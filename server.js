@@ -643,6 +643,63 @@ app.post("/api/analytics/launch", async (req, res) => {
   }
 });
 
+// GET /api/analytics/launch — aggregated data for TelemetryDashboard
+app.get("/api/analytics/launch", async (req, res) => {
+  try {
+    const rows = await prisma.analytics.findMany({ orderBy: { createdAt: "asc" } });
+
+    const counter = (pred) => rows.filter(pred).length;
+    const signupDone   = counter(r => r.event === "signup_done");
+    const totalVisitors = counter(r => r.event === "page_view");
+    const ctaClicks    = counter(r => r.event === "cta_click");
+    const signupStarts = counter(r => r.event === "signup_start");
+    const conversionRate = totalVisitors > 0
+      ? ((signupDone / totalVisitors) * 100).toFixed(1) + "%"
+      : "0%";
+
+    // Daily stats
+    const byDay = {};
+    rows.forEach(r => {
+      const day = (r.createdAt || new Date()).toISOString().slice(0, 10);
+      if (!byDay[day]) byDay[day] = { date: day, uniqueVisitors: 0, pageViews: 0 };
+      if (r.event === "page_view") { byDay[day].pageViews++; byDay[day].uniqueVisitors++; }
+    });
+    const dailyStats = Object.values(byDay).slice(-30);
+
+    // Sources / devices / regions from meta JSON
+    const srcMap = {}, devMap = {}, regMap = {};
+    rows.forEach(r => {
+      try {
+        const m = r.meta ? JSON.parse(r.meta) : {};
+        if (m.source) srcMap[m.source] = (srcMap[m.source] || 0) + 1;
+        if (m.device) devMap[m.device] = (devMap[m.device] || 0) + 1;
+        if (m.region) regMap[m.region] = (regMap[m.region] || 0) + 1;
+      } catch {}
+    });
+    const toArr = (obj) => Object.entries(obj).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+
+    res.json({
+      summary: {
+        totalUniqueVisitors: totalVisitors,
+        totalPageViews: totalVisitors,
+        ctaClicks,
+        signupStarts,
+        signupDone,
+        conversionRate,
+      },
+      dailyStats,
+      sources: toArr(srcMap),
+      devices: toArr(devMap),
+      regions: toArr(regMap),
+      scrollDepth: [],
+      sections: [],
+    });
+  } catch (err) {
+    console.error("GET /api/analytics/launch error:", err);
+    res.status(500).json({ error: "Failed to load analytics" });
+  }
+});
+
 // ====================================================================
 // PROGRESS
 // ====================================================================
