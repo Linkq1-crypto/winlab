@@ -1478,7 +1478,7 @@ section{padding:80px 24px}
       <span class="demo-modal-title" id="demo-modal-title">WinLab — Demo</span>
       <button class="demo-modal-close" onclick="closeDemoModal(null)">✕</button>
     </div>
-    <iframe class="demo-modal-iframe" id="demo-modal-iframe" src="" title="WinLab Demo" allow="clipboard-write" loading="lazy"></iframe>
+    <div id="inline-terminal" style="flex:1;background:#0a0a0a;padding:18px 22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.8;overflow-y:auto;min-height:420px"></div>
     <div class="demo-modal-footer">
       <span class="demo-modal-note">Free demo · Full access from Monday April 20</span>
       <a href="#cta" class="demo-modal-cta" onclick="closeDemoModal(null)">Lock your seat at $5/mo →</a>
@@ -1671,19 +1671,156 @@ const SCENARIO_LABELS = {
   ssh:     '🚫 SSH refused — Firewall diagnosis',
 };
 
+const SCENARIO_STEPS = {
+  apache: [
+    {t:'cmt', v:'# The site is down. Let\'s find out why.'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@web01 ~]$ ', v:'systemctl status httpd', d:600},
+    {t:'out', v:'● httpd.service - The Apache HTTP Server', c:'warn'},
+    {t:'out', v:'   Active: failed (Result: exit-code)', c:'err'},
+    {t:'out', v:'   Process: ExecStart=/usr/sbin/httpd (status=1/FAILURE)', c:'err'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@web01 ~]$ ', v:'journalctl -u httpd --since "5 min ago" | tail -5', d:700},
+    {t:'out', v:'AH00526: Syntax error on line 47 of /etc/httpd/conf/httpd.conf:', c:'err'},
+    {t:'out', v:'Invalid command \'ServerNaame\', perhaps misspelled', c:'err'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@web01 ~]$ ', v:'sed -i \'s/ServerNaame/ServerName/\' /etc/httpd/conf/httpd.conf', d:600},
+    {t:'cmd', p:'[admin@web01 ~]$ ', v:'systemctl start httpd && systemctl status httpd | grep Active', d:900},
+    {t:'out', v:'   Active: active (running) since Thu 2026-04-17 21:03:11 CEST', c:'ok'},
+    {t:'gap'},
+    {t:'out', v:'✓ Apache back online. Typo in httpd.conf fixed in 90s.', c:'ok'},
+  ],
+  disk: [
+    {t:'cmt', v:'# Writes are failing. Server is sluggish.'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@db01 ~]$ ', v:'df -h /', d:500},
+    {t:'out', v:'Filesystem  Size  Used Avail Use% Mounted on', c:'dim'},
+    {t:'out', v:'/dev/sda1    50G   50G    0B 100% /', c:'err'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@db01 ~]$ ', v:'du -sh /var/log/* 2>/dev/null | sort -hr | head -4', d:700},
+    {t:'out', v:'38G  /var/log/nginx/access.log', c:'warn'},
+    {t:'out', v:'4.1G /var/log/syslog', c:'warn'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@db01 ~]$ ', v:'truncate -s 0 /var/log/nginx/access.log', d:500},
+    {t:'cmd', p:'[admin@db01 ~]$ ', v:'find /var/log -name "*.gz" -mtime +7 -delete', d:800},
+    {t:'cmd', p:'[admin@db01 ~]$ ', v:'df -h /', d:400},
+    {t:'out', v:'Filesystem  Size  Used Avail Use% Mounted on', c:'dim'},
+    {t:'out', v:'/dev/sda1    50G  8.2G   42G  17% /', c:'ok'},
+    {t:'gap'},
+    {t:'out', v:'✓ 42G freed. Log rotation will prevent recurrence.', c:'ok'},
+  ],
+  selinux: [
+    {t:'cmt', v:'# httpd returns 403. Config looks fine. It\'s SELinux.'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@web02 ~]$ ', v:'curl -s -o /dev/null -w "%{http_code}" http://localhost/app/', d:600},
+    {t:'out', v:'403', c:'err'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@web02 ~]$ ', v:'ausearch -m avc -ts recent | grep httpd | tail -3', d:800},
+    {t:'out', v:'type=AVC avc: denied { read } for pid=1234', c:'warn'},
+    {t:'out', v:'  scontext=httpd_t  tcontext=user_home_t', c:'err'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@web02 ~]$ ', v:'ls -Z /var/www/app/ | head -2', d:500},
+    {t:'out', v:'unconfined_u:object_r:user_home_t:s0 index.php', c:'warn'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@web02 ~]$ ', v:'chcon -Rv --type=httpd_sys_content_t /var/www/app/', d:700},
+    {t:'out', v:'changing security context of \'/var/www/app/index.php\'', c:'dim'},
+    {t:'cmd', p:'[admin@web02 ~]$ ', v:'curl -s -o /dev/null -w "%{http_code}" http://localhost/app/', d:500},
+    {t:'out', v:'200', c:'ok'},
+    {t:'gap'},
+    {t:'out', v:'✓ SELinux file context corrected. Site responding 200 OK.', c:'ok'},
+  ],
+  cpu: [
+    {t:'cmt', v:'# Load average is 24. Something is out of control.'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@app01 ~]$ ', v:'uptime', d:400},
+    {t:'out', v:' 21:04:12 up 3 days, load average: 24.33, 23.87, 22.10', c:'err'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@app01 ~]$ ', v:'ps aux --sort=-%cpu | head -5', d:700},
+    {t:'out', v:'USER    PID  %CPU COMMAND', c:'dim'},
+    {t:'out', v:'www-data 4821 98.2 php-fpm: worker', c:'err'},
+    {t:'out', v:'www-data 4822 97.8 php-fpm: worker', c:'err'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@app01 ~]$ ', v:'strace -p 4821 2>&1 | head -3', d:800},
+    {t:'out', v:'read(3, "SELECT * FROM sessions WHERE...", 4096)', c:'warn'},
+    {t:'out', v:'# Infinite loop — missing query index on sessions table', c:'dim'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@app01 ~]$ ', v:'mysql -e "ALTER TABLE sessions ADD INDEX idx_token (token);"', d:900},
+    {t:'cmd', p:'[admin@app01 ~]$ ', v:'systemctl restart php-fpm && uptime', d:1000},
+    {t:'out', v:' 21:07:44 up 3 days, load average: 0.42, 8.11, 16.03', c:'ok'},
+    {t:'gap'},
+    {t:'out', v:'✓ Missing DB index caused CPU spiral. Fixed and restarted.', c:'ok'},
+  ],
+  ssh: [
+    {t:'cmt', v:'# Can\'t SSH into prod. Connection refused.'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@jump01 ~]$ ', v:'ssh admin@192.168.1.50', d:600},
+    {t:'out', v:'ssh: connect to host 192.168.1.50 port 22: Connection refused', c:'err'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@jump01 ~]$ ', v:'nc -zv 192.168.1.50 22 2>&1', d:500},
+    {t:'out', v:'nc: connect to port 22 failed: Connection refused', c:'err'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@192.168.1.50 ~]$ ', v:'firewall-cmd --list-all | grep services', d:700},
+    {t:'out', v:'services: http https', c:'warn'},
+    {t:'out', v:'# ssh is NOT in the allowed services!', c:'dim'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@192.168.1.50 ~]$ ', v:'firewall-cmd --add-service=ssh --permanent && firewall-cmd --reload', d:900},
+    {t:'out', v:'success', c:'ok'},
+    {t:'out', v:'success', c:'ok'},
+    {t:'gap'},
+    {t:'cmd', p:'[admin@jump01 ~]$ ', v:'ssh admin@192.168.1.50', d:800},
+    {t:'out', v:'Last login: Thu Apr 17 18:22:10 2026', c:'ok'},
+    {t:'gap'},
+    {t:'out', v:'✓ Firewall was blocking port 22. SSH restored in 3 commands.', c:'ok'},
+  ]
+};
+
+let _demoTimer = null;
+function _renderInlineTerminal(scenario) {
+  const term = document.getElementById('inline-terminal');
+  if (!term) return;
+  term.innerHTML = '';
+  if (_demoTimer) { clearTimeout(_demoTimer); _demoTimer = null; }
+  const steps = SCENARIO_STEPS[scenario] || SCENARIO_STEPS.apache;
+  let idx = 0;
+  function next() {
+    if (idx >= steps.length) {
+      const cur = document.createElement('span');
+      cur.style.cssText = 'display:inline-block;width:8px;height:14px;background:#22c55e;animation:blink 1s step-end infinite;vertical-align:text-bottom';
+      term.appendChild(cur);
+      term.scrollTop = term.scrollHeight;
+      return;
+    }
+    const s = steps[idx++];
+    const delay = s.d || 0;
+    _demoTimer = setTimeout(() => {
+      if (s.t === 'gap') {
+        term.appendChild(document.createElement('br'));
+      } else {
+        const d = document.createElement('div');
+        const color = {ok:'#22c55e', err:'#ef4444', warn:'#facc15', dim:'#6b7280'}[s.c] || '#e5e7eb';
+        if (s.t === 'cmt') {
+          d.innerHTML = `<span style="color:#374151">${s.v}</span>`;
+        } else if (s.t === 'cmd') {
+          d.innerHTML = `<span style="color:#22c55e">${s.p}</span><span style="color:#60a5fa">${s.v}</span>`;
+        } else {
+          d.innerHTML = `<span style="color:${color}">${s.v}</span>`;
+        }
+        term.appendChild(d);
+        term.scrollTop = term.scrollHeight;
+      }
+      next();
+    }, idx === 1 ? 200 : delay);
+  }
+  next();
+}
+
 function launchScenario(card, scenario) {
-  // Highlight active card
   document.querySelectorAll('.sc-card').forEach(c => c.classList.remove('active'));
   card.classList.add('active');
-
-  const modal   = document.getElementById('demo-modal');
-  const iframe  = document.getElementById('demo-modal-iframe');
-  const title   = document.getElementById('demo-modal-title');
-
+  const modal = document.getElementById('demo-modal');
+  const title = document.getElementById('demo-modal-title');
   title.textContent = 'WinLab Demo · ' + (SCENARIO_LABELS[scenario] || scenario);
-  // Load the real demo iframe — scenario param passed for context
-  const src = '/demo?scenario=' + scenario;
-  if (iframe.src !== location.origin + src) iframe.src = src;
+  _renderInlineTerminal(scenario);
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -1848,7 +1985,7 @@ async function goStripe() {
   btn.textContent = 'Redirecting to Stripe…';
   msg.textContent = '';
   try {
-    const r = await fetch('/api/stripe/early-access', {
+    const r = await fetch('/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, name: name || undefined }),
