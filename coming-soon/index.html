@@ -1832,7 +1832,16 @@ function _showPrompt(term, scenario) {
 
     if (cmd) {
       const responses = hint ? hint.cmds : {};
-      const out = responses[cmd];
+      // prefix matching: 'journalctl' matches 'journalctl -u httpd ...'
+      function findCmd(typed) {
+        if (typed in responses) return responses[typed];
+        const t = typed.toLowerCase();
+        for (const key of Object.keys(responses)) {
+          if (key.toLowerCase().startsWith(t) || t.startsWith(key.toLowerCase())) return responses[key];
+        }
+        return undefined;
+      }
+      const out = findCmd(cmd);
       if (out !== undefined) {
         if (out !== '') {
           out.split('\n').forEach(line => {
@@ -1962,7 +1971,7 @@ function setCtaState(state) {
 let seatsRemaining = null;
 async function loadSeats() {
   try {
-    const r = await fetch('/api/early-access/seats');
+    const r = await fetch('/api/early-access/seats', { cache: 'no-store' });
     if (!r.ok) throw new Error();
     const d = await parseApiJson(r, 'Seat service unavailable right now.');
     const claimed = d.claimed || d.count || d.taken || 0;
@@ -2044,13 +2053,16 @@ async function joinWaitlist() {
     if (!r.ok) throw new Error(d.error || 'Error joining waitlist');
     if (d.ok || d.existing) {
       showSuccess(d);
+      setTimeout(() => loadSeats(), 800); // refresh counter after DB write
     } else {
       throw new Error(d.error || 'Temporary server issue');
     }
   } catch(e) {
-    msg.textContent = e.message.includes('fetch') ? '⚠ Server unreachable — try again in a moment.' : '❌ ' + e.message;
+    const errText = e.message.includes('fetch') ? '⚠ Server unreachable — try again in a moment.' : '❌ ' + e.message;
+    msg.textContent = errText;
     btn.disabled = false;
     btn.textContent = 'Claim Early Access — $5/mo locked forever';
+    setTimeout(() => { if (msg.textContent === errText) msg.textContent = ''; }, 5000);
   }
 }
 
@@ -2077,8 +2089,10 @@ async function goStripe() {
     }
     if (d.url) window.location.href = d.url;
   } catch(e) {
-    msg.textContent = '❌ ' + e.message;
+    const stripeErr = '❌ ' + e.message;
+    msg.textContent = stripeErr;
     btn.disabled = false;
+    setTimeout(() => { if (msg.textContent === stripeErr) msg.textContent = ''; }, 5000);
     btn.textContent = 'Reserve my seat at $5/mo →';
   }
 }
