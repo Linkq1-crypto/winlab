@@ -1554,6 +1554,16 @@ async function sendDripEmails() {
 // setTimeout(sendDripEmails, 5_000);
 // setInterval(sendDripEmails, 60 * 60 * 1_000);
 
+// ── Enterprise landing page ───────────────────────────────────────────
+app.get("/enterprise", (req, res) => {
+  const enterprisePage = path.join(__dirname, "coming-soon", "enterprise-landing.html");
+  if (existsSync(enterprisePage)) {
+    res.sendFile(enterprisePage);
+  } else {
+    res.redirect("/");
+  }
+});
+
 // ── SPA fallback ─────────────────────────────────────────────────────
 app.get("*", (req, res) => {
   if (!req.path.startsWith("/api/")) {
