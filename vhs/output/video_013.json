@@ -1,0 +1,39 @@
+{
+  "id": "v013",
+  "name": "video_013",
+  "hook": "This is why juniors panic.",
+  "command": "netstat -tulpn",
+  "structure": "contrast",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "This is why juniors panic.",
+      "duration": 2.5
+    },
+    {
+      "type": "text",
+      "text": "Not here.",
+      "duration": 2.0
+    },
+    {
+      "type": "terminal",
+      "cmd": "netstat -tulpn",
+      "status": "\u2713 Active: running",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "Practice makes the difference.",
+      "duration": 2.5
+    },
+    {
+      "type": "text",
+      "text": "WinLab.cloud",
+      "duration": 2.0,
+      "color": "accent"
+    }
+  ],
+  "cluster": "challenge",
+  "is_new": true,
+  "created_at": "2026-04-14T12:33:50.882392"
+}

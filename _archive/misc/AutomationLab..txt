@@ -1,0 +1,1007 @@
+import React, { useMemo, useState } from "react";
+
+const scenarios = {
+  ansible: {
+    title: "Automation Lab — Ansible Incident",
+    objective: "Ripristina 20 host dopo CVE critical con playbook idempotente.",
+    accepted: ["inventory list", "ansible-playbook patch.yml --limit web --check", "ansible-playbook patch.yml --limit web"],
+  },
+  terraform: {
+    title: "Automation Lab — Terraform Drift",
+    objective: "Rileva drift e applica fix solo dopo approvazione plan.",
+    accepted: ["terraform init", "terraform plan -out fix.plan", "terraform apply fix.plan"],
+  },
+};
+
+const commandRules = [
+  { pattern: /^inventory list$/, output: "Inventory loaded: web-01..web-20 (20 hosts)." },
+  { pattern: /^ansible-playbook patch\.yml --limit web --check$/, output: "Dry-run OK: 20 changed, 0 failed." },
+  { pattern: /^ansible-playbook patch\.yml --limit web$/, output: "Deploy complete: 20/20 success, restart rolling done." },
+  { pattern: /^terraform init$/, output: "Terraform initialized with remote backend." },
+  { pattern: /^terraform plan -out fix\.plan$/, output: "Plan: 2 to change, 0 to destroy." },
+  { pattern: /^terraform apply fix\.plan$/, output: "Apply complete! Resources: 2 changed." },
+];
+
+export default function AutomationLab() {
+  const [scenarioKey, setScenarioKey] = useState("ansible");
+  const [step, setStep] = useState(0);
+  const [input, setInput] = useState("");
+  const [log, setLog] = useState(["Terminal ready. Scegli scenario e digita comandi reali."]);
+  const [metrics, setMetrics] = useState({ cpu: 71, latency: 280, errorRate: 7.3, mistakes: 0 });
+
+  const current = scenarios[scenarioKey];
+  const done = useMemo(() => step >= current.accepted.length, [step, current.accepted.length]);
+
+  const switchScenario = (key) => {
+    setScenarioKey(key);
+    setStep(0);
+    setInput("");
+    setMetrics({ cpu: 74, latency: 300, errorRate: 8.4, mistakes: 0 });
+    setLog([`Scenario loaded: ${scenarios[key].title}`]);
+  };
+
+  const runCommand = () => {
+    if (!input.trim() || done) return;
+    const expected = current.accepted[step];
+    const cmd = input.trim();
+    const rule = commandRules.find((r) => r.pattern.test(cmd));
+    if (cmd !== expected) {
+      setMetrics((m) => ({ ...m, latency: m.latency + 30, errorRate: +(m.errorRate + 1.2).toFixed(1), mistakes: m.mistakes + 1 }));
+      setLog((prev) => [`❌ ${cmd}`, `Expected step ${step + 1}: ${expected}`, ...prev]);
+      setInput("");
+      return;
+    }
+
+    setStep((s) => s + 1);
+    setMetrics((m) => ({
+      ...m,
+      cpu: Math.max(30, m.cpu - 8),
+      latency: Math.max(80, m.latency - 55),
+      errorRate: Math.max(0.3, +(m.errorRate - 2.1).toFixed(1)),
+    }));
+    setLog((prev) => [`$ ${cmd}`, `${rule ? rule.output : "Command executed."}`, ...prev]);
+    setInput("");
+  };
+
+  return (
+    <section style={{ display: "grid", gap: 12 }}>
+      <h2>{current.title}</h2>
+      <p>{current.objective}</p>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <button type="button" onClick={() => switchScenario("ansible")}>
+          Ansible Incident
+        </button>
+        <button type="button" onClick={() => switchScenario("terraform")}>
+          Terraform Drift
+        </button>
+      </div>
+
+      <div style={{ border: "1px solid #1e293b", borderRadius: 8, padding: 10, background: "#020617", color: "#cbd5e1" }}>
+        <p>
+          Step {Math.min(step + 1, current.accepted.length)}/{current.accepted.length} · Mistakes: {metrics.mistakes}
+        </p>
+        <p>
+          CPU {metrics.cpu}% · Latency {metrics.latency}ms · Error Rate {metrics.errorRate}%
+        </p>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={done ? "Scenario complete" : "Type command..."}
+            disabled={done}
+          />
+          <button type="button" onClick={runCommand} disabled={done}>
+            RUN
+          </button>
+        </div>
+        {done && <strong>✅ Post-scenario: drift risolto e servizio stabilizzato.</strong>}
+        <ul>
+          {log.slice(0, 10).map((entry, i) => (
+            <li key={`${entry}-${i}`}>{entry}</li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+
+__________________________________
+
+import React, { useMemo, useState } from "react";
+
+const drills = [
+  {
+    id: "dr",
+    title: "Disaster Recovery Simulator (RTO/RPO)",
+    objective: "Mantieni RTO < 15 min e RPO < 5 min durante failover.",
+    target: { regionsUp: 2, dbReplicaLag: 4, trafficShift: 100 },
+  },
+  {
+    id: "outage",
+    title: "Cloud Outage War Room",
+    objective: "Isola regione in fault e riporta error rate sotto 2%.",
+    target: { regionsUp: 2, dbReplicaLag: 6, trafficShift: 100 },
+  },
+  {
+    id: "hybrid",
+    title: "Hybrid Cloud Failure Scenario",
+    objective: "Ripristina link on-prem ↔ cloud senza perdita dati.",
+    target: { regionsUp: 3, dbReplicaLag: 3, trafficShift: 80 },
+  },
+];
+
+export default function CloudInfra() {
+  const [drillIndex, setDrillIndex] = useState(0);
+  const [state, setState] = useState({ regionsUp: 1, dbReplicaLag: 12, trafficShift: 40, errorRate: 9.8 });
+  const [timeline, setTimeline] = useState(["War room avviata: regione primary non raggiungibile."]);
+
+  const drill = drills[drillIndex];
+  const solved = useMemo(
+    () =>
+      state.regionsUp >= drill.target.regionsUp &&
+      state.dbReplicaLag <= drill.target.dbReplicaLag &&
+      state.trafficShift >= drill.target.trafficShift &&
+      state.errorRate <= 2,
+    [drill.target.dbReplicaLag, drill.target.regionsUp, drill.target.trafficShift, state]
+  );
+
+  const act = (action) => {
+    if (action === "failover") {
+      setState((s) => ({
+        ...s,
+        regionsUp: Math.min(3, s.regionsUp + 1),
+        trafficShift: Math.min(100, s.trafficShift + 30),
+        errorRate: Math.max(1.1, +(s.errorRate - 2.5).toFixed(1)),
+      }));
+      setTimeline((log) => ["Failover multi-region eseguito.", ...log]);
+    }
+    if (action === "db-sync") {
+      setState((s) => ({ ...s, dbReplicaLag: Math.max(1, s.dbReplicaLag - 4), errorRate: Math.max(1, +(s.errorRate - 0.8).toFixed(1)) }));
+      setTimeline((log) => ["Database replica sync accelerata.", ...log]);
+    }
+    if (action === "reroute") {
+      setState((s) => ({ ...s, trafficShift: Math.min(100, s.trafficShift + 20), errorRate: Math.max(0.8, +(s.errorRate - 1.5).toFixed(1)) }));
+      setTimeline((log) => ["Global LB update: traffico reroutato.", ...log]);
+    }
+  };
+
+  const nextDrill = () => {
+    if (!solved) return;
+    if (drillIndex < drills.length - 1) {
+      setDrillIndex((i) => i + 1);
+      setState({ regionsUp: 1, dbReplicaLag: 10, trafficShift: 50, errorRate: 8.6 });
+      setTimeline((log) => [`Nuovo drill avviato: ${drills[drillIndex + 1].title}`, ...log]);
+      return;
+    }
+    setTimeline((log) => ["✅ Tutti i drill cloud completati.", ...log]);
+  };
+
+  return (
+    <section style={{ display: "grid", gap: 12 }}>
+      <h2>{drill.title}</h2>
+      <p>{drill.objective}</p>
+      <p>
+        Target → Regions up: {drill.target.regionsUp}, Replica lag: {drill.target.dbReplicaLag}m, Traffic shift: {drill.target.trafficShift}%
+      </p>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+        <p>Regions up: {state.regionsUp}</p>
+        <p>DB replica lag: {state.dbReplicaLag}m</p>
+        <p>Traffic shift: {state.trafficShift}%</p>
+        <p>Error rate: {state.errorRate}%</p>
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button type="button" onClick={() => act("failover")}>
+          Trigger Failover
+        </button>
+        <button type="button" onClick={() => act("db-sync")}>
+          DB Sync Recovery
+        </button>
+        <button type="button" onClick={() => act("reroute")}>
+          Reroute Traffic
+        </button>
+      </div>
+      <button type="button" disabled={!solved} onClick={nextDrill}>
+        {drillIndex < drills.length - 1 ? "Conferma e passa al prossimo drill" : "Conferma completamento"}
+      </button>
+      <ul>
+        {timeline.slice(0, 8).map((line, i) => (
+          <li key={`${line}-${i}`}>{line}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+_____________________________________________________
+
+import React, { useMemo, useState } from "react";
+import { useScenarioEngine } from "./useScenarioEngine";
+
+const scenarioMap = {
+  multisite: {
+    id: "multisite",
+    title: "Active Directory Multi-Site Failure",
+    objective: "Ripristina autenticazione branch + replica AD senza superare €20k impatto.",
+  },
+  fsmo: {
+    id: "fsmo",
+    title: "FSMO Seizure Scenario",
+    objective: "Recupera ruoli FSMO minimizzando rischio security e downtime.",
+  },
+  trust: {
+    id: "trust",
+    title: "Trust Relationship Break",
+    objective: "Ripristina trust tra foreste senza lockout utenti VIP.",
+  },
+  rodc: {
+    id: "rodc",
+    title: "RODC Authentication Failure",
+    objective: "Sblocca logon branch con cache credenziali sicura.",
+  },
+  forest: {
+    id: "forest",
+    title: "Forest Migration Scenario",
+    objective: "Completa migrazione forest con stabilità > 80.",
+  },
+};
+
+const initialState = {
+  scenario: "multisite",
+  sites: [
+    { id: "hq", name: "HQ", dc: "DC-PRIMARY", status: "degraded" },
+    { id: "dr", name: "DR", dc: "DC-SECONDARY", status: "healthy" },
+    { id: "branch", name: "Branch", dc: "RODC-01", status: "down" },
+  ],
+  done: [],
+  penalties: { tempo: 0, costo: 0, sicurezza: 0, stabilita: 0 },
+  businessImpact: 3200,
+};
+
+const decisions = [
+  {
+    id: "force-replication",
+    label: "Force replication HQ→Branch",
+    log: "Replica forzata completata, backlog Kerberos ridotto.",
+    reducer: (prev) => ({
+      ...prev,
+      done: prev.done.includes("replica") ? prev.done : [...prev.done, "replica"],
+      sites: prev.sites.map((s) => (s.id === "branch" ? { ...s, status: "degraded" } : s)),
+      penalties: { ...prev.penalties, tempo: prev.penalties.tempo + 4, costo: prev.penalties.costo + 3 },
+    }),
+  },
+  {
+    id: "restore-rodc",
+    label: "Restore RODC credentials cache",
+    log: "RODC cache rebuild OK, logon branch in recovery.",
+    reducer: (prev) => ({
+      ...prev,
+      done: prev.done.includes("cache") ? prev.done : [...prev.done, "cache"],
+      sites: prev.sites.map((s) => (s.id === "branch" ? { ...s, status: "healthy" } : s)),
+      penalties: { ...prev.penalties, tempo: prev.penalties.tempo + 2 },
+    }),
+  },
+  {
+    id: "seize-fsmo",
+    label: "Emergency FSMO seizure",
+    log: "FSMO seizure eseguito: servizio ripristinato ma audit aperto.",
+    reducer: (prev) => ({
+      ...prev,
+      done: prev.done.includes("fsmo") ? prev.done : [...prev.done, "fsmo"],
+      penalties: {
+        ...prev.penalties,
+        sicurezza: prev.penalties.sicurezza + 12,
+        costo: prev.penalties.costo + 15,
+      },
+      businessImpact: prev.businessImpact + 9000,
+    }),
+  },
+  {
+    id: "repair-trust",
+    label: "Repair forest trust + SID filtering",
+    log: "Trust relationship validato su entrambe le foreste.",
+    reducer: (prev) => ({
+      ...prev,
+      done: prev.done.includes("trust") ? prev.done : [...prev.done, "trust"],
+      penalties: { ...prev.penalties, tempo: prev.penalties.tempo + 5, stabilita: prev.penalties.stabilita + 2 },
+    }),
+  },
+];
+
+const randomEvents = [
+  { message: "Ticket VIP: lockout utenti finance", penalty: { tempo: 4, costo: 3 }, businessImpact: 1200 },
+  { message: "Latenza WAN > 250ms verso DR", penalty: { stabilita: 5 }, businessImpact: 500 },
+  { message: "Tentativo lateral movement bloccato", penalty: { sicurezza: 6 }, businessImpact: 1800 },
+];
+
+export default function EnterpriseArch() {
+  const engine = useScenarioEngine("enterprise-arch-v2", {
+    initialState,
+    initialTimeline: [
+      "INC-9402 aperto: autenticazioni AD fallite su branch europei.",
+      "Usa decisioni progressive + chaos events per chiudere l'incidente.",
+    ],
+    randomEvents,
+  });
+  const [mentorMode, setMentorMode] = useState("balanced");
+
+  const currentScenario = scenarioMap[engine.state.scenario];
+  const resolved = useMemo(
+    () => engine.state.done.length >= 3 && engine.score.risk < 35 && engine.score.businessImpact < 20000,
+    [engine.score.businessImpact, engine.score.risk, engine.state.done.length]
+  );
+
+  const setScenario = (scenarioId) => {
+    engine.setState((prev) => ({ ...prev, scenario: scenarioId, done: [] }));
+    engine.setTimeline((log) => [`Scenario switched: ${scenarioMap[scenarioId].title}`, ...log]);
+  };
+
+  const mentorMessage =
+    mentorMode === "strict"
+      ? "AI Mentor: evita Seizure FSMO se non hai già tentato replica/restore."
+      : "AI Mentor: priorità al ripristino utenti, poi minimizza rischio e costo.";
+
+  return (
+    <section style={{ display: "grid", gap: 14 }}>
+      <header>
+        <h2>Enterprise Architecture Crisis Lab</h2>
+        <p>{currentScenario.title}</p>
+        <p>{currentScenario.objective}</p>
+      </header>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {Object.values(scenarioMap).map((s) => (
+          <button key={s.id} onClick={() => setScenario(s.id)} type="button">
+            {s.title}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+        {engine.state.sites.map((site) => (
+          <article key={site.id} style={{ border: "1px solid #2d3748", borderRadius: 8, padding: 10 }}>
+            <strong>
+              {site.name} · {site.dc}
+            </strong>
+            <p>Status: {site.status}</p>
+          </article>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {decisions.map((d) => (
+          <button key={d.id} type="button" onClick={() => engine.applyDecision(d)}>
+            {d.label}
+          </button>
+        ))}
+        <button type="button" onClick={engine.injectEvent}>
+          Inject Chaos Event
+        </button>
+      </div>
+
+      <div style={{ border: "1px solid #475569", borderRadius: 8, padding: 10 }}>
+        <h4>Scoring Engine</h4>
+        <p>
+          Tempo {engine.score.tempo} · Costo {engine.score.costo} · Sicurezza {engine.score.sicurezza} · Stabilità{" "}
+          {engine.score.stabilita}
+        </p>
+        <p>Risk Score: {engine.score.risk} · Business Impact: €{engine.score.businessImpact}</p>
+      </div>
+
+      <div style={{ border: "1px solid #64748b", borderRadius: 8, padding: 10 }}>
+        <h4>AI Mentor</h4>
+        <select value={mentorMode} onChange={(e) => setMentorMode(e.target.value)}>
+          <option value="balanced">Balanced</option>
+          <option value="strict">Strict</option>
+        </select>
+        <p>{mentorMessage}</p>
+        {resolved ? (
+          <strong>✅ Scenario chiuso: KPI entro soglia enterprise.</strong>
+        ) : (
+          <p>Post-analysis attiva: chiudi 3 decisioni con rischio e impatto sotto soglia.</p>
+        )}
+      </div>
+
+      <aside style={{ border: "1px solid #334155", borderRadius: 8, padding: 10 }}>
+        <h4>Timeline / Audit Trail</h4>
+        <ul>
+          {engine.timeline.slice(0, 8).map((line, i) => (
+            <li key={`${line}-${i}`}>{line}</li>
+          ))}
+        </ul>
+      </aside>
+    </section>
+  );
+}
+______________________________
+
+import React from "react";
+import { enterpriseFeatures, enterpriseLabTracks, enterpriseRoadmap } from "./enterpriseCatalog";
+
+export default function EnterpriseLabsHub() {
+  return (
+    <section style={{ display: "grid", gap: 16 }}>
+      <header>
+        <h2>🧪 Enterprise Labs (Core Prodotto)</h2>
+        <p>Catalogo completo dei laboratori enterprise + differenziatori platform.</p>
+      </header>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 12 }}>
+        {enterpriseLabTracks.map((track) => (
+          <article key={track.pillar} style={{ border: "1px solid #1f2937", borderRadius: 10, padding: 12 }}>
+            <h3>{track.pillar}</h3>
+            <ul>
+              {track.labs.map((lab) => (
+                <li key={lab}>{lab}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+
+      <h3>⚙️ Enterprise Features</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 }}>
+        {enterpriseFeatures.map((feature) => (
+          <article key={feature.area} style={{ border: "1px solid #334155", borderRadius: 10, padding: 12 }}>
+            <h4>{feature.area}</h4>
+            <ul>
+              {feature.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+
+      <h3>🚀 Feature Future Roadmap</h3>
+      <ol>
+        {enterpriseRoadmap.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+________________________________
+
+import React, { useMemo, useState } from "react";
+
+const initialTenants = [
+  { id: "acme", name: "Acme Health", sla: "Gold", incidents: 3, critical: 2, status: "Ransomware containment" },
+  { id: "cyberdyne", name: "Cyberdyne Labs", sla: "Silver", incidents: 4, critical: 1, status: "Phishing campaign" },
+  { id: "globex", name: "Globex Retail", sla: "Platinum", incidents: 5, critical: 2, status: "Lateral movement detected" },
+];
+
+const roles = ["DevOps", "Security", "IT Manager"];
+const actions = [
+  { id: "isolate", label: "Isolate endpoint", impact: { critical: -1, incidents: -1 } },
+  { id: "revoke", label: "Revoke tokens / force MFA", impact: { critical: -1, incidents: 0 } },
+  { id: "rollback", label: "Rollback deployment", impact: { critical: 0, incidents: -1 } },
+];
+
+export default function MspDashboard() {
+  const [tenants, setTenants] = useState(initialTenants);
+  const [selected, setSelected] = useState("acme");
+  const [role, setRole] = useState("Security");
+  const [chatInput, setChatInput] = useState("");
+  const [timeline, setTimeline] = useState(["SOC shift avviato: allineamento war-room multi-tenant."]);
+  const [chat, setChat] = useState(["[IT Manager] Priorità SLA Platinum su Globex."]);
+
+  const selectedTenant = tenants.find((t) => t.id === selected);
+  const openCritical = useMemo(() => tenants.reduce((acc, t) => acc + t.critical, 0), [tenants]);
+
+  const applyAction = (action) => {
+    if (!selectedTenant) return;
+    setTenants((prev) =>
+      prev.map((t) => {
+        if (t.id !== selectedTenant.id) return t;
+        return {
+          ...t,
+          critical: Math.max(0, t.critical + action.impact.critical),
+          incidents: Math.max(0, t.incidents + action.impact.incidents),
+        };
+      })
+    );
+    setTimeline((log) => [`[${role}] ${action.label} su ${selectedTenant.name}`, ...log]);
+  };
+
+  const sendChat = () => {
+    if (!chatInput.trim()) return;
+    setChat((log) => [`[${role}] ${chatInput.trim()}`, ...log]);
+    setChatInput("");
+  };
+
+  return (
+    <section style={{ display: "grid", gap: 12 }}>
+      <h2>SOC Incident Response (Multi-tenant avanzato)</h2>
+      <p>
+        Ruolo attivo:
+        <select value={role} onChange={(e) => setRole(e.target.value)} style={{ marginLeft: 8 }}>
+          {roles.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
+      </p>
+      <p>Critici aperti globali: {openCritical}</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Tenant</th>
+            <th>SLA</th>
+            <th>Incidents</th>
+            <th>Critical</th>
+            <th>Current status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tenants.map((tenant) => (
+            <tr
+              key={tenant.id}
+              onClick={() => setSelected(tenant.id)}
+              style={{ background: selected === tenant.id ? "#dbeafe" : "transparent", cursor: "pointer" }}
+            >
+              <td>{tenant.name}</td>
+              <td>{tenant.sla}</td>
+              <td>{tenant.incidents}</td>
+              <td>{tenant.critical}</td>
+              <td>{tenant.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {actions.map((a) => (
+          <button key={a.id} type="button" onClick={() => applyAction(a)}>
+            {a.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ border: "1px solid #94a3b8", borderRadius: 8, padding: 10 }}>
+        <h4>Scenario Internal Chat</h4>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Scrivi decisione condivisa..." />
+          <button type="button" onClick={sendChat}>
+            Send
+          </button>
+        </div>
+        <ul>
+          {chat.slice(0, 8).map((entry, i) => (
+            <li key={`${entry}-${i}`}>{entry}</li>
+          ))}
+        </ul>
+      </div>
+
+      <aside>
+        <h4>Audit Trail</h4>
+        <ul>
+          {timeline.slice(0, 8).map((line, i) => (
+            <li key={`${line}-${i}`}>{line}</li>
+          ))}
+        </ul>
+        {openCritical === 0 && <strong>✅ Tutte le criticità multi-tenant risolte.</strong>}
+      </aside>
+    </section>
+  );
+}
+________________________________________________
+
+import React from "react";
+import { enterpriseFeatures, enterpriseLabTracks, enterpriseRoadmap } from "./enterpriseCatalog";
+
+export default function EnterpriseLabsHub() {
+  return (
+    <section style={{ display: "grid", gap: 16 }}>
+      <header>
+        <h2>🧪 Enterprise Labs (Core Prodotto)</h2>
+        <p>Catalogo completo dei laboratori enterprise + differenziatori platform.</p>
+      </header>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 12 }}>
+        {enterpriseLabTracks.map((track) => (
+          <article key={track.pillar} style={{ border: "1px solid #1f2937", borderRadius: 10, padding: 12 }}>
+            <h3>{track.pillar}</h3>
+            <ul>
+              {track.labs.map((lab) => (
+                <li key={lab}>{lab}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+
+      <h3>⚙️ Enterprise Features</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 }}>
+        {enterpriseFeatures.map((feature) => (
+          <article key={feature.area} style={{ border: "1px solid #334155", borderRadius: 10, padding: 12 }}>
+            <h4>{feature.area}</h4>
+            <ul>
+              {feature.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+
+      <h3>🚀 Feature Future Roadmap</h3>
+      <ol>
+        {enterpriseRoadmap.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+___________________________-
+
+import React, { useMemo, useState } from "react";
+
+const initialTenants = [
+  { id: "acme", name: "Acme Health", sla: "Gold", incidents: 3, critical: 2, status: "Ransomware containment" },
+  { id: "cyberdyne", name: "Cyberdyne Labs", sla: "Silver", incidents: 4, critical: 1, status: "Phishing campaign" },
+  { id: "globex", name: "Globex Retail", sla: "Platinum", incidents: 5, critical: 2, status: "Lateral movement detected" },
+];
+
+const roles = ["DevOps", "Security", "IT Manager"];
+const actions = [
+  { id: "isolate", label: "Isolate endpoint", impact: { critical: -1, incidents: -1 } },
+  { id: "revoke", label: "Revoke tokens / force MFA", impact: { critical: -1, incidents: 0 } },
+  { id: "rollback", label: "Rollback deployment", impact: { critical: 0, incidents: -1 } },
+];
+
+export default function MspDashboard() {
+  const [tenants, setTenants] = useState(initialTenants);
+  const [selected, setSelected] = useState("acme");
+  const [role, setRole] = useState("Security");
+  const [chatInput, setChatInput] = useState("");
+  const [timeline, setTimeline] = useState(["SOC shift avviato: allineamento war-room multi-tenant."]);
+  const [chat, setChat] = useState(["[IT Manager] Priorità SLA Platinum su Globex."]);
+
+  const selectedTenant = tenants.find((t) => t.id === selected);
+  const openCritical = useMemo(() => tenants.reduce((acc, t) => acc + t.critical, 0), [tenants]);
+
+  const applyAction = (action) => {
+    if (!selectedTenant) return;
+    setTenants((prev) =>
+      prev.map((t) => {
+        if (t.id !== selectedTenant.id) return t;
+        return {
+          ...t,
+          critical: Math.max(0, t.critical + action.impact.critical),
+          incidents: Math.max(0, t.incidents + action.impact.incidents),
+        };
+      })
+    );
+    setTimeline((log) => [`[${role}] ${action.label} su ${selectedTenant.name}`, ...log]);
+  };
+
+  const sendChat = () => {
+    if (!chatInput.trim()) return;
+    setChat((log) => [`[${role}] ${chatInput.trim()}`, ...log]);
+    setChatInput("");
+  };
+
+  return (
+    <section style={{ display: "grid", gap: 12 }}>
+      <h2>SOC Incident Response (Multi-tenant avanzato)</h2>
+      <p>
+        Ruolo attivo:
+        <select value={role} onChange={(e) => setRole(e.target.value)} style={{ marginLeft: 8 }}>
+          {roles.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
+      </p>
+      <p>Critici aperti globali: {openCritical}</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Tenant</th>
+            <th>SLA</th>
+            <th>Incidents</th>
+            <th>Critical</th>
+            <th>Current status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tenants.map((tenant) => (
+            <tr
+              key={tenant.id}
+              onClick={() => setSelected(tenant.id)}
+              style={{ background: selected === tenant.id ? "#dbeafe" : "transparent", cursor: "pointer" }}
+            >
+              <td>{tenant.name}</td>
+              <td>{tenant.sla}</td>
+              <td>{tenant.incidents}</td>
+              <td>{tenant.critical}</td>
+              <td>{tenant.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {actions.map((a) => (
+          <button key={a.id} type="button" onClick={() => applyAction(a)}>
+            {a.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ border: "1px solid #94a3b8", borderRadius: 8, padding: 10 }}>
+        <h4>Scenario Internal Chat</h4>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Scrivi decisione condivisa..." />
+          <button type="button" onClick={sendChat}>
+            Send
+          </button>
+        </div>
+        <ul>
+          {chat.slice(0, 8).map((entry, i) => (
+            <li key={`${entry}-${i}`}>{entry}</li>
+          ))}
+        </ul>
+      </div>
+
+      <aside>
+        <h4>Audit Trail</h4>
+        <ul>
+          {timeline.slice(0, 8).map((line, i) => (
+            <li key={`${line}-${i}`}>{line}</li>
+          ))}
+        </ul>
+        {openCritical === 0 && <strong>✅ Tutte le criticità multi-tenant risolte.</strong>}
+      </aside>
+    </section>
+  );
+}
+________________-
+export const enterpriseLabTracks = [
+  {
+    pillar: "🔴 Identity & Security",
+    labs: [
+      "Identity & Access Crisis (IAM / Zero Trust)",
+      "Privilege Escalation Attack Simulation",
+      "Lateral Movement Detection Lab",
+      "SOC Incident Response (multi-tenant avanzato)",
+      "Ransomware Containment Scenario",
+      "Phishing Response Drill",
+      "Endpoint Compromise Investigation",
+    ],
+  },
+  {
+    pillar: "🟣 Infrastructure & Cloud",
+    labs: [
+      "Disaster Recovery Simulator (RTO/RPO)",
+      "Cloud Outage War Room",
+      "Multi-Region Failover Lab",
+      "Hybrid Cloud Failure Scenario",
+      "Load Balancing & Traffic Routing Crisis",
+      "Storage Failure / Data Corruption Lab",
+    ],
+  },
+  {
+    pillar: "🔵 DevOps & Automation",
+    labs: [
+      "Automation Lab (Ansible/Terraform reale simulato)",
+      "CI/CD Pipeline Failure Lab",
+      "Deployment Rollback Scenario",
+      "Infra Drift Detection Lab",
+      "Secret Management Failure",
+      "GitOps Incident",
+    ],
+  },
+  {
+    pillar: "🟠 Kubernetes & Containers",
+    labs: [
+      "Kubernetes Incident (CrashLoopBackOff)",
+      "Cluster Resource Exhaustion",
+      "Misconfigured Ingress Attack",
+      "Pod Security Breach",
+      "Service Mesh Failure",
+    ],
+  },
+  {
+    pillar: "🟡 FinOps & Cost Control",
+    labs: [
+      "Cost Explosion War Room",
+      "Zombie Resource Cleanup",
+      "Rightsizing Challenge",
+      "Reserved vs On-Demand Strategy Lab",
+      "Budget Alert Crisis",
+    ],
+  },
+  {
+    pillar: "🟢 Compliance & Governance",
+    labs: [
+      "GDPR Audit Simulator",
+      "ISO27001 Gap Assessment",
+      "Data Breach Legal Response",
+      "Data Retention Misconfiguration",
+      "Access Audit Failure",
+    ],
+  },
+  {
+    pillar: "⚫ AI / Observability",
+    labs: [
+      "AIOps Anomaly Detection Lab",
+      "Silent Failure Scenario",
+      "Alert Fatigue Simulation",
+      "Monitoring Blind Spot Lab",
+      "Predictive Incident Prevention",
+    ],
+  },
+  {
+    pillar: "🧩 Enterprise Architecture",
+    labs: [
+      "Active Directory Multi-Site Failure",
+      "FSMO Seizure Scenario",
+      "Trust Relationship Break",
+      "RODC Authentication Failure",
+      "Forest Migration Scenario",
+    ],
+  },
+];
+
+export const enterpriseFeatures = [
+  {
+    area: "🧠 Core Platform",
+    items: [
+      "Scenario Engine (JSON-driven)",
+      "State Engine (real-time decision impact)",
+      "Event Injection System (chaos/random)",
+      "Persistence (salvataggio progresso)",
+      "Branching Decision Trees",
+    ],
+  },
+  {
+    area: "🤖 AI Layer",
+    items: [
+      "AI Mentor avanzato (contestuale)",
+      "Post-Scenario Analysis",
+      "Adaptive Difficulty",
+      "Skill Gap Detection",
+      "Personalized Learning Path",
+    ],
+  },
+  {
+    area: "📊 Scoring & Analytics",
+    items: [
+      "Tempo, costo, sicurezza, stabilità",
+      "Risk Score",
+      "Business Impact Score (€)",
+      "Leaderboard enterprise (opzionale)",
+    ],
+  },
+  {
+    area: "👥 Collaboration",
+    items: [
+      "Multiplayer scenarios",
+      "Ruoli (DevOps, Security, IT Manager)",
+      "Decisioni condivise / conflitti",
+      "Chat interna scenario",
+    ],
+  },
+  {
+    area: "📈 Reporting",
+    items: [
+      "Scenario replay (timeline)",
+      "Export PDF report",
+      "Performance per utente/team",
+      "Audit trail decisioni",
+    ],
+  },
+  {
+    area: "🧪 Realism Layer",
+    items: [
+      "Terminale simulato con parser comandi",
+      "Errori realistici e non random fake",
+      "Log system (syslog/cloudwatch style)",
+      "Metriche live (CPU, latency, error rate)",
+    ],
+  },
+  {
+    area: "🔐 Enterprise Controls",
+    items: [
+      "SSO (SAML / Azure AD)",
+      "RBAC",
+      "Tenant isolation",
+      "Admin dashboard",
+      "Usage tracking per team",
+    ],
+  },
+  {
+    area: "💰 Business Features",
+    items: [
+      "Licensing per seat",
+      "Billing usage-based",
+      "Trial → conversion tracking",
+      "API access (Enterprise+)",
+    ],
+  },
+];
+
+export const enterpriseRoadmap = [
+  "🧬 Scenario Marketplace (user-generated labs + revenue share)",
+  "🧠 Digital Twin Infrastructure",
+  "🔥 Live Incident Mode con notifiche real-time",
+  "🧪 Certification System (badge + verification)",
+  "🛰️ API Integration (Jira / Slack / Teams)",
+  "🧠 AI Scenario Generator",
+  "🎮 Competitive Mode team-vs-team",
+  "🧾 Compliance Automation (policy + audit docs)",
+];
+
+-___________________
+
+import { useEffect, useMemo, useState } from "react";
+
+const baseScore = { tempo: 100, costo: 100, sicurezza: 100, stabilita: 100 };
+
+export function useScenarioEngine(storageKey, definition) {
+  const [state, setState] = useState(() => {
+    if (typeof window === "undefined") return definition.initialState;
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      return raw ? JSON.parse(raw) : definition.initialState;
+    } catch (error) {
+      return definition.initialState;
+    }
+  });
+  const [timeline, setTimeline] = useState(definition.initialTimeline);
+  const [startTime] = useState(Date.now());
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(storageKey, JSON.stringify(state));
+  }, [storageKey, state]);
+
+  const score = useMemo(() => {
+    const penalties = state.penalties || { tempo: 0, costo: 0, sicurezza: 0, stabilita: 0 };
+    const merged = Object.keys(baseScore).reduce((acc, key) => {
+      acc[key] = Math.max(0, baseScore[key] - (penalties[key] || 0));
+      return acc;
+    }, {});
+    const risk = Math.round((400 - Object.values(merged).reduce((a, b) => a + b, 0)) / 4);
+    const businessImpact = state.businessImpact || 0;
+    return { ...merged, risk, businessImpact };
+  }, [state.businessImpact, state.penalties]);
+
+  const injectEvent = () => {
+    const random = definition.randomEvents[Math.floor(Math.random() * definition.randomEvents.length)];
+    if (!random) return;
+    setState((prev) => ({
+      ...prev,
+      penalties: {
+        ...prev.penalties,
+        ...Object.keys(random.penalty || {}).reduce((acc, key) => {
+          acc[key] = (prev.penalties?.[key] || 0) + random.penalty[key];
+          return acc;
+        }, {}),
+      },
+      businessImpact: (prev.businessImpact || 0) + (random.businessImpact || 0),
+    }));
+    setTimeline((log) => [`⚠️ Chaos: ${random.message}`, ...log]);
+  };
+
+  const applyDecision = (decision) => {
+    setState((prev) => {
+      const nextState = decision.reducer(prev);
+      return nextState;
+    });
+    setTimeline((log) => [decision.log, ...log]);
+  };
+
+  const elapsedMin = Math.max(1, Math.floor((Date.now() - startTime) / 60000));
+
+  return { state, setState, score, timeline, setTimeline, injectEvent, applyDecision, elapsedMin };
+}

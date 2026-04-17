@@ -1,0 +1,39 @@
+{
+  "id": "v012",
+  "name": "video_012",
+  "hook": "You're not behind. You're just untrained.",
+  "command": "df -h",
+  "structure": "contrast",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "You're not behind. You're just untrained.",
+      "duration": 2.5
+    },
+    {
+      "type": "text",
+      "text": "Not here.",
+      "duration": 2.0
+    },
+    {
+      "type": "terminal",
+      "cmd": "df -h",
+      "status": "\u2713 Service started",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "Same lab. Same chance.",
+      "duration": 2.5
+    },
+    {
+      "type": "text",
+      "text": "WinLab.cloud",
+      "duration": 2.0,
+      "color": "accent"
+    }
+  ],
+  "cluster": "general",
+  "is_new": true,
+  "created_at": "2026-04-14T12:33:50.882392"
+}

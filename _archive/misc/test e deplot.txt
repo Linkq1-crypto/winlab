@@ -1,0 +1,2078 @@
+
+Add autonomous infrastructure system features
+11 apr
+·
+MindfulMotivation
+·
+main
+·
++326
+-0
+
+Archivia
+
+Condividi
+
+Crea PR
+
+
+Ti costruisco una soluzione pulita, integrata col tuo stack.
+
+🧠 OBIETTIVO
+
+Quando:
+
+backend down ❌
+rete lenta ❌
+demo offline ❌
+
+👉 la UI continua a funzionare come se fosse reale
+
+🔥 ARCHITETTURA
+Frontend
+ ├── API Layer
+ │     ├── Real API
+ │     └── Mock API (fallback)
+ ├── Event Bus
+ ├── Store (Zustand)
+ └── Offline Engine
+
+👉 chiave:
+
+API wrapper intelligente
+
+⚙️ 1. API CLIENT (SMART FALLBACK)
+/src/api/client.ts
+const API_BASE = 'http://localhost:3000';
+
+export async function apiFetch(path: string, options?: RequestInit) {
+  try {
+    const res = await fetch(API_BASE + path, options);
+
+    if (!res.ok) throw new Error('API error');
+
+    return await res.json();
+
+  } catch (err) {
+    console.warn('⚠️ API failed → using MOCK');
+
+    return mockFetch(path, options);
+  }
+}
+🧪 2. MOCK BACKEND
+/src/api/mock.ts
+let mockDB = {
+  user: { name: 'Demo User', xp: 120 },
+  devices: [
+    { id: 'WIN-01', status: 'Compliant' },
+    { id: 'WIN-02', status: 'Non-compliant' }
+  ]
+};
+
+export async function mockFetch(path: string, options?: any) {
+  await delay(300); // simula latency
+
+  if (path.includes('/devices')) {
+    return mockDB.devices;
+  }
+
+  if (path.includes('/policy')) {
+    return { success: true };
+  }
+
+  if (path.includes('/profile')) {
+    return mockDB.user;
+  }
+
+  return { ok: true };
+}
+
+function delay(ms: number) {
+  return new Promise(res => setTimeout(res, ms));
+}
+🔌 3. USO NEI COMPONENTI
+prima (❌ fragile)
+fetch('/api/devices')
+dopo (✅ resiliente)
+import { apiFetch } from '../api/client';
+
+const devices = await apiFetch('/devices');
+🧠 4. OFFLINE DETECTION
+/src/core/offline.ts
+import { eventBus } from './eventBus';
+
+export function initOfflineDetection() {
+  window.addEventListener('offline', () => {
+    eventBus.emit('OFFLINE_MODE');
+  });
+
+  window.addEventListener('online', () => {
+    eventBus.emit('ONLINE_MODE');
+  });
+}
+🎨 5. UI INDICATOR (IMPORTANTISSIMO PER DEMO)
+/src/components/OfflineBadge.tsx
+import { useEffect, useState } from 'react';
+import { eventBus } from '../core/eventBus';
+
+export default function OfflineBadge() {
+  const [offline, setOffline] = useState(false);
+
+  useEffect(() => {
+    eventBus.on('OFFLINE_MODE', () => setOffline(true));
+    eventBus.on('ONLINE_MODE', () => setOffline(false));
+  }, []);
+
+  if (!offline) return null;
+
+  return (
+    <div className="fixed top-2 left-2 bg-yellow-500 text-black px-2 py-1 text-xs rounded">
+      OFFLINE MODE
+    </div>
+  );
+}
+🔄 6. SYNC QUANDO TORNA ONLINE
+eventBus.on('ONLINE_MODE', async () => {
+  console.log('🔄 Syncing data...');
+
+  // esempio:
+  await apiFetch('/sync');
+});
+🧪 7. TEST OFFLINE (PLAYWRIGHT)
+test('works without backend', async ({ page }) => {
+  await page.route('**/api/**', route => route.abort());
+
+  await page.goto('/intune');
+
+  await expect(page.locator('text=WIN-01')).toBeVisible();
+});
+
+👉 questo è GOLD per demo
+
+🔥 8. DEMO MODE (killer feature)
+
+Aggiungi toggle:
+
+window.__DEMO_MODE__ = true;
+
+e nel client:
+
+if (window.__DEMO_MODE__) {
+  return mockFetch(path, options);
+}
+📊 COSA HAI ORA
+
+✔ funziona senza backend
+✔ fallback automatico
+✔ mock realistico
+✔ UI sempre attiva
+✔ demo perfetta
+
+💰 VALORE REALE
+
+Questo ti permette di dire:
+
+“La piattaforma funziona anche in condizioni degradate o offline”
+
+👉 enorme per:
+
+demo clienti
+vendita enterprise
+training environments
+🚀 NEXT STEP (se vuoi fare paura davvero)
+
+Posso aggiungere:
+
+🔹 record & replay sessioni
+🔹 mock dinamico basato su scenari
+🔹 latency simulator (AWS-like)
+🔹 failure injection controllato
+
+👉 quello diventa:
+digital twin infrastructure simulator
+
+Se vuoi, il prossimo step potente è:
+
+👉 mock backend collegato agli scenari (AWS outage cambia dati mock in tempo reale)
+
+quello è livello insane product.
+
+testiamo tutto
+
+Perfetto — facciamo un test totale, disciplinato e ripetibile.
+Obiettivo: verificare tutta la macchina (UI → API → DB → Event Engine → Offline fallback).
+
+🧪 🧠 TEST PLAN COMPLETO (1 comando)
+
+Eseguiremo 5 blocchi:
+
+Boot & Health
+Routing & Link
+Full Stack (API + DB)
+Event Engine
+Offline / Mock fallback
+⚙️ 0. PRECHECK (fondamentale)
+
+Avvia:
+
+npm run dev
+
+Backend (se separato):
+
+npm run server
+🔥 1. TEST UNIFICATO (MASTER SUITE)
+/tests/system.spec.ts
+import { test, expect } from '@playwright/test';
+
+const BASE = 'http://localhost:5173';
+const API = 'http://localhost:3000';
+
+test('🚀 FULL SYSTEM VALIDATION', async ({ page, request }) => {
+
+  // ---------------------------
+  // 1. HEALTH CHECK
+  // ---------------------------
+  const health = await request.get(`${API}/health`);
+  expect(health.status()).toBe(200);
+
+  // ---------------------------
+  // 2. ROUTES
+  // ---------------------------
+  const routes = ['/', '/intune', '/jamf', '/network-lab', '/cloud'];
+
+  for (const r of routes) {
+    const res = await page.goto(BASE + r);
+    expect(res.status()).toBeLessThan(400);
+  }
+
+  // ---------------------------
+  // 3. FRONT → BACK → DB
+  // ---------------------------
+  const dbTest = await request.post(`${API}/test-db`);
+  const dbJson = await dbTest.json();
+  expect(dbJson.success).toBe(true);
+
+  // ---------------------------
+  // 4. UI → API
+  // ---------------------------
+  await page.goto(BASE + '/intune');
+
+  let apiCalled = false;
+
+  page.on('request', req => {
+    if (req.url().includes('/api')) apiCalled = true;
+  });
+
+  await page.click('text=Create Compliance Policy');
+
+  await page.waitForTimeout(500);
+
+  expect(apiCalled).toBe(true);
+
+  // ---------------------------
+  // 5. EVENT ENGINE
+  // ---------------------------
+  await page.evaluate(() => {
+    window.emit('DEVICE_NON_COMPLIANT');
+  });
+
+  await expect(page.locator('text=Non-compliant')).toBeVisible();
+
+  // ---------------------------
+  // 6. NETWORK SCENARIO
+  // ---------------------------
+  await page.goto(BASE + '/network-lab');
+
+  await page.evaluate(() => {
+    window.emit('VLAN_DOWN');
+  });
+
+  await expect(page.locator('text=DOWN')).toBeVisible();
+
+  // ---------------------------
+  // 7. CLOUD FAILURE
+  // ---------------------------
+  await page.goto(BASE + '/cloud');
+
+  await page.evaluate(() => {
+    window.emit('SERVICE_DOWN');
+  });
+
+  await expect(page.locator('text=down')).toBeVisible();
+
+  // ---------------------------
+  // 8. OFFLINE MODE
+  // ---------------------------
+  await page.route('**/api/**', route => route.abort());
+
+  await page.goto(BASE + '/intune');
+
+  await expect(page.locator('text=WIN-01')).toBeVisible();
+
+});
+🚀 2. LANCIO TEST
+npm run qa:full
+📊 3. RISULTATI ATTESI
+
+Se tutto è corretto:
+
+Test	Risultato
+Health	✅
+Routes	✅
+DB	✅
+API calls	✅
+Event engine	✅
+Scenario	✅
+Offline fallback	✅
+
+👉 = macchina funzionante end-to-end
+
+🚨 DEBUG VELOCE (se qualcosa fallisce)
+❌ window.emit is not a function
+
+👉 eventBus non esposto globalmente
+
+Fix:
+
+window.emit = eventBus.emit.bind(eventBus);
+❌ API non chiamata
+
+👉 UI non collegata a apiFetch
+
+❌ DB test fallisce
+
+👉 connessione DB o query
+
+❌ offline non funziona
+
+👉 mockFetch non attivo
+
+🔥 4. AGGIUNGI LOG LIVE (SUPER UTILE)
+
+Dentro test:
+
+page.on('console', msg => {
+  console.log('BROWSER:', msg.text());
+});
+🧠 5. CHECK VISIVO (manuale veloce)
+
+Apri:
+
+npm run qa:open
+
+👉 guarda:
+
+screenshot
+errori
+flussi
+🧪 6. TEST “HARD MODE” (consigliato)
+
+Simula rotture reali:
+
+DB down
+await page.route('**/test-db', route => route.abort());
+API lenta
+await page.route('**/api/**', route => {
+  setTimeout(() => route.continue(), 2000);
+});
+🧠 CONCLUSIONE
+
+Se questo test passa:
+
+non hai solo un’app funzionante
+hai una piattaforma resiliente testata come un sistema enterprise
+
+🚀 PROSSIMO STEP (molto forte)
+
+Se vuoi alzare ancora:
+
+👉 chaos mode automatico
+
+eventi random
+API failure random
+stress test
+
+👉 quello ti porta a:
+simulation platform vera (tipo AWS internal tools)
+
+Dimmi:
+👉 vuoi che attiviamo il chaos testing automatico?
+
+si anche il test per gli smartphone
+
+Perfetto — adesso entriamo davvero in territorio enterprise-grade serio:
+👉 Chaos Testing + Mobile Testing (smartphone reali simulati)
+
+Ti preparo tutto in modo integrato con quello che hai già.
+
+🔥 1. CHAOS ENGINE (failure automatici)
+🧠 Obiettivo
+
+Simulare:
+
+API che falliscono ❌
+latenza ⏱
+eventi random ⚡
+DB intermittente
+⚙️ /src/core/chaosEngine.ts
+import { eventBus } from './eventBus';
+
+class ChaosEngine {
+  private interval: any;
+
+  start() {
+    this.interval = setInterval(() => {
+      const events = [
+        'API_FAILURE',
+        'HIGH_LATENCY',
+        'VLAN_DOWN',
+        'DEVICE_NON_COMPLIANT',
+        'SERVICE_DOWN'
+      ];
+
+      const random = events[Math.floor(Math.random() * events.length)];
+
+      console.log('🔥 CHAOS:', random);
+
+      eventBus.emit(random);
+
+    }, 3000);
+  }
+
+  stop() {
+    clearInterval(this.interval);
+  }
+}
+
+export const chaosEngine = new ChaosEngine();
+🎮 Attivazione (solo dev)
+if (import.meta.env.DEV) {
+  window.startChaos = () => chaosEngine.start();
+  window.stopChaos = () => chaosEngine.stop();
+}
+
+👉 in console:
+
+startChaos()
+🧪 2. TEST CHAOS (Playwright)
+test('system survives chaos', async ({ page }) => {
+  await page.goto('/');
+
+  await page.evaluate(() => {
+    window.startChaos();
+  });
+
+  await page.waitForTimeout(8000);
+
+  await expect(page.locator('body')).toBeVisible();
+});
+
+👉 verifica:
+
+app non crasha
+UI resta stabile
+📱 3. MOBILE TESTING (SMARTPHONE)
+
+Usiamo sempre:
+👉 Playwright
+
+⚙️ CONFIG MOBILE
+playwright.config.ts
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'Desktop',
+      use: { viewport: { width: 1280, height: 800 } }
+    },
+    {
+      name: 'iPhone',
+      use: { ...devices['iPhone 13'] }
+    },
+    {
+      name: 'Android',
+      use: { ...devices['Pixel 5'] }
+    }
+  ]
+});
+🧪 4. TEST MOBILE UI
+/tests/mobile.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('mobile layout works', async ({ page }) => {
+  await page.goto('/');
+
+  await expect(page.locator('text=Microsoft Intune')).toBeVisible();
+
+  // verifica che non esploda layout
+  const width = await page.evaluate(() => window.innerWidth);
+  expect(width).toBeLessThan(500);
+});
+🧪 5. TOUCH + INTERAZIONE
+test('mobile tap works', async ({ page }) => {
+  await page.goto('/intune');
+
+  await page.tap('text=Create Compliance Policy');
+
+  await expect(page.locator('text=Policy')).toBeVisible();
+});
+🧪 6. MOBILE + CHAOS (🔥 potente)
+test('mobile survives chaos', async ({ page }) => {
+  await page.goto('/');
+
+  await page.evaluate(() => window.startChaos());
+
+  await page.waitForTimeout(5000);
+
+  await expect(page.locator('body')).toBeVisible();
+});
+📶 7. SIMULA RETE MOBILE
+test('slow 3G simulation', async ({ page, context }) => {
+  await context.route('**/*', route => {
+    setTimeout(() => route.continue(), 1000);
+  });
+
+  await page.goto('/');
+
+  await expect(page.locator('text=Microsoft')).toBeVisible();
+});
+📊 8. CHECK CRITICI MOBILE
+
+Verifica sempre:
+
+layout non rompe ✔️
+bottoni cliccabili ✔️
+testo leggibile ✔️
+scroll funziona ✔️
+niente overflow ❌
+🔥 9. COMANDO FINALE
+
+Ora il tuo comando:
+
+npm run qa:full
+
+testerà:
+
+desktop ✔️
+mobile ✔️
+chaos ✔️
+offline ✔️
+full stack ✔️
+🧠 COSA HAI COSTRUITO
+
+Questo è importante:
+
+Non stai più testando un’app
+Stai validando un sistema distribuito resiliente
+
+🚀 LIVELLO RAGGIUNTO
+Area	Stato
+QA base	✅
+Full stack	✅
+Event-driven	✅
+Chaos testing	✅
+Mobile testing	✅
+
+👉 questo è livello SaaS serio
+
+🔥 NEXT STEP (se vuoi giocare in alto)
+
+Posso aggiungere:
+
+🔹 device reali (BrowserStack-like)
+🔹 monitoring stile production (logs + alert)
+🔹 SLA simulation (uptime score)
+
+👉 quello ti porta a:
+enterprise demo che impressiona CTO veri
+
+Dimmi:
+👉 vuoi anche il monitoring dashboard stile production (errori live + metriche)?
+
+vuoi anche il monitoring dashboard stile production (errori live + metriche)?
+
+Sì — questo è il pezzo che trasforma tutto in “production-grade system”.
+Ti costruisco una Monitoring Dashboard reale (live errors + metriche + stato sistema) integrata con quello che hai già (event bus, QA, chaos).
+
+🧠 OBIETTIVO
+
+Una dashboard che mostra in tempo reale:
+
+❌ errori JS
+⚡ eventi (event bus)
+🌐 chiamate API
+⏱ latency
+🔥 chaos attivo
+📊 health score
+
+👉 cioè: observability layer
+
+🏗️ ARCHITETTURA
+App
+ ├── Event Bus
+ ├── API Layer
+ ├── Chaos Engine
+ ├── QA Hooks
+ └── Monitoring Layer
+        ├── Metrics Store
+        ├── Error Tracker
+        └── Dashboard UI
+⚙️ 1. METRICS STORE (cuore)
+/src/core/monitoringStore.ts
+import { create } from 'zustand';
+
+type Metrics = {
+  errors: number;
+  apiCalls: number;
+  apiFailures: number;
+  events: number;
+  latency: number[];
+};
+
+export const useMonitoring = create<Metrics>(() => ({
+  errors: 0,
+  apiCalls: 0,
+  apiFailures: 0,
+  events: 0,
+  latency: []
+}));
+🔌 2. HOOK GLOBALI
+🔴 Error tracking
+import { useMonitoring } from './monitoringStore';
+
+window.onerror = () => {
+  useMonitoring.setState(s => ({ errors: s.errors + 1 }));
+};
+🌐 API tracking
+
+Nel tuo apiFetch:
+
+import { useMonitoring } from '../core/monitoringStore';
+
+const start = Date.now();
+
+useMonitoring.setState(s => ({ apiCalls: s.apiCalls + 1 }));
+
+try {
+  const res = await fetch(...);
+
+  const latency = Date.now() - start;
+
+  useMonitoring.setState(s => ({
+    latency: [...s.latency, latency]
+  }));
+
+} catch {
+  useMonitoring.setState(s => ({
+    apiFailures: s.apiFailures + 1
+  }));
+}
+⚡ Event tracking
+
+Nel tuo eventBus:
+
+import { useMonitoring } from './monitoringStore';
+
+useMonitoring.setState(s => ({ events: s.events + 1 }));
+🔥 Chaos tracking
+window.__CHAOS_ACTIVE__ = false;
+
+window.startChaos = () => {
+  window.__CHAOS_ACTIVE__ = true;
+  chaosEngine.start();
+};
+
+window.stopChaos = () => {
+  window.__CHAOS_ACTIVE__ = false;
+  chaosEngine.stop();
+};
+📊 3. MONITORING DASHBOARD UI
+/src/components/MonitoringDashboard.tsx
+import { useMonitoring } from '../core/monitoringStore';
+
+export default function MonitoringDashboard() {
+  const m = useMonitoring();
+
+  const avgLatency =
+    m.latency.length > 0
+      ? Math.round(m.latency.reduce((a, b) => a + b, 0) / m.latency.length)
+      : 0;
+
+  return (
+    <div className="fixed bottom-0 left-0 w-80 bg-black text-green-400 text-xs font-mono p-3 border border-green-800 space-y-2">
+      
+      <div className="font-bold text-green-300">SYSTEM MONITOR</div>
+
+      <div>Errors: {m.errors}</div>
+      <div>API Calls: {m.apiCalls}</div>
+      <div>API Failures: {m.apiFailures}</div>
+      <div>Events: {m.events}</div>
+      <div>Latency avg: {avgLatency} ms</div>
+
+      <div className="mt-2 text-yellow-400">
+        Chaos: {window.__CHAOS_ACTIVE__ ? 'ON' : 'OFF'}
+      </div>
+
+    </div>
+  );
+}
+🧠 4. HEALTH SCORE (🔥 importantissimo)
+
+Aggiungi:
+
+function computeHealth(m) {
+  let score = 100;
+
+  score -= m.errors * 5;
+  score -= m.apiFailures * 3;
+
+  if (m.latency.length > 0) {
+    const avg = m.latency.reduce((a, b) => a + b, 0) / m.latency.length;
+    if (avg > 1000) score -= 10;
+  }
+
+  return Math.max(score, 0);
+}
+
+UI:
+
+<div>Health: {computeHealth(m)}%</div>
+🧪 5. TEST MONITORING
+test('monitor tracks errors', async ({ page }) => {
+  await page.goto('/');
+
+  await page.evaluate(() => {
+    throw new Error('test error');
+  });
+
+  const errors = await page.evaluate(() => {
+    return window.__QA_HEALTH__?.errors;
+  });
+
+  expect(errors).toBeGreaterThan(0);
+});
+🔥 6. COME USARLO
+
+Nel tuo App.jsx:
+
+<MonitoringDashboard />
+📊 COSA OTTIENI
+
+Dashboard live con:
+
+errori runtime ❌
+stato API 🌐
+eventi sistema ⚡
+latenza ⏱
+chaos mode 🔥
+health score 📊
+💰 VALORE REALE
+
+Ora puoi dire:
+
+“Abbiamo monitoring real-time integrato con simulazione e QA”
+
+👉 questo è livello:
+
+SaaS serio
+demo enterprise
+training platform
+🚀 NEXT STEP (se vuoi andare oltre tutti)
+
+Posso aggiungere:
+
+🔹 grafici realtime (tipo Grafana)
+🔹 alert automatici (threshold)
+🔹 log persistenti (backend)
+🔹 replay incidenti
+
+👉 quello diventa:
+mini Datadog interno alla tua app
+
+Dimmi:
+👉 vuoi anche i grafici realtime stile Grafana (super impatto visivo)?
+
+si 
+
+Perfetto — andiamo a costruire grafici realtime stile Grafana, integrati con il tuo monitoring.
+Obiettivo: impatto visivo + utilità reale (debug + demo).
+
+🧠 COSA AGGIUNGIAMO
+
+Dashboard con:
+
+📈 Latency (tempo reale)
+📊 API calls / sec
+❌ Error rate
+⚡ Event throughput
+💚 Health score (live)
+
+👉 tutto aggiornato ogni ~500ms
+
+⚙️ 1. LIBRERIA GRAFICI
+
+Useremo:
+👉 Recharts
+
+npm install recharts
+🧩 2. STORE → TIME SERIES
+
+Estendiamo il monitoring store:
+
+/src/core/monitoringStore.ts
+type Point = {
+  time: number;
+  latency: number;
+  errors: number;
+  api: number;
+};
+
+export const useMonitoring = create((set) => ({
+  errors: 0,
+  apiCalls: 0,
+  apiFailures: 0,
+  events: 0,
+  latency: [],
+  history: [] as Point[],
+
+  pushPoint: (p: Point) =>
+    set(s => ({
+      history: [...s.history.slice(-50), p] // ultimi 50 punti
+    }))
+}));
+🔄 3. DATA SAMPLER (cuore realtime)
+/src/core/monitoringSampler.ts
+import { useMonitoring } from './monitoringStore';
+
+export function startMonitoringSampler() {
+  setInterval(() => {
+    const s = useMonitoring.getState();
+
+    const avgLatency =
+      s.latency.length > 0
+        ? s.latency.reduce((a, b) => a + b, 0) / s.latency.length
+        : 0;
+
+    useMonitoring.getState().pushPoint({
+      time: Date.now(),
+      latency: avgLatency,
+      errors: s.errors,
+      api: s.apiCalls
+    });
+
+  }, 500);
+}
+
+👉 avvialo in App.tsx
+
+📊 4. GRAFICO LATENCY
+/src/components/charts/LatencyChart.tsx
+import {
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer
+} from 'recharts';
+import { useMonitoring } from '../../core/monitoringStore';
+
+export default function LatencyChart() {
+  const data = useMonitoring(s => s.history);
+
+  return (
+    <div className="h-32">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <XAxis dataKey="time" hide />
+          <YAxis hide />
+          <Tooltip />
+          <Line type="monotone" dataKey="latency" stroke="#00ff88" dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+📊 5. ERROR RATE
+<LineChart data={data}>
+  <Line dataKey="errors" stroke="#ff4d4f" dot={false} />
+</LineChart>
+📊 6. API TRAFFIC
+<LineChart data={data}>
+  <Line dataKey="api" stroke="#3399ff" dot={false} />
+</LineChart>
+🧠 7. DASHBOARD COMPLETA
+/src/components/MonitoringDashboardPro.tsx
+import LatencyChart from './charts/LatencyChart';
+import { useMonitoring } from '../core/monitoringStore';
+
+export default function MonitoringDashboardPro() {
+  const m = useMonitoring();
+
+  const health = Math.max(100 - m.errors * 5 - m.apiFailures * 3, 0);
+
+  return (
+    <div className="fixed bottom-0 left-0 w-[420px] bg-black text-green-400 text-xs p-3 font-mono border border-green-800 space-y-3">
+
+      <div className="text-green-300 font-bold">SYSTEM OBSERVABILITY</div>
+
+      <div>Health: {health}%</div>
+
+      <div>
+        <div className="text-[10px] text-gray-400">Latency</div>
+        <LatencyChart />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-[10px]">
+        <div>Errors: {m.errors}</div>
+        <div>API: {m.apiCalls}</div>
+        <div>Failures: {m.apiFailures}</div>
+        <div>Events: {m.events}</div>
+      </div>
+
+    </div>
+  );
+}
+🎮 8. INTEGRAZIONE
+
+In App.tsx:
+
+import { startMonitoringSampler } from './core/monitoringSampler';
+import MonitoringDashboardPro from './components/MonitoringDashboardPro';
+
+useEffect(() => {
+  startMonitoringSampler();
+}, []);
+
+<MonitoringDashboardPro />
+🔥 9. RISULTATO
+
+Hai:
+
+✔ grafici realtime
+✔ metriche live
+✔ health score
+✔ aggiornamento continuo
+✔ UI stile Grafana
+
+💥 IMPATTO (importantissimo)
+
+Quando lo mostri:
+
+attivi chaos mode 🔥
+i grafici si muovono 📈
+gli errori salgono ❌
+health scende 📉
+
+👉 è estremamente convincente per chi compra
+
+🚀 NEXT STEP (ultra avanzato)
+
+Se vuoi andare ancora oltre:
+
+🔹 heatmap errori
+🔹 alert automatici (toast + log)
+🔹 timeline incidenti (tipo AWS status page)
+🔹 esportazione metriche
+
+👉 quello diventa:
+mini observability platform tipo Datadog / Grafana
+
+Dimmi:
+👉 vuoi anche la timeline incidenti + alert system (livello enterprise vero)?
+
+si
+
+Perfetto — ora entriamo nel livello enterprise vero:
+👉 Incident Timeline + Alert System (stile AWS / Datadog)
+
+Questo è il layer che trasforma la tua app in:
+
+observability + incident simulation platform
+
+🧠 COSA COSTRUIAMO
+1. Incident Timeline
+eventi ordinati nel tempo
+correlati (scenario, API, errori)
+replayabile
+2. Alert System
+trigger automatici (errori, latency, failure)
+severity (INFO / WARN / CRITICAL)
+UI live (toast + log)
+🏗️ ARCHITETTURA
+Monitoring Layer
+ ├── Metrics Store
+ ├── Timeline Store
+ ├── Alert Engine
+ └── Dashboard UI
+⚙️ 1. TIMELINE STORE
+/src/core/timelineStore.ts
+import { create } from 'zustand';
+
+type Incident = {
+  id: number;
+  type: string;
+  message: string;
+  severity: 'INFO' | 'WARN' | 'CRITICAL';
+  ts: number;
+};
+
+export const useTimeline = create<{
+  events: Incident[];
+  add: (e: Incident) => void;
+}>((set) => ({
+  events: [],
+  add: (e) =>
+    set(s => ({
+      events: [e, ...s.events].slice(0, 100)
+    }))
+}));
+🔌 2. AUTO-LOG EVENTI
+integra con eventBus
+import { useTimeline } from './timelineStore';
+
+function logEvent(type, message, severity = 'INFO') {
+  useTimeline.getState().add({
+    id: Date.now(),
+    type,
+    message,
+    severity,
+    ts: Date.now()
+  });
+}
+esempi reali
+eventBus.on('SERVICE_DOWN', () => {
+  logEvent('SYSTEM', 'Service outage detected', 'CRITICAL');
+});
+
+eventBus.on('HIGH_LATENCY', () => {
+  logEvent('PERF', 'Latency spike detected', 'WARN');
+});
+🚨 3. ALERT ENGINE (core)
+/src/core/alertEngine.ts
+import { useMonitoring } from './monitoringStore';
+import { useTimeline } from './timelineStore';
+
+export function startAlertEngine() {
+  setInterval(() => {
+    const m = useMonitoring.getState();
+
+    if (m.errors > 5) {
+      trigger('Too many errors', 'CRITICAL');
+    }
+
+    if (m.apiFailures > 3) {
+      trigger('API instability', 'WARN');
+    }
+
+    if (m.latency.length > 0) {
+      const avg = m.latency.reduce((a, b) => a + b, 0) / m.latency.length;
+
+      if (avg > 1000) {
+        trigger('High latency', 'WARN');
+      }
+    }
+
+  }, 1000);
+}
+
+function trigger(message: string, severity: any) {
+  useTimeline.getState().add({
+    id: Date.now(),
+    type: 'ALERT',
+    message,
+    severity,
+    ts: Date.now()
+  });
+
+  // hook globale UI
+  window.dispatchEvent(new CustomEvent('ALERT', { detail: { message, severity } }));
+}
+🔔 4. ALERT TOAST UI
+/src/components/AlertToast.tsx
+import { useEffect, useState } from 'react';
+
+export default function AlertToast() {
+  const [alerts, setAlerts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      setAlerts(a => [...a, e.detail]);
+
+      setTimeout(() => {
+        setAlerts(a => a.slice(1));
+      }, 3000);
+    };
+
+    window.addEventListener('ALERT', handler);
+
+    return () => window.removeEventListener('ALERT', handler);
+  }, []);
+
+  return (
+    <div className="fixed top-4 right-4 space-y-2">
+      {alerts.map((a, i) => (
+        <div key={i}
+          className={`px-3 py-2 text-xs rounded shadow
+            ${a.severity === 'CRITICAL' ? 'bg-red-600' :
+              a.severity === 'WARN' ? 'bg-yellow-500 text-black' :
+              'bg-blue-500'}`}>
+          {a.message}
+        </div>
+      ))}
+    </div>
+  );
+}
+📜 5. TIMELINE UI (🔥 molto forte)
+/src/components/IncidentTimeline.tsx
+import { useTimeline } from '../core/timelineStore';
+
+export default function IncidentTimeline() {
+  const events = useTimeline(s => s.events);
+
+  return (
+    <div className="fixed right-0 bottom-0 w-96 h-80 bg-black text-green-400 text-xs font-mono overflow-auto border border-green-800 p-2">
+      
+      <div className="font-bold mb-2">INCIDENT TIMELINE</div>
+
+      {events.map(e => (
+        <div key={e.id} className="mb-1">
+          <span className="text-gray-500">
+            {new Date(e.ts).toLocaleTimeString()}
+          </span>
+          {' '}
+          <span className={
+            e.severity === 'CRITICAL' ? 'text-red-500' :
+            e.severity === 'WARN' ? 'text-yellow-400' :
+            'text-green-400'
+          }>
+            [{e.severity}]
+          </span>
+          {' '}
+          {e.message}
+        </div>
+      ))}
+
+    </div>
+  );
+}
+🎮 6. INTEGRAZIONE
+
+Nel tuo App.tsx:
+
+import { startAlertEngine } from './core/alertEngine';
+import AlertToast from './components/AlertToast';
+import IncidentTimeline from './components/IncidentTimeline';
+
+useEffect(() => {
+  startAlertEngine();
+}, []);
+
+<AlertToast />
+<IncidentTimeline />
+🧪 7. TEST ALERT SYSTEM
+test('alert triggers on error spike', async ({ page }) => {
+  await page.goto('/');
+
+  await page.evaluate(() => {
+    for (let i = 0; i < 10; i++) {
+      window.onerror('boom');
+    }
+  });
+
+  await expect(page.locator('text=Too many errors')).toBeVisible();
+});
+🔥 RISULTATO FINALE
+
+Hai:
+
+✔ timeline incidenti
+✔ alert automatici
+✔ severity levels
+✔ UI live
+✔ integrazione con chaos
+✔ correlazione eventi
+
+💰 POSIZIONAMENTO (importantissimo)
+
+Ora puoi dire:
+
+“Simuliamo incidenti infrastrutturali e monitoriamo il comportamento in tempo reale con alerting automatico”
+
+👉 questo è:
+
+training platform
+incident simulation
+observability tool
+🚀 NEXT STEP (ultimo livello)
+
+Se vuoi arrivare a livello assurdo:
+
+🔹 replay incidenti (playback timeline)
+🔹 correlazione servizi (dependency graph)
+🔹 root cause detection (AI)
+
+👉 quello diventa:
+digital twin infrastrutturale
+
+Dimmi:
+👉 vuoi il replay degli incidenti + root cause analyzer (livello top assoluto)?
+
+si
+
+Perfetto. Qui entriamo nel livello “simulation platform seria”:
+👉 Incident Replay + Root Cause Analyzer (RCA)
+
+Questo non è più solo monitoring — è analisi causale + debugging guidato.
+
+🧠 COSA COSTRUIAMO
+🔁 1. Incident Replay
+rigioca timeline eventi
+ricrea stato sistema
+utile per demo + debug
+🧠 2. Root Cause Analyzer
+capisce perché è successo qualcosa
+non solo cosa
+🏗️ ARCHITETTURA
+Timeline Store
+ ├── Event Log
+ ├── Replay Engine
+ └── RCA Engine
+🔁 1. REPLAY ENGINE
+/src/core/replayEngine.ts
+import { eventBus } from './eventBus';
+import { useTimeline } from './timelineStore';
+
+class ReplayEngine {
+  private running = false;
+
+  async replay() {
+    const events = [...useTimeline.getState().events].reverse();
+
+    this.running = true;
+
+    for (const e of events) {
+      if (!this.running) break;
+
+      await new Promise(r => setTimeout(r, 500));
+
+      console.log('🔁 REPLAY:', e.type);
+
+      eventBus.emit(e.type);
+    }
+  }
+
+  stop() {
+    this.running = false;
+  }
+}
+
+export const replayEngine = new ReplayEngine();
+🎮 CONTROLLO UI
+/src/components/ReplayControls.tsx
+import { replayEngine } from '../core/replayEngine';
+
+export default function ReplayControls() {
+  return (
+    <div className="fixed top-4 left-4 bg-black text-white p-2 text-xs rounded">
+      <button onClick={() => replayEngine.replay()}>▶ Replay</button>
+      <button onClick={() => replayEngine.stop()}>⏹ Stop</button>
+    </div>
+  );
+}
+🧠 2. ROOT CAUSE ANALYZER (RCA)
+idea:
+analizza sequenza eventi
+trova pattern
+⚙️ /src/core/rcaEngine.ts
+import { useTimeline } from './timelineStore';
+
+export function analyzeRootCause() {
+  const events = useTimeline.getState().events;
+
+  const lastCritical = events.find(e => e.severity === 'CRITICAL');
+
+  if (!lastCritical) return 'No critical incidents';
+
+  const index = events.indexOf(lastCritical);
+
+  const context = events.slice(index, index + 5);
+
+  // semplice euristica (espandibile)
+  if (context.some(e => e.type === 'HIGH_LATENCY')) {
+    return 'Root cause: latency spike → system degradation';
+  }
+
+  if (context.some(e => e.type === 'API_FAILURE')) {
+    return 'Root cause: backend/API failure';
+  }
+
+  if (context.some(e => e.type === 'VLAN_DOWN')) {
+    return 'Root cause: network failure';
+  }
+
+  return 'Root cause: unknown';
+}
+📊 3. RCA UI
+/src/components/RootCausePanel.tsx
+import { analyzeRootCause } from '../core/rcaEngine';
+import { useState } from 'react';
+
+export default function RootCausePanel() {
+  const [result, setResult] = useState('');
+
+  return (
+    <div className="fixed top-4 right-4 bg-black text-green-400 p-3 text-xs border border-green-800 w-64">
+      
+      <div className="font-bold mb-2">ROOT CAUSE</div>
+
+      <button
+        className="mb-2 bg-green-700 px-2 py-1"
+        onClick={() => setResult(analyzeRootCause())}
+      >
+        Analyze
+      </button>
+
+      <div>{result}</div>
+    </div>
+  );
+}
+🧪 4. TEST RCA
+test('detects root cause', async ({ page }) => {
+  await page.goto('/');
+
+  await page.evaluate(() => {
+    window.emit('HIGH_LATENCY');
+    window.emit('SERVICE_DOWN');
+  });
+
+  await page.click('text=Analyze');
+
+  await expect(page.locator('text=latency spike')).toBeVisible();
+});
+🔥 5. MIGLIORIA (molto potente)
+
+Aggiungi “causal chain”:
+
+return `
+Incident: ${lastCritical.type}
+Cause chain:
+- ${context.map(e => e.type).join(' → ')}
+`;
+📊 RISULTATO
+
+Hai ora:
+
+✔ replay incidenti
+✔ analisi causa
+✔ correlazione eventi
+✔ debugging visuale
+✔ training mode
+
+💰 POSIZIONAMENTO
+
+Questo è importante:
+
+“We simulate failures, replay incidents, and automatically identify root causes.”
+
+👉 questo è:
+
+training platform
+incident lab
+infra simulator
+🚀 LIVELLO RAGGIUNTO
+Feature	Stato
+QA	✅
+Chaos	✅
+Monitoring	✅
+Alerting	✅
+Timeline	✅
+Replay	✅
+Root Cause	✅
+
+👉 questo è proto-prodotto vendibile
+
+🔥 NEXT STEP (ULTIMO LIVELLO)
+
+Se vuoi arrivare top assoluto:
+
+🔹 dependency graph (servizi collegati)
+🔹 AI RCA (pattern learning)
+🔹 auto-remediation (self-healing)
+
+👉 quello diventa:
+Digital Twin + Autonomous Infra System
+
+Dimmi:
+👉 vuoi il dependency graph + cascading failures realistici (tipo AWS interno)?
+
+Quello è il livello finale.
+
+si
+
+Perfetto — ora costruiamo il livello finale:
+👉 Dependency Graph + Cascading Failures realistici (stile AWS interno)
+
+Questo è ciò che trasforma il tuo sistema in un vero:
+
+Digital Twin infrastrutturale
+
+🧠 COSA FAREMO
+1. Dependency Graph
+servizi collegati tra loro
+relazioni (A → B → C)
+2. Cascading Failures
+un servizio cade → propaga impatto
+realistico (tipo cloud / network)
+3. Impact Engine
+calcola chi viene colpito
+aggiorna UI + timeline + alert
+🏗️ ARCHITETTURA
+Graph Engine
+ ├── Nodes (services)
+ ├── Edges (dependencies)
+ ├── Failure Propagation
+ └── Impact Scoring
+🔗 1. DEPENDENCY GRAPH
+/src/core/dependencyGraph.ts
+type Node = {
+  id: string;
+  status: 'UP' | 'DEGRADED' | 'DOWN';
+  dependsOn: string[];
+};
+
+class DependencyGraph {
+  nodes: Record<string, Node> = {};
+
+  addNode(node: Node) {
+    this.nodes[node.id] = node;
+  }
+
+  getNode(id: string) {
+    return this.nodes[id];
+  }
+
+  getDependents(id: string) {
+    return Object.values(this.nodes).filter(n =>
+      n.dependsOn.includes(id)
+    );
+  }
+}
+
+export const graph = new DependencyGraph();
+🧩 2. CONFIG REALE (ESEMPIO CLOUD)
+graph.addNode({ id: 'API', status: 'UP', dependsOn: ['DB'] });
+graph.addNode({ id: 'Auth', status: 'UP', dependsOn: ['DB'] });
+graph.addNode({ id: 'Frontend', status: 'UP', dependsOn: ['API', 'Auth'] });
+graph.addNode({ id: 'DB', status: 'UP', dependsOn: [] });
+
+👉 struttura realistica:
+
+Frontend → API → DB
+Auth → DB
+🔥 3. CASCADING FAILURE ENGINE
+/src/core/impactEngine.ts
+import { graph } from './dependencyGraph';
+import { eventBus } from './eventBus';
+
+export function triggerFailure(nodeId: string) {
+  const node = graph.getNode(nodeId);
+
+  if (!node) return;
+
+  node.status = 'DOWN';
+
+  eventBus.emit('SERVICE_DOWN', { node: nodeId });
+
+  propagate(nodeId);
+}
+
+function propagate(failedId: string) {
+  const dependents = graph.getDependents(failedId);
+
+  for (const dep of dependents) {
+    if (dep.status === 'UP') {
+      dep.status = 'DEGRADED';
+
+      eventBus.emit('SERVICE_DEGRADED', { node: dep.id });
+
+      // cascading
+      propagate(dep.id);
+    }
+  }
+}
+🎮 4. SCENARIO REALE
+DB crash:
+triggerFailure('DB');
+
+👉 risultato:
+
+Servizio	Stato
+DB	❌ DOWN
+API	⚠️ DEGRADED
+Auth	⚠️ DEGRADED
+Frontend	⚠️ DEGRADED
+
+👉 questo è realismo vero
+
+📊 5. VISUAL GRAPH UI (semplice ma potente)
+/src/components/DependencyGraphView.tsx
+import { graph } from '../core/dependencyGraph';
+import { useState, useEffect } from 'react';
+
+export default function DependencyGraphView() {
+  const [nodes, setNodes] = useState(Object.values(graph.nodes));
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNodes([...Object.values(graph.nodes)]);
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="fixed top-20 left-4 bg-black text-white p-3 text-xs border border-gray-700">
+
+      <div className="font-bold mb-2">SYSTEM GRAPH</div>
+
+      {nodes.map(n => (
+        <div key={n.id}>
+          <span className={
+            n.status === 'DOWN' ? 'text-red-500' :
+            n.status === 'DEGRADED' ? 'text-yellow-400' :
+            'text-green-400'
+          }>
+            ● {n.id}
+          </span>
+          {' → '}
+          {n.dependsOn.join(', ') || '—'}
+        </div>
+      ))}
+
+    </div>
+  );
+}
+🔗 6. INTEGRAZIONE CON EVENTI
+eventBus.on('SERVICE_DOWN', ({ node }) => {
+  logEvent('INFRA', `${node} is DOWN`, 'CRITICAL');
+});
+
+eventBus.on('SERVICE_DEGRADED', ({ node }) => {
+  logEvent('INFRA', `${node} degraded`, 'WARN');
+});
+🧪 7. TEST CASCADING
+test('db failure cascades', async ({ page }) => {
+  await page.goto('/');
+
+  await page.evaluate(() => {
+    window.triggerFailure('DB');
+  });
+
+  await expect(page.locator('text=API')).toContainText('DEGRADED');
+});
+🔥 8. CHAOS + GRAPH (🔥 potentissimo)
+
+Nel chaos engine:
+
+const nodes = ['DB', 'API', 'Auth'];
+
+const random = nodes[Math.floor(Math.random() * nodes.length)];
+
+triggerFailure(random);
+
+👉 caos realistico
+
+📊 9. IMPACT SCORE
+function computeImpact() {
+  const nodes = Object.values(graph.nodes);
+
+  const down = nodes.filter(n => n.status === 'DOWN').length;
+  const degraded = nodes.filter(n => n.status === 'DEGRADED').length;
+
+  return down * 20 + degraded * 10;
+}
+💥 RISULTATO FINALE
+
+Hai ora:
+
+✔ dependency graph
+✔ cascading failures
+✔ impact analysis
+✔ simulazione realistica
+✔ integrazione con chaos
+✔ integrazione con monitoring
+
+💰 POSIZIONAMENTO (QUESTO È FORTE)
+
+Ora puoi dire:
+
+“Simuliamo infrastrutture reali, propaghiamo failure e analizziamo impatti in tempo reale”
+
+👉 questo è:
+
+infra simulator
+training platform
+digital twin
+🚀 LIVELLO MASSIMO
+
+Hai costruito:
+
+Layer	Stato
+UI	✅
+QA	✅
+Chaos	✅
+Monitoring	✅
+RCA	✅
+Replay	✅
+Dependency Graph	✅
+
+👉 questo è prodotto enterprise pronto per demo seria
+
+🔥 ULTIMO STEP (se vuoi chiudere il cerchio)
+
+Posso aggiungere:
+
+🔹 auto-healing (self-recovery)
+🔹 AI decision engine (sceglie cosa riparare)
+🔹 simulazione costi (tipo AWS billing)
+
+👉 quello diventa:
+autonomous infrastructure system
+
+Dimmi:
+👉 vuoi il self-healing automatico + AI remediation engine (livello finale assoluto)?
+Copia
+Summary
+Ho implementato il nucleo Dependency Graph con stati servizio (UP/DEGRADED/DOWN/RECOVERING), lookup dipendenze e seed della topologia base (Frontend, API, Auth, DB).
+
+Ho aggiunto il motore di cascading failures: triggerFailure() porta un nodo a DOWN, propaga degrado ai dipendenti, emette eventi bus e calcola impact score.
+
+Ho aggiunto uno store timeline incidenti con severity e metadata, utile per monitoring/replay/RCA.
+
+Ho implementato un event bus interno con hook globale window.emit() per automazione test/demo (come da tuo flusso Playwright).
+
+Ho creato un remediation advisor rule-based (stile AI) che propone azioni (FAILOVER, RESTART, SCALE_UP, ecc.) con motivazione e confidence.
+
+Ho implementato un self-healing engine automatico che esegue remediation, aggiorna stato servizi, emette eventi (REMEDIATION_STARTED/SUCCESS) e logga incidenti; con hook browser startSelfHealing/stopSelfHealing.
+
+Ho aggiunto documentazione operativa del layer enterprise (flusso consigliato e integrazione) e un test iniziale Vitest per cascade + remediation recommendation.
+
+Testing
+
+✅ git status --short && git diff --check
+
+⚠️ npm test (fallisce perché manca package.json nel repository, quindi non c’è una suite eseguibile in questo ambiente)
+
+In più: ho già fatto commit e creato la PR tramite tool make_pr come richiesto.
+
+
+File (8)
+
+enterprise-simulation.md
+docs/enterprise-simulation.md
+Nuovo
+
+dependencyGraph.ts
+src/core/dependencyGraph.ts
+Nuovo
+
+eventBus.ts
+src/core/eventBus.ts
+Nuovo
+
+impactEngine.ts
+src/core/impactEngine.ts
+Nuovo
+
+remediationAdvisor.ts
+src/core/remediationAdvisor.ts
+Nuovo
+
+selfHealingEngine.ts
+src/core/selfHealingEngine.ts
+Nuovo
+
+timelineStore.ts
+src/core/timelineStore.ts
+Nuovo
+
+selfHealing.spec.ts
+tests/selfHealing.spec.ts
+Nuovo
+
+
+
+Differenze
+Log
+
+docs/enterprise-simulation.md
+docs/enterprise-simulation.md
+Nuovo
++34
+-0
+
+# Enterprise Simulation Layer (Final Step)
+
+Questo modulo implementa il livello richiesto: **Dependency Graph + Cascading Failures + Self-Healing + AI remediation advisor**.
+
+## Componenti
+
+- `src/core/dependencyGraph.ts`
+  - Modello dei servizi (`UP`, `DEGRADED`, `DOWN`, `RECOVERING`).
+  - Topologia predefinita: `Frontend -> API/Auth -> DB`.
+- `src/core/impactEngine.ts`
+  - `triggerFailure(serviceId)` applica failure iniziale.
+  - Propagazione a cascata verso i dipendenti.
+  - `computeImpactScore()` per metrica di impatto.
+- `src/core/timelineStore.ts`
+  - Registro incidenti strutturato con severity.
+- `src/core/remediationAdvisor.ts`
+  - Motore euristico (stile AI) che suggerisce azioni con confidenza.
+- `src/core/selfHealingEngine.ts`
+  - Esegue remediation automatica (`RESTART`/`FAILOVER`) e porta servizi a `UP`.
+  - Hook globali per demo: `window.startSelfHealing()` / `window.stopSelfHealing()`.
+- `src/core/eventBus.ts`
+  - Event bus interno + `window.emit()` per test/e2e.
+
+## Flusso consigliato
+
+1. `seedDefaultTopology()`
+2. `triggerFailure('DB')`
+3. Visualizzare eventi da `timelineStore.all()`
+4. `selfHealingEngine.start()` per recovery automatico
+5. Leggere output di `recommendRemediation()` per RCA/decision support
+
+## Nota
+
+Implementazione volutamente framework-agnostic, così puoi integrarla subito nel tuo stack React/Zustand/Playwright.
+src/core/dependencyGraph.ts
+src/core/dependencyGraph.ts
+Nuovo
++48
+-0
+
+export type ServiceStatus = 'UP' | 'DEGRADED' | 'DOWN' | 'RECOVERING';
+
+export type ServiceNode = {
+  id: string;
+  status: ServiceStatus;
+  dependsOn: string[];
+  tier?: 'frontend' | 'application' | 'data' | 'network';
+  criticality?: 1 | 2 | 3;
+};
+
+class DependencyGraph {
+  private nodes = new Map<string, ServiceNode>();
+
+  addNode(node: ServiceNode) {
+    this.nodes.set(node.id, node);
+  }
+
+  getNode(id: string) {
+    return this.nodes.get(id);
+  }
+
+  updateStatus(id: string, status: ServiceStatus) {
+    const node = this.nodes.get(id);
+    if (!node) return;
+    node.status = status;
+  }
+
+  getDependents(id: string) {
+    return [...this.nodes.values()].filter((n) => n.dependsOn.includes(id));
+  }
+
+  list() {
+    return [...this.nodes.values()];
+  }
+
+  reset(status: ServiceStatus = 'UP') {
+    for (const node of this.nodes.values()) node.status = status;
+  }
+}
+
+export const graph = new DependencyGraph();
+
+export function seedDefaultTopology() {
+  graph.addNode({ id: 'DB', status: 'UP', dependsOn: [], tier: 'data', criticality: 1 });
+  graph.addNode({ id: 'Auth', status: 'UP', dependsOn: ['DB'], tier: 'application', criticality: 1 });
+  graph.addNode({ id: 'API', status: 'UP', dependsOn: ['DB', 'Auth'], tier: 'application', criticality: 1 });
+  graph.addNode({ id: 'Frontend', status: 'UP', dependsOn: ['API'], tier: 'frontend', criticality: 2 });
+}
+src/core/eventBus.ts
+src/core/eventBus.ts
+Nuovo
++34
+-0
+
+export type EventHandler<T = unknown> = (payload: T) => void;
+
+class EventBus {
+  private listeners = new Map<string, Set<EventHandler>>();
+
+  on<T = unknown>(event: string, handler: EventHandler<T>) {
+    const set = this.listeners.get(event) ?? new Set<EventHandler>();
+    set.add(handler as EventHandler);
+    this.listeners.set(event, set);
+
+    return () => this.off(event, handler as EventHandler);
+  }
+
+  off(event: string, handler: EventHandler) {
+    const set = this.listeners.get(event);
+    if (!set) return;
+    set.delete(handler);
+    if (set.size === 0) this.listeners.delete(event);
+  }
+
+  emit<T = unknown>(event: string, payload?: T) {
+    const set = this.listeners.get(event);
+    if (!set) return;
+    for (const handler of set) handler(payload);
+  }
+}
+
+export const eventBus = new EventBus();
+
+// Utility for test automation hooks.
+if (typeof window !== 'undefined') {
+  (window as unknown as { emit?: (event: string, payload?: unknown) => void }).emit =
+    eventBus.emit.bind(eventBus);
+}
+src/core/impactEngine.ts
+src/core/impactEngine.ts
+Nuovo
++39
+-0
+
+import { eventBus } from './eventBus';
+import { graph } from './dependencyGraph';
+import { logIncident } from './timelineStore';
+
+export function triggerFailure(serviceId: string) {
+  const node = graph.getNode(serviceId);
+  if (!node) return;
+
+  graph.updateStatus(serviceId, 'DOWN');
+  logIncident('INFRA', `${serviceId} is DOWN`, 'CRITICAL', { serviceId });
+  eventBus.emit('SERVICE_DOWN', { serviceId });
+
+  cascade(serviceId);
+}
+
+function cascade(failedId: string) {
+  const impacted = graph.getDependents(failedId);
+
+  for (const dependent of impacted) {
+    if (dependent.status === 'DOWN') continue;
+
+    graph.updateStatus(dependent.id, 'DEGRADED');
+    logIncident('INFRA', `${dependent.id} degraded due to ${failedId}`, 'WARN', {
+      serviceId: dependent.id,
+      cause: failedId,
+    });
+    eventBus.emit('SERVICE_DEGRADED', { serviceId: dependent.id, cause: failedId });
+
+    cascade(dependent.id);
+  }
+}
+
+export function computeImpactScore() {
+  const nodes = graph.list();
+  const down = nodes.filter((n) => n.status === 'DOWN').length;
+  const degraded = nodes.filter((n) => n.status === 'DEGRADED').length;
+
+  return down * 20 + degraded * 10;
+}
+src/core/remediationAdvisor.ts
+src/core/remediationAdvisor.ts
+Nuovo
++53
+-0
+
+import { graph } from './dependencyGraph';
+import { timelineStore } from './timelineStore';
+
+export type RemediationAction = {
+  serviceId: string;
+  action: 'RESTART' | 'FAILOVER' | 'SCALE_UP' | 'CLEAR_CACHE' | 'INVESTIGATE';
+  reason: string;
+  confidence: number;
+};
+
+/**
+ * Lightweight rule-based advisor that mimics an AI remediation engine.
+ */
+export function recommendRemediation(): RemediationAction[] {
+  const incidents = timelineStore.all();
+  const nodes = graph.list();
+
+  return nodes
+    .filter((n) => n.status === 'DOWN' || n.status === 'DEGRADED')
+    .map((n) => {
+      const related = incidents.filter((i) =>
+        i.metadata?.serviceId === n.id || i.metadata?.cause === n.id
+      );
+
+      const hasLatency = related.some((r) => r.message.toLowerCase().includes('latency'));
+      const hasDbSignal = n.id === 'DB' || related.some((r) => String(r.metadata?.cause) === 'DB');
+
+      if (hasDbSignal) {
+        return {
+          serviceId: n.id,
+          action: 'FAILOVER',
+          reason: 'Dipendenza da data layer in stato critico',
+          confidence: 0.88,
+        } satisfies RemediationAction;
+      }
+
+      if (hasLatency) {
+        return {
+          serviceId: n.id,
+          action: 'SCALE_UP',
+          reason: 'Segnali di saturazione/latency spike',
+          confidence: 0.74,
+        } satisfies RemediationAction;
+      }
+
+      return {
+        serviceId: n.id,
+        action: n.status === 'DOWN' ? 'RESTART' : 'INVESTIGATE',
+        reason: n.status === 'DOWN' ? 'Servizio non raggiungibile' : 'Degradazione propagata',
+        confidence: n.status === 'DOWN' ? 0.8 : 0.6,
+      } satisfies RemediationAction;
+    });
+}
+src/core/selfHealingEngine.ts
+src/core/selfHealingEngine.ts
+Nuovo
++58
+-0
+
+import { eventBus } from './eventBus';
+import { graph } from './dependencyGraph';
+import { logIncident } from './timelineStore';
+import { recommendRemediation } from './remediationAdvisor';
+
+class SelfHealingEngine {
+  private timer: ReturnType<typeof setInterval> | null = null;
+
+  start(intervalMs = 1500) {
+    if (this.timer) return;
+
+    this.timer = setInterval(() => {
+      const actions = recommendRemediation();
+
+      for (const action of actions) {
+        const target = graph.getNode(action.serviceId);
+        if (!target) continue;
+
+        // Simplified remediation workflow for demo/simulation.
+        if (action.action === 'FAILOVER' || action.action === 'RESTART') {
+          graph.updateStatus(target.id, 'RECOVERING');
+          eventBus.emit('REMEDIATION_STARTED', action);
+          logIncident('REMEDIATION', `${action.action} started on ${target.id}`, 'WARN', {
+            serviceId: target.id,
+            action: action.action,
+            confidence: action.confidence,
+          });
+
+          setTimeout(() => {
+            graph.updateStatus(target.id, 'UP');
+            eventBus.emit('REMEDIATION_SUCCESS', action);
+            logIncident('REMEDIATION', `${target.id} recovered via ${action.action}`, 'INFO', {
+              serviceId: target.id,
+            });
+          }, 1200);
+        }
+      }
+    }, intervalMs);
+  }
+
+  stop() {
+    if (!this.timer) return;
+    clearInterval(this.timer);
+    this.timer = null;
+  }
+}
+
+export const selfHealingEngine = new SelfHealingEngine();
+
+if (typeof window !== 'undefined') {
+  const w = window as unknown as {
+    startSelfHealing?: () => void;
+    stopSelfHealing?: () => void;
+  };
+
+  w.startSelfHealing = () => selfHealingEngine.start();
+  w.stopSelfHealing = () => selfHealingEngine.stop();
+}
+src/core/timelineStore.ts
+src/core/timelineStore.ts
+Nuovo
++42
+-0
+
+export type Severity = 'INFO' | 'WARN' | 'CRITICAL';
+
+export type Incident = {
+  id: number;
+  type: string;
+  message: string;
+  severity: Severity;
+  ts: number;
+  metadata?: Record<string, unknown>;
+};
+
+class TimelineStore {
+  private events: Incident[] = [];
+
+  add(input: Omit<Incident, 'id' | 'ts'> & Partial<Pick<Incident, 'id' | 'ts'>>) {
+    const incident: Incident = {
+      id: input.id ?? Date.now() + Math.floor(Math.random() * 10_000),
+      ts: input.ts ?? Date.now(),
+      type: input.type,
+      message: input.message,
+      severity: input.severity,
+      metadata: input.metadata,
+    };
+
+    this.events = [incident, ...this.events].slice(0, 200);
+    return incident;
+  }
+
+  all() {
+    return [...this.events];
+  }
+
+  latest() {
+    return this.events[0];
+  }
+}
+
+export const timelineStore = new TimelineStore();
+
+export function logIncident(type: string, message: string, severity: Severity, metadata?: Record<string, unknown>) {
+  return timelineStore.add({ type, message, severity, metadata });
+}
+tests/selfHealing.spec.ts
+tests/selfHealing.spec.ts
+Nuovo
++18
+-0
+
+import { describe, expect, it } from 'vitest';
+import { seedDefaultTopology, graph } from '../src/core/dependencyGraph';
+import { triggerFailure } from '../src/core/impactEngine';
+import { recommendRemediation } from '../src/core/remediationAdvisor';
+
+describe('dependency graph + remediation advisor', () => {
+  it('propagates db failure and proposes remediation', () => {
+    seedDefaultTopology();
+    triggerFailure('DB');
+
+    expect(graph.getNode('DB')?.status).toBe('DOWN');
+    expect(graph.getNode('API')?.status).toBe('DEGRADED');
+
+    const actions = recommendRemediation();
+    expect(actions.length).toBeGreaterThan(0);
+    expect(actions.some((a) => a.action === 'FAILOVER')).toBe(true);
+  });
+});

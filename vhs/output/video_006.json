@@ -1,0 +1,33 @@
+{
+  "id": "v006",
+  "name": "video_006",
+  "hook": "Watching is easy. Doing is hard.",
+  "command": "free -m",
+  "structure": "solution",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "Watching is easy. Doing is hard.",
+      "duration": 2.0
+    },
+    {
+      "type": "text",
+      "text": "Let's go.",
+      "duration": 1.5
+    },
+    {
+      "type": "terminal",
+      "cmd": "free -m",
+      "status": "\u2713 VM deployed",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "Done.",
+      "duration": 2.5
+    }
+  ],
+  "cluster": "general",
+  "is_new": true,
+  "created_at": "2026-04-14T12:33:50.882392"
+}

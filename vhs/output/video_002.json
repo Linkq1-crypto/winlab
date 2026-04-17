@@ -1,0 +1,33 @@
+{
+  "id": "v002",
+  "name": "video_002",
+  "hook": "You have 5 minutes to fix it.",
+  "command": "iptables -L -n",
+  "structure": "fear",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "You have 5 minutes to fix it.",
+      "duration": 2.5
+    },
+    {
+      "type": "text",
+      "text": "No turning back.",
+      "duration": 2.0
+    },
+    {
+      "type": "terminal",
+      "cmd": "iptables -L -n",
+      "status": "\u2713 mysql is running",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "Practice before it matters.",
+      "duration": 2.5
+    }
+  ],
+  "cluster": "challenge",
+  "is_new": true,
+  "created_at": "2026-04-14T12:33:50.882392"
+}

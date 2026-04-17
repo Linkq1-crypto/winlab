@@ -1,0 +1,38 @@
+{
+  "tech": [
+    "How do I learn programming",
+    "Best practices for Docker",
+    "Linux vs Windows server",
+    "Git workflow best practices",
+    "How to deploy web applications",
+    "Database optimization tips",
+    "Cloud hosting recommendations",
+    "DevOps tools you need",
+    "API design patterns",
+    "Microservices architecture"
+  ],
+  "ai": [
+    "How to use ChatGPT for coding",
+    "AI tools for developers",
+    "Machine learning basics explained",
+    "Prompt engineering tips",
+    "AI productivity tools",
+    "Best AI for content creation",
+    "AI code assistants compared",
+    "How AI is changing development",
+    "Free AI tools you should use",
+    "AI automation for business"
+  ],
+  "career": [
+    "How to become a developer",
+    "Remote work productivity tips",
+    "Freelancing as a developer",
+    "Tech career advice",
+    "How I got my first tech job",
+    "Side projects that make money",
+    "Developer portfolio tips",
+    "Learning to code at 30",
+    "Switch careers to tech",
+    "Work from home setup"
+  ]
+}

@@ -1,0 +1,5860 @@
+{
+  "user_000": {
+    "id": "user_000",
+    "name": "User_user_000",
+    "score": 330,
+    "rank": "Senior",
+    "badges": [
+      "no_panic",
+      "perfect",
+      "fast_response"
+    ],
+    "choices": [
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "scenarios_completed": [
+      "ssh_refused",
+      "apache_down",
+      "apache_down",
+      "dns_broken",
+      "dns_broken",
+      "ssh_refused",
+      "ssh_refused",
+      "dns_broken",
+      "apache_down",
+      "ssh_refused",
+      "apache_down",
+      "disk_full",
+      "ssh_refused",
+      "disk_full",
+      "apache_down",
+      "disk_full"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.166761"
+  },
+  "user_001": {
+    "id": "user_001",
+    "name": "User_user_001",
+    "score": 640,
+    "rank": "Senior",
+    "badges": [
+      "first_fix",
+      "perfect",
+      "no_panic",
+      "fast_response",
+      "log_master",
+      "night_owl"
+    ],
+    "choices": [
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "scenarios_completed": [
+      "mysql_crash",
+      "mysql_crash",
+      "dns_broken",
+      "apache_down",
+      "apache_down",
+      "ssh_refused",
+      "disk_full",
+      "disk_full",
+      "disk_full",
+      "mysql_crash",
+      "dns_broken",
+      "apache_down",
+      "disk_full",
+      "mysql_crash",
+      "disk_full",
+      "mysql_crash",
+      "dns_broken",
+      "dns_broken",
+      "disk_full",
+      "mysql_crash",
+      "mysql_crash",
+      "apache_down",
+      "ssh_refused",
+      "dns_broken",
+      "ssh_refused",
+      "mysql_crash",
+      "ssh_refused",
+      "disk_full"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.166761"
+  },
+  "user_002": {
+    "id": "user_002",
+    "name": "User_user_002",
+    "score": 200,
+    "rank": "Intermediate",
+    "badges": [
+      "first_fix",
+      "perfect",
+      "fast_response",
+      "no_panic",
+      "log_master"
+    ],
+    "choices": [
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "scenarios_completed": [
+      "mysql_crash",
+      "mysql_crash",
+      "disk_full",
+      "mysql_crash",
+      "mysql_crash",
+      "apache_down",
+      "ssh_refused",
+      "disk_full"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.166761"
+  },
+  "user_003": {
+    "id": "user_003",
+    "name": "User_user_003",
+    "score": 360,
+    "rank": "Senior",
+    "badges": [
+      "first_fix",
+      "perfect",
+      "log_master",
+      "no_panic",
+      "fast_response"
+    ],
+    "choices": [
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "scenarios_completed": [
+      "dns_broken",
+      "disk_full",
+      "dns_broken",
+      "apache_down",
+      "ssh_refused",
+      "apache_down",
+      "ssh_refused",
+      "dns_broken",
+      "dns_broken",
+      "disk_full",
+      "dns_broken",
+      "ssh_refused",
+      "mysql_crash",
+      "ssh_refused",
+      "mysql_crash"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.166761"
+  },
+  "user_004": {
+    "id": "user_004",
+    "name": "User_user_004",
+    "score": 160,
+    "rank": "Intermediate",
+    "badges": [
+      "first_fix",
+      "perfect",
+      "no_panic",
+      "log_master",
+      "night_owl",
+      "fast_response"
+    ],
+    "choices": [
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "scenarios_completed": [
+      "ssh_refused",
+      "dns_broken",
+      "disk_full",
+      "disk_full",
+      "disk_full",
+      "mysql_crash",
+      "mysql_crash"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.166761"
+  },
+  "user_005": {
+    "id": "user_005",
+    "name": "User_user_005",
+    "score": 500,
+    "rank": "Senior",
+    "badges": [
+      "fast_response",
+      "first_fix",
+      "perfect",
+      "no_panic",
+      "log_master",
+      "night_owl"
+    ],
+    "choices": [
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "scenarios_completed": [
+      "apache_down",
+      "disk_full",
+      "dns_broken",
+      "disk_full",
+      "ssh_refused",
+      "disk_full",
+      "apache_down",
+      "dns_broken",
+      "apache_down",
+      "disk_full",
+      "ssh_refused",
+      "disk_full",
+      "dns_broken",
+      "dns_broken",
+      "mysql_crash",
+      "dns_broken",
+      "disk_full",
+      "ssh_refused",
+      "apache_down",
+      "mysql_crash",
+      "dns_broken",
+      "apache_down",
+      "dns_broken"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.166761"
+  },
+  "user_006": {
+    "id": "user_006",
+    "name": "User_user_006",
+    "score": 590,
+    "rank": "Senior",
+    "badges": [
+      "first_fix",
+      "perfect",
+      "no_panic",
+      "night_owl",
+      "fast_response",
+      "log_master"
+    ],
+    "choices": [
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "scenarios_completed": [
+      "disk_full",
+      "ssh_refused",
+      "mysql_crash",
+      "mysql_crash",
+      "disk_full",
+      "disk_full",
+      "ssh_refused",
+      "disk_full",
+      "ssh_refused",
+      "disk_full",
+      "apache_down",
+      "disk_full",
+      "mysql_crash",
+      "apache_down",
+      "dns_broken",
+      "apache_down",
+      "disk_full",
+      "mysql_crash",
+      "dns_broken",
+      "ssh_refused",
+      "dns_broken",
+      "mysql_crash",
+      "ssh_refused",
+      "mysql_crash",
+      "dns_broken",
+      "mysql_crash"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.166761"
+  },
+  "user_007": {
+    "id": "user_007",
+    "name": "User_user_007",
+    "score": 290,
+    "rank": "Intermediate",
+    "badges": [
+      "fast_response",
+      "log_master",
+      "night_owl",
+      "perfect",
+      "no_panic"
+    ],
+    "choices": [
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      }
+    ],
+    "scenarios_completed": [
+      "apache_down",
+      "mysql_crash",
+      "mysql_crash",
+      "mysql_crash",
+      "apache_down",
+      "apache_down",
+      "mysql_crash",
+      "ssh_refused",
+      "ssh_refused",
+      "dns_broken",
+      "disk_full",
+      "ssh_refused",
+      "dns_broken",
+      "apache_down"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.166761"
+  },
+  "user_008": {
+    "id": "user_008",
+    "name": "User_user_008",
+    "score": 320,
+    "rank": "Senior",
+    "badges": [
+      "no_panic",
+      "fast_response",
+      "log_master",
+      "perfect"
+    ],
+    "choices": [
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.166761"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      }
+    ],
+    "scenarios_completed": [
+      "disk_full",
+      "disk_full",
+      "mysql_crash",
+      "mysql_crash",
+      "ssh_refused",
+      "ssh_refused",
+      "disk_full",
+      "ssh_refused",
+      "ssh_refused",
+      "dns_broken",
+      "ssh_refused",
+      "mysql_crash",
+      "mysql_crash",
+      "apache_down"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.166761"
+  },
+  "user_009": {
+    "id": "user_009",
+    "name": "User_user_009",
+    "score": 640,
+    "rank": "Senior",
+    "badges": [
+      "first_fix",
+      "perfect",
+      "no_panic",
+      "fast_response",
+      "night_owl",
+      "log_master"
+    ],
+    "choices": [
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      }
+    ],
+    "scenarios_completed": [
+      "dns_broken",
+      "ssh_refused",
+      "disk_full",
+      "ssh_refused",
+      "disk_full",
+      "disk_full",
+      "apache_down",
+      "dns_broken",
+      "dns_broken",
+      "ssh_refused",
+      "disk_full",
+      "dns_broken",
+      "dns_broken",
+      "apache_down",
+      "ssh_refused",
+      "disk_full",
+      "disk_full",
+      "apache_down",
+      "apache_down",
+      "disk_full",
+      "apache_down",
+      "ssh_refused",
+      "ssh_refused",
+      "disk_full",
+      "ssh_refused",
+      "apache_down",
+      "dns_broken",
+      "ssh_refused",
+      "ssh_refused",
+      "apache_down"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.169557"
+  },
+  "user_010": {
+    "id": "user_010",
+    "name": "User_user_010",
+    "score": 640,
+    "rank": "Senior",
+    "badges": [
+      "first_fix",
+      "perfect",
+      "no_panic",
+      "fast_response",
+      "log_master"
+    ],
+    "choices": [
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      }
+    ],
+    "scenarios_completed": [
+      "apache_down",
+      "disk_full",
+      "dns_broken",
+      "dns_broken",
+      "ssh_refused",
+      "dns_broken",
+      "dns_broken",
+      "mysql_crash",
+      "mysql_crash",
+      "apache_down",
+      "apache_down",
+      "disk_full",
+      "mysql_crash",
+      "dns_broken",
+      "ssh_refused",
+      "mysql_crash",
+      "apache_down",
+      "dns_broken",
+      "dns_broken",
+      "dns_broken",
+      "mysql_crash",
+      "dns_broken",
+      "dns_broken",
+      "disk_full",
+      "apache_down",
+      "ssh_refused",
+      "dns_broken",
+      "ssh_refused",
+      "mysql_crash"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.169557"
+  },
+  "user_011": {
+    "id": "user_011",
+    "name": "User_user_011",
+    "score": 290,
+    "rank": "Intermediate",
+    "badges": [
+      "fast_response",
+      "first_fix",
+      "perfect",
+      "no_panic"
+    ],
+    "choices": [
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.169557"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      }
+    ],
+    "scenarios_completed": [
+      "ssh_refused",
+      "mysql_crash",
+      "disk_full",
+      "ssh_refused",
+      "apache_down",
+      "ssh_refused",
+      "apache_down",
+      "dns_broken",
+      "apache_down",
+      "disk_full",
+      "disk_full",
+      "apache_down",
+      "apache_down"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.169557"
+  },
+  "user_012": {
+    "id": "user_012",
+    "name": "User_user_012",
+    "score": 190,
+    "rank": "Intermediate",
+    "badges": [
+      "fast_response",
+      "night_owl",
+      "no_panic",
+      "log_master"
+    ],
+    "choices": [
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      }
+    ],
+    "scenarios_completed": [
+      "dns_broken",
+      "ssh_refused",
+      "mysql_crash",
+      "disk_full",
+      "dns_broken",
+      "disk_full",
+      "disk_full",
+      "mysql_crash"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.170579"
+  },
+  "user_013": {
+    "id": "user_013",
+    "name": "User_user_013",
+    "score": 210,
+    "rank": "Intermediate",
+    "badges": [
+      "fast_response",
+      "no_panic"
+    ],
+    "choices": [
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      }
+    ],
+    "scenarios_completed": [
+      "disk_full",
+      "dns_broken",
+      "mysql_crash",
+      "disk_full",
+      "disk_full",
+      "ssh_refused",
+      "mysql_crash",
+      "disk_full",
+      "dns_broken"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.170579"
+  },
+  "user_014": {
+    "id": "user_014",
+    "name": "User_user_014",
+    "score": 480,
+    "rank": "Senior",
+    "badges": [
+      "first_fix",
+      "perfect",
+      "night_owl",
+      "fast_response",
+      "no_panic"
+    ],
+    "choices": [
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      }
+    ],
+    "scenarios_completed": [
+      "apache_down",
+      "dns_broken",
+      "dns_broken",
+      "apache_down",
+      "disk_full",
+      "ssh_refused",
+      "ssh_refused",
+      "apache_down",
+      "mysql_crash",
+      "ssh_refused",
+      "disk_full",
+      "dns_broken",
+      "disk_full",
+      "apache_down",
+      "mysql_crash",
+      "ssh_refused",
+      "mysql_crash",
+      "disk_full",
+      "dns_broken",
+      "mysql_crash",
+      "disk_full",
+      "dns_broken"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.170579"
+  },
+  "user_015": {
+    "id": "user_015",
+    "name": "User_user_015",
+    "score": 610,
+    "rank": "Senior",
+    "badges": [
+      "first_fix",
+      "perfect",
+      "no_panic",
+      "fast_response",
+      "log_master"
+    ],
+    "choices": [
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.170579"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      }
+    ],
+    "scenarios_completed": [
+      "apache_down",
+      "apache_down",
+      "apache_down",
+      "ssh_refused",
+      "disk_full",
+      "dns_broken",
+      "ssh_refused",
+      "disk_full",
+      "apache_down",
+      "apache_down",
+      "dns_broken",
+      "apache_down",
+      "dns_broken",
+      "apache_down",
+      "disk_full",
+      "dns_broken",
+      "ssh_refused",
+      "mysql_crash",
+      "ssh_refused",
+      "ssh_refused",
+      "disk_full",
+      "dns_broken",
+      "mysql_crash",
+      "mysql_crash",
+      "apache_down",
+      "mysql_crash",
+      "apache_down"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.170579"
+  },
+  "user_016": {
+    "id": "user_016",
+    "name": "User_user_016",
+    "score": 220,
+    "rank": "Intermediate",
+    "badges": [
+      "fast_response",
+      "first_fix",
+      "perfect",
+      "no_panic",
+      "night_owl",
+      "log_master"
+    ],
+    "choices": [
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      }
+    ],
+    "scenarios_completed": [
+      "mysql_crash",
+      "mysql_crash",
+      "apache_down",
+      "dns_broken",
+      "disk_full",
+      "mysql_crash",
+      "ssh_refused",
+      "mysql_crash",
+      "apache_down"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.171575"
+  },
+  "user_017": {
+    "id": "user_017",
+    "name": "User_user_017",
+    "score": 330,
+    "rank": "Senior",
+    "badges": [
+      "fast_response",
+      "perfect",
+      "no_panic"
+    ],
+    "choices": [
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      }
+    ],
+    "scenarios_completed": [
+      "apache_down",
+      "apache_down",
+      "dns_broken",
+      "mysql_crash",
+      "dns_broken",
+      "apache_down",
+      "disk_full",
+      "mysql_crash",
+      "mysql_crash",
+      "dns_broken",
+      "ssh_refused",
+      "disk_full",
+      "mysql_crash",
+      "apache_down",
+      "dns_broken"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.171575"
+  },
+  "user_018": {
+    "id": "user_018",
+    "name": "User_user_018",
+    "score": 580,
+    "rank": "Senior",
+    "badges": [
+      "log_master",
+      "fast_response",
+      "no_panic",
+      "perfect",
+      "night_owl"
+    ],
+    "choices": [
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      }
+    ],
+    "scenarios_completed": [
+      "ssh_refused",
+      "apache_down",
+      "apache_down",
+      "dns_broken",
+      "dns_broken",
+      "dns_broken",
+      "ssh_refused",
+      "dns_broken",
+      "disk_full",
+      "dns_broken",
+      "dns_broken",
+      "disk_full",
+      "ssh_refused",
+      "dns_broken",
+      "ssh_refused",
+      "dns_broken",
+      "apache_down",
+      "disk_full",
+      "dns_broken",
+      "dns_broken",
+      "ssh_refused",
+      "ssh_refused",
+      "ssh_refused",
+      "apache_down",
+      "mysql_crash",
+      "apache_down",
+      "mysql_crash"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.171575"
+  },
+  "user_019": {
+    "id": "user_019",
+    "name": "User_user_019",
+    "score": 580,
+    "rank": "Senior",
+    "badges": [
+      "no_panic",
+      "fast_response",
+      "night_owl",
+      "log_master",
+      "perfect"
+    ],
+    "choices": [
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "disk_full",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "correct": true,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "correct": false,
+        "timestamp": "2026-04-14T03:15:55.172576"
+      }
+    ],
+    "failures": [
+      {
+        "scenario": "ssh_refused",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.171575"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "ssh_refused",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "apache_down",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "dns_broken",
+        "choice": "B",
+        "timestamp": "2026-04-14T03:15:55.172576"
+      },
+      {
+        "scenario": "mysql_crash",
+        "choice": "A",
+        "timestamp": "2026-04-14T03:15:55.172576"
+      }
+    ],
+    "scenarios_completed": [
+      "ssh_refused",
+      "apache_down",
+      "apache_down",
+      "mysql_crash",
+      "disk_full",
+      "apache_down",
+      "mysql_crash",
+      "dns_broken",
+      "disk_full",
+      "apache_down",
+      "mysql_crash",
+      "apache_down",
+      "apache_down",
+      "disk_full",
+      "mysql_crash",
+      "ssh_refused",
+      "ssh_refused",
+      "ssh_refused",
+      "ssh_refused",
+      "disk_full",
+      "mysql_crash",
+      "ssh_refused",
+      "dns_broken",
+      "apache_down",
+      "apache_down",
+      "apache_down"
+    ],
+    "streak": 0,
+    "last_active": null,
+    "created_at": "2026-04-14T03:15:55.171575"
+  }
+}

@@ -1,0 +1,62 @@
+name = "ai-shorts-worker"
+main = "src/index.ts"
+compatibility_date = "2026-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Worker configuration
+workers_dev = true
+
+# Environment variables (set via wrangler secret put)
+# REPLICATE_API_KEY
+# ELEVEN_API_KEY
+# AYRSHARE_API_KEY
+# TELEGRAM_BOT_TOKEN
+# TELEGRAM_CHAT_ID
+# HF_API_KEY
+# DASHBOARD_API_KEY
+# ADMIN_USER
+# ADMIN_PASS
+# APPS_SCRIPT_WEBHOOK_URL
+# DISCORD_WEBHOOK_URL
+# SLACK_WEBHOOK_URL
+
+# KV Namespace for approval workflow + budget tracking + analytics
+[[kv_namespaces]]
+binding = "KV_APPROVALS"
+id = "6d7f2b8154da43b6baaec73212d359f6"
+
+# Queue for async rendering jobs
+[[queues.producers]]
+queue = "render-queue"
+binding = "RENDER_QUEUE"
+
+[[queues.consumers]]
+queue = "render-queue"
+max_batch_size = 1
+max_retries = 3
+retry_delay = 60
+
+# R2 bucket for media storage
+[[r2_buckets]]
+binding = "AI_SHORTS_MEDIA"
+bucket_name = "ai-shorts-media"
+preview_bucket_name = "ai-shorts-media-dev"
+
+# Cron triggers
+[triggers]
+crons = ["0 */6 * * *", "0 0 * * 1"]  # Every 6 hours + Monday midnight for weekly aggregation
+
+# NOTE: Upgrade to Workers Paid ($5/mo) when:
+# - KV reads exceed 100K/month (free tier limit)
+# - FFmpeg WASM needs >128MB memory
+# - You need CPU priority over free tier
+# In-memory cache reduces reads by 60-70%, so free tier may be sufficient.
+
+# Build configuration
+[build]
+command = ""
+watch_dir = "src"
+
+# Deployment settings
+[placement]
+mode = "smart"

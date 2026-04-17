@@ -1,0 +1,33 @@
+{
+  "positive": [
+    "Glad you found this helpful! 🙌 What specific part are you most interested in?",
+    "Thanks! I've got more tips coming. What should I cover next?",
+    "Appreciate you reading! Drop your biggest challenge below 👇",
+    "🔥 Right? More content like this coming soon. Follow for updates!",
+    "Exactly! This changed my workflow too. What's your experience been?"
+  ],
+  "question": [
+    "Great question! Here's the breakdown:\n\n1/ First, you need to...\n2/ Then...\n3/ Finally...\n\nWant me to go deeper on any part?",
+    "I get this a lot! The short answer: it depends on your setup.\n\nFor most people, I recommend X because Y.\n\nWhat's your specific use case?",
+    "The trick is:\n\n→ Do X first\n→ Then Y\n→ Test Z\n\nBut the REAL answer depends on your goals. What are you trying to achieve?",
+    "Here's what I'd do:\n\n✅ Step 1: ...\n✅ Step 2: ...\n✅ Step 3: ...\n\nBut honestly, context matters. What's your situation?"
+  ],
+  "skeptical": [
+    "Fair point! I've seen both approaches work. What's worked for you?",
+    "I hear you. This isn't one-size-fits-all. What's your experience been?",
+    "Valid concern! Here's why I still recommend it: [specific reason]\n\nBut yeah, test it yourself first.",
+    "You're not wrong! I've had mixed results too. Here's what worked for me..."
+  ],
+  "engagement": [
+    "Hot take: [controversial but defensible opinion]\n\nAgree or disagree? 👇",
+    "Unpopular opinion: [something most disagree with]\n\nChange my mind or I'll change yours?",
+    "Quick poll: Which do you prefer?\n\nA) Option 1\nB) Option 2\n\nDrop your vote below! 👇",
+    "I'm curious - what's YOUR approach to this?\n\nI learn more from comments than most articles tbh"
+  ],
+  "followup": [
+    "If you liked this, you'll love my thread on [related topic]\n\n👉 [link]\n\nMore coming this week!",
+    "This is part 1 of a series.\n\nPart 2 drops tomorrow at [time].\n\nFollow so you don't miss it! 🔔",
+    "I made a full guide on this.\n\nFree access: [link]\n\nLet me know what you think!",
+    "Want the advanced version?\n\nI'm dropping it next week.\n\nTurn on notifications 🔔"
+  ]
+}

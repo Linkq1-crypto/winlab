@@ -1,0 +1,57 @@
+[
+  {
+    "comment_id": "c1",
+    "author": "DevUser42",
+    "text": "This is amazing! How do I try it?",
+    "platform": "tiktok",
+    "reply": "This is exactly what we built WinLab for. No VM, no setup, just practice \u2192 winlab.cloud",
+    "reply_type": "question",
+    "style": "friendly",
+    "posted": false,
+    "scheduled_at": "2026-04-14T03:39:11.048666"
+  },
+  {
+    "comment_id": "c2",
+    "author": "SkepticEng",
+    "text": "But is it really like production?",
+    "platform": "linkedin",
+    "reply": "This is exactly what we built WinLab for. No VM, no setup, just practice \u2192 winlab.cloud",
+    "reply_type": "question",
+    "style": "friendly",
+    "posted": false,
+    "scheduled_at": "2026-04-14T03:39:11.048666"
+  },
+  {
+    "comment_id": "c3",
+    "author": "JuniorOps",
+    "text": "I had the exact same problem last week \ud83d\ude02",
+    "platform": "tiktok",
+    "reply": "Your story is why this matters. Access shouldn't be the barrier to learning real skills.",
+    "reply_type": "personal_story",
+    "style": "friendly",
+    "posted": false,
+    "scheduled_at": "2026-04-14T03:39:11.048666"
+  },
+  {
+    "comment_id": "c4",
+    "author": "SysAdmin_Pro",
+    "text": "What scenarios do you cover?",
+    "platform": "youtube",
+    "reply": "SysAdmin_Pro, you're thinking about it right \u2014 real skills come from doing, not watching. Give it a try: winlab.cloud",
+    "reply_type": "question",
+    "style": "friendly",
+    "posted": false,
+    "scheduled_at": "2026-04-14T03:39:11.048666"
+  },
+  {
+    "comment_id": "c5",
+    "author": "CareerChanger",
+    "text": "Finally something accessible. My internet is terrible.",
+    "platform": "linkedin",
+    "reply": "CareerChanger, good to connect with fellow engineers! WinLab.cloud if you ever want hands-on practice.",
+    "reply_type": "generic",
+    "style": "friendly",
+    "posted": false,
+    "scheduled_at": "2026-04-14T03:39:11.048666"
+  }
+]

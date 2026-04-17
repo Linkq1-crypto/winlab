@@ -1,0 +1,38 @@
+{
+  "name": "yt-ml-pipeline",
+  "version": "1.0.0",
+  "description": "YouTube ML Pipeline - AI-powered video content generation and filtering",
+  "main": "backend/main.js",
+  "scripts": {
+    "fetch": "node node/fetch.js",
+    "extract": "cd ml && python extract.py",
+    "train": "cd ml && python train.py",
+    "predict": "node backend/main.js",
+    "start": "node backend/main.js",
+    "serverless": "node serverless/orchestrator.js",
+    "deploy:vercel": "vercel",
+    "deploy:cf": "wrangler deploy",
+    "deploy:aws": "serverless deploy"
+  },
+  "keywords": [
+    "youtube",
+    "ml",
+    "ai",
+    "video",
+    "automation",
+    "serverless"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.500.0",
+    "@aws-sdk/s3-request-presigner": "^3.500.0",
+    "@distube/ytdl-core": "^4.16.12",
+    "axios": "^1.6.7",
+    "ffmpeg-static": "^5.2.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "fs-extra": "^11.2.0",
+    "youtube-search-api": "^1.2.2",
+    "ytdl-core": "^4.11.5"
+  }
+}

@@ -1,0 +1,1281 @@
+
+Complete P1 and P2 simulators in JSX
+11 apr
+·
+MindfulMotivation
+·
+main
+·
++992
+-0
+
+Archivia
+
+Condividi
+
+Crea PR
+
+
+. Intune MDM (intune-mdm)\njsx\nimport React, { useState } from 'react';\n\nconst IntuneMDM = () => {\n  const [devices, setDevices] = useState([\n    { id: 'WIN-01', status: 'Compliant', os: 'Windows 11' },\n    { id: 'WIN-02', status: 'Non-compliant', os: 'Windows 10' }\n  ]);\n\n  return (\n    <div className="p-4 bg-slate-900 text-white rounded-lg">\n      <h2 className="text-xl font-bold mb-4">Microsoft Intune Dashboard</h2>\n      <div className="grid gap-2">\n        {devices.map(d => (\n          <div key={d.id} className="flex justify-between border-b border-slate-700 p-2">\n            <span>{d.id} ({d.os})</span>\n            <span className={d.status === 'Compliant' ? 'text-green-400' : 'text-red-400'}>\n              {d.status}\n            </span>\n          </div>\n        ))}\n      </div>\n      <button className="mt-4 bg-blue-600 px-4 py-2 rounded">Create Compliance Policy</button>\n    </div>\n  );\n};\n\nexport default IntuneMDM;\nUsa il codice con cautela.\n\n2. Jamf Pro (jamf-pro)\njsx\nimport React, { useState } from 'react';\n\nconst JamfPro = () => {\n  const [profiles, setProfiles] = useState(['FileVault Encryption', 'Wi-Fi Corporate']);\n\n  return (\n    <div className="p-4 bg-gray-100 text-gray-800 rounded-lg shadow-inner">\n      <div className="bg-red-700 text-white p-2 -mx-4 -mt-4 mb-4 rounded-t-lg">JAMF PRO ADMIN</div>\n      <h3 className="font-semibold">Configuration Profiles</h3>\n      <ul className="list-disc ml-5 mt-2">\n        {profiles.map(p => <li key={p}>{p}</li>)}\n      </ul>\n      <div className="mt-4 p-3 bg-white border border-dashed border-gray-400">\n        <p className="text-sm text-gray-500 italic">Drag & Drop .mobileconfig here</p>\n      </div>\n    </div>\n  );\n};\n\nexport default JamfPro;\nUsa il codice con cautela.\n\n3. Network Lab (network-lab)\njsx\nimport React, { useState } from 'react';\n\nconst NetworkLab = () => {\n  const [log, setLog] = useState(['Switch-L3 initialized...', 'VLAN 10: Up']);\n\n  const runPing = () => setLog([...log, 'Pinging 192.168.1.1... Reply in 2ms']);\n\n  return (\n    <div className="p-4 bg-black text-green-500 font-mono rounded-lg">\n      <div className="mb-4">\n        {log.map((line, i) => <div key={i}>{`> ${line}`}</div>)}\n      </div>\n      <div className="flex gap-2">\n        <span className="text-white">console#</span>\n        <input \n          className="bg-transparent outline-none border-none text-green-500 w-full"\n          onKeyDown={(e) => e.key === 'Enter' && runPing()}\n          placeholder="type 'ping'..."\n        />\n      </div>\n    </div>\n  );\n};\n\nexport default NetworkLab;\nUsa il codice con cautela.\n\nNote Rapide:\nStile: Ho usato classi Tailwind (comuni in questi progetti) per darti un look pulito subito.\nLogica: Sono interattivi (puoi aggiungere policy o simulare comandi da terminale).\nVuoi che procediamo con gli altri della lista P1 (Automation/Cloud) o preferisci rifinire la logica di questi P0?\nLe risposte dell'AI potrebbero contenere errori. Scopri di più\n\n\n\n\ntutti perfetto\nOttimo, completiamo la lista. Ti ho preparato i restanti simulatori (dal #4 al #8), mantenendo lo stile JSX + Tailwind per una coerenza visiva immediata.\n4. Security Audit (security-audit) - P0\njsx\nimport React, { useState } from 'react';\n\nconst SecurityAudit = () => {\n  const [scanned, setScanned] = useState(false);\n  const vulnerabilities = [\n    { severity: 'High', title: 'CVE-2024-21408', target: 'Server-01' },\n    { severity: 'Medium', title: 'Insecure Cipher Suite', target: 'Web-GW' }\n  ];\n\n  return (\n    <div className="p-4 bg-zinc-950 text-emerald-500 border border-emerald-900 rounded-lg">\n      <div className="flex justify-between items-center mb-4">\n        <h2 className="font-bold uppercase tracking-widest text-sm">Vulnerability Scanner</h2>\n        <button onClick={() => setScanned(true)} className="bg-emerald-600 text-black px-3 py-1 text-xs font-bold rounded">START SCAN</button>\n      </div>\n      {scanned ? (\n        <div className="space-y-2">\n          {vulnerabilities.map((v, i) => (\n            <div key={i} className="bg-zinc-900 p-2 border-l-2 border-red-500">\n              <span className="text-red-500 font-bold mr-2">[{v.severity}]</span>\n              <span className="text-white">{v.title}</span>\n              <p className="text-[10px] text-zinc-500 uppercase">{v.target}</p>\n            </div>\n          ))}\n        </div>\n      ) : <p className="animate-pulse text-zinc-600">Waiting for scan initiation...</p>}\n    </div>\n  );\n};\nUsa il codice con cautela.\n\n5. Enterprise Architecture (enterprise-arch) - P1\njsx\nimport React from 'react';\n\nconst EnterpriseArch = () => (\n  <div className="p-4 bg-slate-100 text-slate-900 rounded-lg shadow-md border-t-4 border-blue-600">\n    <div className="mb-4">\n      <h3 className="font-bold text-blue-800">AD Topology: contoso.local</h3>\n      <div className="flex items-center gap-4 mt-4">\n        <div className="p-2 bg-blue-100 border border-blue-300 text-xs rounded text-center w-24">DC-PRIMARY<br/>(Master)</div>\n        <div className="h-[1px] w-10 bg-blue-300"></div>\n        <div className="p-2 bg-blue-100 border border-blue-300 text-xs rounded text-center w-24">DC-SECONDARY<br/>(Replica)</div>\n      </div>\n    </div>\n    <div className="text-xs bg-white p-2 rounded border">\n      <p className="font-mono font-bold text-gray-500">Active GPOs:</p>\n      <ul className="list-inside list-disc">\n        <li>Default Domain Policy</li>\n        <li>Disable-USB-Storage</li>\n      </ul>\n    </div>\n  </div>\n);\nUsa il codice con cautela.\n\n6. Automation (automation) - P1\njsx\nimport React, { useState } from 'react';\n\nconst AutomationLab = () => {\n  const [playbookRunning, setPlaybookRunning] = useState(false);\n\n  return (\n    <div className="p-4 bg-slate-800 text-orange-400 font-mono rounded-lg">\n      <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-2">\n        <span className="text-xs text-slate-400">ansible-playbook --site.yml</span>\n        <button \n          onClick={() => setPlaybookRunning(true)}\n          className="bg-orange-600 text-white px-2 py-0.5 text-[10px] rounded"\n        >RUN</button>\n      </div>\n      <div className="text-[11px]">\n        <p className="text-green-400 font-bold">TASK [Gathering Facts] ************ ok: [webserver]</p>\n        {playbookRunning && (\n          <p className="mt-1 animate-pulse">TASK [Install Nginx] ************ changed: [webserver]</p>\n        )}\n      </div>\n    </div>\n  );\n};\nUsa il codice con cautela.\n\n7. Cloud Infrastructure (cloud-infrastructure) - P1\njsx\nimport React from 'react';\n\nconst CloudInfra = () => (\n  <div className="p-4 bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-lg overflow-hidden">\n    <div className="flex gap-2 mb-4">\n      <div className="w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_8px_orange]"></div>\n      <span className="text-[10px] font-bold tracking-widest">AWS VPC CONSOLE</span>\n    </div>\n    <div className="grid grid-cols-2 gap-2">\n      <div className="p-2 bg-white/5 border border-white/10 rounded">\n        <p className="text-[10px] text-indigo-300">EC2 Instances</p>\n        <p className="text-xl">12</p>\n      </div>\n      <div className="p-2 bg-white/5 border border-white/10 rounded">\n        <p className="text-[10px] text-indigo-300">S3 Buckets</p>\n        <p className="text-xl">4</p>\n      </div>\n    </div>\n    <div className="mt-3 p-2 bg-indigo-500/20 rounded text-[10px]">Region: us-east-1 (N. Virginia)</div>\n  </div>\n);\nUsa il codice con cautela.\n\n8. Multi-Tenant MSP (msp-multi-tenant) - P2\njsx\nimport React from 'react';\n\nconst MspDashboard = () => (\n  <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">\n    <div className="flex justify-between mb-4 border-b pb-2">\n      <h2 className="text-sm font-bold text-gray-700 uppercase tracking-tighter">MSP Central</h2>\n      <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">API ONLINE</span>\n    </div>\n    <table className="w-full text-[11px]">\n      <thead>\n        <tr className="text-left text-gray-400 uppercase">\n          <th className="pb-2">Client</th>\n          <th className="pb-2 text-right">SLA Status</th>\n        </tr>\n      </thead>\n      <tbody>\n        <tr><td>Acme Corp</td><td className="text-right text-green-600">99.9%</td></tr>\n        <tr><td>Cyberdyne</td><td className="text-right text-yellow-600">97.2%</td></tr>\n        <tr><td>Globex</td><td className="text-right text-red-600">88.5%</td></tr>\n      </tbody>\n    </table>\n  </div>\n);\n li fai reali ... per favore ... sempre in jsx
+Copia
+Summary
+
+Ho creato versioni reali e interattive in JSX per tutti gli 8 simulatori richiesti, con stato, azioni utente e logica applicativa (non solo UI statica): Intune MDM, Jamf Pro, Network Lab, Security Audit, Enterprise Architecture, Automation Lab, Cloud Infrastructure, MSP Multi-Tenant. 
+
+Ho aggiunto un barrel export src/components/index.js per importarli facilmente dal resto dell’app. 
+
+Ho fatto commit su branch corrente con messaggio: Add realistic JSX simulator components for IT labs.
+
+Ho anche creato la PR tramite tool make_pr come richiesto.
+
+Testing
+
+✅ git status --short
+
+✅ nl -ba src/components/IntuneMDM.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/JamfPro.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/NetworkLab.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/SecurityAudit.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/EnterpriseArch.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/AutomationLab.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/CloudInfra.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/MspDashboard.jsx | sed -n '1,260p'
+
+✅ nl -ba src/components/index.js
+
+Se vuoi, nel prossimo step posso collegarteli anche in una singola pagina demo (LabsDashboard.jsx) con tabs/filter per priorità P0/P1/P2.
+
+
+File (9)
+sono tutti reali?
+Copia
+Ottima domanda: no, non sono “reali” nel senso di produzione.
+
+Quelli che ho messo sono simulatori realistici:
+
+UI reale in React/JSX ✅
+
+logica locale/interattiva reale (state, azioni, flussi) ✅
+
+nessuna integrazione live con Intune, Jamf, AWS, scanner CVE, ecc. ❌
+
+Quindi: sembrano e si comportano come dashboard vere, ma i dati sono mock/in-memory.
+
+Se vuoi, nel prossimo step li rendo davvero “reali” collegando API:
+
+Intune → Microsoft Graph
+
+Jamf Pro API
+
+AWS SDK/CloudWatch
+
+Scanner (es. OpenVAS/Nessus API)
+
+Backend Node/Express con auth + persistenza (Postgres)
+
+Se mi dici da quale dei 8 iniziare, lo trasformo in versione production-like mantenendo JSX.
+
+per un lab di formzione . vanno bne, si?
+Copia
+Sì, per un lab di formazione vanno bene 👍
+
+Sono adatti perché:
+
+sono in JSX puro e facili da leggere/modificare,
+
+hanno interazioni realistiche (toggle policy, comandi console, scan/remediation, ecc.),
+
+non richiedono integrazioni esterne complesse.
+
+Per un training sono perfetti come:
+
+demo in aula,
+
+esercizi pratici,
+
+base per challenge (aggiungere API, auth, persistenza).
+
+Se vuoi, posso prepararti una versione “didattica” con:
+
+obiettivi per modulo,
+
+task step-by-step,
+
+checklist di valutazione per studenti.
+
+come li salvo in unica volta
+Copia
+Certo — hai 2 modi per salvarli “in unica volta” 👇
+
+1) Salvarli come progetto (tutti i file insieme)
+Se sei già nella repo, basta un unico commit:
+
+✅ git add src/components
+
+✅ git commit -m "Add lab components"
+
+✅ git push
+
+In questo modo salvi/pubblici tutti i componenti in una volta sola.
+
+2) Usarli in una volta sola nel codice (import unico)
+L’ho già predisposto con src/components/index.js, quindi puoi importare tutto da un solo punto. 
+
+Esempio:
+
+import {
+  IntuneMDM,
+  JamfPro,
+  NetworkLab,
+  SecurityAudit,
+  EnterpriseArch,
+  AutomationLab,
+  CloudInfra,
+  MspDashboard
+} from './components';
+Se vuoi, ti preparo anche un singolo file LabsSuite.jsx che li renderizza tutti insieme in griglia (così li hai “in un colpo solo” anche a schermo).
+
+🟢 1. HERO SECTION: L'Evoluzione del Copy\nIl visual del computerino è carino, ma occupa spazio prezioso. Rimpiccioliscilo e sposta il focus sul valore.\nElemento	🇺🇸/🇪🇺 (Occidente)	🇮🇳 (India)\nHeadline	Master Production Incidents.	Real-World Skills, Real Jobs.\nSub-headline	"Escape tutorial hell. Fix real Linux, Cloud, and SRE failures in a live sandbox."	"Stop watching videos. Practice fixing real server problems for the price of a Chai."\nCTA Button	Launch Free Lab →	Start Solving (₹20) →\nMicro-copy	"Trusted by 1000+ SREs"	"Job-ready training for ₹199/mo"\n💻 2. UI/UX: Dal Testo all'Azione (Interactive Hook)\nAttualmente hai un pulsante statico. Per massimizzare l'engagement:\nShadow Terminal: Sotto il pulsante "Start Free Scenario", mostra un'anteprima di un terminale nero semi-trasparente con un comando che si scrive da solo: $ systemctl status nginx... [FAILED].\nBadge dinamici: I tuoi badge attuali ("Medium difficulty", "24 scenarios") sono un po' piatti.\nOccidente: Usa badge tecnici: UBUNTU 22.04, DOCKER, SRE-LEVEL.\nIndia: Usa badge di valore: PRACTICE-BASED, INTERVIEW PREP, ₹20 PER LAB.\n🏆 3. IL PRIMO SCENARIO: "The Port Conflict" (Nginx Fail)\nCodifichiamo questo come primo scenario "gancio" perché ha un feedback visivo immediato.\nLogica UX:\nL'errore: L'utente clicca su "Start", il terminale si apre e mostra subito un log di errore rosso: Error: Port 80 already in use.\nL'azione: L'utente deve digitare netstat -tulpn per vedere che Apache occupa la porta.\nIl Payoff:\nOccidente: Messaggio sobrio: "Incident Resolved. Time: 1m 20s. You are faster than 85% of DevOps."\nIndia: Animazione celebrativa: "Success! +15 XP. You are one step closer to your Junior Admin Level! 🔥"\n🧱 4. CAREER PATH UI (Il "Sogno" di conversione)\nSotto la Hero, aggiungi una sezione "Your Path" che cambia in base alla Geo:\n🇺🇸/🇪🇺 (The Elite SRE Path):\nLevel 1: Core Linux (Free)\nLevel 2: Cloud Infrastructure (Pro)\nLevel 3: Chaos Engineering (Enterprise)\n🇮🇳 (The Job-Ready Path):\nLevel 1: System Admin Basics (Free)\nLevel 2: Data Center Ops (₹20/lab)\nLevel 3: IT Support Expert (Job-Ready)\n🛠️ Implementazione veloce per il tuo Stack\nNel tuo componente Next.js, avvolgi il contenuto della Home in una logica di rilevamento:\njsx\nconst HomeContent = ({ country }) => {\n  const isIndia = country === 'IN';\n\n  return (\n    <main className="bg-[#0b0f1a] text-white">\n      <Badge variant="outline">{isIndia ? "₹20 Per Scenario" : "Real CLI Sandbox"}</Badge>\n      <h1 className={isIndia ? "text-job-green" : "text-sre-blue"}>\n        {isIndia ? "Real Incidents Practice Karo" : "Master Production Incidents"}\n      </h1>\n      {/* Terminal Autoplay Component */}\n      <TerminalPreview scenario="nginx-fail" />\n      <CTA country={country} />\n    </main>\n  );\n}\nUsa il codice con cautela.\n\nIl tocco finale: Sostituisci "No signup required for the first incident" con un timer di scarsità o una social proof live: "12 engineers are fixing this incident right now".\nVuoi che ti scriva il codice Tailwind per la tabella dei prezzi "Pay-per-incident" specifica per il mercato indiano?\nLe risposte dell'AI potrebbero contenere errori. Scopri di più\n\n\n\n\nil codice per tutta la hme\nEcco il codice completo per la tua Home "Perfect Conversion". È strutturato per Next.js + Tailwind, pronto per essere diviso in componenti.\nHo implementato la logica di switch tramite una prop country (che puoi passare dal middleware o da un'API di geolocalizzazione).\ntsx\nimport React, { useState, useEffect } from 'react';\nimport { Terminal, Shield, Zap, Target, Award, Users } from 'lucide-react';\n\n// --- CONFIGURAZIONE COPY GEO-TARGETED ---\nconst CONTENT = {\n  WEST: {\n    heroTitle: "Master Production Incidents.",\n    heroSub: "Stop reading docs. Fix real-world Linux, Cloud, and SRE failures in a live, sandboxed terminal.",\n    cta: "Start Free Scenario →",\n    socialProof: "Trusted by 1,400+ Engineers from top tech hubs.",\n    badge1: "REAL CLI",\n    badge2: "SRE LEVEL",\n    badge3: "NO QUIZZES",\n    pricingTitle: "Unlimited Access",\n    price: "$19",\n    priceSub: "per month, cancel anytime",\n    careerLevel: "Junior SRE"\n  },\n  INDIA: {\n    heroTitle: "Real Incidents Practice Karo.",\n    heroSub: "Fix Linux, Cloud, and Enterprise problems for the price of a Chai. No theory, only real practice.",\n    cta: "Start Solving Now →",\n    socialProof: "142 log abhi training kar rahe hain.",\n    badge1: "JOB READY",\n    badge2: "₹20 PER LAB",\n    badge3: "PRACTICAL",\n    pricingTitle: "Pay Per Incident",\n    price: "₹20",\n    priceSub: "per incident or ₹199 unlimited",\n    careerLevel: "Junior Sysadmin"\n  }\n};\n\nexport default function WinLabHome({ country = 'US' }) {\n  const isIndia = country === 'IN';\n  const t = isIndia ? CONTENT.INDIA : CONTENT.WEST;\n\n  return (\n    <div className="min-h-screen bg-[#0b0f1a] text-slate-200 font-sans selection:bg-emerald-500/30">\n      \n      {/* --- NAV / HEADER --- */}\n      <nav className="flex justify-between items-center p-6 max-w-7xl mx-auto">\n        <div className="flex items-center gap-2 font-bold text-xl tracking-tighter">\n          <div className="bg-emerald-500 p-1.5 rounded-lg">\n            <Terminal size={20} className="text-[#0b0f1a]" />\n          </div>\n          WINLAB <span className="text-emerald-500 text-xs font-mono ml-1">PROD_SPEC</span>\n        </div>\n        <div className="hidden md:flex gap-8 text-sm font-medium text-slate-400">\n          <a href="#" className="hover:text-white transition">Scenarios</a>\n          <a href="#" className="hover:text-white transition">Enterprise</a>\n          <a href="#" className="hover:text-white transition">Pricing</a>\n        </div>\n      </nav>\n\n      {/* --- HERO SECTION --- */}\n      <section className="max-w-5xl mx-auto pt-16 pb-12 px-6 text-center">\n        <div className="inline-flex gap-2 mb-6">\n          {[t.badge1, t.badge2, t.badge3].map((b) => (\n            <span key={b} className="px-3 py-1 rounded-full border border-slate-800 bg-slate-900/50 text-[10px] font-bold tracking-widest text-emerald-500 uppercase">\n              {b}\n            </span>\n          ))}\n        </div>\n        \n        <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight">\n          {t.heroTitle}\n        </h1>\n        \n        <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">\n          {t.heroSub}\n        </p>\n\n        <div className="flex flex-col items-center gap-4">\n          <button className="group relative px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-[#0b0f1a] font-bold rounded-xl transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(16,185,129,0.4)]">\n            {t.cta}\n          </button>\n          <p className="text-xs text-slate-500 italic">No signup required for the first incident.</p>\n        </div>\n      </section>\n\n      {/* --- TERMINAL AUTO-PLAY PREVIEW --- */}\n      <section className="max-w-4xl mx-auto px-6 mb-24">\n        <div className="rounded-xl border border-slate-800 bg-[#0d1117] shadow-2xl overflow-hidden">\n          <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800 bg-slate-900/50">\n            <div className="flex gap-1.5">\n              <div className="w-3 h-3 rounded-full bg-red-500/20" />\n              <div className="w-3 h-3 rounded-full bg-amber-500/20" />\n              <div className="w-3 h-3 rounded-full bg-emerald-500/20" />\n            </div>\n            <span className="text-xs font-mono text-slate-500 ml-2">ssh prod-server-01</span>\n          </div>\n          <div className="p-6 font-mono text-sm md:text-base leading-relaxed">\n            <div className="text-slate-400 mb-2">$ systemctl status nginx</div>\n            <div className="text-red-400 mb-2">✖ nginx.service failed - Port 80 already in use</div>\n            <div className="text-slate-400 mb-2">$ netstat -tulpn | grep :80</div>\n            <div className="text-amber-400 mb-4">tcp 0 0 0.0.0.0:80 0.0.0.0:* LISTEN 1402/apache2</div>\n            <div className="flex items-center gap-2">\n              <span className="text-emerald-500 animate-pulse">_</span>\n              <span className="text-slate-500 italic">Type your command to fix...</span>\n            </div>\n          </div>\n        </div>\n        <div className="mt-6 flex justify-center items-center gap-4 text-slate-500 text-sm">\n          <Users size={16} />\n          <span>{t.socialProof}</span>\n        </div>\n      </section>\n\n      {/* --- CAREER PATH PREVIEW --- */}\n      <section className="bg-slate-900/30 border-y border-slate-800/50 py-20">\n        <div className="max-w-6xl mx-auto px-6">\n          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">\n            <div>\n              <h2 className="text-3xl font-bold text-white mb-2">Your Career Path</h2>\n              <p className="text-slate-400">Current Level: <span className="text-emerald-500 font-bold uppercase tracking-wider ml-1">{t.careerLevel}</span></p>\n            </div>\n            <div className="w-full md:w-64 bg-slate-800 rounded-full h-2 overflow-hidden">\n              <div className="bg-emerald-500 h-full w-[30%]" />\n            </div>\n          </div>\n\n          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">\n            {.map((card, i) => (\n              <div key={i} className={`p-6 rounded-2xl border transition ${card.status === 'Unlocked' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-800 bg-slate-900/50 grayscale'}`}>\n                <div className="mb-4">{card.icon}</div>\n                <h3 className="text-lg font-bold text-white mb-1">{card.title}</h3>\n                <p className="text-sm text-slate-500 mb-4">{card.desc}</p>\n                <span className={`text-[10px] font-bold uppercase tracking-widest ${card.status === 'Unlocked' ? 'text-emerald-500' : 'text-slate-600'}`}>\n                  {card.status}\n                </span>\n              </div>\n            ))}\n          </div>\n        </div>\n      </section>\n\n      {/* --- PRICING SECTION (GEO-ADAPTIVE) --- */}\n      <section className="max-w-4xl mx-auto py-24 px-6 text-center">\n        <h2 className="text-4xl font-bold text-white mb-12 italic">One small investment, pro skills.</h2>\n        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-10 max-w-sm mx-auto hover:border-emerald-500/50 transition">\n          <h3 className="text-emerald-500 font-bold uppercase tracking-widest mb-4">{t.pricingTitle}</h3>\n          <div className="flex justify-center items-baseline gap-1 mb-2">\n            <span className="text-6xl font-black text-white">{t.price}</span>\n          </div>\n          <p className="text-slate-400 mb-8">{t.priceSub}</p>\n          <button className="w-full py-4 bg-white text-[#0b0f1a] font-black rounded-xl hover:bg-slate-200 transition">\n            GET STARTED\n          </button>\n        </div>\n      </section>\n    </div>\n  );\n}     COME TI SEMBRA QUESTA HOME PER IL MIO SAAS
+Copia
+È molto buona come direzione prodotto/marketing — per un SaaS tecnico ha un potenziale conversione alto.
+Ti do un feedback pratico, senza giri di parole:
+
+Cosa funziona molto bene ✅
+Value proposition chiara in hero (incidenti reali, non teoria).
+
+Geo-personalizzazione US/EU vs IN: ottima per aumentare CTR/CR.
+
+Terminal preview: fortissimo “proof of realism”.
+
+Career path + pricing adattivo: buon mix sogno + offerta.
+
+Design coerente dark/tech, leggibile e moderno.
+
+Problemi da sistemare subito ❌
+Errore bloccante nel Career Path
+
+Hai scritto {.map((card, i) => (...) senza array prima di .map.
+
+Così il componente non compila.
+
+Manca il dataset delle card
+
+Ti serve qualcosa tipo const careerCards = isIndia ? [...] : [...] e poi careerCards.map(...).
+
+Messaggio micro-copy
+
+Hai ancora "No signup required for the first incident." mentre sopra volevi sostituirlo con social proof live/scarsità.
+
+Meglio uniformare (una sola narrativa).
+
+TSX vs JSX mismatch
+
+Dici “JSX”, ma il blocco è dichiarato tsx.
+
+Va bene anche JSX puro: togli typing e resta semplice.
+
+Ottimizzazioni conversione (alto impatto) 🚀
+CTA:
+
+India: Start Solving (₹20) →
+
+West: Launch Free Lab →
+
+Sotto CTA: live proof dinamica tipo
+12 engineers are fixing this incident right now.
+
+A/B test 2 headline per geo.
+
+Sticky CTA su mobile.
+
+Metti un mini “time-to-value”: “First incident in < 2 min”.
+
+Valutazione finale
+Direzione: 8.5/10
+Con fix tecnici + coerenza copy-arricchita può diventare molto forte per conversione.
+
+Se vuoi, nel prossimo messaggio ti scrivo io la versione pulita e funzionante 100% in JSX (con careerCards già pronti per US/EU + India, e terminal autoplay leggero).
+
+SI 100/100 DEVE SPACCARE
+Copia
+Summary
+Ho aggiunto una nuova Home “spacca” in JSX (WinLabHome) con copy geo-targeted (US/EU vs India), hero più focalizzata sul valore, badge dinamici per mercato e CTA differenziata. 
+
+Ho implementato l’interactive hook richiesto: terminal preview con comando auto-typed ($ systemctl status nginx... [FAILED]) + errore visivo immediato + social proof live dinamica (“X engineers are fixing…”). 
+
+Ho costruito il primo scenario “The Port Conflict” reale lato UX: start, errore su porta 80, input comandi, feedback progressivo (netstat -tulpn, stop apache, start nginx) e payoff finale diverso per geo. 
+
+Ho aggiunto la sezione “Your Path” con livelli differenti per Occidente/India e progress bar legata allo stato del lab, come da direzione conversion-first. 
+
+Ho incluso callout pricing adattivo per mercato e ho esportato il nuovo componente nel barrel index.js per import unico. 
+
+Testing
+
+✅ git status --short
+
+✅ git diff --check
+
+✅ nl -ba src/components/WinLabHome.jsx | sed -n '1,260p'
+
+✅ nl -ba src/components/index.js
+
+✅ git add src/components/WinLabHome.jsx src/components/index.js && git commit -m "Add geo-targeted SaaS home component with interactive incident hook"
+
+⚠️ Screenshot non allegato: in questo ambiente non è disponibile il browser container per catturare la preview UI.
+
+
+File (10)
+QUAL è IL FILE DELLA HOME
+Copia
+Il file della Home è:
+
+src/components/WinLabHome.jsx. 
+
+Ed è anche esportato nel barrel:
+
+src/components/index.js alla riga export { default as WinLabHome } from './WinLabHome';. 
+
+Comando usato per verificarlo:
+
+ls src/components && nl -ba src/components/index.js | sed -n '1,40p' ✅
+
+🧠 🧩 1. SCHEMA PRISMA (FONDAMENTA)
+model User {
+  id                   String   @id @default(cuid())
+  email                String   @unique
+  password             String
+
+  plan                 String   @default("free") // free | pro | business
+  subscriptionStatus   String   @default("inactive") // active | past_due | canceled
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?
+
+  createdAt            DateTime @default(now())
+}
+
+👉 DB = verità del tuo sistema (già stai lavorando bene così)
+
+⚙️ 💳 2. CREAZIONE CUSTOMER + SUBSCRIPTION
+quando utente paga:
+import Stripe from "stripe";
+const stripe = new Stripe(process.env.STRIPE_SECRET);
+
+export async function createSubscription(user, priceId) {
+  const customer = await stripe.customers.create({
+    email: user.email
+  });
+
+  const subscription = await stripe.subscriptions.create({
+    customer: customer.id,
+    items: [{ price: priceId }],
+    payment_behavior: "default_incomplete",
+    expand: ["latest_invoice.payment_intent"]
+  });
+
+  // salva su DB
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      stripeCustomerId: customer.id,
+      stripeSubscriptionId: subscription.id
+    }
+  });
+
+  return subscription;
+}
+🔔 3. WEBHOOK COMPLETO (CORE DEL SISTEMA)
+
+👉 questo è il pezzo più importante
+
+import express from "express";
+import Stripe from "stripe";
+
+const app = express();
+const stripe = new Stripe(process.env.STRIPE_SECRET);
+
+app.post("/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  switch (event.type) {
+
+    // ✅ PAGAMENTO RIUSCITO
+    case "invoice.payment_succeeded": {
+      const sub = event.data.object;
+
+      await prisma.user.update({
+        where: { stripeSubscriptionId: sub.subscription },
+        data: {
+          subscriptionStatus: "active",
+          plan: "pro" // o business in base al priceId
+        }
+      });
+
+      break;
+    }
+
+    // ❌ PAGAMENTO FALLITO
+    case "invoice.payment_failed": {
+      const sub = event.data.object;
+
+      await prisma.user.update({
+        where: { stripeSubscriptionId: sub.subscription },
+        data: {
+          subscriptionStatus: "past_due"
+        }
+      });
+
+      break;
+    }
+
+    // 🧨 SUB CANCELLATA
+    case "customer.subscription.deleted": {
+      const sub = event.data.object;
+
+      await prisma.user.update({
+        where: { stripeSubscriptionId: sub.id },
+        data: {
+          subscriptionStatus: "canceled",
+          plan: "free"
+        }
+      });
+
+      break;
+    }
+
+    // 🔄 UPDATE (downgrade/upgrade)
+    case "customer.subscription.updated": {
+      const sub = event.data.object;
+
+      const priceId = sub.items.data[0].price.id;
+
+      const plan =
+        priceId === process.env.PRO_PRICE ? "pro" :
+        priceId === process.env.BUSINESS_PRICE ? "business" :
+        "free";
+
+      await prisma.user.update({
+        where: { stripeSubscriptionId: sub.id },
+        data: { plan }
+      });
+
+      break;
+    }
+  }
+
+  res.json({ received: true });
+});
+🔽 4. DOWNGRADE (API)
+export async function downgrade(subscriptionId, newPriceId) {
+  const sub = await stripe.subscriptions.retrieve(subscriptionId);
+
+  await stripe.subscriptions.update(subscriptionId, {
+    items: [{
+      id: sub.items.data[0].id,
+      price: newPriceId
+    }],
+    proration_behavior: "create_prorations"
+  });
+}
+❌ 5. CANCEL (NO CHURN AGGRESSIVO)
+export async function cancelAtEnd(subscriptionId) {
+  await stripe.subscriptions.update(subscriptionId, {
+    cancel_at_period_end: true
+  });
+}
+
+👉 utente mantiene accesso fino a fine periodo
+
+🧠 🔄 6. RETRY AUTOMATICO
+
+👉 attivalo da dashboard Stripe:
+
+Smart Retries ON
+Email reminder ON
+
+Tu devi solo gestire:
+
+if (status === "past_due") {
+  // UI warning
+}
+📩 7. ANTI-CHURN (MINIMO MA EFFICACE)
+trigger:
+if (event.type === "invoice.payment_failed") {
+  sendEmail(user.email, "Aggiorna il metodo di pagamento");
+}
+esempio semplice:
+Oggetto: Problema con il pagamento
+
+Abbiamo avuto un problema con il tuo abbonamento.
+Aggiorna la carta per non perdere l’accesso.
+🧠 8. ACCESS CONTROL (CRITICO)
+
+Middleware:
+
+export function requirePlan(plan) {
+  return (req, res, next) => {
+    if (req.user.plan !== plan) {
+      return res.status(403).json({ error: "Upgrade required" });
+    }
+    next();
+  };
+}
+🔥 COSA HAI ORA
+
+✔ billing completo
+✔ retry automatico
+✔ downgrade/upgrade
+✔ churn gestito
+✔ webhook real-time
+✔ DB sincronizzato
+
+⚡ VERSIONE KERNEL
+
+Stripe gestisce il pagamento.
+Il webhook decide il destino dell’utente.
+
+🚀 PROSSIMO LIVELLO (SE VUOI)
+
+Posso farti:
+
+👉 sistema email automatico completo (anti churn serio)
+👉 dashboard admin con utenti + pagamenti live
+👉 oppure funnel: free → trial → paid ottimizzato per conversione
+
+Dimmi 👍
+
+Hai Stripe, ma devi avere:
+
+retry pagamenti
+gestione downgrade
+gestione churn
+
+Perfetto, te lo riassumo come lo devi implementare davvero in produzione, senza casino 👇
+
+💳 1. RETRY PAGAMENTI (DUNNING)
+🎯 Ob
+contiua
+
+Perfetto, continuo e ti chiudo il cerchio in modo operativo e concreto 👇
+
+💳 1. RETRY PAGAMENTI (DUNNING)
+🎯 Obiettivo
+
+Non perdere utenti per una carta scaduta o errore temporaneo.
+
+✔️ Cosa fa Stripe
+riprova automaticamente i pagamenti (Smart Retries)
+manda email al cliente
+aggiorna stato: past_due → canceled
+🔧 TU cosa devi fare
+A. Attiva da dashboard
+Billing → Retry rules → ON
+Email customer → ON
+B. Gestisci webhook
+if (event.type === "invoice.payment_failed") {
+  // mostra warning in app
+  user.subscriptionStatus = "past_due";
+}
+C. UX intelligente
+
+👉 in app:
+
+⚠️ Problema con il pagamento
+Aggiorna il metodo per non perdere l’accesso
+📉 2. GESTIONE DOWNGRADE
+🎯 Caso reale
+
+Utente passa:
+
+Business → Pro
+Pro → Free
+✔️ Logica corretta
+NON fare:
+
+❌ cambiare piano nel frontend
+
+FAI:
+
+✔ sempre via backend + Stripe
+
+🔧 codice
+await stripe.subscriptions.update(subscriptionId, {
+  items: [{
+    id: subscriptionItemId,
+    price: NEW_PRICE_ID
+  }],
+  proration_behavior: "create_prorations"
+});
+🧠 comportamento
+Stripe calcola differenze automaticamente
+accredita o addebita
+tu aggiorni DB via webhook
+🔁 webhook update
+if (event.type === "customer.subscription.updated") {
+  // aggiorna piano nel DB
+}
+🔄 3. GESTIONE CHURN (PERDITA UTENTI)
+🎯 3 casi principali
+🔴 Caso 1: pagamento fallito
+payment_failed → retry → canceled
+
+👉 TU:
+
+if (status === "past_due") {
+  mostra warning
+}
+🔴 Caso 2: utente cancella
+✔️ modo giusto:
+await stripe.subscriptions.update(subscriptionId, {
+  cancel_at_period_end: true
+});
+
+👉 risultato:
+
+mantiene accesso fino a fine periodo
+poi downgrade automatico
+🔴 Caso 3: churn definitivo
+
+Webhook:
+
+if (event.type === "customer.subscription.deleted") {
+  user.plan = "free";
+}
+🧠 4. STATO UTENTE (CRITICO)
+
+Nel DB devi avere sempre:
+
+plan: "free" | "pro" | "business"
+subscriptionStatus:
+  "active" | "past_due" | "canceled"
+⚙️ 5. FLOW COMPLETO (QUELLO GIUSTO)
+utente paga
+   ↓
+Stripe subscription
+   ↓
+webhook → DB = active
+
+pagamento fallisce
+   ↓
+Stripe retry
+   ↓
+DB = past_due
+
+utente non paga
+   ↓
+Stripe cancella
+   ↓
+DB = free
+🔥 ERRORI GRAVI DA EVITARE
+
+❌ fidarti del frontend
+❌ fidarti del JWT per il piano
+❌ non usare webhook
+❌ non gestire past_due
+
+⚡ ARCHITETTURA CORRETTA
+Stripe (pagamenti)
+        ↓
+Webhook
+        ↓
+Database (verità app)
+        ↓
+Middleware accesso
+🧠 FRASE CHIAVE
+
+Il pagamento è un evento.
+Lo stato utente è una decisione.
+
+🚀 SE VUOI CHIUDERE PERFETTO
+
+Posso farti:
+
+👉 email automatiche anti-churn (quelle che recuperano soldi veri)
+👉 oppure dashboard admin con utenti + stato pagamenti live
+👉 oppure funnel conversione (free → paid) ottimizzato
+
+Dimmi 👍
+Copia
+Perfetto, ci siamo. Ti chiudo il piano produzione vero in modo ordinato e senza caos.
+
+✅ Stack minimo consigliato
+Stripe (pagamenti/subscription)
+
+Webhook endpoint server-side
+
+Prisma + DB come sorgente verità
+
+Middleware di accesso basato su plan + subscriptionStatus
+
+UI warning per past_due
+
+1) Stato utente (fonte verità)
+Mantieni SEMPRE questi campi:
+
+plan: free | pro | business
+
+subscriptionStatus: inactive | active | past_due | canceled
+
+stripeCustomerId
+
+stripeSubscriptionId
+
+Regola d’oro: mai fidarsi del frontend per il piano.
+
+2) Checkout / subscription creation
+Flow corretto:
+
+backend crea/reusa customer
+
+backend crea subscription
+
+salva stripeCustomerId + stripeSubscriptionId nel DB
+
+ritorna client_secret se usi PaymentIntent flow
+
+3) Webhook (cuore del sistema)
+Gestisci almeno questi eventi:
+
+invoice.payment_succeeded → subscriptionStatus=active, aggiorna plan
+
+invoice.payment_failed → subscriptionStatus=past_due
+
+customer.subscription.updated → aggiorna plan (priceId → plan)
+
+customer.subscription.deleted → plan=free, subscriptionStatus=canceled
+
+Il webhook deve usare express.raw({ type: 'application/json' }) e verifica firma Stripe.
+
+4) Retry pagamenti (dunning)
+In Stripe Dashboard:
+
+Smart Retries ON
+
+Email payment failure ON
+
+In app:
+
+se past_due: banner + blocco soft sulle feature premium + CTA “Aggiorna carta”.
+
+5) Downgrade/Upgrade
+Solo backend:
+
+stripe.subscriptions.update(...)
+
+proration_behavior: "create_prorations"
+
+il DB si aggiorna via webhook, non direttamente dal frontend.
+
+6) Cancel corretto (anti-churn aggressivo)
+Usa:
+
+cancel_at_period_end: true
+
+Così non bruci relazione cliente: accesso fino a fine ciclo.
+
+7) Access control (critico)
+Middleware:
+
+free può entrare solo in feature free
+
+pro/business in base a piano
+
+se past_due, puoi scegliere:
+
+modalità “grace period”, oppure
+
+blocco premium immediato
+
+8) Errori da evitare assolutamente
+❌ aggiornare piano solo dal client
+
+❌ non usare webhook
+
+❌ non gestire past_due
+
+❌ fidarsi del JWT “vecchio” per autorizzazione premium
+
+Se vuoi, nel prossimo step ti preparo codice completo pronto (Express + Prisma + Stripe) con:
+
+route POST /billing/create-subscription
+
+route POST /billing/webhook
+
+route POST /billing/downgrade
+
+route POST /billing/cancel
+
+middleware requirePlan()
+così lo incolli e parti subito.
+
+tutto end - end
+Copia
+Summary
+Ho implementato una base end-to-end billing con Stripe + Express + Prisma, includendo modello dati utente con plan, subscriptionStatus, stripeCustomerId e stripeSubscriptionId come sorgente di verità applicativa. 
+
+Ho aggiunto il wiring server con gestione webhook Stripe su raw body e health endpoint. 
+
+Ho creato API billing complete:
+
+creazione subscription,
+
+downgrade,
+
+cancel a fine periodo,
+
+webhook handler con validazione firma Stripe. 
+
+Ho implementato la logica business Stripe:
+
+createSubscription,
+
+downgradeSubscription,
+
+cancelAtPeriodEnd,
+
+sync stato DB su eventi invoice.payment_succeeded, invoice.payment_failed, customer.subscription.updated, customer.subscription.deleted. 
+
+Ho aggiunto middleware di access control per piano e stato abbonamento attivo. 
+
+Ho separato client Prisma e Stripe e documentato endpoint/env richiesti in README server. 
+
+Testing
+
+✅ node --check src/server/app.js
+
+✅ node --check src/server/routes/billing.js
+
+✅ node --check src/server/services/billingService.js
+
+✅ git status --short
+
+✅ git diff --check
+
+✅ git add prisma/schema.prisma src/server && git commit -m "Add end-to-end Stripe billing backend scaffold with Prisma"
+
+⚠️ Nessuno screenshot allegato: modifica backend/API (non UI visuale).
+
+
+File (18)
+
+schema.prisma
+prisma/schema.prisma
+Nuovo
+
+AutomationLab.jsx
+src/components/AutomationLab.jsx
+Nuovo
+
+CloudInfra.jsx
+src/components/CloudInfra.jsx
+Nuovo
+
+EnterpriseArch.jsx
+src/components/EnterpriseArch.jsx
+Nuovo
+
+IntuneMDM.jsx
+src/components/IntuneMDM.jsx
+Nuovo
+
+JamfPro.jsx
+src/components/JamfPro.jsx
+Nuovo
+
+MspDashboard.jsx
+src/components/MspDashboard.jsx
+Nuovo
+
+NetworkLab.jsx
+src/components/NetworkLab.jsx
+Nuovo
+
+SecurityAudit.jsx
+src/components/SecurityAudit.jsx
+Nuovo
+
+WinLabHome.jsx
+src/components/WinLabHome.jsx
+Nuovo
+
+index.js
+src/components/index.js
+Nuovo
+
+README.md
+src/server/README.md
+Nuovo
+
+app.js
+src/server/app.js
+Nuovo
+
+requirePlan.js
+src/server/middleware/requirePlan.js
+Nuovo
+
+prisma.js
+src/server/prisma.js
+Nuovo
+
+billing.js
+src/server/routes/billing.js
+Nuovo
+
+billingService.js
+src/server/services/billingService.js
+Nuovo
+
+stripeClient.js
+src/server/stripeClient.js
+Nuovo
+
+quali sono i file per stripe?
+
+
+
+
+Differenze
+Log
+
+prisma/schema.prisma
+prisma/schema.prisma
+Nuovo
++22
+-0
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String   @id @default(cuid())
+  email                String   @unique
+  password             String
+
+  plan                 String   @default("free")
+  subscriptionStatus   String   @default("inactive")
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?  @unique
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+src/components/AutomationLab.jsx
+src/components/AutomationLab.jsx
+Nuovo
++30
+-0
+
+import React, { useState } from 'react';
+
+const AutomationLab = () => {
+  const [steps, setSteps] = useState([]);
+
+  const runPlaybook = () => {
+    setSteps([
+      'TASK [Gathering Facts] ************ ok: [webserver]',
+      'TASK [Install Nginx] ************ changed: [webserver]',
+      'TASK [Deploy config] ************ changed: [webserver]',
+      'PLAY RECAP ************ webserver : ok=3 changed=2 failed=0',
+    ]);
+  };
+
+  return (
+    <div className="rounded-lg bg-slate-800 p-4 font-mono text-orange-400">
+      <div className="mb-2 flex items-center justify-between border-b border-slate-700 pb-2">
+        <span className="text-xs text-slate-400">ansible-playbook site.yml -l webserver</span>
+        <button onClick={runPlaybook} className="rounded bg-orange-600 px-2 py-0.5 text-[10px] text-white">
+          RUN
+        </button>
+      </div>
+      <div className="space-y-1 text-[11px]">
+        {steps.length === 0 ? <p className="text-slate-400">Ready to execute playbook.</p> : steps.map((s) => <p key={s}>{s}</p>)}
+      </div>
+    </div>
+  );
+};
+
+export default AutomationLab;
+src/components/CloudInfra.jsx
+src/components/CloudInfra.jsx
+Nuovo
++38
+-0
+
+src/components/EnterpriseArch.jsx
+src/components/EnterpriseArch.jsx
+Nuovo
++36
+-0
+
+src/components/IntuneMDM.jsx
+src/components/IntuneMDM.jsx
+Nuovo
++147
+-0
+
+src/components/JamfPro.jsx
+src/components/JamfPro.jsx
+Nuovo
++67
+-0
+
+src/components/MspDashboard.jsx
+src/components/MspDashboard.jsx
+Nuovo
++65
+-0
+
+src/components/NetworkLab.jsx
+src/components/NetworkLab.jsx
+Nuovo
++50
+-0
+
+src/components/SecurityAudit.jsx
+src/components/SecurityAudit.jsx
+Nuovo
++54
+-0
+
+src/components/WinLabHome.jsx
+src/components/WinLabHome.jsx
+Nuovo
++210
+-0
+
+src/components/index.js
+src/components/index.js
+Nuovo
++10
+-0
+
+src/server/README.md
+src/server/README.md
+Nuovo
++18
+-0
+
+# Billing End-to-End (Stripe + Prisma)
+
+## Endpoints
+- `POST /billing/create-subscription`
+- `POST /billing/downgrade`
+- `POST /billing/cancel`
+- `POST /billing/webhook` (raw body)
+
+## Required env vars
+- `DATABASE_URL`
+- `STRIPE_SECRET`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_PRO`
+- `STRIPE_PRICE_BUSINESS`
+
+## Notes
+- Database is the source of truth for `plan` and `subscriptionStatus`.
+- Webhook events update user access state in real time.
+src/server/app.js
+src/server/app.js
+Nuovo
++15
+-0
+
+import express from 'express';
+import billingRoutes from './routes/billing.js';
+
+const app = express();
+
+app.use('/billing/webhook', express.raw({ type: 'application/json' }));
+app.use(express.json());
+
+app.get('/health', (_req, res) => {
+  res.json({ ok: true });
+});
+
+app.use('/billing', billingRoutes);
+
+export default app;
+src/server/middleware/requirePlan.js
+src/server/middleware/requirePlan.js
+Nuovo
++28
+-0
+
+const PLAN_RANK = {
+  free: 0,
+  pro: 1,
+  business: 2,
+};
+
+export const requirePlan = (requiredPlan) => {
+  return (req, res, next) => {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (user.subscriptionStatus !== 'active') {
+      return res.status(402).json({ error: 'Subscription inactive', subscriptionStatus: user.subscriptionStatus });
+    }
+
+    const userRank = PLAN_RANK[user.plan] ?? -1;
+    const requiredRank = PLAN_RANK[requiredPlan] ?? 99;
+
+    if (userRank < requiredRank) {
+      return res.status(403).json({ error: 'Upgrade required', requiredPlan });
+    }
+
+    next();
+  };
+};
+src/server/prisma.js
+src/server/prisma.js
+Nuovo
++5
+-0
+
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+export default prisma;
+src/server/routes/billing.js
+src/server/routes/billing.js
+Nuovo
++72
+-0
+
+import express from 'express';
+import stripe from '../stripeClient.js';
+import {
+  cancelAtPeriodEnd,
+  createSubscription,
+  downgradeSubscription,
+  handleStripeEvent,
+} from '../services/billingService.js';
+
+const router = express.Router();
+
+router.post('/create-subscription', async (req, res) => {
+  try {
+    const { userId, email, priceId } = req.body;
+    const subscription = await createSubscription({ userId, email, priceId });
+
+    const paymentIntent = subscription.latest_invoice?.payment_intent;
+
+    return res.status(201).json({
+      subscriptionId: subscription.id,
+      clientSecret: paymentIntent?.client_secret,
+      status: subscription.status,
+    });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/downgrade', async (req, res) => {
+  try {
+    const { subscriptionId, newPriceId } = req.body;
+    await downgradeSubscription({ subscriptionId, newPriceId });
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/cancel', async (req, res) => {
+  try {
+    const { subscriptionId } = req.body;
+    await cancelAtPeriodEnd({ subscriptionId });
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/webhook', async (req, res) => {
+  const signature = req.headers['stripe-signature'];
+
+  if (!signature || !process.env.STRIPE_WEBHOOK_SECRET) {
+    return res.status(400).send('Missing stripe signature or webhook secret');
+  }
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, signature, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (error) {
+    return res.status(400).send(`Webhook Error: ${error.message}`);
+  }
+
+  try {
+    await handleStripeEvent(event);
+    return res.json({ received: true });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+export default router;
+src/server/services/billingService.js
+src/server/services/billingService.js
+Nuovo
++114
+-0
+
+import prisma from '../prisma.js';
+import stripe from '../stripeClient.js';
+
+const PRICE_TO_PLAN = {
+  [process.env.STRIPE_PRICE_PRO]: 'pro',
+  [process.env.STRIPE_PRICE_BUSINESS]: 'business',
+};
+
+const resolvePlanByPriceId = (priceId) => PRICE_TO_PLAN[priceId] || 'free';
+
+export const createSubscription = async ({ userId, email, priceId }) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error('User not found');
+
+  let customerId = user.stripeCustomerId;
+
+  if (!customerId) {
+    const customer = await stripe.customers.create({ email, metadata: { userId } });
+    customerId = customer.id;
+  }
+
+  const subscription = await stripe.subscriptions.create({
+    customer: customerId,
+    items: [{ price: priceId }],
+    payment_behavior: 'default_incomplete',
+    expand: ['latest_invoice.payment_intent'],
+  });
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      stripeCustomerId: customerId,
+      stripeSubscriptionId: subscription.id,
+      subscriptionStatus: 'inactive',
+    },
+  });
+
+  return subscription;
+};
+
+export const downgradeSubscription = async ({ subscriptionId, newPriceId }) => {
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+  await stripe.subscriptions.update(subscriptionId, {
+    items: [{ id: subscription.items.data[0].id, price: newPriceId }],
+    proration_behavior: 'create_prorations',
+  });
+};
+
+export const cancelAtPeriodEnd = async ({ subscriptionId }) => {
+  await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: true });
+};
+
+export const handleStripeEvent = async (event) => {
+  switch (event.type) {
+    case 'invoice.payment_succeeded': {
+      const invoice = event.data.object;
+      const subscriptionId = invoice.subscription;
+
+      if (!subscriptionId) break;
+
+      const sub = await stripe.subscriptions.retrieve(subscriptionId, { expand: ['items.data.price'] });
+      const activePriceId = sub.items.data[0]?.price?.id;
+      const plan = resolvePlanByPriceId(activePriceId);
+
+      await prisma.user.update({
+        where: { stripeSubscriptionId: String(subscriptionId) },
+        data: { subscriptionStatus: 'active', plan },
+      });
+      break;
+    }
+
+    case 'invoice.payment_failed': {
+      const invoice = event.data.object;
+      const subscriptionId = invoice.subscription;
+
+      if (!subscriptionId) break;
+
+      await prisma.user.update({
+        where: { stripeSubscriptionId: String(subscriptionId) },
+        data: { subscriptionStatus: 'past_due' },
+      });
+      break;
+    }
+
+    case 'customer.subscription.updated': {
+      const sub = event.data.object;
+      const activePriceId = sub.items.data[0]?.price?.id;
+      const plan = resolvePlanByPriceId(activePriceId);
+
+      await prisma.user.update({
+        where: { stripeSubscriptionId: sub.id },
+        data: {
+          plan,
+          subscriptionStatus: sub.cancel_at_period_end ? 'active' : sub.status === 'active' ? 'active' : 'inactive',
+        },
+      });
+      break;
+    }
+
+    case 'customer.subscription.deleted': {
+      const sub = event.data.object;
+
+      await prisma.user.update({
+        where: { stripeSubscriptionId: sub.id },
+        data: { plan: 'free', subscriptionStatus: 'canceled' },
+      });
+      break;
+    }
+
+    default:
+      break;
+  }
+};
+src/server/stripeClient.js
+src/server/stripeClient.js
+Nuovo
++11
+-0
+
+import Stripe from 'stripe';
+
+if (!process.env.STRIPE_SECRET) {
+  throw new Error('STRIPE_SECRET is required');
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET, {
+  apiVersion: '2025-02-24.acacia',
+});
+
+export default stripe;

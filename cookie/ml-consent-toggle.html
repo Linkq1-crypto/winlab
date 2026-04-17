@@ -1,0 +1,252 @@
+<!--
+  ============================================================
+  WINLAB — ML TRAINING CONSENT TOGGLE
+  ============================================================
+  Two places where this goes:
+  
+  1. REGISTRATION FORM — add this block after the password field
+     and before the "Create Account" button
+  
+  2. ACCOUNT SETTINGS — add this in the user settings/profile page
+     so users can change their preference anytime
+  
+  Backend: store the preference in the User model (Prisma schema)
+  ============================================================
+-->
+
+<!-- ======== STYLES ======== -->
+<style>
+  .wl-ml-consent {
+    margin: 16px 0;
+    padding: 16px;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px;
+    background: #fafafa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .wl-ml-consent-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .wl-ml-consent-toggle {
+    position: relative;
+    flex-shrink: 0;
+    width: 44px;
+    height: 24px;
+    margin-top: 2px;
+  }
+
+  .wl-ml-consent-toggle input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    margin: 0;
+    z-index: 1;
+  }
+
+  .wl-ml-consent-track {
+    position: absolute;
+    inset: 0;
+    background: #d4d4d4;
+    border-radius: 12px;
+    transition: background 0.2s ease;
+  }
+
+  .wl-ml-consent-toggle input:checked + .wl-ml-consent-track {
+    background: #2563eb;
+  }
+
+  .wl-ml-consent-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  .wl-ml-consent-toggle input:checked ~ .wl-ml-consent-thumb {
+    transform: translateX(20px);
+  }
+
+  .wl-ml-consent-text h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 4px;
+  }
+
+  .wl-ml-consent-text p {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #666;
+    margin: 0;
+  }
+
+  .wl-ml-consent-text a {
+    color: #2563eb;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .wl-ml-consent-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #e0f2fe;
+    color: #0369a1;
+    margin-left: 8px;
+  }
+</style>
+
+<!-- ======== HTML — REGISTRATION VERSION ======== -->
+<div class="wl-ml-consent" id="wl-ml-consent-reg">
+  <div class="wl-ml-consent-header">
+    <div class="wl-ml-consent-toggle">
+      <input type="checkbox" id="ml-consent-checkbox" name="mlConsent" value="true">
+      <div class="wl-ml-consent-track"></div>
+      <div class="wl-ml-consent-thumb"></div>
+    </div>
+    <div class="wl-ml-consent-text">
+      <h4>Help improve WinLab <span class="wl-ml-consent-badge">Optional</span></h4>
+      <p>
+        Allow WinLab to use your <strong>anonymized</strong> lab interactions 
+        (commands typed, completion patterns) to improve our training scenarios. 
+        All data is stripped of personal identifiers before use. 
+        This does not affect your experience — you can change this anytime in Settings. 
+        <a href="/privacy#ml-training">Learn more</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ======== HTML — SETTINGS VERSION (with status indicator) ======== -->
+<!--
+<div class="wl-ml-consent" id="wl-ml-consent-settings">
+  <div class="wl-ml-consent-header">
+    <div class="wl-ml-consent-toggle">
+      <input type="checkbox" id="ml-consent-settings-checkbox" name="mlConsent"
+             onchange="updateMLConsent(this.checked)">
+      <div class="wl-ml-consent-track"></div>
+      <div class="wl-ml-consent-thumb"></div>
+    </div>
+    <div class="wl-ml-consent-text">
+      <h4>ML Training Data <span class="wl-ml-consent-badge">Optional</span></h4>
+      <p>
+        Allow WinLab to use your anonymized lab interactions to improve training scenarios. 
+        All personal identifiers are removed before processing. 
+        <a href="/privacy#ml-training">Read our full ML data policy</a>
+      </p>
+    </div>
+  </div>
+</div>
+-->
+
+<!-- ======== JAVASCRIPT ======== -->
+<script>
+// --- Registration flow ---
+// Read the checkbox value when the registration form is submitted
+// and include it in the POST /api/auth/register payload:
+//
+// const mlConsent = document.getElementById('ml-consent-checkbox')?.checked || false;
+//
+// fetch('/api/auth/register', {
+//   method: 'POST',
+//   headers: { 'Content-Type': 'application/json' },
+//   body: JSON.stringify({ email, password, mlConsent })
+// });
+
+// --- Settings flow ---
+async function updateMLConsent(enabled) {
+  try {
+    const res = await fetch('/api/user/ml-consent', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // httpOnly JWT cookie
+      body: JSON.stringify({ mlConsent: enabled })
+    });
+    if (!res.ok) throw new Error('Failed to update');
+  } catch (err) {
+    console.error('ML consent update failed:', err);
+    // Revert toggle on failure
+    const cb = document.getElementById('ml-consent-settings-checkbox');
+    if (cb) cb.checked = !enabled;
+  }
+}
+
+// --- Load current preference in Settings page ---
+async function loadMLConsent() {
+  try {
+    const res = await fetch('/api/user/profile', { credentials: 'include' });
+    const data = await res.json();
+    const cb = document.getElementById('ml-consent-settings-checkbox');
+    if (cb) cb.checked = data.mlConsent || false;
+  } catch (err) {
+    console.error('Failed to load ML consent:', err);
+  }
+}
+</script>
+
+<!--
+  ============================================================
+  BACKEND CHANGES NEEDED (server.js + prisma/schema.prisma):
+  ============================================================
+  
+  1. PRISMA SCHEMA — add to User model:
+  
+     model User {
+       // ... existing fields ...
+       mlConsent       Boolean   @default(false)
+       mlConsentDate   DateTime?
+     }
+  
+  2. REGISTRATION ENDPOINT — update POST /api/auth/register:
+  
+     const { email, password, mlConsent } = req.body;
+     const user = await prisma.user.create({
+       data: {
+         email,
+         password: hashedPassword,
+         mlConsent: mlConsent || false,
+         mlConsentDate: mlConsent ? new Date() : null,
+       }
+     });
+  
+  3. NEW ENDPOINT — PUT /api/user/ml-consent:
+  
+     app.put('/api/user/ml-consent', authMiddleware, async (req, res) => {
+       const { mlConsent } = req.body;
+       await prisma.user.update({
+         where: { id: req.user.id },
+         data: {
+           mlConsent: Boolean(mlConsent),
+           mlConsentDate: mlConsent ? new Date() : null,
+         }
+       });
+       // Log for audit trail
+       console.log(`[ML-CONSENT] user=${req.user.id} consent=${mlConsent} at=${new Date().toISOString()}`);
+       res.json({ success: true, mlConsent });
+     });
+  
+  4. DATA EXPORT — when extracting training data, filter:
+  
+     const consentedUsers = await prisma.user.findMany({
+       where: { mlConsent: true }
+     });
+     // Only use lab data from these user IDs
+  
+  ============================================================
+-->

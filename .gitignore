@@ -1,0 +1,35 @@
+# Environment – NEVER commit secrets
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Prisma
+*.db
+*.db-journal
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# AI tooling configs (private)
+.qwen/
+.claude/
+
+# Reviews & cache
+.qwen/reviews/
+.qwen/review-cache/
+
+# QA Reports
+qa-report/
+playwright-report/
+test-results/

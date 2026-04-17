@@ -1,0 +1,697 @@
+
+Complete P1 and P2 simulators in JSX
+11 apr
+·
+MindfulMotivation
+·
+main
+
+Archivia
+
+Condividi
+
+Crea PR
+
+
+1
+. Intune MDM (intune-mdm)\njsx\nimport React, { useState } from 'react';\n\nconst IntuneMDM = () => {\n  const [devices, setDevices] = useState([\n    { id: 'WIN-01', status: 'Compliant', os: 'Windows 11' },\n    { id: 'WIN-02', status: 'Non-compliant', os: 'Windows 10' }\n  ]);\n\n  return (\n    <div className="p-4 bg-slate-900 text-white rounded-lg">\n      <h2 className="text-xl font-bold mb-4">Microsoft Intune Dashboard</h2>\n      <div className="grid gap-2">\n        {devices.map(d => (\n          <div key={d.id} className="flex justify-between border-b border-slate-700 p-2">\n            <span>{d.id} ({d.os})</span>\n            <span className={d.status === 'Compliant' ? 'text-green-400' : 'text-red-400'}>\n              {d.status}\n            </span>\n          </div>\n        ))}\n      </div>\n      <button className="mt-4 bg-blue-600 px-4 py-2 rounded">Create Compliance Policy</button>\n    </div>\n  );\n};\n\nexport default IntuneMDM;\nUsa il codice con cautela.\n\n2. Jamf Pro (jamf-pro)\njsx\nimport React, { useState } from 'react';\n\nconst JamfPro = () => {\n  const [profiles, setProfiles] = useState(['FileVault Encryption', 'Wi-Fi Corporate']);\n\n  return (\n    <div className="p-4 bg-gray-100 text-gray-800 rounded-lg shadow-inner">\n      <div className="bg-red-700 text-white p-2 -mx-4 -mt-4 mb-4 rounded-t-lg">JAMF PRO ADMIN</div>\n      <h3 className="font-semibold">Configuration Profiles</h3>\n      <ul className="list-disc ml-5 mt-2">\n        {profiles.map(p => <li key={p}>{p}</li>)}\n      </ul>\n      <div className="mt-4 p-3 bg-white border border-dashed border-gray-400">\n        <p className="text-sm text-gray-500 italic">Drag & Drop .mobileconfig here</p>\n      </div>\n    </div>\n  );\n};\n\nexport default JamfPro;\nUsa il codice con cautela.\n\n3. Network Lab (network-lab)\njsx\nimport React, { useState } from 'react';\n\nconst NetworkLab = () => {\n  const [log, setLog] = useState(['Switch-L3 initialized...', 'VLAN 10: Up']);\n\n  const runPing = () => setLog([...log, 'Pinging 192.168.1.1... Reply in 2ms']);\n\n  return (\n    <div className="p-4 bg-black text-green-500 font-mono rounded-lg">\n      <div className="mb-4">\n        {log.map((line, i) => <div key={i}>{`> ${line}`}</div>)}\n      </div>\n      <div className="flex gap-2">\n        <span className="text-white">console#</span>\n        <input \n          className="bg-transparent outline-none border-none text-green-500 w-full"\n          onKeyDown={(e) => e.key === 'Enter' && runPing()}\n          placeholder="type 'ping'..."\n        />\n      </div>\n    </div>\n  );\n};\n\nexport default NetworkLab;\nUsa il codice con cautela.\n\nNote Rapide:\nStile: Ho usato classi Tailwind (comuni in questi progetti) per darti un look pulito subito.\nLogica: Sono interattivi (puoi aggiungere policy o simulare comandi da terminale).\nVuoi che procediamo con gli altri della lista P1 (Automation/Cloud) o preferisci rifinire la logica di questi P0?\nLe risposte dell'AI potrebbero contenere errori. Scopri di più\n\n\n\n\ntutti perfetto\nOttimo, completiamo la lista. Ti ho preparato i restanti simulatori (dal #4 al #8), mantenendo lo stile JSX + Tailwind per una coerenza visiva immediata.\n4. Security Audit (security-audit) - P0\njsx\nimport React, { useState } from 'react';\n\nconst SecurityAudit = () => {\n  const [scanned, setScanned] = useState(false);\n  const vulnerabilities = [\n    { severity: 'High', title: 'CVE-2024-21408', target: 'Server-01' },\n    { severity: 'Medium', title: 'Insecure Cipher Suite', target: 'Web-GW' }\n  ];\n\n  return (\n    <div className="p-4 bg-zinc-950 text-emerald-500 border border-emerald-900 rounded-lg">\n      <div className="flex justify-between items-center mb-4">\n        <h2 className="font-bold uppercase tracking-widest text-sm">Vulnerability Scanner</h2>\n        <button onClick={() => setScanned(true)} className="bg-emerald-600 text-black px-3 py-1 text-xs font-bold rounded">START SCAN</button>\n      </div>\n      {scanned ? (\n        <div className="space-y-2">\n          {vulnerabilities.map((v, i) => (\n            <div key={i} className="bg-zinc-900 p-2 border-l-2 border-red-500">\n              <span className="text-red-500 font-bold mr-2">[{v.severity}]</span>\n              <span className="text-white">{v.title}</span>\n              <p className="text-[10px] text-zinc-500 uppercase">{v.target}</p>\n            </div>\n          ))}\n        </div>\n      ) : <p className="animate-pulse text-zinc-600">Waiting for scan initiation...</p>}\n    </div>\n  );\n};\nUsa il codice con cautela.\n\n5. Enterprise Architecture (enterprise-arch) - P1\njsx\nimport React from 'react';\n\nconst EnterpriseArch = () => (\n  <div className="p-4 bg-slate-100 text-slate-900 rounded-lg shadow-md border-t-4 border-blue-600">\n    <div className="mb-4">\n      <h3 className="font-bold text-blue-800">AD Topology: contoso.local</h3>\n      <div className="flex items-center gap-4 mt-4">\n        <div className="p-2 bg-blue-100 border border-blue-300 text-xs rounded text-center w-24">DC-PRIMARY<br/>(Master)</div>\n        <div className="h-[1px] w-10 bg-blue-300"></div>\n        <div className="p-2 bg-blue-100 border border-blue-300 text-xs rounded text-center w-24">DC-SECONDARY<br/>(Replica)</div>\n      </div>\n    </div>\n    <div className="text-xs bg-white p-2 rounded border">\n      <p className="font-mono font-bold text-gray-500">Active GPOs:</p>\n      <ul className="list-inside list-disc">\n        <li>Default Domain Policy</li>\n        <li>Disable-USB-Storage</li>\n      </ul>\n    </div>\n  </div>\n);\nUsa il codice con cautela.\n\n6. Automation (automation) - P1\njsx\nimport React, { useState } from 'react';\n\nconst AutomationLab = () => {\n  const [playbookRunning, setPlaybookRunning] = useState(false);\n\n  return (\n    <div className="p-4 bg-slate-800 text-orange-400 font-mono rounded-lg">\n      <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-2">\n        <span className="text-xs text-slate-400">ansible-playbook --site.yml</span>\n        <button \n          onClick={() => setPlaybookRunning(true)}\n          className="bg-orange-600 text-white px-2 py-0.5 text-[10px] rounded"\n        >RUN</button>\n      </div>\n      <div className="text-[11px]">\n        <p className="text-green-400 font-bold">TASK [Gathering Facts] ************ ok: [webserver]</p>\n        {playbookRunning && (\n          <p className="mt-1 animate-pulse">TASK [Install Nginx] ************ changed: [webserver]</p>\n        )}\n      </div>\n    </div>\n  );\n};\nUsa il codice con cautela.\n\n7. Cloud Infrastructure (cloud-infrastructure) - P1\njsx\nimport React from 'react';\n\nconst CloudInfra = () => (\n  <div className="p-4 bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-lg overflow-hidden">\n    <div className="flex gap-2 mb-4">\n      <div className="w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_8px_orange]"></div>\n      <span className="text-[10px] font-bold tracking-widest">AWS VPC CONSOLE</span>\n    </div>\n    <div className="grid grid-cols-2 gap-2">\n      <div className="p-2 bg-white/5 border border-white/10 rounded">\n        <p className="text-[10px] text-indigo-300">EC2 Instances</p>\n        <p className="text-xl">12</p>\n      </div>\n      <div className="p-2 bg-white/5 border border-white/10 rounded">\n        <p className="text-[10px] text-indigo-300">S3 Buckets</p>\n        <p className="text-xl">4</p>\n      </div>\n    </div>\n    <div className="mt-3 p-2 bg-indigo-500/20 rounded text-[10px]">Region: us-east-1 (N. Virginia)</div>\n  </div>\n);\nUsa il codice con cautela.\n\n8. Multi-Tenant MSP (msp-multi-tenant) - P2\njsx\nimport React from 'react';\n\nconst MspDashboard = () => (\n  <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">\n    <div className="flex justify-between mb-4 border-b pb-2">\n      <h2 className="text-sm font-bold text-gray-700 uppercase tracking-tighter">MSP Central</h2>\n      <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">API ONLINE</span>\n    </div>\n    <table className="w-full text-[11px]">\n      <thead>\n        <tr className="text-left text-gray-400 uppercase">\n          <th className="pb-2">Client</th>\n          <th className="pb-2 text-right">SLA Status</th>\n        </tr>\n      </thead>\n      <tbody>\n        <tr><td>Acme Corp</td><td className="text-right text-green-600">99.9%</td></tr>\n        <tr><td>Cyberdyne</td><td className="text-right text-yellow-600">97.2%</td></tr>\n        <tr><td>Globex</td><td className="text-right text-red-600">88.5%</td></tr>\n      </tbody>\n    </table>\n  </div>\n);\n li fai reali ... per favore ... sempre in jsx
+Copia
+Summary
+
+Ho creato versioni reali e interattive in JSX per tutti gli 8 simulatori richiesti, con stato, azioni utente e logica applicativa (non solo UI statica): Intune MDM, Jamf Pro, Network Lab, Security Audit, Enterprise Architecture, Automation Lab, Cloud Infrastructure, MSP Multi-Tenant. 
+
+Ho aggiunto un barrel export src/components/index.js per importarli facilmente dal resto dell’app. 
+
+Ho fatto commit su branch corrente con messaggio: Add realistic JSX simulator components for IT labs.
+
+Ho anche creato la PR tramite tool make_pr come richiesto.
+
+Testing
+
+✅ git status --short
+
+✅ nl -ba src/components/IntuneMDM.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/JamfPro.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/NetworkLab.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/SecurityAudit.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/EnterpriseArch.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/AutomationLab.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/CloudInfra.jsx | sed -n '1,220p'
+
+✅ nl -ba src/components/MspDashboard.jsx | sed -n '1,260p'
+
+✅ nl -ba src/components/index.js
+
+Se vuoi, nel prossimo step posso collegarteli anche in una singola pagina demo (LabsDashboard.jsx) con tabs/filter per priorità P0/P1/P2.
+
+
+File (9)
+sono tutti reali?
+Copia
+Ottima domanda: no, non sono “reali” nel senso di produzione.
+
+Quelli che ho messo sono simulatori realistici:
+
+UI reale in React/JSX ✅
+
+logica locale/interattiva reale (state, azioni, flussi) ✅
+
+nessuna integrazione live con Intune, Jamf, AWS, scanner CVE, ecc. ❌
+
+Quindi: sembrano e si comportano come dashboard vere, ma i dati sono mock/in-memory.
+
+Se vuoi, nel prossimo step li rendo davvero “reali” collegando API:
+
+Intune → Microsoft Graph
+
+Jamf Pro API
+
+AWS SDK/CloudWatch
+
+Scanner (es. OpenVAS/Nessus API)
+
+Backend Node/Express con auth + persistenza (Postgres)
+
+Se mi dici da quale dei 8 iniziare, lo trasformo in versione production-like mantenendo JSX.
+
+per un lab di formzione . vanno bne, si?
+Copia
+Sì, per un lab di formazione vanno bene 👍
+
+Sono adatti perché:
+
+sono in JSX puro e facili da leggere/modificare,
+
+hanno interazioni realistiche (toggle policy, comandi console, scan/remediation, ecc.),
+
+non richiedono integrazioni esterne complesse.
+
+Per un training sono perfetti come:
+
+demo in aula,
+
+esercizi pratici,
+
+base per challenge (aggiungere API, auth, persistenza).
+
+Se vuoi, posso prepararti una versione “didattica” con:
+
+obiettivi per modulo,
+
+task step-by-step,
+
+checklist di valutazione per studenti.
+
+come li salvo in unica volta
+Copia
+Certo — hai 2 modi per salvarli “in unica volta” 👇
+
+1) Salvarli come progetto (tutti i file insieme)
+Se sei già nella repo, basta un unico commit:
+
+✅ git add src/components
+
+✅ git commit -m "Add lab components"
+
+✅ git push
+
+In questo modo salvi/pubblici tutti i componenti in una volta sola.
+
+2) Usarli in una volta sola nel codice (import unico)
+L’ho già predisposto con src/components/index.js, quindi puoi importare tutto da un solo punto. 
+
+Esempio:
+
+import {
+  IntuneMDM,
+  JamfPro,
+  NetworkLab,
+  SecurityAudit,
+  EnterpriseArch,
+  AutomationLab,
+  CloudInfra,
+  MspDashboard
+} from './components';
+Se vuoi, ti preparo anche un singolo file LabsSuite.jsx che li renderizza tutti insieme in griglia (così li hai “in un colpo solo” anche a schermo).
+
+
+
+
+Differenze
+Log
+
+src/components/AutomationLab.jsx
+src/components/AutomationLab.jsx
+Nuovo
++30
+-0
+
+import React, { useState } from 'react';
+
+const AutomationLab = () => {
+  const [steps, setSteps] = useState([]);
+
+  const runPlaybook = () => {
+    setSteps([
+      'TASK [Gathering Facts] ************ ok: [webserver]',
+      'TASK [Install Nginx] ************ changed: [webserver]',
+      'TASK [Deploy config] ************ changed: [webserver]',
+      'PLAY RECAP ************ webserver : ok=3 changed=2 failed=0',
+    ]);
+  };
+
+  return (
+    <div className="rounded-lg bg-slate-800 p-4 font-mono text-orange-400">
+      <div className="mb-2 flex items-center justify-between border-b border-slate-700 pb-2">
+        <span className="text-xs text-slate-400">ansible-playbook site.yml -l webserver</span>
+        <button onClick={runPlaybook} className="rounded bg-orange-600 px-2 py-0.5 text-[10px] text-white">
+          RUN
+        </button>
+      </div>
+      <div className="space-y-1 text-[11px]">
+        {steps.length === 0 ? <p className="text-slate-400">Ready to execute playbook.</p> : steps.map((s) => <p key={s}>{s}</p>)}
+      </div>
+    </div>
+  );
+};
+
+export default AutomationLab;
+src/components/CloudInfra.jsx
+src/components/CloudInfra.jsx
+Nuovo
++38
+-0
+
+import React, { useMemo, useState } from 'react';
+
+const CloudInfra = () => {
+  const [instances, setInstances] = useState(12);
+  const [buckets] = useState(4);
+
+  const monthlyEstimate = useMemo(() => (instances * 42 + buckets * 3).toFixed(2), [instances, buckets]);
+
+  return (
+    <div className="overflow-hidden rounded-lg bg-gradient-to-br from-indigo-900 to-slate-900 p-4 text-white">
+      <div className="mb-4 flex gap-2">
+        <div className="h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_8px_orange]" />
+        <span className="text-[10px] font-bold tracking-widest">AWS VPC CONSOLE</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded border border-white/10 bg-white/5 p-2">
+          <p className="text-[10px] text-indigo-300">EC2 Instances</p>
+          <p className="text-xl">{instances}</p>
+        </div>
+        <div className="rounded border border-white/10 bg-white/5 p-2">
+          <p className="text-[10px] text-indigo-300">S3 Buckets</p>
+          <p className="text-xl">{buckets}</p>
+        </div>
+      </div>
+      <div className="mt-3 flex gap-2 text-xs">
+        <button onClick={() => setInstances((n) => n + 1)} className="rounded bg-indigo-500 px-2 py-1">
+          Scale +1
+        </button>
+        <button onClick={() => setInstances((n) => Math.max(0, n - 1))} className="rounded bg-indigo-700 px-2 py-1">
+          Scale -1
+        </button>
+      </div>
+      <div className="mt-3 rounded bg-indigo-500/20 p-2 text-[10px]">Region: us-east-1 · Estimated monthly: ${monthlyEstimate}</div>
+    </div>
+  );
+};
+
+export default CloudInfra;
+src/components/EnterpriseArch.jsx
+src/components/EnterpriseArch.jsx
+Nuovo
++36
+-0
+
+import React, { useState } from 'react';
+
+const EnterpriseArch = () => {
+  const [sites] = useState([
+    { name: 'HQ', dc: 'DC-PRIMARY', subnet: '10.10.0.0/24', healthy: true },
+    { name: 'DR', dc: 'DC-SECONDARY', subnet: '10.20.0.0/24', healthy: true },
+    { name: 'Branch', dc: 'RODC-01', subnet: '10.30.0.0/24', healthy: false },
+  ]);
+
+  return (
+    <div className="rounded-lg border-t-4 border-blue-600 bg-slate-100 p-4 text-slate-900 shadow-md">
+      <h3 className="mb-3 font-bold text-blue-800">AD Topology: contoso.local</h3>
+      <div className="grid gap-2 md:grid-cols-3">
+        {sites.map((s) => (
+          <div key={s.name} className="rounded border border-blue-200 bg-white p-2 text-xs">
+            <p className="font-semibold">{s.name}</p>
+            <p>{s.dc}</p>
+            <p className="text-gray-500">{s.subnet}</p>
+            <p className={s.healthy ? 'text-green-600' : 'text-red-600'}>{s.healthy ? 'Replication healthy' : 'Replication lagging'}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 rounded border bg-white p-2 text-xs">
+        <p className="font-mono font-bold text-gray-500">Active GPOs:</p>
+        <ul className="list-inside list-disc">
+          <li>Default Domain Policy</li>
+          <li>Disable-USB-Storage</li>
+          <li>LAPS-Password-Rotation</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+export default EnterpriseArch;
+src/components/IntuneMDM.jsx
+src/components/IntuneMDM.jsx
+Nuovo
++147
+-0
+
+import React, { useMemo, useState } from 'react';
+
+const initialDevices = [
+  {
+    id: 'WIN-01',
+    user: 'm.rossi',
+    os: 'Windows 11 23H2',
+    encrypted: true,
+    osUpToDate: true,
+    avActive: true,
+    lastCheckIn: '2026-04-11 08:22',
+  },
+  {
+    id: 'WIN-02',
+    user: 'a.bianchi',
+    os: 'Windows 10 22H2',
+    encrypted: false,
+    osUpToDate: true,
+    avActive: true,
+    lastCheckIn: '2026-04-11 08:01',
+  },
+  {
+    id: 'WIN-03',
+    user: 'l.verdi',
+    os: 'Windows 11 22H2',
+    encrypted: true,
+    osUpToDate: false,
+    avActive: true,
+    lastCheckIn: '2026-04-10 18:40',
+  },
+];
+
+const evaluateCompliance = (device, policy) => {
+  const checks = {
+    encrypted: !policy.requireEncryption || device.encrypted,
+    osUpToDate: !policy.requireOsUpToDate || device.osUpToDate,
+    avActive: !policy.requireAvActive || device.avActive,
+  };
+
+  const failedRules = Object.entries(checks)
+    .filter(([, pass]) => !pass)
+    .map(([rule]) => rule);
+
+  return {
+    compliant: failedRules.length === 0,
+    failedRules,
+  };
+};
+
+const IntuneMDM = () => {
+  const [policy, setPolicy] = useState({
+    name: 'Baseline Windows Compliance',
+    requireEncryption: true,
+    requireOsUpToDate: true,
+    requireAvActive: true,
+  });
+
+  const [devices, setDevices] = useState(initialDevices);
+
+  const report = useMemo(
+    () =>
+      devices.map((d) => ({
+        ...d,
+        ...evaluateCompliance(d, policy),
+      })),
+    [devices, policy],
+  );
+
+  const compliantCount = report.filter((d) => d.compliant).length;
+
+  const remediateDevice = (id) => {
+    setDevices((prev) =>
+      prev.map((d) =>
+        d.id === id
+          ? { ...d, encrypted: true, osUpToDate: true, avActive: true, lastCheckIn: '2026-04-11 09:00' }
+          : d,
+      ),
+    );
+  };
+
+  return (
+    <div className="rounded-lg bg-slate-900 p-4 text-white">
+      <h2 className="mb-1 text-xl font-bold">Microsoft Intune Dashboard</h2>
+      <p className="mb-4 text-sm text-slate-300">Policy: {policy.name}</p>
+
+      <div className="mb-4 flex flex-wrap gap-2 text-xs">
+        <label className="flex items-center gap-2 rounded bg-slate-800 px-2 py-1">
+          <input
+            type="checkbox"
+            checked={policy.requireEncryption}
+            onChange={(e) => setPolicy((p) => ({ ...p, requireEncryption: e.target.checked }))}
+          />
+          Require BitLocker
+        </label>
+        <label className="flex items-center gap-2 rounded bg-slate-800 px-2 py-1">
+          <input
+            type="checkbox"
+            checked={policy.requireOsUpToDate}
+            onChange={(e) => setPolicy((p) => ({ ...p, requireOsUpToDate: e.target.checked }))}
+          />
+          Require OS Updates
+        </label>
+        <label className="flex items-center gap-2 rounded bg-slate-800 px-2 py-1">
+          <input
+            type="checkbox"
+            checked={policy.requireAvActive}
+            onChange={(e) => setPolicy((p) => ({ ...p, requireAvActive: e.target.checked }))}
+          />
+          Require Defender
+        </label>
+      </div>
+
+      <p className="mb-2 text-sm">
+        Compliance score: <span className="font-semibold">{compliantCount}/{report.length}</span>
+      </p>
+
+      <div className="grid gap-2">
+        {report.map((d) => (
+          <div key={d.id} className="rounded border border-slate-700 p-2 text-sm">
+            <div className="flex items-center justify-between">
+              <span>
+                {d.id} ({d.os}) — {d.user}
+              </span>
+              <span className={d.compliant ? 'text-green-400' : 'text-red-400'}>
+                {d.compliant ? 'Compliant' : 'Non-compliant'}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-slate-400">Last check-in: {d.lastCheckIn}</p>
+            {!d.compliant && (
+              <div className="mt-2 flex items-center justify-between">
+                <p className="text-xs text-red-300">Failed: {d.failedRules.join(', ')}</p>
+                <button
+                  onClick={() => remediateDevice(d.id)}
+                  className="rounded bg-blue-600 px-2 py-1 text-xs"
+                >
+                  Remediate
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default IntuneMDM;
+src/components/JamfPro.jsx
+src/components/JamfPro.jsx
+Nuovo
++67
+-0
+
+import React, { useState } from 'react';
+
+const JamfPro = () => {
+  const [profiles, setProfiles] = useState([
+    { name: 'FileVault Encryption', scope: 'All Managed Macs', enabled: true },
+    { name: 'Wi-Fi Corporate', scope: 'HQ + Branch', enabled: true },
+  ]);
+  const [profileName, setProfileName] = useState('');
+  const [scope, setScope] = useState('Pilot Group');
+
+  const addProfile = () => {
+    if (!profileName.trim()) return;
+    setProfiles((prev) => [...prev, { name: profileName.trim(), scope, enabled: false }]);
+    setProfileName('');
+  };
+
+  const toggleProfile = (name) => {
+    setProfiles((prev) => prev.map((p) => (p.name === name ? { ...p, enabled: !p.enabled } : p)));
+  };
+
+  return (
+    <div className="rounded-lg bg-gray-100 p-4 text-gray-800 shadow-inner">
+      <div className="-mx-4 -mt-4 mb-4 rounded-t-lg bg-red-700 p-2 text-white">JAMF PRO ADMIN</div>
+
+      <h3 className="font-semibold">Configuration Profiles</h3>
+      <ul className="mt-2 space-y-2">
+        {profiles.map((p) => (
+          <li key={p.name} className="rounded border bg-white p-2 text-sm">
+            <div className="flex items-center justify-between">
+              <span>{p.name}</span>
+              <button
+                onClick={() => toggleProfile(p.name)}
+                className={`rounded px-2 py-0.5 text-xs ${p.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}
+              >
+                {p.enabled ? 'Enabled' : 'Disabled'}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500">Scope: {p.scope}</p>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-4 rounded border border-dashed border-gray-400 bg-white p-3">
+        <p className="mb-2 text-xs font-semibold text-gray-500">Create profile</p>
+        <div className="grid gap-2 md:grid-cols-3">
+          <input
+            value={profileName}
+            onChange={(e) => setProfileName(e.target.value)}
+            placeholder="Profile name"
+            className="rounded border px-2 py-1 text-sm"
+          />
+          <input
+            value={scope}
+            onChange={(e) => setScope(e.target.value)}
+            placeholder="Scope"
+            className="rounded border px-2 py-1 text-sm"
+          />
+          <button onClick={addProfile} className="rounded bg-blue-600 px-3 py-1 text-sm text-white">
+            Upload .mobileconfig
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default JamfPro;
+src/components/MspDashboard.jsx
+src/components/MspDashboard.jsx
+Nuovo
++65
+-0
+
+import React, { useMemo, useState } from 'react';
+
+const initialClients = [
+  { name: 'Acme Corp', uptime: 99.9, incidents: 1 },
+  { name: 'Cyberdyne', uptime: 97.2, incidents: 4 },
+  { name: 'Globex', uptime: 88.5, incidents: 10 },
+];
+
+const MspDashboard = () => {
+  const [clients, setClients] = useState(initialClients);
+
+  const avgUptime = useMemo(() => (clients.reduce((acc, c) => acc + c.uptime, 0) / clients.length).toFixed(2), [clients]);
+
+  const resolveIncident = (name) => {
+    setClients((prev) =>
+      prev.map((c) =>
+        c.name === name
+          ? {
+              ...c,
+              incidents: Math.max(0, c.incidents - 1),
+              uptime: Math.min(99.99, Number((c.uptime + 0.2).toFixed(2))),
+            }
+          : c,
+      ),
+    );
+  };
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="mb-4 flex justify-between border-b pb-2">
+        <h2 className="text-sm font-bold uppercase tracking-tighter text-gray-700">MSP Central</h2>
+        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-700">API ONLINE</span>
+      </div>
+      <p className="mb-3 text-xs text-gray-500">Portfolio uptime average: {avgUptime}%</p>
+      <table className="w-full text-[11px]">
+        <thead>
+          <tr className="text-left uppercase text-gray-400">
+            <th className="pb-2">Client</th>
+            <th className="pb-2 text-right">SLA</th>
+            <th className="pb-2 text-right">Incidents</th>
+            <th className="pb-2 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {clients.map((c) => (
+            <tr key={c.name} className="border-t">
+              <td>{c.name}</td>
+              <td className={`text-right ${c.uptime >= 99 ? 'text-green-600' : c.uptime >= 95 ? 'text-yellow-600' : 'text-red-600'}`}>
+                {c.uptime}%
+              </td>
+              <td className="text-right">{c.incidents}</td>
+              <td className="text-right">
+                <button onClick={() => resolveIncident(c.name)} className="rounded bg-gray-900 px-2 py-0.5 text-white">
+                  Resolve
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+export default MspDashboard;
+src/components/NetworkLab.jsx
+src/components/NetworkLab.jsx
+Nuovo
++50
+-0
+
+import React, { useState } from 'react';
+
+const NetworkLab = () => {
+  const [log, setLog] = useState([
+    'Switch-L3 initialized...',
+    'VLAN 10: Up',
+    'VLAN 20: Up',
+  ]);
+  const [command, setCommand] = useState('');
+
+  const executeCommand = () => {
+    const cmd = command.trim().toLowerCase();
+    if (!cmd) return;
+
+    if (cmd.startsWith('ping')) {
+      const target = cmd.split(' ')[1] || '192.168.1.1';
+      setLog((prev) => [...prev, `Pinging ${target}... Reply in 2ms`]);
+    } else if (cmd === 'show vlan') {
+      setLog((prev) => [...prev, 'VLAN 10 - USERS - ACTIVE', 'VLAN 20 - SERVERS - ACTIVE']);
+    } else if (cmd === 'show ip route') {
+      setLog((prev) => [...prev, '0.0.0.0/0 via 192.168.1.254', '192.168.1.0/24 directly connected']);
+    } else {
+      setLog((prev) => [...prev, `Unknown command: ${cmd}`]);
+    }
+
+    setCommand('');
+  };
+
+  return (
+    <div className="rounded-lg bg-black p-4 font-mono text-green-500">
+      <div className="mb-4 h-48 overflow-auto rounded border border-green-800 p-2 text-sm">
+        {log.map((line, i) => (
+          <div key={`${line}-${i}`}>{`> ${line}`}</div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <span className="text-white">console#</span>
+        <input
+          className="w-full border-none bg-transparent text-green-500 outline-none"
+          value={command}
+          onChange={(e) => setCommand(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && executeCommand()}
+          placeholder="ping 8.8.8.8 | show vlan | show ip route"
+        />
+      </div>
+    </div>
+  );
+};
+
+export default NetworkLab;
+src/components/SecurityAudit.jsx
+src/components/SecurityAudit.jsx
+Nuovo
++54
+-0
+
+import React, { useState } from 'react';
+
+const mockFindings = [
+  { severity: 'High', title: 'CVE-2024-21408', target: 'Server-01', patch: 'KB5037771' },
+  { severity: 'Medium', title: 'Insecure Cipher Suite', target: 'Web-GW', patch: 'TLS Policy v2' },
+  { severity: 'Low', title: 'Outdated OpenSSH Banner', target: 'Jump-Host', patch: 'OpenSSH 9.8' },
+];
+
+const SecurityAudit = () => {
+  const [scanned, setScanned] = useState(false);
+  const [findings, setFindings] = useState([]);
+
+  const runScan = () => {
+    setScanned(true);
+    setFindings(mockFindings);
+  };
+
+  const remediate = (title) => {
+    setFindings((prev) => prev.filter((f) => f.title !== title));
+  };
+
+  return (
+    <div className="rounded-lg border border-emerald-900 bg-zinc-950 p-4 text-emerald-500">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-sm font-bold uppercase tracking-widest">Vulnerability Scanner</h2>
+        <button onClick={runScan} className="rounded bg-emerald-600 px-3 py-1 text-xs font-bold text-black">
+          START SCAN
+        </button>
+      </div>
+
+      {!scanned && <p className="animate-pulse text-zinc-600">Waiting for scan initiation...</p>}
+
+      {scanned && (
+        <div className="space-y-2">
+          {findings.length === 0 && <p className="text-green-400">All findings remediated ✅</p>}
+          {findings.map((v) => (
+            <div key={v.title} className="rounded bg-zinc-900 p-2">
+              <span className={`mr-2 font-bold ${v.severity === 'High' ? 'text-red-500' : v.severity === 'Medium' ? 'text-amber-400' : 'text-yellow-300'}`}>
+                [{v.severity}]
+              </span>
+              <span className="text-white">{v.title}</span>
+              <p className="text-[10px] uppercase text-zinc-500">{v.target} · Patch: {v.patch}</p>
+              <button onClick={() => remediate(v.title)} className="mt-1 rounded bg-slate-700 px-2 py-1 text-[10px] text-white">
+                Mark remediated
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SecurityAudit;
+src/components/index.js
+src/components/index.js
+Nuovo
++8
+-0
+
+export { default as IntuneMDM } from './IntuneMDM';
+export { default as JamfPro } from './JamfPro';
+export { default as NetworkLab } from './NetworkLab';
+export { default as SecurityAudit } from './SecurityAudit';
+export { default as EnterpriseArch } from './EnterpriseArch';
+export { default as AutomationLab } from './AutomationLab';
+export { default as CloudInfra } from './CloudInfra';
+export { default as MspDashboard } from './MspDashboard';

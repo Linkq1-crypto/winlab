@@ -1,0 +1,14 @@
+/dev/md0:
+           Version : 1.2
+     Creation Time : Mon Jan  1 00:00:00 2024
+        Raid Level : raid1
+        Array Size : 104856832 (99.99 GiB)
+         State : degraded
+  Active Devices : 1
+ Failed Devices : 1
+         Layout : near=2
+     Chunk Size : 512K
+
+  Number  Major  Minor  RaidDevice State
+     0       8       1        0      active  /dev/sda1
+     1       0       0        1      failed  /dev/sdb1

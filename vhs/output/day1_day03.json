@@ -1,0 +1,39 @@
+{
+  "id": "series_day1_ep03",
+  "name": "day1_day03",
+  "series": "Day 1 as a SysAdmin",
+  "episode": 3,
+  "total_episodes": 7,
+  "hook": "Day 3.",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "Day 3.",
+      "duration": 2.5
+    },
+    {
+      "type": "text",
+      "text": "Production is down.",
+      "duration": 2.0
+    },
+    {
+      "type": "terminal",
+      "cmd": "journalctl -xe",
+      "status": "ERROR: config invalid",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "People are waiting.",
+      "duration": 2.0
+    },
+    {
+      "type": "text",
+      "text": "Fix it. Fast.",
+      "duration": 2.5,
+      "color": "text"
+    }
+  ],
+  "cluster": "learning",
+  "created_at": "2026-04-14T03:15:54.944533"
+}

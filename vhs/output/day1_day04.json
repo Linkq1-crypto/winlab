@@ -1,0 +1,39 @@
+{
+  "id": "series_day1_ep04",
+  "name": "day1_day04",
+  "series": "Day 1 as a SysAdmin",
+  "episode": 4,
+  "total_episodes": 7,
+  "hook": "Day 4.",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "Day 4.",
+      "duration": 2.5
+    },
+    {
+      "type": "text",
+      "text": "You read the logs.",
+      "duration": 2.0
+    },
+    {
+      "type": "terminal",
+      "cmd": "cat /etc/apache2/sites-enabled/000-default.conf",
+      "status": "Syntax error on line 15",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "One line is wrong.",
+      "duration": 2.0
+    },
+    {
+      "type": "text",
+      "text": "Do you see it?",
+      "duration": 2.5,
+      "color": "text"
+    }
+  ],
+  "cluster": "learning",
+  "created_at": "2026-04-14T03:15:54.944533"
+}

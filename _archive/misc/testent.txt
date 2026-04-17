@@ -1,0 +1,136 @@
+#!/usr/bin/env node
+/* eslint-disable no-console */
+const fs = require("fs");
+const path = require("path");
+
+const root = process.cwd();
+const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
+
+const failures = [];
+const debug = [];
+
+function check(condition, message, details) {
+  if (!condition) {
+    failures.push(message);
+    if (details) debug.push(`DEBUG: ${details}`);
+  }
+}
+
+function includesAll(content, values, scope) {
+  values.forEach((value) => {
+    check(content.includes(value), `${scope}: manca "${value}"`, `Controlla hardcode/catalog in ${scope}`);
+  });
+}
+
+console.log("🧪 Avvio test completo scenari (locale, debug mode)...");
+
+const catalog = read("enterpriseCatalog.js");
+const arch = read("EnterpriseArch.jsx");
+const automation = read("AutomationLab.jsx");
+const cloud = read("CloudInfra.jsx");
+const msp = read("MspDashboard.jsx");
+const engine = read("useScenarioEngine.js");
+const controls = read("EnterpriseControls.jsx");
+
+includesAll(
+  catalog,
+  [
+    "Identity & Access Crisis (IAM / Zero Trust)",
+    "Privilege Escalation Attack Simulation",
+    "Lateral Movement Detection Lab",
+    "SOC Incident Response (multi-tenant avanzato)",
+    "Ransomware Containment Scenario",
+    "Phishing Response Drill",
+    "Endpoint Compromise Investigation",
+    "Disaster Recovery Simulator (RTO/RPO)",
+    "Cloud Outage War Room",
+    "Multi-Region Failover Lab",
+    "Hybrid Cloud Failure Scenario",
+    "Load Balancing & Traffic Routing Crisis",
+    "Storage Failure / Data Corruption Lab",
+    "Automation Lab (Ansible/Terraform reale simulato)",
+    "CI/CD Pipeline Failure Lab",
+    "Deployment Rollback Scenario",
+    "Infra Drift Detection Lab",
+    "Secret Management Failure",
+    "GitOps Incident",
+    "Kubernetes Incident (CrashLoopBackOff)",
+    "Cluster Resource Exhaustion",
+    "Misconfigured Ingress Attack",
+    "Pod Security Breach",
+    "Service Mesh Failure",
+    "Cost Explosion War Room",
+    "Zombie Resource Cleanup",
+    "Rightsizing Challenge",
+    "Reserved vs On-Demand Strategy Lab",
+    "Budget Alert Crisis",
+    "GDPR Audit Simulator",
+    "ISO27001 Gap Assessment",
+    "Data Breach Legal Response",
+    "Data Retention Misconfiguration",
+    "Access Audit Failure",
+    "AIOps Anomaly Detection Lab",
+    "Silent Failure Scenario",
+    "Alert Fatigue Simulation",
+    "Monitoring Blind Spot Lab",
+    "Predictive Incident Prevention",
+    "Active Directory Multi-Site Failure",
+    "FSMO Seizure Scenario",
+    "Trust Relationship Break",
+    "RODC Authentication Failure",
+    "Forest Migration Scenario",
+  ],
+  "enterpriseCatalog.js"
+);
+
+includesAll(
+  arch,
+  ["multisite", "fsmo", "trust", "rodc", "forest", "Adaptive Difficulty + Skill Gap Detection"],
+  "EnterpriseArch.jsx"
+);
+
+includesAll(
+  automation,
+  ["ansible", "terraform", "Expected step", "CPU", "Latency", "Error Rate"],
+  "AutomationLab.jsx"
+);
+
+includesAll(
+  cloud,
+  ["Disaster Recovery Simulator (RTO/RPO)", "Cloud Outage War Room", "Hybrid Cloud Failure Scenario"],
+  "CloudInfra.jsx"
+);
+
+includesAll(msp, ["DevOps", "Security", "IT Manager", "Scenario Internal Chat"], "MspDashboard.jsx");
+
+includesAll(
+  engine,
+  ["adaptiveDifficulty", "skillGapDetection", "leaderboardScore", "injectEvent", "applyDecision"],
+  "useScenarioEngine.js"
+);
+
+includesAll(controls, ["Enable SSO/SAML", "Export PDF report", "Leaderboard"], "EnterpriseControls.jsx");
+
+// Debug test: intentionally verify error-path markers are present.
+const hasAutomationErrorPath = automation.includes("❌") && automation.includes("Expected step");
+check(
+  hasAutomationErrorPath,
+  "AutomationLab.jsx: manca debug error-path per comando errato",
+  "Aggiungi output diagnostico quando cmd !== expected"
+);
+
+const hasChaosDebug = arch.includes("Inject Chaos Event") && engine.includes("Chaos:");
+check(hasChaosDebug, "Chaos event debug non rilevato", "Verifica injectEvent e label nel componente arch");
+
+if (failures.length > 0) {
+  console.error("\n❌ TEST FALLITO");
+  failures.forEach((f, i) => console.error(`${i + 1}. ${f}`));
+  if (debug.length) {
+    console.error("\n--- DEBUG ERRORI ---");
+    debug.forEach((d) => console.error(d));
+  }
+  process.exit(1);
+}
+
+console.log("✅ TEST PASSATO");
+console.log("Copertura: catalogo enterprise, scenari core, engine, SSO/SAML, leaderboard, PDF export, debug error-path.");

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <!-- Character encoding - MUST be first -->
+  <meta charset="UTF-8" />
+  
+  <!-- Viewport and theme -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" />
+  
+  <!-- SEO and description -->
+  <meta name="description" content="Professional IT Infrastructure Training Labs – Linux, RAID, vSphere, LDAP and more." />
+  <meta name="keywords" content="sysadmin training, linux lab, raid simulator, vsphere, it infrastructure, devops training" />
+  <meta name="author" content="WINLAB" />
+  
+  <!-- Mobile/PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="WINLAB" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  
+  <!-- Accessibility: Skip link hint for screen readers -->
+  <meta name="accessibility" content="ARIA landmarks implemented, keyboard navigation supported, screen reader optimized" />
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Apple touch icons (iOS home screen) -->
+  <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96.png" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+
+  <title>WINLAB – Sysadmin Training Platform</title>
+</head>
+<body>
+  <!-- Skip to main content link (accessibility) -->
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
+    Skip to main content
+  </a>
+  
+  <!-- Main content wrapper with ARIA landmark -->
+  <div id="root" role="document" aria-label="WINLAB Application"></div>
+  
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# Dataset & Output
+dataset/*.mp4
+dataset/*/frame_*.jpg
+output/
+published/
+
+# ML Artifacts
+ml/model.pt
+ml/norm_params.json
+train.json
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

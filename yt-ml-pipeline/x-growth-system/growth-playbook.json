@@ -1,0 +1,53 @@
+{
+  "attach_to_viral": {
+    "name": "Viral Thread Attachment",
+    "steps": [
+      "1. Search for viral threads in your niche (use THREAD_SEARCH_QUERIES)",
+      "2. Sort by 'Latest' (not 'Top')",
+      "3. Reply within first 10 responses with HIGH VALUE",
+      "4. Your reply should be better than the original thread",
+      "5. Follow up with 'DM me for more details' (gets clicks)",
+      "6. Convert thread viewers to followers"
+    ],
+    "expected_results": "50-200 followers per viral thread",
+    "time_investment": "15 minutes per thread"
+  },
+  "auto_reply_boost": {
+    "name": "Auto-Reply Algorithm Boost",
+    "steps": [
+      "1. Post valuable thread",
+      "2. Enable auto-reply system (use generateAutoReply)",
+      "3. AI replies to every comment within 30-120 seconds",
+      "4. Each reply = engagement signal to algorithm",
+      "5. Algorithm pushes your content to more people",
+      "6. More reach = more followers"
+    ],
+    "expected_results": "3-5x more impressions per post",
+    "time_investment": "Setup once, runs automatically"
+  },
+  "content_repurpose": {
+    "name": "Video → Thread Repurposing",
+    "steps": [
+      "1. Take video content from bulk_generate_x_enhanced.js",
+      "2. Use generateThreadFromVideo() to create thread",
+      "3. Post thread at peak hours (8-10 AM, 12-2 PM, 6-8 PM)",
+      "4. Enable auto-replies",
+      "5. Monitor engagement, double down on winners"
+    ],
+    "expected_results": "1 video = 5-10 threads = 1 week of content",
+    "time_investment": "5 minutes per video"
+  },
+  "organic_engagement": {
+    "name": "Organic Engagement (No Pods)",
+    "steps": [
+      "1. Follow 50 accounts in your niche daily",
+      "2. Reply to THEIR posts with genuine value",
+      "3. Don't sell, just help",
+      "4. 30% will check your profile",
+      "5. 10% of those will follow",
+      "6. Rinse and repeat daily"
+    ],
+    "expected_results": "20-50 followers per day",
+    "time_investment": "30 minutes per day"
+  }
+}

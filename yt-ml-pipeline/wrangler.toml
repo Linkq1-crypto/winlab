@@ -1,0 +1,32 @@
+name = "yt-ml-pipeline"
+main = "serverless/orchestrator.js"
+compatibility_date = "2026-04-01"
+
+# Worker configuration
+workers_dev = true
+node_compat = true
+
+# Environment variables
+[vars]
+NODE_ENV = "production"
+SERVERLESS = "true"
+SCORE_THRESHOLD = "0.75"
+MAX_RETRIES = "2"
+PUBLISH_PLATFORMS = "youtube,instagram,tiktok"
+
+# Secrets (set via wrangler secret put)
+# REPLICATE_API_TOKEN
+# HUGGINGFACE_API_TOKEN
+# AYRSHARE_API_KEY
+# CLOUDFLARE_R2_ACCESS_KEY_ID
+# CLOUDFLARE_R2_SECRET_ACCESS_KEY
+
+# R2 bucket binding
+[[r2_buckets]]
+binding = "YT_ML_BUCKET"
+bucket_name = "yt-ml-pipeline"
+preview_bucket_name = "yt-ml-pipeline-dev"
+
+# Cron trigger for scheduled runs
+[triggers]
+crons = ["0 */6 * * *"]  # Every 6 hours

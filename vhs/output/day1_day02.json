@@ -1,0 +1,39 @@
+{
+  "id": "series_day1_ep02",
+  "name": "day1_day02",
+  "series": "Day 1 as a SysAdmin",
+  "episode": 2,
+  "total_episodes": 7,
+  "hook": "Day 2.",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "Day 2.",
+      "duration": 2.5
+    },
+    {
+      "type": "text",
+      "text": "You try restarting.",
+      "duration": 2.0
+    },
+    {
+      "type": "terminal",
+      "cmd": "sudo systemctl restart apache2",
+      "status": "\u2716 failed again",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "Still broken.",
+      "duration": 2.0
+    },
+    {
+      "type": "text",
+      "text": "Now what?",
+      "duration": 2.5,
+      "color": "text"
+    }
+  ],
+  "cluster": "learning",
+  "created_at": "2026-04-14T03:15:54.944533"
+}

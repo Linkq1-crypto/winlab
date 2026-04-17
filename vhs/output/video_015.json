@@ -1,0 +1,39 @@
+{
+  "id": "v015",
+  "name": "video_015",
+  "hook": "You need practice.",
+  "command": "service ssh restart",
+  "structure": "contrast",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "You need practice.",
+      "duration": 2.5
+    },
+    {
+      "type": "text",
+      "text": "Not anymore.",
+      "duration": 2.0
+    },
+    {
+      "type": "terminal",
+      "cmd": "service ssh restart",
+      "status": "\u2717 Failed \u2014 timeout",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "Same lab. Same chance.",
+      "duration": 2.5
+    },
+    {
+      "type": "text",
+      "text": "WinLab.cloud",
+      "duration": 2.0,
+      "color": "accent"
+    }
+  ],
+  "cluster": "learning",
+  "is_new": true,
+  "created_at": "2026-04-14T12:33:50.882392"
+}

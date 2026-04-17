@@ -1,0 +1,97 @@
+# ─── CONFIG ─────────────────────────────────────────────
+$SCENARIOS_DIR = "vhs/scenarios"
+$OUTPUT_DIR    = "vhs/output"
+$VERTICAL_DIR  = "vhs/output/vertical"
+$THUMB_DIR     = "vhs/output/thumbnails"
+$LOG_DIR       = "logs"
+
+$MAX_JOBS = 4
+$RETRIES  = 2
+
+# ─── INIT ───────────────────────────────────────────────
+New-Item -ItemType Directory -Force -Path $OUTPUT_DIR,$VERTICAL_DIR,$THUMB_DIR,$LOG_DIR | Out-Null
+
+if (-not (Get-Command vhs -ErrorAction SilentlyContinue)) {
+    Write-Error "VHS not found"
+    exit 1
+}
+if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+    Write-Error "FFmpeg not found"
+    exit 1
+}
+
+Write-Host "[OK] Dependencies ready"
+
+# ─── FUNCTION ───────────────────────────────────────────
+function Process-Scenario {
+    param ($file)
+
+    $name = [System.IO.Path]::GetFileNameWithoutExtension($file)
+    $log  = "logs/$name.log"
+
+    Write-Output "[INFO] $name"
+
+    if (Test-Path "$OUTPUT_DIR/$name.mp4") {
+        Write-Output "[SKIP] $name exists"
+        return
+    }
+
+    # ─── VHS (retry) ─────────────────────────────────────
+    $success = $false
+    for ($i=1; $i -le $RETRIES; $i++) {
+        & vhs $file --output "$OUTPUT_DIR/$name.mp4" --width 1280 --height 720 --padding 40 --margin 60 *> $log
+
+        if (Test-Path "$OUTPUT_DIR/$name.mp4") {
+            $success = $true
+            break
+        } else {
+            Write-Output "[WARN] Retry $i for $name"
+        }
+    }
+
+    if (-not $success) {
+        Write-Output "[ERROR] VHS failed: $name"
+        return
+    }
+
+    # ─── VERTICAL ────────────────────────────────────────
+    & ffmpeg -i "$OUTPUT_DIR/$name.mp4" `
+        -vf "crop=trunc(ih*9/16):ih:trunc((iw-ih*9/16)/2):0,scale=1080:1920" `
+        -c:v libx264 -preset fast -crf 23 `
+        -c:a aac -b:a 128k `
+        -movflags +faststart `
+        "$VERTICAL_DIR/${name}_vertical.mp4" -y *> $log
+
+    # ─── THUMB ──────────────────────────────────────────
+    & ffmpeg -i "$OUTPUT_DIR/$name.mp4" `
+        -vf "thumbnail,scale=1280:720" `
+        -frames:v 1 -q:v 2 "$THUMB_DIR/${name}_thumb.jpg" -y *> $log
+
+    Write-Output "[OK] Done: $name"
+}
+
+# ─── LOAD FILES ─────────────────────────────────────────
+$files = Get-ChildItem "$SCENARIOS_DIR/*.tape"
+
+# ─── JOB QUEUE ──────────────────────────────────────────
+$jobs = @()
+
+foreach ($file in $files) {
+
+    # Limita concurrency
+    while (($jobs | Where-Object { $_.State -eq "Running" }).Count -ge $MAX_JOBS) {
+        Start-Sleep -Seconds 1
+    }
+
+    $jobs += Start-Job -ScriptBlock ${function:Process-Scenario} -ArgumentList $file.FullName
+}
+
+# ─── WAIT ───────────────────────────────────────────────
+Write-Host "`n[INFO] Waiting for jobs..."
+
+$jobs | ForEach-Object {
+    Receive-Job -Job $_ -Wait
+    Remove-Job $_
+}
+
+Write-Host "`n[DONE] All videos generated"

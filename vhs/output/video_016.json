@@ -1,0 +1,33 @@
+{
+  "id": "v016",
+  "name": "video_016",
+  "hook": "11 failures. 1 real skill.",
+  "command": "service ssh restart",
+  "structure": "solution",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "11 failures. 1 real skill.",
+      "duration": 2.0
+    },
+    {
+      "type": "text",
+      "text": "Let's go.",
+      "duration": 1.5
+    },
+    {
+      "type": "terminal",
+      "cmd": "service ssh restart",
+      "status": "\u2713 Container running",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "That's the difference.",
+      "duration": 2.5
+    }
+  ],
+  "cluster": "learning",
+  "is_new": true,
+  "created_at": "2026-04-14T12:33:50.882392"
+}

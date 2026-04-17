@@ -1,0 +1,100 @@
+PS C:\Users\johns>  ssh root@89.167.59.14 "pm2 logs winlab --lines 50 --nostream"
+root@89.167.59.14's password:
+[TAILING] Tailing last 50 lines for [winlab] process (change the value with --lines option)
+/root/.pm2/logs/winlab-error.log last 50 lines:
+0|winlab   |       'access-control-allow-credentials': 'true',
+0|winlab   |       'access-control-allow-methods': 'GET, HEAD, PUT, PATCH, POST, DELETE',
+0|winlab   |       'access-control-allow-origin': '*',
+0|winlab   |       'access-control-expose-headers': 'Request-Id, Stripe-Manage-Version, Stripe-Should-Retry, X-Stripe-External-Auth-Required, X-Stripe-Privileged-Session-Required',
+0|winlab   |       'access-control-max-age': '300',
+0|winlab   |       'cache-control': 'no-cache, no-store',
+0|winlab   |       'content-security-policy': "base-uri 'none'; default-src 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests",
+0|winlab   |       vary: 'Origin',
+0|winlab   |       'www-authenticate': 'Bearer realm="Stripe"',
+0|winlab   |       'x-robots-tag': 'none',
+0|winlab   |       'x-wc': '383',
+0|winlab   |       'strict-transport-security': 'max-age=63072000; includeSubDomains; preload'
+0|winlab   |     },
+0|winlab   |     statusCode: 401,
+0|winlab   |     requestId: undefined
+0|winlab   |   },
+0|winlab   |   rawType: 'invalid_request_error',
+0|winlab   |   code: undefined,
+0|winlab   |   doc_url: undefined,
+0|winlab   |   param: undefined,
+0|winlab   |   detail: undefined,
+0|winlab   |   headers: {
+0|winlab   |     server: 'nginx',
+0|winlab   |     date: 'Wed, 15 Apr 2026 14:31:24 GMT',
+0|winlab   |     'content-type': 'application/json',
+0|winlab   |     'content-length': '119',
+0|winlab   |     connection: 'keep-alive',
+0|winlab   |     'access-control-allow-credentials': 'true',
+0|winlab   |     'access-control-allow-methods': 'GET, HEAD, PUT, PATCH, POST, DELETE',
+0|winlab   |     'access-control-allow-origin': '*',
+0|winlab   |     'access-control-expose-headers': 'Request-Id, Stripe-Manage-Version, Stripe-Should-Retry, X-Stripe-External-Auth-Required, X-Stripe-Privileged-Session-Required',
+0|winlab   |     'access-control-max-age': '300',
+0|winlab   |     'cache-control': 'no-cache, no-store',
+0|winlab   |     'content-security-policy': "base-uri 'none'; default-src 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests",
+0|winlab   |     vary: 'Origin',
+0|winlab   |     'www-authenticate': 'Bearer realm="Stripe"',
+0|winlab   |     'x-robots-tag': 'none',
+0|winlab   |     'x-wc': '383',
+0|winlab   |     'strict-transport-security': 'max-age=63072000; includeSubDomains; preload'
+0|winlab   |   },
+0|winlab   |   requestId: undefined,
+0|winlab   |   statusCode: 401,
+0|winlab   |   charge: undefined,
+0|winlab   |   decline_code: undefined,
+0|winlab   |   payment_intent: undefined,
+0|winlab   |   payment_method: undefined,
+0|winlab   |   payment_method_type: undefined,
+0|winlab   |   setup_intent: undefined,
+0|winlab   |   source: undefined
+0|winlab   | }
+
+/root/.pm2/logs/winlab-out.log last 50 lines:
+0|winlab   | p":"2026-04-16T01:06:48.125Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/api/early-access/seats","status":304,"duration_ms":3,"ip":"151.47.18.170","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_12 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/388.0.811331708 M"}
+0|winlab   | {"timestamp":"2026-04-16T01:06:50.935Z","service":"winlab-backend","level":"warn","event":"http_request","method":"POST","path":"/api/consent/log","status":404,"duration_ms":3,"ip":"151.47.18.170","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_12 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/388.0.811331708 M"}
+0|winlab   | {"timestamp":"2026-04-16T01:06:55.528Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/demo","status":200,"duration_ms":2,"ip":"151.47.18.170","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_12 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/388.0.811331708 M"}
+0|winlab   | {"timestamp":"2026-04-16T01:06:55.744Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/assets/index-xZCrOWOB.js","status":200,"duration_ms":6,"ip":"151.47.18.170","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_12 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/388.0.811331708 M"}
+0|winlab   | {"timestamp":"2026-04-16T01:06:55.783Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/registerSW.js","status":200,"duration_ms":2,"ip":"151.47.18.170","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_12 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/388.0.811331708 M"}
+0|winlab   | {"timestamp":"2026-04-16T01:06:55.790Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/assets/index-BGxx89zR.css","status":200,"duration_ms":2,"ip":"151.47.18.170","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_12 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/388.0.811331708 M"}
+0|winlab   | {"timestamp":"2026-04-16T01:06:56.157Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/assets/rolldown-runtime-COnpUsM8.js","status":200,"duration_ms":3,"ip":"151.47.18.170","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_12 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/388.0.811331708 M"}
+0|winlab   | {"timestamp":"2026-04-16T01:06:56.166Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/assets/vendor-react-Uk6W7PvN.js","status":200,"duration_ms":6,"ip":"151.47.18.170","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_12 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/388.0.811331708 M"}
+0|winlab   | {"timestamp":"2026-04-16T01:06:56.167Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/assets/lab-linux-terminal-DN87XX5k.js","status":200,"duration_ms":4,"ip":"151.47.18.170","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_12 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/388.0.811331708 M"}
+0|winlab   | {"timestamp":"2026-04-16T01:06:56.176Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/assets/LabContext-B1293DYI.js","status":200,"duration_ms":3,"ip":"151.47.18.170","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_12 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/388.0.811331708 M"}
+0|winlab   | {"timestamp":"2026-04-16T01:06:56.493Z","service":"winlab-backend","level":"warn","event":"auth_missing_token","method":"GET","path":"/api/user/me","ip":"151.47.18.170"}
+0|winlab   | {"timestamp":"2026-04-16T01:06:56.494Z","service":"winlab-backend","level":"warn","event":"http_request","method":"GET","path":"/api/user/me","status":401,"duration_ms":1,"ip":"151.47.18.170","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_12 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/388.0.811331708 M"}
+0|winlab   | {"timestamp":"2026-04-16T01:07:35.562Z","service":"winlab-backend","level":"warn","event":"http_request","method":"POST","path":"/api/consent/log","status":404,"duration_ms":1,"ip":"151.47.18.170","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_12 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/388.0.811331708 M"}
+0|winlab   | {"timestamp":"2026-04-16T01:07:53.987Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/","status":200,"duration_ms":6,"ip":"47.250.156.29","userAgent":"Go-http-client/1.1"}
+0|winlab   | {"timestamp":"2026-04-16T01:07:58.593Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/","status":200,"duration_ms":4,"ip":"8.213.197.208","userAgent":"Go-http-client/1.1"}
+0|winlab   | {"timestamp":"2026-04-16T01:10:03.346Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/","status":200,"duration_ms":5,"ip":"43.157.153.236","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/"}
+0|winlab   | [AlertDispatcher] Alert flow bootstrap complete
+0|winlab   | 🚀 Helpdesk worker started
+0|winlab   | 🚧 MAINTENANCE MODE — serving coming-soon page
+0|winlab   | 🚀 WINLAB v7 running on :3001
+0|winlab   | {"timestamp":"2026-04-16T01:45:13.070Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/api/early-access/seats","status":304,"duration_ms":13,"ip":"151.47.18.170, 172.70.216.55","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+0|winlab   | {"timestamp":"2026-04-16T01:45:13.229Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/api/early-access/seats","status":200,"duration_ms":7,"ip":"151.47.18.170, 172.68.192.152","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+0|winlab   | {"timestamp":"2026-04-16T01:46:32.805Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/api/early-access/seats","status":304,"duration_ms":4,"ip":"151.47.18.170, 172.69.68.41","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147."}
+0|winlab   | {"timestamp":"2026-04-16T01:46:44.363Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/api/early-access/seats","status":200,"duration_ms":5,"ip":"151.47.18.170, 172.69.68.41","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147."}
+0|winlab   | {"timestamp":"2026-04-16T01:46:44.480Z","service":"winlab-backend","level":"warn","event":"auth_missing_token","method":"GET","path":"/api/user/me","ip":"151.47.18.170, 172.69.68.41"}
+0|winlab   | {"timestamp":"2026-04-16T01:46:44.482Z","service":"winlab-backend","level":"warn","event":"http_request","method":"GET","path":"/api/user/me","status":401,"duration_ms":6,"ip":"151.47.18.170, 172.69.68.41","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147."}
+0|winlab   | {"timestamp":"2026-04-16T01:46:44.488Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/api/pricing","status":200,"duration_ms":3,"ip":"151.47.18.170, 172.69.68.41","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147."}
+0|winlab   | {"timestamp":"2026-04-16T01:46:44.635Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/api/pricing","status":304,"duration_ms":3,"ip":"151.47.18.170, 172.69.68.41","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147."}
+0|winlab   | {"timestamp":"2026-04-16T01:46:55.867Z","service":"winlab-backend","level":"warn","event":"http_request","method":"GET","path":"/api/user/profile","status":404,"duration_ms":8,"ip":"151.47.18.170, 172.69.68.41","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147."}
+0|winlab   | {"timestamp":"2026-04-16T01:47:15.534Z","service":"winlab-backend","level":"warn","event":"http_request","method":"GET","path":"/api/user/profile","status":404,"duration_ms":8,"ip":"151.47.18.170, 172.69.68.41","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147."}
+0|winlab   | {"timestamp":"2026-04-16T01:47:23.918Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/api/early-access/seats","status":200,"duration_ms":4,"ip":"151.47.18.170, 172.69.68.41","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147."}
+0|winlab   | {"timestamp":"2026-04-16T01:47:23.921Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/api/pricing","status":200,"duration_ms":1,"ip":"151.47.18.170, 172.69.68.41","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147."}
+0|winlab   | {"timestamp":"2026-04-16T01:47:23.923Z","service":"winlab-backend","level":"warn","event":"auth_missing_token","method":"GET","path":"/api/user/me","ip":"151.47.18.170, 172.69.68.41"}
+0|winlab   | {"timestamp":"2026-04-16T01:47:23.924Z","service":"winlab-backend","level":"warn","event":"http_request","method":"GET","path":"/api/user/me","status":401,"duration_ms":2,"ip":"151.47.18.170, 172.69.68.41","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147."}
+0|winlab   | {"timestamp":"2026-04-16T01:47:24.052Z","service":"winlab-backend","level":"info","event":"http_request","method":"GET","path":"/api/pricing","status":200,"duration_ms":2,"ip":"151.47.18.170, 172.69.68.41","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147."}
+
+PS C:\Users\johns>  ssh root@89.167.59.14 "pm2 list"
+root@89.167.59.14's password:
+┌────┬───────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name      │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ winlab    │ default     │ 7.0.0   │ fork    │ 109743   │ 34m    │ 25   │ online    │ 0%       │ 88.7mb   │ root     │ disabled │
+└────┴───────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+PS C:\Users\johns>

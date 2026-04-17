@@ -1,0 +1,57 @@
+Skip to main content
+WINLAB PROD_SPEC
+Launch Free Lab →
+REAL CLI SANDBOX
+UBUNTU 22.04
+DOCKER
+SRE-LEVEL
+Master Production Incidents.
+
+Escape tutorial hell. Fix real Linux, Cloud, and SRE failures in a live sandbox.
+
+Launch Free Lab →
+
+27 engineers are fixing this incident right now
+
+LIVE PREVIEW
+
+$ systemctl status nginx... [▌
+
+Error: Port 80 already in use.
+
+Trusted by 1000+ SREs
+
+Scenario 1 · The Port Conflict
+
+Press CTA to start the nginx failure scenario.
+
+Your Path
+
+The Elite SRE Path
+
+LEVEL 1
+
+Core Linux
+
+Free
+
+LEVEL 2
+
+Cloud Infrastructure
+
+Pro
+
+LEVEL 3
+
+Chaos Engineering
+
+Enterprise
+
+Pricing built for action
+
+$19/mo • Unlimited labs
+
+Get Started
+© 2026 WINLAB
+Privacy
+Terms

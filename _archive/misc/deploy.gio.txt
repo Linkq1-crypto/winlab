@@ -1,0 +1,15 @@
+11 file da scaricare da questa chat e portare sul sito:
+
+page-privacy-replacement.html → sostituisce /privacy dentro coming-soon/index.html
+compliance/cookie-banner.html → sostituisce il cookie banner dentro coming-soon/index.html
+compliance/cookie-policy.html → sostituisce /cookies dentro coming-soon/index.html
+compliance/terms-conditions.html → sostituisce /terms dentro coming-soon/index.html
+compliance/ml-consent-toggle.html → nel form registrazione + settings
+compliance/ai-mentor-consent.html → modal prima del primo uso AI Mentor
+pricing-section.html → sostituisce la sezione pricing dentro coming-soon/index.html
+b2b-lead-capture.html → sezione nuova dentro coming-soon/index.html, dopo gli scenario cards
+enterprise-landing.html → file standalone, servito come /enterprise
+trust-center.html → file standalone, servito come /enterprise/trust
+setup-stripe.js → lancia sul VPS per creare i 27 prezzi su Stripe
+
+Più 5 endpoint da aggiungere a server.js e 4 campi Prisma — tutto copiabile dal Deploy Package su Notion.

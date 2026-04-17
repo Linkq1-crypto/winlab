@@ -1,0 +1,658 @@
+
+Implement email and alert flows
+11 apr
+·
+MindfulMotivation
+·
+main
+·
++287
+-0
+
+Archivia
+
+Condividi
+
+Crea PR
+
+
+📧 Email Flow (identity + lifecycle)
+🚨 Alert Flow (system → user/team notifications)
+
+Ti do una struttura production-ready, non teorica.
+
+🧠 1. EMAIL FLOW (IDENTITY + USER LIFECYCLE)
+🎯 Obiettivo
+
+Gestire tutto il ciclo utente:
+
+signup → verify → login → reset → usage → security
+
+🔁 FLOW COMPLETO
+User Action
+   ↓
+Backend (API)
+   ↓
+Email Service (Resend / SendGrid)
+   ↓
+User Inbox
+   ↓
+User clicks → App
+⚙️ EVENTI EMAIL (P0)
+1. Signup → Verify Email
+trigger: USER_REGISTERED
+email: verification link
+2. Password Reset
+trigger: PASSWORD_RESET_REQUESTED
+email: reset link + expiry
+3. Login Security (optional ma forte)
+trigger: NEW_DEVICE_LOGIN
+email: “new login detected”
+4. Account Deleted
+trigger: ACCOUNT_DELETED
+email: confirmation
+🔧 IMPLEMENTAZIONE
+/src/services/emailService.ts
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export async function sendEmail(to: string, subject: string, html: string) {
+  return resend.emails.send({
+    from: 'noreply@yourapp.com',
+    to,
+    subject,
+    html
+  });
+}
+📩 PASSWORD RESET (CORE)
+import crypto from 'crypto';
+
+export async function sendResetEmail(user) {
+  const token = crypto.randomBytes(32).toString('hex');
+
+  // salva hash + expiry
+  await db.saveResetToken(user.id, hash(token), Date.now() + 15 * 60 * 1000);
+
+  const link = `https://app/reset?token=${token}`;
+
+  await sendEmail(
+    user.email,
+    'Reset your password',
+    `<a href="${link}">Reset Password</a>`
+  );
+}
+
+👉 IMPORTANTISSIMO
+
+non salvare token in chiaro
+expiry breve (10–15 min)
+✅ VERIFY EMAIL
+const link = `https://app/verify?token=${token}`;
+
+DB:
+
+verified: boolean
+verify_token_hash
+🧠 2. ALERT FLOW (SYSTEM → USER)
+
+Questo è il tuo vantaggio competitivo 🔥
+
+🎯 Obiettivo
+
+Notificare:
+
+incidenti
+failure
+anomalie
+sicurezza
+🔁 FLOW ALERT
+Event (Chaos / System)
+   ↓
+Monitoring Engine
+   ↓
+Alert Engine
+   ↓
+Channel:
+   ├── UI Toast
+   ├── Timeline
+   ├── Email 🔥
+   └── (future: Slack/Webhook)
+🚨 ALERT TYPES
+🔴 CRITICAL
+service down
+cascading failure
+DB crash
+🟡 WARN
+high latency
+API unstable
+🔵 INFO
+recovery
+deployment
+⚙️ ALERT → EMAIL INTEGRAZIONE
+/src/core/alertDispatcher.ts
+import { sendEmail } from '../services/emailService';
+
+export async function dispatchAlert(alert, user) {
+  // sempre UI + timeline
+  window.dispatchEvent(new CustomEvent('ALERT', { detail: alert }));
+
+  // email solo per severità alta
+  if (alert.severity === 'CRITICAL') {
+    await sendEmail(
+      user.email,
+      `🚨 Critical Alert: ${alert.message}`,
+      `
+        <h2>Critical Incident</h2>
+        <p>${alert.message}</p>
+        <p>Time: ${new Date().toISOString()}</p>
+      `
+    );
+  }
+}
+🔥 INTEGRAZIONE CON EVENT BUS
+eventBus.on('SERVICE_DOWN', async () => {
+  await dispatchAlert({
+    message: 'Service outage detected',
+    severity: 'CRITICAL'
+  }, currentUser);
+});
+📊 USER SETTINGS (fondamentale per SaaS)
+/settings
+email alerts ON/OFF
+severity filter
+frequency (immediate / digest)
+🧠 BEST PRACTICE (QUESTO FA DIFFERENZA)
+❌ NON fare:
+email per ogni evento (spam)
+no deduplication
+no rate limit
+✅ FAI:
+1. Deduplication
+if (sameAlertInLast(5min)) return;
+2. Rate limit
+max 5 email / ora / user
+3. Aggregazione (P1)
+
+“5 incidents detected in last 10 minutes”
+
+💰 IMPATTO BUSINESS
+
+Questa parte cambia tutto:
+
+Senza email/alert:
+
+👉 tool tecnico
+
+Con email/alert:
+
+👉 platform operativa
+
+🚀 COME LO VENDI DOPO QUESTO
+
+“We don’t just simulate failures — we notify, track, and help teams react in real time.”
+
+🔥 TL;DR
+
+Devi avere:
+
+EMAIL FLOW
+verify
+reset
+security
+ALERT FLOW
+event → alert engine
+severity
+email (solo critical)
+Copia
+Summary
+Ho implementato uno scheletro TypeScript production-ready per i due flussi che hai descritto: Identity/User Lifecycle Email Flow + Alert Flow con severità, deduplica e rate limiting. La configurazione progetto (package.json + tsconfig) è stata aggiunta per supportare build/check tipizzati. 
+
+Ho aggiunto un servizio email centralizzato con Resend, fallback sicuro se la chiave API non è configurata, e campi env per APP_BASE_URL, RESEND_API_KEY, EMAIL_FROM. 
+
+Ho implementato il lifecycle email completo P0:
+
+verify email (sendVerifyEmail)
+
+password reset con expiry 15 minuti (sendPasswordResetEmail)
+
+new device login (sendNewDeviceLoginEmail)
+
+account deleted (sendAccountDeletedEmail). 
+
+Ho implementato la parte sicurezza token come richiesto: token raw generato, hash SHA-256 salvato, mai token in chiaro in storage. 
+
+Ho implementato l’Alert Dispatcher con:
+
+deduplicazione finestra 5 minuti
+
+rate limit 5 email/ora/utente
+
+invio email solo se CRITICAL e solo se permesso dalle preferenze utente. 
+
+Ho aggiunto un event bus tipizzato e bootstrap del flow SERVICE_DOWN -> dispatchAlert, pronto per integrazione con il tuo monitoring engine/event bus. 
+
+Ho documentato rapidamente architettura e note operative nel README. 
+
+Commit creato: be1d894
+PR metadata creato con tool make_pr (titolo/body compilati).
+
+Testing
+
+⚠️ npm install (fallito per limitazione ambiente/policy: 403 Forbidden verso registry npm, quindi non è stato possibile eseguire tsc/check locali).
+
+
+File (12)
+
+README.md
+README.md
+Nuovo
+
+package.json
+package.json
+Nuovo
+
+env.ts
+src/config/env.ts
+Nuovo
+
+alertDispatcher.ts
+src/core/alertDispatcher.ts
+Nuovo
+
+bootstrap.ts
+src/core/bootstrap.ts
+Nuovo
+
+eventBus.ts
+src/core/eventBus.ts
+Nuovo
+
+emailService.ts
+src/services/emailService.ts
+Nuovo
+
+inMemoryDb.ts
+src/services/inMemoryDb.ts
+Nuovo
+
+tokenService.ts
+src/services/tokenService.ts
+Nuovo
+
+userLifecycleEmailFlow.ts
+src/services/userLifecycleEmailFlow.ts
+Nuovo
+
+domain.ts
+src/types/domain.ts
+Nuovo
+
+tsconfig.json
+tsconfig.json
+Nuovo
+
+
+
+Differenze
+Log
+
+README.md
+README.md
+Nuovo
++19
+-0
+
+# MindfulMotivation – Identity Email + Alert Flow Skeleton
+
+Production-oriented TypeScript skeleton that covers:
+
+- User lifecycle email events (verify, reset, new device login, account deleted)
+- Token security (hashed token storage, short reset expiry)
+- Alert engine with deduplication and per-user rate limiting
+- CRITICAL-only email escalation with user notification preferences
+
+## Main Files
+
+- `src/services/userLifecycleEmailFlow.ts`
+- `src/core/alertDispatcher.ts`
+- `src/core/eventBus.ts`
+
+## Notes
+
+- `inMemoryDb` is intentionally a stub; replace with your real persistence layer.
+- Configure `RESEND_API_KEY`, `APP_BASE_URL`, and `EMAIL_FROM` in your environment.
+package.json
+package.json
+Nuovo
++17
+-0
+
+{
+  "name": "mindful-motivation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "resend": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "typescript": "^5.8.3"
+  }
+}
+src/config/env.ts
+src/config/env.ts
+Nuovo
++5
+-0
+
+export const env = {
+  appBaseUrl: process.env.APP_BASE_URL ?? 'https://app.example.com',
+  resendApiKey: process.env.RESEND_API_KEY ?? '',
+  emailFrom: process.env.EMAIL_FROM ?? 'noreply@yourapp.com'
+};
+src/core/alertDispatcher.ts
+src/core/alertDispatcher.ts
+Nuovo
++64
+-0
+
+import { sendEmail } from '../services/emailService.js';
+import type { AlertEvent, User } from '../types/domain.js';
+
+const DEDUP_WINDOW_MS = 5 * 60 * 1000;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const RATE_LIMIT_MAX = 5;
+
+const latestAlertByKey = new Map<string, number>();
+const emailSendsByUser = new Map<string, number[]>();
+
+function sameAlertInLastFiveMinutes(alert: AlertEvent): boolean {
+  const last = latestAlertByKey.get(alert.key);
+  if (!last) {
+    latestAlertByKey.set(alert.key, alert.createdAt);
+    return false;
+  }
+
+  if (alert.createdAt - last < DEDUP_WINDOW_MS) {
+    return true;
+  }
+
+  latestAlertByKey.set(alert.key, alert.createdAt);
+  return false;
+}
+
+function allowEmailByRateLimit(userId: string, now: number): boolean {
+  const sends = emailSendsByUser.get(userId) ?? [];
+  const recent = sends.filter((timestamp) => now - timestamp <= RATE_LIMIT_WINDOW_MS);
+
+  if (recent.length >= RATE_LIMIT_MAX) {
+    emailSendsByUser.set(userId, recent);
+    return false;
+  }
+
+  recent.push(now);
+  emailSendsByUser.set(userId, recent);
+  return true;
+}
+
+export async function dispatchAlert(alert: AlertEvent, user: User): Promise<void> {
+  if (sameAlertInLastFiveMinutes(alert)) {
+    return;
+  }
+
+  // Placeholder: broadcast to UI timeline/toast channel.
+  // In browser runtime you can replace with window.dispatchEvent(new CustomEvent('ALERT', { detail: alert }))
+  console.info('[ALERT_TIMELINE]', alert);
+
+  const shouldEmail =
+    user.notifyByEmail &&
+    user.alertSeverities.includes(alert.severity) &&
+    alert.severity === 'CRITICAL' &&
+    allowEmailByRateLimit(user.id, alert.createdAt);
+
+  if (!shouldEmail) {
+    return;
+  }
+
+  await sendEmail(
+    user.email,
+    `🚨 Critical Alert: ${alert.message}`,
+    `<h2>Critical Incident</h2><p>${alert.message}</p><p>Time: ${new Date(alert.createdAt).toISOString()}</p>`
+  );
+}
+src/core/bootstrap.ts
+src/core/bootstrap.ts
+Nuovo
++13
+-0
+
+import { EventBus } from './eventBus.js';
+import { dispatchAlert } from './alertDispatcher.js';
+import type { AlertEvent, User } from '../types/domain.js';
+
+interface SystemEvents {
+  SERVICE_DOWN: { user: User; alert: AlertEvent };
+}
+
+export function bootstrapAlertFlow(eventBus: EventBus<SystemEvents>): void {
+  eventBus.on('SERVICE_DOWN', async ({ user, alert }) => {
+    await dispatchAlert(alert, user);
+  });
+}
+src/core/eventBus.ts
+src/core/eventBus.ts
+Nuovo
++18
+-0
+
+type EventHandler<Payload> = (payload: Payload) => void | Promise<void>;
+
+export class EventBus<Events extends Record<string, unknown>> {
+  private handlers: { [K in keyof Events]?: EventHandler<Events[K]>[] } = {};
+
+  on<K extends keyof Events>(event: K, handler: EventHandler<Events[K]>): void {
+    const list = this.handlers[event] ?? [];
+    list.push(handler);
+    this.handlers[event] = list;
+  }
+
+  async emit<K extends keyof Events>(event: K, payload: Events[K]): Promise<void> {
+    const list = this.handlers[event] ?? [];
+    for (const handler of list) {
+      await handler(payload);
+    }
+  }
+}
+src/services/emailService.ts
+src/services/emailService.ts
+Nuovo
++17
+-0
+
+import { Resend } from 'resend';
+import { env } from '../config/env.js';
+
+const resend = env.resendApiKey ? new Resend(env.resendApiKey) : null;
+
+export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+  if (!resend) {
+    throw new Error('RESEND_API_KEY is not configured');
+  }
+
+  await resend.emails.send({
+    from: env.emailFrom,
+    to,
+    subject,
+    html
+  });
+}
+src/services/inMemoryDb.ts
+src/services/inMemoryDb.ts
+Nuovo
++23
+-0
+
+import type { ResetTokenRecord, User, VerifyTokenRecord } from '../types/domain.js';
+
+const users = new Map<string, User>();
+const resetTokens = new Map<string, ResetTokenRecord>();
+const verifyTokens = new Map<string, VerifyTokenRecord>();
+
+export const db = {
+  async saveUser(user: User): Promise<void> {
+    users.set(user.id, user);
+  },
+
+  async getUserById(userId: string): Promise<User | null> {
+    return users.get(userId) ?? null;
+  },
+
+  async saveResetToken(record: ResetTokenRecord): Promise<void> {
+    resetTokens.set(record.userId, record);
+  },
+
+  async saveVerifyToken(record: VerifyTokenRecord): Promise<void> {
+    verifyTokens.set(record.userId, record);
+  }
+};
+src/services/tokenService.ts
+src/services/tokenService.ts
+Nuovo
++9
+-0
+
+import crypto from 'node:crypto';
+
+export function generateRawToken(byteLength = 32): string {
+  return crypto.randomBytes(byteLength).toString('hex');
+}
+
+export function hashToken(rawToken: string): string {
+  return crypto.createHash('sha256').update(rawToken).digest('hex');
+}
+src/services/userLifecycleEmailFlow.ts
+src/services/userLifecycleEmailFlow.ts
+Nuovo
++60
+-0
+
+import { env } from '../config/env.js';
+import { db } from './inMemoryDb.js';
+import { sendEmail } from './emailService.js';
+import { generateRawToken, hashToken } from './tokenService.js';
+import type { User } from '../types/domain.js';
+
+const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+const RESET_TOKEN_TTL_MS = 15 * 60 * 1000;
+
+export async function sendVerifyEmail(user: User): Promise<void> {
+  const token = generateRawToken();
+  const tokenHash = hashToken(token);
+
+  await db.saveVerifyToken({
+    userId: user.id,
+    tokenHash,
+    expiresAt: Date.now() + VERIFY_TOKEN_TTL_MS
+  });
+
+  const link = `${env.appBaseUrl}/verify?token=${token}`;
+  await sendEmail(
+    user.email,
+    'Verify your email',
+    `<p>Welcome!</p><p>Please verify your email: <a href="${link}">Verify account</a>.</p>`
+  );
+}
+
+export async function sendPasswordResetEmail(user: User): Promise<void> {
+  const token = generateRawToken();
+  const tokenHash = hashToken(token);
+
+  await db.saveResetToken({
+    userId: user.id,
+    tokenHash,
+    expiresAt: Date.now() + RESET_TOKEN_TTL_MS
+  });
+
+  const link = `${env.appBaseUrl}/reset-password?token=${token}`;
+  await sendEmail(
+    user.email,
+    'Reset your password',
+    `<p>Reset requested.</p><p><a href="${link}">Reset password</a> (expires in 15 minutes).</p>`
+  );
+}
+
+export async function sendNewDeviceLoginEmail(user: User, ipAddress: string): Promise<void> {
+  await sendEmail(
+    user.email,
+    'New login detected',
+    `<p>New login detected from IP ${ipAddress}.</p><p>If this wasn't you, reset your password immediately.</p>`
+  );
+}
+
+export async function sendAccountDeletedEmail(user: User): Promise<void> {
+  await sendEmail(
+    user.email,
+    'Your account has been deleted',
+    '<p>Your account was deleted successfully. If this was not expected, contact support immediately.</p>'
+  );
+}
+src/types/domain.ts
+src/types/domain.ts
+Nuovo
++28
+-0
+
+export type AlertSeverity = 'CRITICAL' | 'WARN' | 'INFO';
+
+export interface User {
+  id: string;
+  email: string;
+  verified: boolean;
+  notifyByEmail: boolean;
+  alertSeverities: AlertSeverity[];
+}
+
+export interface AlertEvent {
+  key: string;
+  message: string;
+  severity: AlertSeverity;
+  createdAt: number;
+}
+
+export interface ResetTokenRecord {
+  userId: string;
+  tokenHash: string;
+  expiresAt: number;
+}
+
+export interface VerifyTokenRecord {
+  userId: string;
+  tokenHash: string;
+  expiresAt: number;
+}
+tsconfig.json
+tsconfig.json
+Nuovo
++14
+-0
+
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*.ts"]
+}

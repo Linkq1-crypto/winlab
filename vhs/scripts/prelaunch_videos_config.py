@@ -1,0 +1,193 @@
+# Pre-launch video configs — 72h countdown (Friday to Monday)
+# Language: English
+# Focus: Early access, Linux terminal, 500 seats, works offline
+
+PRELAUNCH_VIDEOS = [
+    # === FRIDAY — DAY 1: ANNOUNCEMENT ===
+    {
+        "name": "prelaunch_fri_01_announcement",
+        "hook": "A real Linux terminal in your browser.",
+        "command": "uname -a",
+        "structure": "identity",
+        "cluster": "announcement",
+        "scenes": [
+            {"type": "text", "text": "A real Linux terminal in your browser.", "duration": 3.0},
+            {"type": "text", "text": "Type real commands.", "duration": 2.0},
+            {"type": "terminal", "cmd": "uname -a", "status": "→ Linux 6.2.0 x86_64", "duration": 5.0},
+            {"type": "text", "text": "Break things. Fix them.", "duration": 2.5},
+            {"type": "text", "text": "No setup. No VM. No excuses.", "duration": 2.5},
+            {"type": "text", "text": "WinLab.cloud", "duration": 2.0, "color": "accent"},
+        ],
+    },
+    {
+        "name": "prelaunch_fri_02_500_seats",
+        "hook": "500 seats. That's it.",
+        "command": "whoami",
+        "structure": "fear",
+        "cluster": "announcement",
+        "scenes": [
+            {"type": "text", "text": "500 seats. That's it.", "duration": 2.5},
+            {"type": "terminal", "cmd": "whoami", "status": "→ admin", "duration": 4.0},
+            {"type": "text", "text": "First come, first served.", "duration": 2.5},
+            {"type": "text", "text": "Early access locked at $5.", "duration": 2.5},
+            {"type": "text", "text": "Then $19. Then gone.", "duration": 2.5},
+            {"type": "text", "text": "WinLab.cloud", "duration": 2.0, "color": "accent"},
+        ],
+    },
+    {
+        "name": "prelaunch_fri_03_30_seconds",
+        "hook": "First lab starts in 30 seconds.",
+        "command": "sudo systemctl start nginx",
+        "structure": "speed",
+        "cluster": "announcement",
+        "scenes": [
+            {"type": "black", "duration": 0.5},
+            {"type": "text", "text": "First lab starts in 30 seconds.", "duration": 2.5},
+            {"type": "terminal", "cmd": "sudo systemctl start nginx", "status": "✓ Active: running", "duration": 5.0},
+            {"type": "text", "text": "No account required.", "duration": 2.0},
+            {"type": "text", "text": "Just open the browser.", "duration": 2.0},
+            {"type": "text", "text": "WinLab.cloud", "duration": 2.0, "color": "accent"},
+        ],
+    },
+
+    # === SATURDAY — DAY 2: PROOF IT WORKS ===
+    {
+        "name": "prelaunch_sat_04_real_linux",
+        "hook": "This isn't a simulator.",
+        "command": "cat /etc/os-release",
+        "structure": "identity",
+        "cluster": "proof",
+        "scenes": [
+            {"type": "text", "text": "This isn't a simulator.", "duration": 2.5},
+            {"type": "text", "text": "It's real Linux.", "duration": 2.0},
+            {"type": "terminal", "cmd": "cat /etc/os-release", "status": "→ Ubuntu 24.04 LTS", "duration": 5.0},
+            {"type": "text", "text": "Real commands. Real output.", "duration": 2.5},
+            {"type": "text", "text": "Same terminal you'll use at 3AM.", "duration": 2.5},
+            {"type": "text", "text": "WinLab.cloud", "duration": 2.0, "color": "accent"},
+        ],
+    },
+    {
+        "name": "prelaunch_sat_05_offline",
+        "hook": "Works on 2G.",
+        "command": "ping -c 3 8.8.8.8",
+        "structure": "contrast",
+        "cluster": "proof",
+        "scenes": [
+            {"type": "text", "text": "Works on 2G.", "duration": 2.0},
+            {"type": "text", "text": "Works offline.", "duration": 2.0},
+            {"type": "terminal", "cmd": "ping -c 3 8.8.8.8", "status": "→ 3 packets transmitted, 3 received", "duration": 5.0},
+            {"type": "text", "text": "Your internet shouldn't decide your career.", "duration": 3.0},
+            {"type": "text", "text": "WinLab.cloud", "duration": 2.0, "color": "accent"},
+        ],
+    },
+    {
+        "name": "prelaunch_sat_06_break_fix",
+        "hook": "Break it on purpose.",
+        "command": "rm -rf /tmp/* && echo 'clean'",
+        "structure": "challenge",
+        "cluster": "proof",
+        "scenes": [
+            {"type": "text", "text": "Break it on purpose.", "duration": 2.5},
+            {"type": "text", "text": "That's how you learn.", "duration": 2.0},
+            {"type": "terminal", "cmd": "rm -rf /tmp/* && echo 'clean'", "status": "→ clean", "duration": 5.0},
+            {"type": "text", "text": "10+ labs. Zero consequences.", "duration": 2.5},
+            {"type": "text", "text": "Until it becomes one.", "duration": 2.5},
+            {"type": "text", "text": "WinLab.cloud", "duration": 2.0, "color": "accent"},
+        ],
+    },
+
+    # === SUNDAY — DAY 3: URGENCY BUILDING ===
+    {
+        "name": "prelaunch_sun_07_countdown",
+        "hook": "48 hours left.",
+        "command": "date",
+        "structure": "fear",
+        "cluster": "urgency",
+        "scenes": [
+            {"type": "text", "text": "48 hours left.", "duration": 2.5},
+            {"type": "terminal", "cmd": "date", "status": "→ $(current_date)", "duration": 4.0},
+            {"type": "text", "text": "Early access closes Monday.", "duration": 2.5},
+            {"type": "text", "text": "$5 locks your price forever.", "duration": 2.5},
+            {"type": "text", "text": "After that? $19.", "duration": 2.5},
+            {"type": "text", "text": "WinLab.cloud", "duration": 2.0, "color": "accent"},
+        ],
+    },
+    {
+        "name": "prelaunch_sun_08_skills",
+        "hook": "Same skills. Different outcome.",
+        "command": "docker ps -a",
+        "structure": "contrast",
+        "cluster": "urgency",
+        "scenes": [
+            {"type": "text", "text": "Same skills.", "duration": 2.0},
+            {"type": "text", "text": "Different outcome.", "duration": 2.0},
+            {"type": "terminal", "cmd": "docker ps -a", "status": "→ 3 containers running", "duration": 5.0},
+            {"type": "text", "text": "Talent is universal.", "duration": 2.5},
+            {"type": "text", "text": "Access shouldn't be the barrier.", "duration": 2.5},
+            {"type": "text", "text": "WinLab.cloud", "duration": 2.0, "color": "accent"},
+        ],
+    },
+    {
+        "name": "prelaunch_sun_09_no_excuses",
+        "hook": "No setup. No VM. No excuses.",
+        "command": "ls -la /home/admin",
+        "structure": "identity",
+        "cluster": "urgency",
+        "scenes": [
+            {"type": "text", "text": "No setup.", "duration": 1.5},
+            {"type": "text", "text": "No VM.", "duration": 1.5},
+            {"type": "text", "text": "No excuses.", "duration": 1.5},
+            {"type": "terminal", "cmd": "ls -la /home/admin", "status": "→ lab_01 lab_02 lab_03", "duration": 5.0},
+            {"type": "text", "text": "Just open your browser.", "duration": 2.5},
+            {"type": "text", "text": "WinLab.cloud", "duration": 2.0, "color": "accent"},
+        ],
+    },
+
+    # === MONDAY — DAY 4: FINAL CALL ===
+    {
+        "name": "prelaunch_mon_10_final_call",
+        "hook": "Last chance. $5 early access.",
+        "command": "echo 'final call'",
+        "structure": "fear",
+        "cluster": "final",
+        "scenes": [
+            {"type": "text", "text": "Last chance.", "duration": 2.0},
+            {"type": "text", "text": "$5 early access.", "duration": 2.0},
+            {"type": "terminal", "cmd": "echo 'final call'", "status": "→ final call", "duration": 4.0},
+            {"type": "text", "text": "Locks your price forever.", "duration": 2.5},
+            {"type": "text", "text": "Tomorrow it's $19.", "duration": 2.5},
+            {"type": "text", "text": "WinLab.cloud", "duration": 2.0, "color": "accent"},
+        ],
+    },
+    {
+        "name": "prelaunch_mon_11_closing",
+        "hook": "This is it.",
+        "command": "history | tail -10",
+        "structure": "contrast",
+        "cluster": "final",
+        "scenes": [
+            {"type": "text", "text": "This is it.", "duration": 2.0},
+            {"type": "text", "text": "Real Linux. Real labs.", "duration": 2.5},
+            {"type": "terminal", "cmd": "history | tail -10", "status": "→ 10 labs completed", "duration": 5.0},
+            {"type": "text", "text": "Early access closes tonight.", "duration": 2.5},
+            {"type": "text", "text": "Don't watch. Do.", "duration": 2.5},
+            {"type": "text", "text": "WinLab.cloud", "duration": 2.0, "color": "accent"},
+        ],
+    },
+    {
+        "name": "prelaunch_mon_12_going_live",
+        "hook": "Going live in 3... 2... 1...",
+        "command": "curl -I winlab.cloud",
+        "structure": "speed",
+        "cluster": "final",
+        "scenes": [
+            {"type": "text", "text": "Going live in", "duration": 1.0},
+            {"type": "text", "text": "3...", "duration": 1.0},
+            {"type": "text", "text": "2...", "duration": 1.0},
+            {"type": "text", "text": "1...", "duration": 1.0},
+            {"type": "terminal", "cmd": "curl -I winlab.cloud", "status": "→ HTTP/2 200 OK", "duration": 5.0},
+            {"type": "text", "text": "We're live.", "duration": 2.0},
+            {"type": "text", "text": "WinLab.cloud", "duration": 2.0, "color": "accent"},
+        ],
+    },
+]

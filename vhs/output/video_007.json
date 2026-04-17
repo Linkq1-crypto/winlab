@@ -1,0 +1,28 @@
+{
+  "id": "v007",
+  "name": "video_007",
+  "hook": "Break it. Fix it.",
+  "command": "systemctl restart mysql",
+  "structure": "identity",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "Break it. Fix it.",
+      "duration": 2.5
+    },
+    {
+      "type": "terminal",
+      "cmd": "systemctl restart mysql",
+      "status": "\u2713 Filesystem clean",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "Not talent. Repetition.",
+      "duration": 3.0
+    }
+  ],
+  "cluster": "challenge",
+  "is_new": true,
+  "created_at": "2026-04-14T12:33:50.882392"
+}

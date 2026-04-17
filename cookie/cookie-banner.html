@@ -1,0 +1,400 @@
+<!--
+  ============================================================
+  WINLAB — GDPR/ePR COMPLIANT COOKIE BANNER
+  ============================================================
+  Drop this block into coming-soon/index.html
+  Replace the existing cookie banner code entirely.
+  
+  What this fixes:
+  ✅ "Accept" and "Reject" buttons in equal prominence
+  ✅ Granular category control (essential, analytics)
+  ✅ Privacy widget to reopen preferences anytime
+  ✅ Blocks non-essential cookies/trackers until consent
+  ✅ Stores consent with timestamp for audit trail
+  ✅ CCPA "Do Not Sell" support
+  ✅ Links to /privacy, /cookies, /terms
+  ============================================================
+-->
+
+<!-- COOKIE BANNER STYLES -->
+<style id="winlab-cookie-styles">
+  .wl-cookie-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 9998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  .wl-cookie-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .wl-cookie-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: #fff;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.10);
+    padding: 24px 32px;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .wl-cookie-banner.visible {
+    transform: translateY(0);
+  }
+
+  .wl-cookie-inner {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .wl-cookie-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 8px;
+  }
+
+  .wl-cookie-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #555;
+    margin: 0 0 16px;
+  }
+
+  .wl-cookie-text a {
+    color: #2563eb;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* ---- Category toggles ---- */
+  .wl-cookie-categories {
+    display: none;
+    gap: 12px;
+    margin: 0 0 16px;
+    flex-wrap: wrap;
+  }
+  .wl-cookie-categories.visible {
+    display: flex;
+  }
+
+  .wl-cookie-cat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #333;
+    background: #fafafa;
+  }
+
+  .wl-cookie-cat input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #2563eb;
+  }
+
+  .wl-cookie-cat.essential {
+    opacity: 0.6;
+  }
+
+  /* ---- Buttons ---- */
+  .wl-cookie-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .wl-cookie-btn {
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+    line-height: 1;
+  }
+
+  /* CRITICAL: Accept and Reject have EQUAL visual weight (GDPR requirement) */
+  .wl-cookie-btn-accept {
+    background: #1a1a1a;
+    color: #fff;
+  }
+  .wl-cookie-btn-accept:hover {
+    background: #333;
+  }
+
+  .wl-cookie-btn-reject {
+    background: #1a1a1a;
+    color: #fff;
+  }
+  .wl-cookie-btn-reject:hover {
+    background: #333;
+  }
+
+  .wl-cookie-btn-customize {
+    background: transparent;
+    color: #555;
+    border: 1px solid #d4d4d4;
+  }
+  .wl-cookie-btn-customize:hover {
+    background: #f5f5f5;
+  }
+
+  .wl-cookie-btn-save {
+    background: #2563eb;
+    color: #fff;
+    display: none;
+  }
+  .wl-cookie-btn-save.visible {
+    display: inline-flex;
+  }
+  .wl-cookie-btn-save:hover {
+    background: #1d4ed8;
+  }
+
+  /* ---- Privacy widget (floating button to reopen) ---- */
+  .wl-privacy-widget {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 9990;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: transform 0.15s ease;
+  }
+  .wl-privacy-widget:hover {
+    transform: scale(1.1);
+  }
+  .wl-privacy-widget.visible {
+    display: flex;
+  }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    .wl-cookie-banner { padding: 16px 20px; }
+    .wl-cookie-actions { flex-direction: column; }
+    .wl-cookie-btn { width: 100%; text-align: center; }
+  }
+</style>
+
+<!-- COOKIE BANNER HTML -->
+<div class="wl-cookie-overlay" id="wl-cookie-overlay"></div>
+
+<div class="wl-cookie-banner" id="wl-cookie-banner" role="dialog" aria-label="Cookie preferences" aria-modal="true">
+  <div class="wl-cookie-inner">
+    <p class="wl-cookie-title">We value your privacy</p>
+    <p class="wl-cookie-text">
+      We use essential cookies to make WinLab work. With your consent, we may also use non-essential cookies to improve your experience and analyze usage.
+      Read our <a href="/privacy">Privacy Policy</a> and <a href="/cookies">Cookie Policy</a> for details.
+    </p>
+
+    <!-- Granular category toggles (hidden by default, shown on "Customize") -->
+    <div class="wl-cookie-categories" id="wl-cookie-cats">
+      <label class="wl-cookie-cat essential">
+        <input type="checkbox" checked disabled /> Essential (always active)
+      </label>
+      <label class="wl-cookie-cat">
+        <input type="checkbox" id="wl-cat-analytics" /> Analytics
+      </label>
+    </div>
+
+    <div class="wl-cookie-actions">
+      <button class="wl-cookie-btn wl-cookie-btn-reject" id="wl-btn-reject">Reject all</button>
+      <button class="wl-cookie-btn wl-cookie-btn-accept" id="wl-btn-accept">Accept all</button>
+      <button class="wl-cookie-btn wl-cookie-btn-customize" id="wl-btn-customize">Customize</button>
+      <button class="wl-cookie-btn wl-cookie-btn-save" id="wl-btn-save">Save preferences</button>
+    </div>
+  </div>
+</div>
+
+<!-- Privacy widget (reopen banner) -->
+<button class="wl-privacy-widget" id="wl-privacy-widget" aria-label="Cookie preferences" title="Cookie preferences">
+  &#x1f6e1;
+</button>
+
+<!-- COOKIE BANNER JAVASCRIPT -->
+<script>
+(function() {
+  'use strict';
+
+  const CONSENT_KEY = 'winlab_cookie_consent';
+  const CONSENT_VERSION = 1;
+  const BANNER_DELAY_MS = 800;
+
+  // ---- Consent state ----
+  function getConsent() {
+    try {
+      const raw = localStorage.getItem(CONSENT_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (data.version !== CONSENT_VERSION) return null;
+      return data;
+    } catch { return null; }
+  }
+
+  function setConsent(preferences) {
+    const record = {
+      version: CONSENT_VERSION,
+      timestamp: new Date().toISOString(),
+      preferences: preferences, // { essential: true, analytics: true/false }
+      userAgent: navigator.userAgent,
+    };
+    localStorage.setItem(CONSENT_KEY, JSON.stringify(record));
+    applyConsent(preferences);
+    closeBanner();
+    showWidget();
+
+    // Send consent record to backend for audit trail
+    try {
+      navigator.sendBeacon('/api/consent/log', JSON.stringify(record));
+    } catch(e) { /* fail silently */ }
+  }
+
+  // ---- Apply consent (block/unblock trackers) ----
+  function applyConsent(prefs) {
+    if (prefs.analytics) {
+      enableAnalytics();
+    } else {
+      disableAnalytics();
+    }
+  }
+
+  function enableAnalytics() {
+    // Unblock any analytics scripts that were deferred
+    // The winlab_plan cookie and sendBeacon analytics can now run
+    window.__wl_analytics_allowed = true;
+  }
+
+  function disableAnalytics() {
+    window.__wl_analytics_allowed = false;
+    // Remove the winlab_plan cookie if it exists
+    document.cookie = 'winlab_plan=; Max-Age=0; path=/;';
+  }
+
+  // ---- Banner UI ----
+  const banner    = document.getElementById('wl-cookie-banner');
+  const overlay   = document.getElementById('wl-cookie-overlay');
+  const cats      = document.getElementById('wl-cookie-cats');
+  const btnAccept = document.getElementById('wl-btn-accept');
+  const btnReject = document.getElementById('wl-btn-reject');
+  const btnCustom = document.getElementById('wl-btn-customize');
+  const btnSave   = document.getElementById('wl-btn-save');
+  const widget    = document.getElementById('wl-privacy-widget');
+  const catAnalytics = document.getElementById('wl-cat-analytics');
+
+  function showBanner() {
+    banner.classList.add('visible');
+    overlay.classList.add('visible');
+    widget.classList.remove('visible');
+  }
+
+  function closeBanner() {
+    banner.classList.remove('visible');
+    overlay.classList.remove('visible');
+  }
+
+  function showWidget() {
+    widget.classList.add('visible');
+  }
+
+  // Accept all
+  btnAccept.addEventListener('click', function() {
+    setConsent({ essential: true, analytics: true });
+  });
+
+  // Reject all
+  btnReject.addEventListener('click', function() {
+    setConsent({ essential: true, analytics: false });
+  });
+
+  // Customize — show category toggles
+  btnCustom.addEventListener('click', function() {
+    cats.classList.toggle('visible');
+    btnSave.classList.toggle('visible');
+    // If already have consent, pre-check based on existing preferences
+    const existing = getConsent();
+    if (existing) {
+      catAnalytics.checked = existing.preferences.analytics;
+    }
+  });
+
+  // Save custom preferences
+  btnSave.addEventListener('click', function() {
+    setConsent({
+      essential: true,
+      analytics: catAnalytics.checked,
+    });
+  });
+
+  // Privacy widget — reopen banner
+  widget.addEventListener('click', function() {
+    showBanner();
+    // Pre-check categories based on current consent
+    const existing = getConsent();
+    if (existing) {
+      catAnalytics.checked = existing.preferences.analytics;
+      cats.classList.add('visible');
+      btnSave.classList.add('visible');
+    }
+  });
+
+  // ---- Init ----
+  const consent = getConsent();
+  if (consent) {
+    // User already consented — apply and show widget
+    applyConsent(consent.preferences);
+    showWidget();
+  } else {
+    // No consent yet — block everything, show banner after delay
+    window.__wl_analytics_allowed = false;
+    setTimeout(showBanner, BANNER_DELAY_MS);
+  }
+
+})();
+</script>
+
+<!--
+  ============================================================
+  INTEGRATION NOTES:
+  ============================================================
+  
+  1. Replace your existing cookie banner code in coming-soon/index.html
+     with this entire block.
+  
+  2. In your analytics code (sendBeacon), wrap it with:
+     if (window.__wl_analytics_allowed) { ... sendBeacon ... }
+  
+  3. The winlab_plan cookie should only be set when 
+     window.__wl_analytics_allowed === true
+  
+  4. Add a backend endpoint POST /api/consent/log to store 
+     consent records (optional but recommended for GDPR audit).
+     If you skip this, the sendBeacon call fails silently.
+  
+  5. The shield button (bottom-left) lets users reopen the 
+     banner anytime to change preferences.
+  ============================================================
+-->

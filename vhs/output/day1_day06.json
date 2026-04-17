@@ -1,0 +1,39 @@
+{
+  "id": "series_day1_ep06",
+  "name": "day1_day06",
+  "series": "Day 1 as a SysAdmin",
+  "episode": 6,
+  "total_episodes": 7,
+  "hook": "Day 6.",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "Day 6.",
+      "duration": 2.5
+    },
+    {
+      "type": "text",
+      "text": "New problem. Database lag.",
+      "duration": 2.0
+    },
+    {
+      "type": "terminal",
+      "cmd": "mysql -e 'SHOW SLAVE STATUS\\G'",
+      "status": "Replication delayed",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "Again.",
+      "duration": 2.0
+    },
+    {
+      "type": "text",
+      "text": "Ready?",
+      "duration": 2.5,
+      "color": "text"
+    }
+  ],
+  "cluster": "learning",
+  "created_at": "2026-04-14T03:15:54.944533"
+}

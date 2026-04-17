@@ -1,0 +1,33 @@
+{
+  "id": "v008",
+  "name": "video_008",
+  "hook": "Others try on a SIM card.",
+  "command": "iptables -L -n",
+  "structure": "solution",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "Others try on a SIM card.",
+      "duration": 2.0
+    },
+    {
+      "type": "text",
+      "text": "Now fix it.",
+      "duration": 1.5
+    },
+    {
+      "type": "terminal",
+      "cmd": "iptables -L -n",
+      "status": "\u2192 You find the answer",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "Done.",
+      "duration": 2.5
+    }
+  ],
+  "cluster": "general",
+  "is_new": true,
+  "created_at": "2026-04-14T12:33:50.882392"
+}

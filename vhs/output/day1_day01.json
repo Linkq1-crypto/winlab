@@ -1,0 +1,39 @@
+{
+  "id": "series_day1_ep01",
+  "name": "day1_day01",
+  "series": "Day 1 as a SysAdmin",
+  "episode": 1,
+  "total_episodes": 7,
+  "hook": "Day 1.",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "Day 1.",
+      "duration": 2.5
+    },
+    {
+      "type": "text",
+      "text": "First job. Nothing works.",
+      "duration": 2.0
+    },
+    {
+      "type": "terminal",
+      "cmd": "systemctl status apache2",
+      "status": "\u25cf failed",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "No idea why.",
+      "duration": 2.0
+    },
+    {
+      "type": "text",
+      "text": "What would you do?",
+      "duration": 2.5,
+      "color": "text"
+    }
+  ],
+  "cluster": "learning",
+  "created_at": "2026-04-14T03:15:54.944533"
+}

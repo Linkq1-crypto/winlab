@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "name": "yt-ml-pipeline",
+  "builds": [
+    {
+      "src": "serverless/orchestrator.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/run",
+      "dest": "serverless/orchestrator.js"
+    },
+    {
+      "src": "/api/webhook",
+      "dest": "serverless/orchestrator.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "SERVERLESS": "true"
+  }
+}

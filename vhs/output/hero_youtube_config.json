@@ -1,0 +1,245 @@
+{
+  "name": "hero_youtube",
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "duration": 75,
+  "scenes": [
+    {
+      "type": "text",
+      "text": "Connection lost.",
+      "duration": 2.0,
+      "size": 52,
+      "color": "error"
+    },
+    {
+      "type": "black",
+      "duration": 0.5
+    },
+    {
+      "type": "text",
+      "text": "Again.",
+      "duration": 2.0,
+      "size": 48,
+      "color": "sub"
+    },
+    {
+      "type": "text",
+      "text": "A few years ago, I helped a junior engineer",
+      "duration": 3.0,
+      "size": 34
+    },
+    {
+      "type": "text",
+      "text": "debug an LDAP issue.",
+      "duration": 2.5,
+      "size": 34
+    },
+    {
+      "type": "text",
+      "text": "Smart. Motivated. Capable.",
+      "duration": 3.0,
+      "size": 38,
+      "color": "text"
+    },
+    {
+      "type": "text",
+      "text": "But every time I sent him a lab:",
+      "duration": 2.5,
+      "size": 34
+    },
+    {
+      "type": "text",
+      "text": "\"Connection dropped.\"",
+      "duration": 3.0,
+      "size": 40,
+      "color": "error"
+    },
+    {
+      "type": "text",
+      "text": "Not his fault.",
+      "duration": 2.0,
+      "size": 40
+    },
+    {
+      "type": "text",
+      "text": "His internet wasn't stable.",
+      "duration": 2.5,
+      "size": 34,
+      "color": "sub"
+    },
+    {
+      "type": "text",
+      "text": "Meanwhile, someone else,",
+      "duration": 2.5,
+      "size": 34
+    },
+    {
+      "type": "text",
+      "text": "same skills, same ambition,",
+      "duration": 2.5,
+      "size": 34
+    },
+    {
+      "type": "text",
+      "text": "could practice all night.",
+      "duration": 2.5,
+      "size": 34
+    },
+    {
+      "type": "text",
+      "text": "Same effort.",
+      "duration": 2.0,
+      "size": 42,
+      "weight": "bold"
+    },
+    {
+      "type": "text",
+      "text": "Different outcome.",
+      "duration": 2.5,
+      "size": 46,
+      "weight": "bold",
+      "color": "accent"
+    },
+    {
+      "type": "text",
+      "text": "Because of infrastructure.",
+      "duration": 3.0,
+      "size": 40,
+      "color": "sub"
+    },
+    {
+      "type": "black",
+      "duration": 0.5
+    },
+    {
+      "type": "text",
+      "text": "That didn't sit right with me.",
+      "duration": 3.0,
+      "size": 36
+    },
+    {
+      "type": "text",
+      "text": "So I built something different.",
+      "duration": 3.0,
+      "size": 38,
+      "color": "accent"
+    },
+    {
+      "type": "text",
+      "text": "A sysadmin simulator that works:",
+      "duration": 2.5,
+      "size": 34
+    },
+    {
+      "type": "text",
+      "text": "On GSM.",
+      "duration": 1.5,
+      "size": 40,
+      "color": "success"
+    },
+    {
+      "type": "text",
+      "text": "Offline.",
+      "duration": 1.5,
+      "size": 40,
+      "color": "success"
+    },
+    {
+      "type": "text",
+      "text": "On any device.",
+      "duration": 1.5,
+      "size": 40,
+      "color": "success"
+    },
+    {
+      "type": "text",
+      "text": "No setup.",
+      "duration": 1.5,
+      "size": 38
+    },
+    {
+      "type": "text",
+      "text": "No perfect internet required.",
+      "duration": 2.5,
+      "size": 34,
+      "color": "sub"
+    },
+    {
+      "type": "terminal",
+      "cmd": "systemctl status apache2",
+      "duration": 3.0
+    },
+    {
+      "type": "terminal",
+      "status": "\u25cf failed",
+      "duration": 2.0,
+      "color": "error"
+    },
+    {
+      "type": "text",
+      "text": "You debug.",
+      "duration": 1.5,
+      "size": 38
+    },
+    {
+      "type": "text",
+      "text": "You fix.",
+      "duration": 1.5,
+      "size": 38
+    },
+    {
+      "type": "text",
+      "text": "And you learn the way",
+      "duration": 2.0,
+      "size": 34
+    },
+    {
+      "type": "text",
+      "text": "real sysadmins do.",
+      "duration": 2.0,
+      "size": 38,
+      "color": "success"
+    },
+    {
+      "type": "text",
+      "text": "Not by watching.",
+      "duration": 2.0,
+      "size": 42
+    },
+    {
+      "type": "text",
+      "text": "By doing.",
+      "duration": 2.0,
+      "size": 46,
+      "weight": "bold",
+      "color": "accent"
+    },
+    {
+      "type": "text",
+      "text": "Same lab.",
+      "duration": 2.0,
+      "size": 44,
+      "weight": "bold"
+    },
+    {
+      "type": "text",
+      "text": "Same chance.",
+      "duration": 2.5,
+      "size": 44,
+      "weight": "bold"
+    },
+    {
+      "type": "black",
+      "duration": 0.5
+    },
+    {
+      "type": "text",
+      "text": "WinLab.cloud",
+      "duration": 3.0,
+      "size": 56,
+      "color": "accent"
+    }
+  ],
+  "style": "apple_hero"
+}

@@ -1,0 +1,22 @@
+User-agent: *
+
+Sitemap: https://winlab.cloud/sitemap.xml
+
+# Dashboard e route private — non indicizzare
+Disallow: /myrooting
+Disallow: /myrooting/
+Disallow: /myrooting/telemetry
+Disallow: /myrooting/helpdesk
+Disallow: /myrooting/msp
+Disallow: /myrooting/launch
+Disallow: /myrooting/deception
+Disallow: /dash_board
+
+# API
+Disallow: /api/
+
+# Pagine post-acquisto e auth
+Disallow: /early-access/success
+Disallow: /cert/
+
+Allow: /

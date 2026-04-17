@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WinLab Trust Center — Security, Compliance & Privacy</title>
+<meta name="description" content="WinLab security posture, GDPR compliance, tenant isolation, data residency, SSO/SAML, incident response, and enterprise questionnaire responses.">
+<link rel="icon" href="/favicon.ico">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" onload="this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"></noscript>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080810;--surface:#0d0d18;--border:#1f2937;--green:#00d084;--green-bg:rgba(0,208,132,.06);--text:#f1f5f9;--muted:#94a3b8;--dim:#6b7280;--radius:12px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+a{color:var(--green);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:900px;margin:0 auto;padding:0 24px}
+nav{position:sticky;top:0;z-index:100;background:rgba(8,8,16,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px}
+.nav-logo{font-weight:900;font-size:18px}.nav-logo .w{color:#fff}.nav-logo .l{color:var(--green)}
+.nav-cta{background:var(--green);color:#000;font-weight:700;font-size:13px;padding:8px 18px;border-radius:8px}
+.hero{padding:72px 24px 48px;border-bottom:1px solid var(--border)}
+.badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-bg);border:1px solid rgba(0,208,132,.2);color:var(--green);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:5px 14px;border-radius:100px;margin-bottom:20px}
+h1{font-size:clamp(28px,4vw,48px);font-weight:900;letter-spacing:-1.5px;margin-bottom:12px}
+.subtitle{font-size:16px;color:var(--muted);max-width:580px;line-height:1.7}
+.meta{font-size:12px;color:var(--dim);margin-top:16px}
+/* Security-first banner */
+.enterprise-banner{background:linear-gradient(135deg,rgba(0,208,132,.08),rgba(0,208,132,.02));border:1px solid rgba(0,208,132,.2);border-radius:var(--radius);padding:20px 24px;margin-top:24px;display:flex;gap:16px;align-items:flex-start}
+.enterprise-banner-icon{font-size:24px;flex-shrink:0;margin-top:2px}
+.enterprise-banner h3{font-size:14px;font-weight:700;color:#fff;margin-bottom:6px}
+.enterprise-banner p{font-size:13px;color:var(--muted);line-height:1.6;margin:0}
+/* Principles strip */
+.principles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:24px 0}
+.principle{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;gap:10px;align-items:flex-start}
+.principle-icon{font-size:18px;flex-shrink:0;margin-top:2px}
+.principle-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px}
+.principle-desc{font-size:12px;color:var(--muted);line-height:1.5}
+/* Layout */
+.layout{display:grid;grid-template-columns:220px 1fr;gap:48px;padding:48px 24px;max-width:900px;margin:0 auto}
+@media(max-width:768px){.layout{grid-template-columns:1fr}.sidebar{display:none}}
+.sidebar{position:sticky;top:80px;height:fit-content}
+.sidebar nav{position:static;background:none;backdrop-filter:none;border:none;padding:0;flex-direction:column;align-items:flex-start;height:auto;gap:2px}
+.sidebar a{display:block;padding:7px 12px;border-radius:8px;font-size:13px;color:var(--muted);transition:background .15s,color .15s}
+.sidebar a:hover,.sidebar a.active{background:var(--green-bg);color:var(--green);text-decoration:none}
+.sidebar-section{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);padding:12px 12px 4px;margin-top:8px}
+/* Trust sections */
+section.trust-section{margin-bottom:56px;scroll-margin-top:80px}
+section.trust-section h2{font-size:22px;font-weight:800;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+section.trust-section h3{font-size:15px;font-weight:700;margin:24px 0 8px;color:#fff}
+section.trust-section p{font-size:14px;color:var(--muted);margin-bottom:12px;line-height:1.7}
+section.trust-section ul{margin:8px 0 16px 20px}
+section.trust-section ul li{font-size:14px;color:var(--muted);margin-bottom:6px;line-height:1.6}
+/* Badges */
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;margin-left:8px;white-space:nowrap}
+.status-green{background:rgba(0,208,132,.1);color:var(--green);border:1px solid rgba(0,208,132,.2)}
+.status-yellow{background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.2)}
+.status-gray{background:rgba(148,163,184,.1);color:var(--muted);border:1px solid var(--border)}
+/* Certs */
+.cert-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:20px 0}
+.cert-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center}
+.cert-icon{font-size:32px;margin-bottom:10px}
+.cert-name{font-size:13px;font-weight:700;margin-bottom:4px}
+/* Tables */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{text-align:left;padding:8px 12px;background:var(--surface);border:1px solid var(--border);font-weight:600;color:var(--muted)}
+td{padding:8px 12px;border:1px solid var(--border);color:var(--muted);vertical-align:top}
+/* FAQ */
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-q{font-size:14px;font-weight:600;color:var(--text);cursor:pointer;padding:14px 0;display:flex;justify-content:space-between;align-items:center;gap:12px;user-select:none;list-style:none}
+.faq-q::marker,.faq-q::-webkit-details-marker{display:none}
+.faq-a{font-size:13px;color:var(--muted);line-height:1.7;padding-bottom:14px}
+/* Contact */
+.contact-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-top:16px}
+.contact-box h3{margin-bottom:12px;font-size:15px}
+.contact-box p{font-size:13px;color:var(--muted);margin-bottom:8px}
+/* SLA cards */
+.sla-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.sla-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.sla-value{font-size:28px;font-weight:900;color:var(--green);font-family:monospace;line-height:1}
+.sla-label{font-size:11px;color:var(--muted);margin-top:5px;text-transform:uppercase;letter-spacing:.5px}
+/* Footer */
+footer{padding:40px 24px;border-top:1px solid var(--border);text-align:center}
+.footer-logo{font-weight:900;font-size:18px;margin-bottom:10px}.footer-logo .w{color:#fff}.footer-logo .l{color:var(--green)}
+.footer-copy{font-size:11px;color:var(--dim)}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/"><span class="w">WIN</span><span class="l">LAB</span></a>
+  <a class="nav-cta" href="/enterprise">← Back to Enterprise</a>
+</nav>
+
+<div class="hero">
+  <div class="container">
+    <div class="badge">🔒 Trust Center</div>
+    <h1>Security, Compliance &amp; Privacy</h1>
+    <p class="subtitle">Everything you need to complete a vendor security review — architecture controls, GDPR documentation, certifications, incident response SLAs, and pre-answered enterprise questionnaire responses.</p>
+    <p class="meta">Last updated: April 2026 · Questions: <a href="mailto:security@winlab.cloud">security@winlab.cloud</a></p>
+
+    <!-- Enterprise-first banner -->
+    <div class="enterprise-banner">
+      <div class="enterprise-banner-icon">🏗️</div>
+      <div>
+        <h3>Designed for enterprise environments from day one</h3>
+        <p>WinLab is built with isolated tenants, EU data residency, strict access controls, and no shared runtime between customers. It is not a consumer product retrofitted with enterprise features — security-by-design is the foundation, not an add-on.</p>
+      </div>
+    </div>
+
+    <!-- Core security principles -->
+    <div class="principles">
+      <div class="principle">
+        <div class="principle-icon">🔑</div>
+        <div><div class="principle-title">Least Privilege</div><div class="principle-desc">Every component, API endpoint, and database query operates with the minimum permissions required. No wildcard access patterns.</div></div>
+      </div>
+      <div class="principle">
+        <div class="principle-icon">🧱</div>
+        <div><div class="principle-title">Tenant Isolation</div><div class="principle-desc">Customer data is scoped at the ORM layer on every query. Cross-tenant data access is architecturally impossible.</div></div>
+      </div>
+      <div class="principle">
+        <div class="principle-icon">⚙️</div>
+        <div><div class="principle-title">No Shared Runtime</div><div class="principle-desc">Lab sandboxes run in isolated execution environments. One customer's lab session cannot interact with another's.</div></div>
+      </div>
+      <div class="principle">
+        <div class="principle-icon">🇪🇺</div>
+        <div><div class="principle-title">EU Data Residency</div><div class="principle-desc">All PII and scenario data stored in Frankfurt, Germany. No US-based storage for EU customer data.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <nav>
+      <div class="sidebar-section">Security</div>
+      <a href="#design">Security Design</a>
+      <a href="#data-security">Data Security</a>
+      <a href="#infrastructure">Infrastructure</a>
+      <a href="#pen-testing">Pen Testing</a>
+      <a href="#incident">Incident Response</a>
+      <div class="sidebar-section">Compliance</div>
+      <a href="#gdpr">GDPR</a>
+      <a href="#certifications">Certifications</a>
+      <a href="#data-residency">Data Residency</a>
+      <a href="#subprocessors">Sub-processors</a>
+      <div class="sidebar-section">Access</div>
+      <a href="#sso">SSO / SAML</a>
+      <a href="#rbac">RBAC</a>
+      <a href="#tenant">Tenant Isolation</a>
+      <div class="sidebar-section">Enterprise</div>
+      <a href="#questionnaire">Security FAQ</a>
+      <a href="#bcp">Business Continuity</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </aside>
+
+  <!-- Content -->
+  <main>
+
+    <section class="trust-section" id="design">
+      <h2>🏗️ Security by Design</h2>
+      <p>WinLab's security model follows defence-in-depth principles. Controls are applied at every layer — network, application, database, and runtime — so that no single misconfiguration creates a critical exposure.</p>
+      <h3>Architecture principles</h3>
+      <ul>
+        <li><strong>Least privilege</strong> — API tokens are scoped to specific operations. Database service accounts have read/write access only to required tables. No admin credentials are used at runtime.</li>
+        <li><strong>Fail-closed</strong> — authentication middleware rejects requests by default. Features are opted in, not opted out.</li>
+        <li><strong>Input validation at every boundary</strong> — all user input is validated at the API layer before any database operation. Prisma's parameterised queries prevent SQL injection by default.</li>
+        <li><strong>Secrets out-of-code</strong> — no credentials, API keys, or signing secrets appear in source code or version history. All secrets are injected via environment variables at deploy time.</li>
+        <li><strong>Dependency hygiene</strong> — <code>npm audit</code> runs on every deploy. Dependencies are pinned to reviewed versions. No transitive dependency updates without review.</li>
+      </ul>
+    </section>
+
+    <section class="trust-section" id="data-security">
+      <h2>🔐 Data Security</h2>
+      <h3>Encryption in transit</h3>
+      <p>All client–server communication uses TLS 1.2+ enforced at the nginx layer. HSTS is set with a 2-year max-age and preload flag. HTTP requests are permanently redirected to HTTPS (301).</p>
+      <h3>Encryption at rest</h3>
+      <p>Database files are stored on encrypted volumes (AES-256 via host provider). Personally identifiable information — name, email, nickname — is additionally encrypted at the application layer before storage, using AES-256-GCM with a key derived from a server-side secret. Even direct database access does not expose raw PII.</p>
+      <h3>Password handling</h3>
+      <p>Passwords are hashed with bcrypt, work factor 12. Plain-text passwords are never stored, logged, or transmitted. OAuth/SSO users (Microsoft, Google) have no password record at all.</p>
+      <h3>JWT / Session management</h3>
+      <p>Authentication tokens are signed with HS256, expire after 24 hours, and are delivered via httpOnly, Secure, SameSite=Strict cookies. Tokens are not stored in localStorage. Refresh tokens are rotated on each use.</p>
+      <h3>Audit logging</h3>
+      <p>All security-relevant events — logins, failed attempts, consent changes, admin actions, payment events — are logged with timestamp, user ID, and anonymised IP (last octet masked). Logs are retained for 90 days. Log access requires admin authentication.</p>
+    </section>
+
+    <section class="trust-section" id="infrastructure">
+      <h2>🌐 Infrastructure</h2>
+      <h3>Hosting</h3>
+      <p>WinLab runs on dedicated VPS hardware in the EU (Hetzner, Frankfurt). There are no shared application-layer tenants. The server runs Ubuntu 22.04 LTS with unattended security updates enabled.</p>
+      <h3>Network controls</h3>
+      <ul>
+        <li>Inbound firewall: only ports 80 and 443 are publicly exposed</li>
+        <li>SSH access restricted to key-based authentication only (password auth disabled)</li>
+        <li>Backend API port (3001) is localhost-only, not exposed externally</li>
+        <li>Cloudflare proxy for DDoS mitigation and edge caching</li>
+      </ul>
+      <h3>Rate limiting</h3>
+      <table>
+        <tr><th>Endpoint category</th><th>Limit</th><th>Window</th></tr>
+        <tr><td>Authentication (login, register)</td><td>10 requests</td><td>per minute per IP</td></tr>
+        <tr><td>Password reset</td><td>5 requests</td><td>per hour per IP</td></tr>
+        <tr><td>AI Mentor</td><td>30 requests</td><td>per minute per user</td></tr>
+        <tr><td>Payment endpoints</td><td>5 requests</td><td>per minute per IP</td></tr>
+        <tr><td>General API</td><td>200 requests</td><td>per minute per IP</td></tr>
+      </table>
+      <h3>HTTP security headers</h3>
+      <table>
+        <tr><th>Header</th><th>Value</th><th>Status</th></tr>
+        <tr><td>Content-Security-Policy</td><td>script-src 'self'; frame-src Stripe only</td><td><span class="status-badge status-green">✓ Active</span></td></tr>
+        <tr><td>Strict-Transport-Security</td><td>max-age=63072000; includeSubDomains; preload</td><td><span class="status-badge status-green">✓ Active</span></td></tr>
+        <tr><td>X-Frame-Options</td><td>SAMEORIGIN</td><td><span class="status-badge status-green">✓ Active</span></td></tr>
+        <tr><td>X-Content-Type-Options</td><td>nosniff</td><td><span class="status-badge status-green">✓ Active</span></td></tr>
+        <tr><td>Permissions-Policy</td><td>camera=(), microphone=(), geolocation=()</td><td><span class="status-badge status-green">✓ Active</span></td></tr>
+        <tr><td>Referrer-Policy</td><td>strict-origin-when-cross-origin</td><td><span class="status-badge status-green">✓ Active</span></td></tr>
+      </table>
+      <h3>SLA</h3>
+      <div class="sla-grid">
+        <div class="sla-card"><div class="sla-value">99.5%</div><div class="sla-label">Uptime — Business</div></div>
+        <div class="sla-card"><div class="sla-value">99.9%</div><div class="sla-label">Uptime — Enterprise</div></div>
+        <div class="sla-card"><div class="sla-value">4h</div><div class="sla-label">RTO — Critical</div></div>
+        <div class="sla-card"><div class="sla-value">1h</div><div class="sla-label">RPO</div></div>
+      </div>
+    </section>
+
+    <section class="trust-section" id="pen-testing">
+      <h2>🧪 Penetration Testing</h2>
+      <table>
+        <tr><th>Assessment type</th><th>Last run</th><th>Status</th></tr>
+        <tr><td>OWASP Top 10 internal review</td><td>Q1 2026</td><td><span class="status-badge status-green">✓ Passed</span></td></tr>
+        <tr><td>Dependency audit (npm audit)</td><td>Continuous (CI)</td><td><span class="status-badge status-green">✓ Active</span></td></tr>
+        <tr><td>CSP / header audit (securityheaders.com)</td><td>Q1 2026</td><td><span class="status-badge status-green">✓ A rating</span></td></tr>
+        <tr><td>External penetration test</td><td>Planned Q3 2026</td><td><span class="status-badge status-yellow">⏳ Scheduled</span></td></tr>
+        <tr><td>SOC 2 Type II audit</td><td>Planned 2027</td><td><span class="status-badge status-gray">Roadmap</span></td></tr>
+      </table>
+      <p>Enterprise customers can request a summary of our most recent internal security assessment under NDA. Contact <a href="mailto:security@winlab.cloud">security@winlab.cloud</a>.</p>
+    </section>
+
+    <section class="trust-section" id="incident">
+      <h2>🚨 Incident Response</h2>
+      <h3>Response SLAs</h3>
+      <table>
+        <tr><th>Severity</th><th>Definition</th><th>Initial response</th><th>Customer notification</th></tr>
+        <tr><td><strong>P1 — Critical</strong></td><td>Data breach, auth bypass, service down</td><td>30 minutes</td><td>Within 2 hours</td></tr>
+        <tr><td><strong>P2 — High</strong></td><td>Partial outage, data integrity issue</td><td>2 hours</td><td>Within 8 hours</td></tr>
+        <tr><td><strong>P3 — Medium</strong></td><td>Performance degradation, non-critical bug</td><td>8 hours</td><td>Next business day</td></tr>
+      </table>
+      <h3>Data breach procedure</h3>
+      <ul>
+        <li>Affected enterprise customers notified within <strong>24 hours</strong> of confirmed breach (GDPR Art. 33 compliant)</li>
+        <li>Supervisory authority (EDPB) notified within <strong>72 hours</strong> if required</li>
+        <li>Breach report includes: nature of data exposed, affected users, remediation steps taken, and recommended customer actions</li>
+      </ul>
+      <h3>Vulnerability disclosure</h3>
+      <p>WinLab operates a responsible disclosure policy. Security researchers who report valid vulnerabilities via <a href="mailto:security@winlab.cloud">security@winlab.cloud</a> receive acknowledgement within 48 hours and are credited (with permission) upon remediation.</p>
+    </section>
+
+    <section class="trust-section" id="gdpr">
+      <h2>🇪🇺 GDPR Compliance</h2>
+      <h3>Legal basis</h3>
+      <p>WinLab processes personal data under GDPR Art. 6(1)(b) (contract performance) for account and billing data, and Art. 6(1)(a) (consent) for analytics and AI training data. Consent is granular, revocable, and recorded with a timestamp and user ID.</p>
+      <h3>Data subject rights</h3>
+      <ul>
+        <li><strong>Right of access</strong> — users can export all their data (JSON) from the account dashboard at any time</li>
+        <li><strong>Right to erasure</strong> — account deletion removes all PII within 72 hours. Payment records retained for 7 years (legal requirement)</li>
+        <li><strong>Right to portability</strong> — scenario results, certificates, and progress are exportable as JSON or PDF</li>
+        <li><strong>Right to object</strong> — ML training consent and analytics consent can be withdrawn independently at any time from Settings</li>
+        <li><strong>Right to rectification</strong> — users can update name, email, and profile data directly in the dashboard</li>
+      </ul>
+      <h3>Data Processing Agreement (DPA)</h3>
+      <p>A GDPR-compliant DPA is available for all Business and Enterprise customers. Contact <a href="mailto:enterprise@winlab.cloud">enterprise@winlab.cloud</a> to request a countersigned DPA before or during onboarding.</p>
+      <h3>Data transfers</h3>
+      <p>User data is stored exclusively in EU infrastructure (Frankfurt). AI Mentor queries are processed via Anthropic's API (US-based). This transfer is covered by Standard Contractual Clauses (SCCs) and is only activated with explicit user consent. If your organisation requires that all data remain within the EU, AI Mentor can be disabled at the tenant level.</p>
+      <h3>Data retention</h3>
+      <table>
+        <tr><th>Data type</th><th>Retention period</th><th>Deletion method</th></tr>
+        <tr><td>Account / PII</td><td>Until deletion + 90 days</td><td>Soft-delete then purge</td></tr>
+        <tr><td>Scenario results &amp; progress</td><td>2 years (configurable per tenant)</td><td>Automatic purge</td></tr>
+        <tr><td>Audit logs</td><td>90 days</td><td>Rolling purge</td></tr>
+        <tr><td>Payment records</td><td>7 years (legal requirement)</td><td>Stripe-managed</td></tr>
+        <tr><td>AI conversation logs</td><td>30 days</td><td>Automatic purge; not used for training without consent</td></tr>
+        <tr><td>Session replay events</td><td>90 days</td><td>Automatic purge</td></tr>
+      </table>
+      <h3>Data Controller</h3>
+      <p>Giovanni Spata — operating as WinLab (winlab.cloud) · EU-based sole trader<br>Contact: <a href="mailto:privacy@winlab.cloud">privacy@winlab.cloud</a></p>
+    </section>
+
+    <section class="trust-section" id="certifications">
+      <h2>📋 Certifications &amp; Standards</h2>
+      <div class="cert-grid">
+        <div class="cert-card"><div class="cert-icon">🇪🇺</div><div class="cert-name">GDPR</div><div style="font-size:11px;color:var(--muted)"><span class="status-badge status-green">✓ Compliant</span></div></div>
+        <div class="cert-card"><div class="cert-icon">🔒</div><div class="cert-name">SOC 2 Type II</div><div style="font-size:11px;color:var(--muted)"><span class="status-badge status-gray">2027 Roadmap</span></div></div>
+        <div class="cert-card"><div class="cert-icon">📋</div><div class="cert-name">ISO 27001</div><div style="font-size:11px;color:var(--muted)"><span class="status-badge status-yellow">In preparation</span></div></div>
+        <div class="cert-card"><div class="cert-icon">🛡️</div><div class="cert-name">OWASP Top 10</div><div style="font-size:11px;color:var(--muted)"><span class="status-badge status-green">✓ Reviewed Q1 2026</span></div></div>
+        <div class="cert-card"><div class="cert-icon">📄</div><div class="cert-name">DPA Available</div><div style="font-size:11px;color:var(--muted)"><span class="status-badge status-green">✓ On request</span></div></div>
+        <div class="cert-card"><div class="cert-icon">🤝</div><div class="cert-name">Right to Audit</div><div style="font-size:11px;color:var(--muted)"><span class="status-badge status-green">✓ Enterprise plan</span></div></div>
+      </div>
+    </section>
+
+    <section class="trust-section" id="data-residency">
+      <h2>📍 Data Residency</h2>
+      <p>All user data, scenario results, and audit logs are stored exclusively in EU infrastructure (Frankfurt, Germany). WinLab does not replicate EU customer data to US-based storage.</p>
+      <table>
+        <tr><th>Service</th><th>Location</th><th>Provider</th><th>Data category</th></tr>
+        <tr><td>Application server</td><td>EU — Frankfurt, DE</td><td>Hetzner</td><td>All application data</td></tr>
+        <tr><td>Database (MySQL)</td><td>EU — Frankfurt, DE</td><td>Self-hosted on Hetzner</td><td>User PII, progress, logs</td></tr>
+        <tr><td>Backups</td><td>EU — Frankfurt, DE</td><td>Self-hosted (encrypted)</td><td>Full database snapshots</td></tr>
+        <tr><td>AI inference (AI Mentor)</td><td>US</td><td>Anthropic (SCC-covered)</td><td>Anonymised query context only; consent-gated</td></tr>
+        <tr><td>Payments</td><td>US / Global</td><td>Stripe (standard DPA)</td><td>Billing data only; no lab data</td></tr>
+        <tr><td>Email transactional</td><td>US</td><td>Resend (SCC-covered)</td><td>Email address + message only</td></tr>
+        <tr><td>DNS / CDN</td><td>Global edge</td><td>Cloudflare (EU-compliant)</td><td>No persistent user data</td></tr>
+      </table>
+    </section>
+
+    <section class="trust-section" id="subprocessors">
+      <h2>🔗 Sub-processors</h2>
+      <p>WinLab uses the following sub-processors that may handle personal data. Enterprise customers are notified of any changes to this list with 30 days advance notice.</p>
+      <table>
+        <tr><th>Sub-processor</th><th>Purpose</th><th>Location</th><th>Legal basis</th></tr>
+        <tr><td>Hetzner Online GmbH</td><td>Server hosting</td><td>Germany (EU)</td><td>DPA in place</td></tr>
+        <tr><td>Stripe Inc.</td><td>Payment processing</td><td>US</td><td>Standard DPA; SCCs</td></tr>
+        <tr><td>Anthropic PBC</td><td>AI Mentor inference</td><td>US</td><td>SCCs; consent-gated</td></tr>
+        <tr><td>Resend Inc.</td><td>Transactional email</td><td>US</td><td>SCCs; email only</td></tr>
+        <tr><td>Cloudflare Inc.</td><td>DDoS protection / CDN</td><td>Global (EU nodes)</td><td>EU DPA; no persistent storage</td></tr>
+        <tr><td>Microsoft Corp.</td><td>Azure AD SSO (optional)</td><td>EU region configurable</td><td>Customer's own Azure tenant; no data passed to Microsoft by WinLab</td></tr>
+      </table>
+    </section>
+
+    <section class="trust-section" id="sso">
+      <h2>🔑 SSO / SAML 2.0</h2>
+      <h3>Supported identity providers</h3>
+      <ul>
+        <li>Microsoft Azure AD / Entra ID — OAuth 2.0 + OIDC (all plans)</li>
+        <li>Okta — SAML 2.0 (Enterprise plan)</li>
+        <li>Google Workspace — OAuth 2.0 (Enterprise plan)</li>
+        <li>Generic SAML 2.0 IdP (Enterprise plan)</li>
+      </ul>
+      <h3>Provisioning</h3>
+      <p>Just-in-time (JIT) provisioning is supported. Users are automatically created on first SSO login with the role defined in the IdP group mapping. SCIM provisioning for automated user lifecycle management is on the Enterprise roadmap (H2 2026).</p>
+      <h3>Forced SSO</h3>
+      <p>Enterprise admins can enforce SSO-only login for their tenant domain. When enabled, password-based login is disabled for all users with matching email domains. This prevents shadow account creation.</p>
+      <h3>Setup time</h3>
+      <p>Azure AD SSO setup takes approximately 10 minutes using the self-service enterprise dashboard. Okta and custom SAML configurations are handled during the dedicated Enterprise onboarding call.</p>
+    </section>
+
+    <section class="trust-section" id="rbac">
+      <h2>👥 Role-Based Access Control</h2>
+      <table>
+        <tr><th>Role</th><th>Lab access</th><th>Team analytics</th><th>Admin controls</th><th>Billing</th></tr>
+        <tr><td><strong>Member</strong></td><td>Assigned catalogue</td><td>Own results only</td><td>—</td><td>—</td></tr>
+        <tr><td><strong>Team Lead</strong></td><td>Full catalogue</td><td>Team view</td><td>Assign scenarios, view skill gaps</td><td>—</td></tr>
+        <tr><td><strong>Admin</strong></td><td>Full catalogue</td><td>Full team</td><td>User management, SSO config, seat allocation</td><td>View only</td></tr>
+        <tr><td><strong>Super Admin</strong></td><td>Full catalogue</td><td>Full tenant</td><td>All admin controls + audit log access</td><td>Full</td></tr>
+      </table>
+      <p>Role assignments are managed by the tenant Super Admin. Roles can be synced from the SSO IdP using group-to-role mapping (Enterprise plan).</p>
+    </section>
+
+    <section class="trust-section" id="tenant">
+      <h2>🧱 Tenant Isolation</h2>
+      <p>Enterprise workspaces are fully isolated tenants. User data, scenario progress, leaderboard entries, custom configurations, and audit logs are scoped strictly to the tenant at every layer.</p>
+      <h3>How isolation is enforced</h3>
+      <ul>
+        <li><strong>Database layer</strong> — every query includes a tenant filter enforced by the ORM (Prisma). Raw SQL access is not used in application code.</li>
+        <li><strong>API layer</strong> — JWT claims carry the tenant domain. Middleware validates tenant scope on every authenticated request before any data operation.</li>
+        <li><strong>Lab runtime</strong> — each lab session runs in an isolated sandboxed environment. Sessions cannot access filesystem paths, environment variables, or network resources of other sessions.</li>
+        <li><strong>Leaderboard &amp; analytics</strong> — cross-tenant aggregations are never exposed. Enterprise leaderboards are scoped to the tenant by default.</li>
+      </ul>
+      <p>There is no administrative interface or internal tool that can view cross-tenant data without explicit super-admin elevation with audit logging.</p>
+    </section>
+
+    <section class="trust-section" id="questionnaire">
+      <h2>❓ Security Review FAQ</h2>
+      <p style="margin-bottom:20px">Pre-answered responses to the most common enterprise vendor security questionnaire questions. For a full completed VSA/SIG Lite, contact <a href="mailto:security@winlab.cloud">security@winlab.cloud</a>.</p>
+
+      <details class="faq-item">
+        <summary class="faq-q">Does WinLab store credit card numbers or payment data? <span>+</span></summary>
+        <div class="faq-a">No. All payment processing is handled directly by Stripe. WinLab stores only Stripe customer IDs and subscription status. No card numbers, CVVs, or bank account details ever touch WinLab systems.</div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">Can our security team conduct a penetration test of WinLab? <span>+</span></summary>
+        <div class="faq-a">Yes. Enterprise plan customers have the right to conduct a scoped penetration test of their tenant environment. A testing agreement and scope document must be signed before testing begins. Contact enterprise@winlab.cloud to arrange.</div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">Does WinLab use customer data to train AI models? <span>+</span></summary>
+        <div class="faq-a">No, by default. AI Mentor uses Anthropic's API. WinLab does not send identifiable user data to Anthropic. Query context is anonymised before transmission. Users must explicitly opt in to ML training data use, and enterprise admins can disable this option for their entire tenant.</div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">What happens to our data if we cancel? <span>+</span></summary>
+        <div class="faq-a">Upon subscription cancellation, customer data is retained for 90 days to allow data export. After 90 days, all PII and scenario data is permanently deleted. A data export in JSON format can be requested at any time during the retention window. Payment records are retained for 7 years as required by law.</div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">Is WinLab ISO 27001 or SOC 2 certified? <span>+</span></summary>
+        <div class="faq-a">Not yet. ISO 27001 preparation is in progress (target: 2026). SOC 2 Type II is on the 2027 roadmap. We recognise that these certifications are required for some procurement processes and are actively working toward them. In the interim, we provide our internal OWASP audit results, security controls documentation, and a completed security questionnaire under NDA upon request.</div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">Who has access to our tenant's data? <span>+</span></summary>
+        <div class="faq-a">Access to production data is limited to the system owner (Giovanni Spata) for infrastructure maintenance and incident response. Access events are logged. No third-party support staff have access to customer data. Enterprise customers can request a right-to-audit session to verify access controls.</div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">Do you have a Data Processing Agreement (DPA)? <span>+</span></summary>
+        <div class="faq-a">Yes. A GDPR-compliant DPA is available for Business and Enterprise customers. Contact enterprise@winlab.cloud to receive and countersign the DPA. We typically turn around DPA requests within 2 business days.</div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">How are vulnerabilities in dependencies managed? <span>+</span></summary>
+        <div class="faq-a">npm audit runs as part of every deployment pipeline. Critical and high severity vulnerabilities are patched within 72 hours of disclosure. Medium severity within 14 days. Dependency versions are pinned and updated on a reviewed schedule, not automatically.</div>
+      </details>
+    </section>
+
+    <section class="trust-section" id="bcp">
+      <h2>🔄 Business Continuity &amp; Disaster Recovery</h2>
+      <h3>Backup policy</h3>
+      <ul>
+        <li>Full database backups: daily, retained for 30 days</li>
+        <li>Incremental backups: every 6 hours</li>
+        <li>Backups stored encrypted on the same EU datacenter with a separate access credential</li>
+        <li>Backup integrity verified weekly via automated restore test</li>
+      </ul>
+      <h3>Recovery objectives</h3>
+      <table>
+        <tr><th>Metric</th><th>Business plan</th><th>Enterprise plan</th></tr>
+        <tr><td>Recovery Time Objective (RTO)</td><td>8 hours</td><td>4 hours</td></tr>
+        <tr><td>Recovery Point Objective (RPO)</td><td>6 hours</td><td>1 hour</td></tr>
+        <tr><td>Planned maintenance window</td><td>Sundays 02:00–04:00 CEST</td><td>Coordinated with customer</td></tr>
+      </table>
+      <h3>Status page</h3>
+      <p>Real-time service status and incident history are available at <a href="https://status.winlab.cloud">status.winlab.cloud</a>. Enterprise customers can subscribe to incident notifications via email or webhook.</p>
+    </section>
+
+    <section class="trust-section" id="contact">
+      <h2>📬 Security Contact</h2>
+      <div class="contact-box">
+        <h3>Report a vulnerability</h3>
+        <p>Email <a href="mailto:security@winlab.cloud">security@winlab.cloud</a> with a description, reproduction steps, and potential impact. We respond within 48 hours and follow coordinated disclosure. We do not currently operate a bug bounty programme but acknowledge all valid reports publicly with your permission.</p>
+      </div>
+      <div class="contact-box">
+        <h3>Enterprise security reviews</h3>
+        <p>Need a completed security questionnaire (VSA, SIG Lite, CAIQ), a signed DPA, a right-to-audit session, or a custom penetration test scope? Contact <a href="mailto:enterprise@winlab.cloud">enterprise@winlab.cloud</a>. We handle enterprise security reviews as a standard part of Enterprise onboarding — no extra fee.</p>
+      </div>
+      <div class="contact-box">
+        <h3>Privacy enquiries</h3>
+        <p>For GDPR data subject requests, data deletion, or DPA enquiries: <a href="mailto:privacy@winlab.cloud">privacy@winlab.cloud</a>. We respond within 5 business days.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <div class="footer-logo"><span class="w">WIN</span><span class="l">LAB</span></div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:8px">
+    <a href="/enterprise" style="color:var(--muted)">Enterprise</a> ·
+    <a href="/privacy" style="color:var(--muted)">Privacy</a> ·
+    <a href="/terms" style="color:var(--muted)">Terms</a> ·
+    <a href="mailto:security@winlab.cloud" style="color:var(--muted)">security@winlab.cloud</a>
+  </div>
+  <div class="footer-copy">© 2026 WinLab (Giovanni Spata). All rights reserved.</div>
+</footer>
+
+<script>
+// FAQ toggle arrow
+document.querySelectorAll('details.faq-item').forEach(d => {
+  d.addEventListener('toggle', () => {
+    d.querySelector('summary span').textContent = d.open ? '−' : '+';
+  });
+});
+// Sidebar active link on scroll
+const sections = document.querySelectorAll('section.trust-section');
+const links = document.querySelectorAll('.sidebar a');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const l = document.querySelector(`.sidebar a[href="#${e.target.id}"]`);
+      if (l) l.classList.add('active');
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px' });
+sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

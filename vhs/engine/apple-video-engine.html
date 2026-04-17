@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WinLab — Apple Style Video Engine</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    color: #e5e7eb;
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 20px;
+  }
+  canvas {
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    max-width: 90vw;
+    max-height: 70vh;
+  }
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  button {
+    background: #111;
+    color: #e5e7eb;
+    border: 1px solid #333;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  button:hover { background: #222; border-color: #555; }
+  button.active { background: #1a1a2e; border-color: #3b82f6; color: #60a5fa; }
+  .info {
+    font-size: 12px;
+    color: #6b7280;
+    text-align: center;
+    max-width: 600px;
+    line-height: 1.6;
+  }
+  .label {
+    font-size: 11px;
+    color: #3b82f6;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+<span class="label">WinLab Video Engine — Apple Style</span>
+<canvas id="canvas" width="1280" height="720"></canvas>
+
+<div class="controls">
+  <button data-variant="A" class="active">A — Emotiva</button>
+  <button data-variant="B">B — Apple Minimal</button>
+  <button data-variant="C">C — Provocatoria</button>
+  <button id="playBtn">▶ Play</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="info" id="variantInfo">
+  <strong>Variante A</strong> — Empatia: "Same skills. Different outcome."
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// WINLAB APPLE-STYLE VIDEO ENGINE
+// Scene-based timeline renderer
+// ═══════════════════════════════════════════════════════════════
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// ─── Theme ────────────────────────────────────────────────────
+const THEME = {
+  bg:       '#0a0a0a',
+  panel:    '#111111',
+  header:   '#1e1e1e',
+  text:     '#e5e7eb',
+  sub:      '#6b7280',
+  accent:   '#3b82f6',
+  success:  '#22c55e',
+  error:    '#ef4444',
+  warning:  '#f59e00',
+};
+
+// ─── Easing ───────────────────────────────────────────────────
+function easeOutExpo(t) {
+  return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+}
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+// ─── Canvas Helpers ───────────────────────────────────────────
+function roundRect(x, y, w, h, r, fill = true, stroke = false) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCENE DEFINITIONS
+// ═══════════════════════════════════════════════════════════════
+
+const VARIANTS = {
+  A: {
+    name: 'A — Emotiva',
+    desc: 'Empatia: "Same skills. Different outcome."',
+    scenes: [
+      { type: 'black',        duration: 2 },
+      { type: 'text',         text: 'Connection lost.',        duration: 2 },
+      { type: 'text',         text: 'Again.',                  duration: 2 },
+      { type: 'text',         text: 'Same skills.',            duration: 2 },
+      { type: 'text',         text: 'Different outcome.',      duration: 2 },
+      { type: 'terminal',     duration: 6 },
+      { type: 'text',         text: 'Works offline.',          duration: 2 },
+      { type: 'text',         text: 'Even on GSM.',            duration: 2 },
+      { type: 'text',         text: 'Same lab. Same chance.',  duration: 2 },
+      { type: 'logo',         duration: 3 },
+    ]
+  },
+  B: {
+    name: 'B — Apple Minimal',
+    desc: 'Ultra clean: "It\'s not your skills."',
+    scenes: [
+      { type: 'black',        duration: 2 },
+      { type: 'text',         text: "It's not your skills.",   duration: 3 },
+      { type: 'text',         text: "It's your connection.",   duration: 3 },
+      { type: 'terminal',     duration: 6 },
+      { type: 'text',         text: 'Works offline.',          duration: 2 },
+      { type: 'logo',         duration: 3 },
+    ]
+  },
+  C: {
+    name: 'C — Provocatoria',
+    desc: 'Virale: "Some learn on fiber."',
+    scenes: [
+      { type: 'text',         text: 'Some learn on fiber.',    duration: 3 },
+      { type: 'text',         text: 'Others try on a SIM card.', duration: 3 },
+      { type: 'text',         text: 'We fixed that.',          duration: 3 },
+      { type: 'terminal',     duration: 6 },
+      { type: 'logo',         duration: 3 },
+    ]
+  },
+};
+
+let currentVariant = 'A';
+let totalDuration = 0;
+
+function getVariant(v) {
+  const scenes = VARIANTS[v].scenes;
+  totalDuration = scenes.reduce((s, sc) => s + sc.duration, 0);
+  return scenes;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDERERS
+// ═══════════════════════════════════════════════════════════════
+
+function clearScreen() {
+  ctx.fillStyle = THEME.bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawAppleText(text, localT, opts = {}) {
+  const {
+    size = 42,
+    color = THEME.text,
+    weight = '500',
+    align = 'center',
+    x = canvas.width / 2,
+    y = canvas.height / 2,
+    fade = true,
+  } = opts;
+
+  clearScreen();
+
+  // Fade in (0→0.5), hold (0.5→0.8), fade out (0.8→1)
+  let alpha = 1;
+  if (fade) {
+    if (localT < 0.2) alpha = localT / 0.2;
+    else if (localT > 0.8) alpha = (1 - localT) / 0.2;
+    alpha = Math.max(0, Math.min(1, alpha));
+  }
+
+  ctx.save();
+  ctx.globalAlpha = easeInOut(alpha);
+  ctx.fillStyle = color;
+  ctx.font = `${weight} ${size}px -apple-system, 'Segoe UI', system-ui, sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+function drawBlack(localT) {
+  clearScreen();
+}
+
+function drawTerminal(localT) {
+  clearScreen();
+
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const w = 800, h = 280;
+  const x = cx - w / 2;
+  const y = cy - h / 2 - 20;
+  const r = 14;
+
+  // Terminal container
+  ctx.fillStyle = THEME.panel;
+  roundRect(x, y, w, h, r);
+
+  // Header
+  ctx.fillStyle = THEME.header;
+  roundRect(x, y, w, 38, r);
+
+  // Traffic lights
+  const dots = ['#ff5f57', '#febc2e', '#28c840'];
+  dots.forEach((c, i) => {
+    ctx.beginPath();
+    ctx.fillStyle = c;
+    ctx.arc(x + 22 + i * 18, y + 19, 6, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Terminal body
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  roundRect(x + 2, y + 40, w - 4, h - 42, 10);
+
+  // Commands
+  const lines = [
+    { text: '$ sudo systemctl restart apache2', color: '#60a5fa' },
+    { text: 'Started apache2.service',          color: THEME.success },
+    { text: '',                                 color: '' },
+    { text: '✓ Active: running',                color: THEME.success },
+  ];
+
+  const startX = x + 24;
+  const startY = y + 78;
+  const lineH = 40;
+
+  lines.forEach((line, i) => {
+    if (!line.text) return;
+
+    const t = Math.min(1, Math.max(0, (localT * 2.5) - i * 0.5));
+    const eased = easeOutExpo(t);
+    const chars = Math.floor(line.text.length * eased);
+    const visible = line.text.substring(0, chars);
+
+    // Cursor on current line
+    const isCurrent = i === Math.floor(localT * 2.5);
+    const cursorBlink = Math.floor(performance.now() / 500) % 2 === 0;
+    const cursor = (isCurrent && eased < 1 && cursorBlink) ? '█' : '';
+
+    ctx.save();
+    ctx.fillStyle = line.color;
+    ctx.font = '26px Consolas, "Courier New", monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(visible + cursor, startX, startY + i * lineH);
+
+    // Success glow on "✓ Active"
+    if (line.text.startsWith('✓') && eased >= 1) {
+      ctx.shadowColor = THEME.success;
+      ctx.shadowBlur = 14;
+      ctx.fillText(line.text, startX, startY + i * lineH);
+    }
+    ctx.restore();
+  });
+}
+
+function drawLogo(localT) {
+  clearScreen();
+
+  // Fade in
+  let alpha = localT < 0.2 ? localT / 0.2 : localT > 0.7 ? (1 - localT) / 0.3 : 1;
+  alpha = Math.max(0, Math.min(1, alpha));
+
+  ctx.save();
+  ctx.globalAlpha = easeInOut(alpha);
+
+  // "WinLab.cloud"
+  ctx.fillStyle = THEME.accent;
+  ctx.font = '700 52px -apple-system, "Segoe UI", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('WinLab.cloud', canvas.width / 2, canvas.height / 2 - 20);
+
+  // Tagline
+  ctx.fillStyle = THEME.sub;
+  ctx.font = '400 22px -apple-system, "Segoe UI", system-ui, sans-serif';
+  ctx.fillText('Same lab. Same chance.', canvas.width / 2, canvas.height / 2 + 35);
+
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TIMELINE ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+let scenes = getVariant('A');
+
+function renderTimeline(elapsed) {
+  let acc = 0;
+  for (const scene of scenes) {
+    if (elapsed < acc + scene.duration) {
+      const localT = (elapsed - acc) / scene.duration;
+      switch (scene.type) {
+        case 'black':    drawBlack(localT); break;
+        case 'text':     drawAppleText(scene.text, localT, { size: 42 }); break;
+        case 'terminal': drawTerminal(localT); break;
+        case 'logo':     drawLogo(localT); break;
+      }
+      return;
+    }
+    acc += scene.duration;
+  }
+  // Loop
+  return true; // signal to restart
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PLAYER
+// ═══════════════════════════════════════════════════════════════
+
+let playing = false;
+let startTime = null;
+let animFrame = null;
+
+function play() {
+  playing = true;
+  startTime = performance.now();
+  scenes = getVariant(currentVariant);
+
+  function tick(now) {
+    const elapsed = (now - startTime) / 1000;
+    const shouldRestart = renderTimeline(elapsed);
+    if (shouldRestart && playing) {
+      startTime = now;
+      scenes = getVariant(currentVariant);
+    }
+    if (playing) animFrame = requestAnimationFrame(tick);
+  }
+  animFrame = requestAnimationFrame(tick);
+}
+
+function stop() {
+  playing = false;
+  if (animFrame) cancelAnimationFrame(animFrame);
+}
+
+function reset() {
+  stop();
+  startTime = null;
+  clearScreen();
+  drawAppleText('Press ▶ Play', 1, { size: 36, color: THEME.sub });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UI
+// ═══════════════════════════════════════════════════════════════
+
+const info = document.getElementById('variantInfo');
+
+document.querySelectorAll('[data-variant]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-variant]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentVariant = btn.dataset.variant;
+    const v = VARIANTS[currentVariant];
+    info.innerHTML = `<strong>${v.name}</strong> — ${v.desc}`;
+    if (playing) { stop(); play(); }
+  });
+});
+
+document.getElementById('playBtn').addEventListener('click', () => {
+  if (playing) { stop(); document.getElementById('playBtn').textContent = '▶ Play'; }
+  else { play(); document.getElementById('playBtn').textContent = '⏸ Pause'; }
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  reset();
+  document.getElementById('playBtn').textContent = '▶ Play';
+});
+
+// Initial state
+reset();
+
+</script>
+</body>
+</html>

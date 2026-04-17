@@ -1,0 +1,4 @@
+● nginx.service
+   Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled)
+   Active: active (running) since Sun Apr 12 2026 10:00:00
+   Main PID: 3456 (nginx)

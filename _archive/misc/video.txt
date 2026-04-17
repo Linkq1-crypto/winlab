@@ -1,0 +1,157 @@
+from moviepy.editor import *
+from PIL import Image, ImageDraw, ImageFont
+import numpy as np
+import random, os
+
+W, H = 1080, 1920
+
+# 🔤 FONT
+def load_font(size=70):
+    try:
+        return ImageFont.truetype("arial.ttf", size)
+    except:
+        return ImageFont.load_default()
+
+# 🖼️ TEXT RENDER
+def text_image(text):
+    img = Image.new("RGB", (W, H), (0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    font = load_font(70)
+
+    w = draw.textlength(text, font=font)
+    x = (W - w) // 2
+    y = H // 2
+
+    draw.text((x, y), text, fill=(255,255,255), font=font)
+    return np.array(img)
+
+# 🎬 CLIP
+def text_clip(text, start, duration):
+    clip = ImageClip(text_image(text)).set_start(start).set_duration(duration)
+
+    # Apple style
+    clip = clip.fadein(0.4).fadeout(0.3)
+
+    return clip
+
+# ⚡ GLITCH
+def glitch(get_frame, t):
+    frame = get_frame(t)
+    if random.random() < 0.07:
+        frame = np.roll(frame, random.randint(-10,10), axis=1)
+    return frame
+
+# 🔊 AUDIO
+def add_audio(duration):
+    clips = []
+
+    if os.path.exists("assets/audio/typing.mp3"):
+        clips.append(AudioFileClip("assets/audio/typing.mp3").set_duration(duration))
+
+    return CompositeAudioClip(clips) if clips else None
+
+# 💻 TERMINAL OVERLAY
+def terminal_clip(text, start):
+    return TextClip(
+        text,
+        fontsize=40,
+        color="green",
+        font="Courier"
+    ).set_start(start).set_duration(3).set_position(("left","bottom"))
+
+# 🎬 GENERATE
+def render_video(timeline, filename):
+    duration = timeline[-1]["t"] + 3
+
+    base = ColorClip((W,H), color=(0,0,0)).set_duration(duration)
+
+    clips = [base]
+
+    for i, item in enumerate(timeline):
+        t = item["t"]
+        text = item["text"]
+
+        if i < len(timeline)-1:
+            d = timeline[i+1]["t"] - t
+        else:
+            d = 3
+
+        clips.append(text_clip(text, t, d))
+
+        # terminal auto
+        if "kubectl" in text or "error" in text.lower():
+            clips.append(terminal_clip(text, t))
+
+    video = CompositeVideoClip(clips)
+
+    # glitch
+    video = video.fl(glitch)
+
+    # audio
+    audio = add_audio(duration)
+    if audio:
+        video = video.set_audio(audio)
+
+    video.write_videofile(filename, fps=30)
+🎬 2) TEMPLATE T1–T10 (usa questi)
+
+Metti in content_engine.py o file separato:
+
+TEMPLATES = {
+"T1": ["Connection lost.", "Users: 1200", "Error rate: 87%", "Fix it."],
+"T2": ["kubectl get pods", "CrashLoopBackOff", "Why?"],
+"T3": ["It failed.", "Users impacted", "Fix deployed"],
+"T4": ["Tutorials don't work.", "Real engineers fix systems"],
+"T5": ["Production is down.", "Restart?", "Debug?", "Rollback?"],
+"T6": ["Something is wrong.", "Checking logs...", "Find it."],
+"T7": ["Minor issue.", "Now spreading.", "Critical failure"],
+"T8": ["Engineer A", "Engineer B", "Different outcome"],
+"T9": ["Can you fix this?", "Error rate 92%", "Go."],
+"T10": ["Real engineers don't watch.", "They fix.", "WinLab"]
+}
+🧠 3) COLLEGAMENTO AI TUOI LAB (QUESTO È IL PUNTO CHIAVE)
+
+Esempio:
+
+Kubernetes Lab
+timeline = [
+    {"t": 0, "text": "Production is down."},
+    {"t": 3, "text": "CrashLoopBackOff"},
+    {"t": 6, "text": "Error rate: 87%"},
+    {"t": 9, "text": "Users: 1200"},
+    {"t": 12, "text": "Fix it."}
+]
+Security Lab
+timeline = [
+    {"t": 0, "text": "They logged in."},
+    {"t": 3, "text": "No alert."},
+    {"t": 6, "text": "Privilege escalation"},
+    {"t": 9, "text": "You missed it."}
+]
+Cloud Lab
+timeline = [
+    {"t": 0, "text": "AWS is down."},
+    {"t": 3, "text": "Region failure"},
+    {"t": 6, "text": "Users dropping"},
+    {"t": 9, "text": "Now what?"}
+]
+⚙️ 4) USO REALE (IL TUO FLOW)
+Genera 10 video:
+from vertical_engine import render_video
+
+videos = [
+    ["Production is down.", "CrashLoopBackOff", "Fix it."],
+    ["AWS is down.", "Failover failed", "Users impacted"],
+    ["They logged in.", "No alert.", "Too late."]
+]
+
+for i, v in enumerate(videos):
+    timeline = [{"t": i*3, "text": txt} for i, txt in enumerate(v)]
+    render_video(timeline, f"vhs/output/video_{i}.mp4")
+🚀 5) COME SI COLLEGA AL TUO SYSTEM
+
+Ora puoi usare ESATTAMENTE:
+
+python vhs/scripts/content_engine.py --generate 50
+python vhs/scripts/vertical_engine.py --batch
+python vhs/scripts/autopost.py --schedule

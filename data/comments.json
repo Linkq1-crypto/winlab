@@ -1,0 +1,10 @@
+[
+  {"id": "c1", "author": "TechNewbie", "text": "How do I start learning Linux?", "platform": "tiktok"},
+  {"id": "c2", "author": "DevOpsGuru", "text": "This is exactly what the industry needs 🔥", "platform": "linkedin"},
+  {"id": "c3", "author": "SkepticalDev", "text": "But it's not real production though", "platform": "youtube"},
+  {"id": "c4", "author": "JuniorEngineer", "text": "I tried journalctl -xe and found the issue! Thank you!", "platform": "tiktok"},
+  {"id": "c5", "author": "CareerSwitcher", "text": "My internet is terrible. Can I actually use this?", "platform": "linkedin"},
+  {"id": "c6", "author": "SysAdminVeteran", "text": "We need this in our onboarding. Where's the team plan?", "platform": "linkedin"},
+  {"id": "c7", "author": "BootcampGrad", "text": "I watched 50 tutorials and still couldn't debug. This makes sense.", "platform": "youtube"},
+  {"id": "c8", "author": "HiringManager", "text": "This is what we test in interviews. Real scenarios, not theory.", "platform": "linkedin"}
+]

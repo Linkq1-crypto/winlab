@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
+:root {
+  --bg:      #0a0a0b;
+  --surface: #0d0d0f;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: white;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* NO overflow:hidden here – landing page needs to scroll.
+     The app shell (SaaSOrchestrator) sets its own overflow-hidden internally. */
+}
+
+#root {
+  /* Let each top-level view control its own height/overflow */
+  min-height: 100vh;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #334155; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* ── App shell (opt-in class, applied only inside SaaSOrchestrator) ─────────── */
+.app-shell {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Print (certificate) ───────────────────────────────────────────────────── */
+@media print {
+  body > *:not(#winlab-cert) { display: none !important; }
+  #winlab-cert { display: block !important; }
+}
+
+/* ── Toast Animations ───────────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Progress bar fill animation */
+@keyframes progressFill {
+  from { width: 0%; }
+}
+
+.animate-progress-fill {
+  animation: progressFill 0.5s ease-out;
+}
+
+/* ── Error Toast ──────────────────────────────────────────────────────────── */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(100px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.25s ease-out;
+}
+
+/* ── Skeleton Pulse ───────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ── Performance: Disable animations on low-end devices ───────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Virtual List ─────────────────────────────────────────────────────────── */
+.virtual-list-container {
+  position: relative;
+  overflow-y: auto;
+  will-change: transform;
+  transform: translateZ(0); /* GPU acceleration */
+}
+
+/* Prevent scroll jank */
+.virtual-list-container * {
+  will-change: auto;
+}
+
+/* ── Offline Status Bar Spacing ─────────────────────────────────────────── */
+body.has-offline-bar {
+  padding-bottom: 28px;
+}

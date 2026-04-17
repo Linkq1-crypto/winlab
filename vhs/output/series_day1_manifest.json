@@ -1,0 +1,42 @@
+{
+  "series": "Day 1 as a SysAdmin",
+  "arc": "confusion \u2192 competence",
+  "total_episodes": 7,
+  "episodes": [
+    {
+      "id": "series_day1_ep01",
+      "name": "day1_day01",
+      "file": "day1_day01.json"
+    },
+    {
+      "id": "series_day1_ep02",
+      "name": "day1_day02",
+      "file": "day1_day02.json"
+    },
+    {
+      "id": "series_day1_ep03",
+      "name": "day1_day03",
+      "file": "day1_day03.json"
+    },
+    {
+      "id": "series_day1_ep04",
+      "name": "day1_day04",
+      "file": "day1_day04.json"
+    },
+    {
+      "id": "series_day1_ep05",
+      "name": "day1_day05",
+      "file": "day1_day05.json"
+    },
+    {
+      "id": "series_day1_ep06",
+      "name": "day1_day06",
+      "file": "day1_day06.json"
+    },
+    {
+      "id": "series_day1_ep07",
+      "name": "day1_day07",
+      "file": "day1_day07.json"
+    }
+  ]
+}

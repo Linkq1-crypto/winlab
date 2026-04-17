@@ -1,0 +1,39 @@
+{
+  "id": "series_day1_ep07",
+  "name": "day1_day07",
+  "series": "Day 1 as a SysAdmin",
+  "episode": 7,
+  "total_episodes": 7,
+  "hook": "Day 7.",
+  "scenes": [
+    {
+      "type": "text",
+      "text": "Day 7.",
+      "duration": 2.5
+    },
+    {
+      "type": "text",
+      "text": "You don't panic anymore.",
+      "duration": 2.0
+    },
+    {
+      "type": "terminal",
+      "cmd": "You've seen this before.",
+      "status": "\u2713 Confident",
+      "duration": 5.0
+    },
+    {
+      "type": "text",
+      "text": "Practice makes the difference.",
+      "duration": 2.0
+    },
+    {
+      "type": "text",
+      "text": "Try it yourself \u2192 WinLab",
+      "duration": 2.5,
+      "color": "accent"
+    }
+  ],
+  "cluster": "learning",
+  "created_at": "2026-04-14T03:15:54.944533"
+}

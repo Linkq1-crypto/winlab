@@ -1,0 +1,42 @@
+[
+  {
+    "id": "v001",
+    "hook": "Connection lost.",
+    "structure": "problem",
+    "platform": "tiktok",
+    "metrics": {"views": 15000, "clicks": 900, "signups": 85, "comments": 120},
+    "file": "connection_lost.mp4"
+  },
+  {
+    "id": "v002",
+    "hook": "Same skills. Different outcome.",
+    "structure": "contrast",
+    "platform": "youtube",
+    "metrics": {"views": 8000, "clicks": 520, "signups": 42, "comments": 67},
+    "file": "same_skills.mp4"
+  },
+  {
+    "id": "v003",
+    "hook": "Your internet shouldn't decide your career.",
+    "structure": "inequality",
+    "platform": "linkedin",
+    "metrics": {"views": 5200, "clicks": 410, "signups": 55, "comments": 89},
+    "file": "career.mp4"
+  },
+  {
+    "id": "v004",
+    "hook": "System failed. Now fix it.",
+    "structure": "problem",
+    "platform": "tiktok",
+    "metrics": {"views": 3200, "clicks": 80, "signups": 3, "comments": 12},
+    "file": "system_failed.mp4"
+  },
+  {
+    "id": "v005",
+    "hook": "Works offline. Even on GSM.",
+    "structure": "speed",
+    "platform": "instagram",
+    "metrics": {"views": 12000, "clicks": 720, "signups": 68, "comments": 95},
+    "file": "offline.mp4"
+  }
+]

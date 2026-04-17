@@ -1,0 +1,381 @@
+// WINLAB v7 – Prisma Schema
+// Dev: SQLite | Prod: MySQL (swap provider in .env)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"  // Prod: "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique          // Encrypted as JSON string in prod
+  name         String?                         // Encrypted JSON string (Text in SQLite)
+  nickname     String?        @unique          // Encrypted
+  passwordHash String         @default("")
+  plan         String         @default("{}")   // Encrypted JSON string (Text in SQLite)
+  isAdmin      Boolean        @default(false)
+  mlConsent           Boolean   @default(false)  // User consent for ML training data use
+  mlConsentDate       DateTime?
+  aiMentorConsent     Boolean?                  // null = never asked, true = allowed, false = declined
+  aiMentorConsentDate DateTime?
+  lastActiveLab String?                       // Last open lab ID
+  lastLabState String?                        // State of the open lab (JSON string)
+  unlockedBadges String?                      // JSON array of unlocked badge IDs
+  accountStatus String       @default("active") // active | deleted
+  provider     String?                         // null = email, "google", "github", "microsoft"
+  providerId   String?
+  microsoftId  String?  @unique               // Azure AD object ID (oid claim)
+  tenantDomain String?                        // e.g. "contoso.com" from MS email
+  teamId       String?
+  totalXp      Int            @default(0)
+  currentStreak Int           @default(0)
+  longestStreak Int           @default(0)
+
+  // Launch promo tracking
+  isPromo      Boolean        @default(false) // true = paid $5 during 72h launch window
+
+  // Stripe integration fields
+  stripeCustomerId       String?         @unique
+  stripeSubscriptionId   String?         @unique
+  subscriptionStatus     String          @default("none") // none | active | past_due | canceled | paused | trial
+  subscriptionPlan       String?         // pro | business (mirrors Stripe subscription)
+  subscriptionPeriodEnd  DateTime?       // Current billing period end
+  trialEndsAt            DateTime?       // Trial expiration (if applicable)
+  cancelAtPeriodEnd      Boolean         @default(false) // Whether subscription is set to cancel at period end
+
+  createdAt    DateTime       @default(now())
+  progress     UserProgress[]
+  certificates Certificate[]
+  analytics    Analytics[]
+  passwordResets PasswordReset[]
+  dailyCompletions DailyCompletion[]
+  skills       UserSkill[]
+  subscriptions Subscription[]
+  payments     Payment[]
+}
+
+model UserProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  labId     String
+  completed Boolean  @default(false)
+  score     Int      @default(0)
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, labId])
+}
+
+model Certificate {
+  id            String   @id @default(cuid())
+  certId        String   @unique
+  userId        String
+  labsCompleted Int
+  issuedAt      DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, usedAt])
+  @@index([token])
+}
+
+// AI response cache
+model AiCache {
+  id         String   @id @default(cuid())
+  key        String   @unique
+  prompt     String
+  reply      String
+  model      String
+  tokensUsed Int
+  hits       Int      @default(1)
+  createdAt  DateTime @default(now())
+}
+
+model Analytics {
+  id        String   @id @default(cuid())
+  event     String
+  userId    String?
+  meta      String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([event, createdAt])
+  @@index([userId])
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  type      String   // "feature" | "bug"
+  title     String
+  body      String   @default("")
+  labId     String?
+  severity  String?  // "low" | "medium" | "high" | "critical"
+  userId    String?
+  votes     Vote[]
+  createdAt DateTime @default(now())
+}
+
+model Vote {
+  id     String @id @default(cuid())
+  postId String
+  userId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+// Event Sourcing: Outbox Pattern
+model Event {
+  id          String   @id @default(cuid())
+  type        String
+  version     Int      @default(1)
+  payload     String                          // JSON string (Text in SQLite, JSON in MySQL)
+  status      String   @default("pending")  // pending | processing | done | failed
+  attempts    Int      @default(0)
+  error       String?
+  lockedAt    DateTime?
+  processedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([lockedAt])
+  @@index([type])
+}
+
+// Daily Challenge + Streak System
+model DailyCompletion {
+  id               String   @id @default(cuid())
+  userId           String
+  challengeId      String
+  date             DateTime                      // Date only (store as ISO string for SQLite)
+  timeSpentSeconds Int      @default(0)
+  hintsUsed        Int      @default(0)
+  xpEarned         Int      @default(0)
+  streakAfter      Int      @default(0)
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId, date])
+  @@index([userId, date])
+  @@index([date, xpEarned])
+}
+
+// Skill Tree
+model UserSkill {
+  id                String   @id @default(cuid())
+  userId            String
+  branch            String   // "basic_ops", "jamf", "routing", etc.
+  geniusScore       Int      @default(0)
+  sessionsCompleted Int      @default(0)
+  bestScore         Int      @default(0)
+  lastSessionId     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, branch])
+  @@index([userId])
+  @@index([geniusScore])
+  @@index([branch, geniusScore])
+}
+
+// Referral system
+model Referral {
+  id              String   @id @default(cuid())
+  referrerId      String
+  refereeEmail    String
+  token           String   @unique
+  type            String   // "peer" | "corporate"
+  discount        Int
+  active          Boolean  @default(true)
+  converted       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  convertedAt     DateTime?
+}
+
+// Discount codes
+model DiscountCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  type        String   // "referral_peer" | "referral_corporate" | "promo"
+  discount    Int
+  maxUses     Int      @default(1)
+  usedCount   Int      @default(0)
+  userId      String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+// Stripe Subscription tracking
+model Subscription {
+  id                String   @id @default(cuid())
+  userId            String
+  stripeCustomerId  String
+  stripeSubscriptionId String @unique
+  plan              String   // pro | business
+  status            String   // active | past_due | canceled | paused | trialing
+  currency          String   @default("usd")
+  amount            Int      // Amount in cents
+  interval          String   // month | year
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean @default(false)
+  canceledAt        DateTime?
+  trialStart        DateTime?
+  trialEnd          DateTime?
+  metadata          String?  // JSON string for additional data
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([stripeSubscriptionId])
+  @@index([status])
+}
+
+// Stripe Payment/Invoice tracking
+model Payment {
+  id                String   @id @default(cuid())
+  userId            String
+  stripePaymentIntentId String @unique
+  stripeInvoiceId   String?
+  amount            Int      // Amount in cents
+  currency          String   @default("usd")
+  status            String   // succeeded | failed | pending | refunded
+  type              String   // subscription | one_time | invoice
+  description       String?
+  receiptUrl        String?
+  hostedInvoiceUrl  String?
+  failureMessage    String?
+  metadata          String?  // JSON string for additional data
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([stripePaymentIntentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Early Access Signup Counter (500 seats limit)
+model EarlyAccessSignup {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String?
+  signupDate      DateTime @default(now())
+  lockedPrice     Float    @default(5.0)  // $5 locked price
+  accessDate      DateTime                // When they get full access
+  activated       Boolean  @default(false) // Whether they've been charged
+  paymentIntentId String?  @unique        // Stripe payment intent
+  createdAt       DateTime @default(now())
+
+  // Viral referral loop
+  referralCode    String?  @unique        // User's own referral code (8 chars)
+  referredBy      String?                 // Code of who referred them
+  referralCount   Int      @default(0)    // How many people they referred
+  position        Int?                    // Position in waitlist (lower = better)
+
+  @@index([signupDate])
+  @@index([activated])
+  @@index([referralCode])
+  @@index([referredBy])
+}
+
+// Blog Posts
+model BlogPost {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String?
+  content     String
+  tags        String?   // JSON array ["linux","devops"]
+  status      String    @default("draft") // draft | published
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, publishedAt])
+  @@index([slug])
+}
+
+// B2B Enterprise Lead Capture
+model B2bLead {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String
+  company     String
+  teamSize    String                      // "1-5" | "6-20" | "21-50" | "50+"
+  message     String?
+  source      String   @default("website") // "enterprise-landing" | "pricing" | "demo-cta"
+  status      String   @default("new")    // "new" | "contacted" | "demo_scheduled" | "converted" | "lost"
+  tenantDomain String?                    // auto-extracted from email
+  assignedTo  String?                    // admin user id
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([tenantDomain])
+  @@index([email])
+}
+
+// Enterprise Lab Leaderboard
+model ScenarioResult {
+  id             String   @id @default(cuid())
+  userId         String?                        // null = anonymous
+  teamName       String   @default("Your Team")
+  region         String   @default("EU")
+  scenarioId     String                         // e.g. "multisite", "fsmo"
+  scenarioName   String
+  leaderboardScore Int
+  riskScore      Int
+  businessImpact Int
+  elapsedMin     Int
+  actionCount    Int
+  createdAt      DateTime @default(now())
+
+  @@index([scenarioId, leaderboardScore])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Session Replay Events
+model SessionEvent {
+  id        String   @id @default(cuid())
+  sessionId String
+  userId    String?
+  labId     String?
+  cmd       String
+  output    String
+  ts        DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([userId, labId])
+}
+
+// Webhook Event Deduplication Table
+model ProcessedWebhookEvent {
+  id              String   @id @default(cuid())
+  eventId         String   @unique  // Stripe/Razorpay event ID
+  eventType       String   // checkout.session.completed, etc.
+  processedAt     DateTime @default(now())
+  metadata        String?  // JSON for additional data
+
+  @@index([eventId])
+  @@index([processedAt])
+}

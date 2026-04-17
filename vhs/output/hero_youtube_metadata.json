@@ -1,0 +1,333 @@
+{
+  "video": {
+    "name": "hero_youtube",
+    "title": "Your Internet Shouldn't Decide Your Career",
+    "duration": 75,
+    "scenes": [
+      {
+        "type": "text",
+        "text": "Connection lost.",
+        "duration": 2.0,
+        "size": 52,
+        "color": "error"
+      },
+      {
+        "type": "black",
+        "duration": 0.5
+      },
+      {
+        "type": "text",
+        "text": "Again.",
+        "duration": 2.0,
+        "size": 48,
+        "color": "sub"
+      },
+      {
+        "type": "text",
+        "text": "A few years ago, I helped a junior engineer",
+        "duration": 3.0,
+        "size": 34
+      },
+      {
+        "type": "text",
+        "text": "debug an LDAP issue.",
+        "duration": 2.5,
+        "size": 34
+      },
+      {
+        "type": "text",
+        "text": "Smart. Motivated. Capable.",
+        "duration": 3.0,
+        "size": 38,
+        "color": "text"
+      },
+      {
+        "type": "text",
+        "text": "But every time I sent him a lab:",
+        "duration": 2.5,
+        "size": 34
+      },
+      {
+        "type": "text",
+        "text": "\"Connection dropped.\"",
+        "duration": 3.0,
+        "size": 40,
+        "color": "error"
+      },
+      {
+        "type": "text",
+        "text": "Not his fault.",
+        "duration": 2.0,
+        "size": 40
+      },
+      {
+        "type": "text",
+        "text": "His internet wasn't stable.",
+        "duration": 2.5,
+        "size": 34,
+        "color": "sub"
+      },
+      {
+        "type": "text",
+        "text": "Meanwhile, someone else,",
+        "duration": 2.5,
+        "size": 34
+      },
+      {
+        "type": "text",
+        "text": "same skills, same ambition,",
+        "duration": 2.5,
+        "size": 34
+      },
+      {
+        "type": "text",
+        "text": "could practice all night.",
+        "duration": 2.5,
+        "size": 34
+      },
+      {
+        "type": "text",
+        "text": "Same effort.",
+        "duration": 2.0,
+        "size": 42,
+        "weight": "bold"
+      },
+      {
+        "type": "text",
+        "text": "Different outcome.",
+        "duration": 2.5,
+        "size": 46,
+        "weight": "bold",
+        "color": "accent"
+      },
+      {
+        "type": "text",
+        "text": "Because of infrastructure.",
+        "duration": 3.0,
+        "size": 40,
+        "color": "sub"
+      },
+      {
+        "type": "black",
+        "duration": 0.5
+      },
+      {
+        "type": "text",
+        "text": "That didn't sit right with me.",
+        "duration": 3.0,
+        "size": 36
+      },
+      {
+        "type": "text",
+        "text": "So I built something different.",
+        "duration": 3.0,
+        "size": 38,
+        "color": "accent"
+      },
+      {
+        "type": "text",
+        "text": "A sysadmin simulator that works:",
+        "duration": 2.5,
+        "size": 34
+      },
+      {
+        "type": "text",
+        "text": "On GSM.",
+        "duration": 1.5,
+        "size": 40,
+        "color": "success"
+      },
+      {
+        "type": "text",
+        "text": "Offline.",
+        "duration": 1.5,
+        "size": 40,
+        "color": "success"
+      },
+      {
+        "type": "text",
+        "text": "On any device.",
+        "duration": 1.5,
+        "size": 40,
+        "color": "success"
+      },
+      {
+        "type": "text",
+        "text": "No setup.",
+        "duration": 1.5,
+        "size": 38
+      },
+      {
+        "type": "text",
+        "text": "No perfect internet required.",
+        "duration": 2.5,
+        "size": 34,
+        "color": "sub"
+      },
+      {
+        "type": "terminal",
+        "cmd": "systemctl status apache2",
+        "duration": 3.0
+      },
+      {
+        "type": "terminal",
+        "status": "\u25cf failed",
+        "duration": 2.0,
+        "color": "error"
+      },
+      {
+        "type": "text",
+        "text": "You debug.",
+        "duration": 1.5,
+        "size": 38
+      },
+      {
+        "type": "text",
+        "text": "You fix.",
+        "duration": 1.5,
+        "size": 38
+      },
+      {
+        "type": "text",
+        "text": "And you learn the way",
+        "duration": 2.0,
+        "size": 34
+      },
+      {
+        "type": "text",
+        "text": "real sysadmins do.",
+        "duration": 2.0,
+        "size": 38,
+        "color": "success"
+      },
+      {
+        "type": "text",
+        "text": "Not by watching.",
+        "duration": 2.0,
+        "size": 42
+      },
+      {
+        "type": "text",
+        "text": "By doing.",
+        "duration": 2.0,
+        "size": 46,
+        "weight": "bold",
+        "color": "accent"
+      },
+      {
+        "type": "text",
+        "text": "Same lab.",
+        "duration": 2.0,
+        "size": 44,
+        "weight": "bold"
+      },
+      {
+        "type": "text",
+        "text": "Same chance.",
+        "duration": 2.5,
+        "size": 44,
+        "weight": "bold"
+      },
+      {
+        "type": "black",
+        "duration": 0.5
+      },
+      {
+        "type": "text",
+        "text": "WinLab.cloud",
+        "duration": 3.0,
+        "size": 56,
+        "color": "accent"
+      }
+    ]
+  },
+  "titles": [
+    "Connection Is Blocking Engineers. I Fixed It.",
+    "Why Most Engineers Can't Get Real Experience (And How I Fixed It)",
+    "The Real Reason You Can't Learn Sysadmin",
+    "This Changes How Engineers Practice",
+    "I Built a Sysadmin Lab That Works Without Perfect Internet",
+    "Your Internet Shouldn't Decide Your Career",
+    "I Built a Sysadmin Lab That Works Offline",
+    "Why Most Engineers Can't Practice (And How I Fixed It)",
+    "This Is How Real Sysadmins Learn",
+    "The Infrastructure Inequality Nobody Talks About"
+  ],
+  "thumbnails": [
+    {
+      "text": "CONNECTION\nLOST",
+      "style": "minimal"
+    },
+    {
+      "text": "SAME SKILLS\nDIFFERENT OUTCOME",
+      "style": "bold"
+    },
+    {
+      "text": "NO INTERNET\nNO PROBLEM",
+      "style": "glitch"
+    }
+  ],
+  "ab_variants": [
+    {
+      "id": "ab_1",
+      "title": "I Made a Lab That Works on On GSM",
+      "thumbnail": {
+        "text": "CONNECTION\nLOST",
+        "style": "minimal"
+      },
+      "description": "Variant 1: CONNECTION / LOST"
+    },
+    {
+      "id": "ab_2",
+      "title": "Why Most Engineers Can't Learn Sysadmin (And How I Fixed It)",
+      "thumbnail": {
+        "text": "SAME SKILLS\nDIFFERENT OUTCOME",
+        "style": "bold"
+      },
+      "description": "Variant 2: SAME SKILLS / DIFFERENT OUTCOME"
+    },
+    {
+      "id": "ab_3",
+      "title": "I Made a Lab That Works on Offline",
+      "thumbnail": {
+        "text": "NO INTERNET\nNO PROBLEM",
+        "style": "glitch"
+      },
+      "description": "Variant 3: NO INTERNET / NO PROBLEM"
+    }
+  ],
+  "description": "Your Internet Shouldn't Decide Your Career.\n\nA few years ago, I helped a junior engineer debug an LDAP issue.\nSmart. Motivated. Capable. But every time I sent him a lab: \"Connection dropped.\"\n\nNot his fault. His internet wasn't stable.\n\nMeanwhile, someone else, same skills, same ambition, could practice all night.\nSame effort. Different outcome. Because of infrastructure.\n\nThat didn't sit right with me. So I built WinLab.\n\nA sysadmin simulator that works on GSM, offline, on any device.\nNo setup. No perfect internet required. Just real scenarios.\n\n\u2192 Try it free: https://winlab.cloud\n\n#SysAdmin #Linux #DevOps #TechEducation #CloudComputing #Infrastructure",
+  "tags": [
+    "sysadmin",
+    "linux",
+    "devops",
+    "cloud computing",
+    "tech education",
+    "infrastructure",
+    "networking",
+    "system administration",
+    "terraform",
+    "docker",
+    "winlab",
+    "hands-on learning"
+  ],
+  "shorts_strategy": [
+    {
+      "hook": "Connection lost.",
+      "cta": "Full story \u2192 link in description"
+    },
+    {
+      "hook": "Same skills. Different outcome.",
+      "cta": "Full story \u2192 link in description"
+    },
+    {
+      "hook": "Works offline.",
+      "cta": "Full story \u2192 link in description"
+    },
+    {
+      "hook": "3AM Incident",
+      "cta": "Full story \u2192 link in description"
+    }
+  ],
+  "created_at": "2026-04-14T03:23:00.940051"
+}

@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WinLab — Hands-on Sysadmin Training</title>
+<meta name="description" content="Browser-based Linux, Jamf and networking labs. Real terminals. AI Mentor. Certificates. 500 early access seats at $5/mo locked forever.">
+<meta property="og:title" content="WinLab — Learn sysadmin by doing, not watching">
+<meta property="og:description" content="Real terminals in your browser. Linux · Jamf · Networking. 500 seats at $5/mo locked forever.">
+<meta property="og:image" content="https://winlab.cloud/og.png">
+<meta property="og:url" content="https://winlab.cloud">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0a0a'/%3E%3Ctext x='4' y='24' font-family='monospace' font-size='22' font-weight='900' fill='%2322c55e'%3EW%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Non-blocking font load: avoids render-blocking penalty -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" onload="this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"></noscript>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0a; --surface:#111111; --surface2:#161616; --border:#1f2937;
+  --text:#f3f4f6; --muted:#9ca3af; --dim:#6b7280;
+  --green:#22c55e; --green-dim:#15803d; --green-bg:#052e16;
+  --blue:#3b82f6; --blue-dim:#1d4ed8; --blue-bg:#0f172a;
+  --yellow:#facc15; --red:#ef4444;
+  --radius:10px; --mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{font-family:'Inter',sans-serif;cursor:pointer;border:none;outline:none}
+input,textarea{font-family:'Inter',sans-serif;outline:none}
+
+/* ── Scrollbar ────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+
+/* ── Noise overlay ────────────────────────────────────────────────── */
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");opacity:.4;pointer-events:none;z-index:0}
+
+/* ── Nav ──────────────────────────────────────────────────────────── */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(10,10,10,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(31,41,55,.5)}
+.nav-logo{display:flex;align-items:baseline;gap:1px;font-weight:900;font-size:20px;letter-spacing:-0.5px}
+.nav-logo .w{color:#fff}.nav-logo .l{color:var(--green)}
+.nav-links{display:flex;align-items:center;gap:20px;font-size:13px;color:var(--muted)}
+.nav-links a:hover{color:var(--text);transition:color .15s}
+.nav-cta{background:var(--green);color:#000;font-weight:700;font-size:13px;padding:7px 16px;border-radius:6px;transition:opacity .15s}
+.nav-cta:hover{opacity:.85}
+
+/* ── Sections layout ──────────────────────────────────────────────── */
+.page{position:relative;z-index:1}
+section{padding:80px 24px}
+.container{max-width:960px;margin:0 auto}
+.container-sm{max-width:680px;margin:0 auto}
+.container-lg{max-width:1100px;margin:0 auto}
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
+.hero{padding:140px 24px 80px;text-align:center}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--green-bg);border:1px solid var(--green-dim);color:var(--green);font-size:12px;font-weight:600;padding:5px 14px;border-radius:100px;margin-bottom:28px;letter-spacing:.3px}
+.hero-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse-dot 2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.hero h1{font-size:clamp(36px,6vw,68px);font-weight:900;line-height:1.08;letter-spacing:-2px;margin-bottom:20px;color:#fff}
+.hero h1 em{font-style:normal;color:var(--green)}
+.hero-sub{font-size:clamp(16px,2.2vw,20px);color:var(--muted);max-width:580px;margin:0 auto 40px;line-height:1.6}
+.hero-sub b{color:var(--text);font-weight:500}
+
+/* ── Scenario cards ───────────────────────────────────────────────── */
+.scenarios-grid{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;max-width:900px;margin:0 auto 36px}
+.sc-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 18px;width:160px;text-align:center;cursor:pointer;transition:border-color .2s,transform .15s,box-shadow .2s;position:relative;overflow:hidden}
+.sc-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(34,197,94,.07),transparent 70%);opacity:0;transition:opacity .2s}
+.sc-card:hover{border-color:var(--green-dim);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.sc-card:hover::before{opacity:1}
+.sc-card.active{border-color:var(--green);box-shadow:0 0 0 1px var(--green-dim),0 8px 24px rgba(34,197,94,.15)}
+.sc-card-icon{font-size:28px;margin-bottom:10px;line-height:1}
+.sc-card-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px}
+.sc-card-desc{font-size:11px;color:var(--muted);line-height:1.45;margin-bottom:14px;min-height:30px}
+.sc-card-btn{background:var(--green);color:#000;font-size:12px;font-weight:800;padding:6px 16px;border-radius:6px;border:none;cursor:pointer;transition:opacity .15s;font-family:'Inter',sans-serif}
+.sc-card-btn:hover{opacity:.85}
+.sc-card.active .sc-card-btn{background:#fff}
+
+/* ── Demo modal ────────────────────────────────────────────────────── */
+.demo-modal{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.88);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px}
+.demo-modal.open{display:flex}
+.demo-modal-inner{background:#0d0d0d;border:1px solid #1f2937;border-radius:14px;width:100%;max-width:960px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.7)}
+.demo-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#111;border-bottom:1px solid #1f2937;flex-shrink:0}
+.demo-modal-title{font-size:13px;color:var(--muted);font-family:var(--mono)}
+.demo-modal-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:4px 8px;border-radius:4px}
+.demo-modal-close:hover{color:var(--text);background:#1f2937}
+.demo-modal-iframe{flex:1;min-height:520px;border:none;width:100%}
+.demo-modal-footer{padding:12px 18px;background:#0d0d0d;border-top:1px solid #1f2937;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.demo-modal-cta{background:var(--green);color:#000;font-weight:800;font-size:13px;padding:9px 22px;border-radius:7px;text-decoration:none;white-space:nowrap}
+.demo-modal-note{font-size:11px;color:var(--muted)}
+
+/* ── Live pulse ───────────────────────────────────────────────────── */
+.live-pulse{display:inline-flex;align-items:center;gap:8px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:#86efac;font-size:13px;font-weight:600;padding:7px 16px;border-radius:100px;margin:0 auto 28px;letter-spacing:.1px}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;animation:live-blink 1.8s ease-in-out infinite}
+@keyframes live-blink{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{opacity:.6;box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+
+/* ── Scarcity bar ─────────────────────────────────────────────────── */
+.scarcity{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;max-width:600px;margin:0 auto 32px;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center}
+.sc-left{}
+.sc-seat-label{font-size:11px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;display:flex;justify-content:space-between}
+.sc-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.sc-fill{height:100%;background:linear-gradient(90deg,var(--green),#86efac);border-radius:3px;transition:width 1.2s ease;width:0%}
+.sc-count{font-size:12px;color:var(--green);font-weight:700;margin-top:6px}
+.sc-right{text-align:right}
+.sc-timer-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.sc-timer{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--yellow)}
+.sc-timer-sub{font-size:10px;color:var(--dim);margin-top:3px}
+
+/* ── CTA form ─────────────────────────────────────────────────────── */
+.cta-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:28px;max-width:600px;margin:0 auto}
+.cta-state{display:none}
+.cta-state.active{display:block}
+.form-row{display:flex;gap:10px;margin-bottom:10px}
+.form-row input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:12px 14px;color:var(--text);font-size:14px;transition:border-color .2s}
+.form-row input:focus{border-color:var(--green)}
+.form-row input::placeholder{color:var(--muted)}
+.btn-primary{width:100%;padding:14px;background:var(--green);color:#000;font-weight:800;font-size:15px;border-radius:7px;transition:opacity .15s,transform .1s;letter-spacing:.2px}
+.btn-primary:hover{opacity:.88}
+.btn-primary:active{transform:scale(.99)}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed}
+.cta-note{font-size:11px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.6}
+.cta-note b{color:var(--text);font-weight:500}
+.form-error{font-size:12px;color:var(--red);text-align:center;margin-top:8px;min-height:18px}
+
+/* Stripe state */
+.stripe-cta{}
+.stripe-price{text-align:center;margin-bottom:20px}
+.stripe-price .amount{font-size:56px;font-weight:900;color:var(--green);line-height:1}
+.stripe-price .period{font-size:18px;color:var(--muted);margin-left:4px}
+.stripe-price .locked{font-size:13px;color:var(--text);margin-top:6px}
+.stripe-timer-wrap{background:var(--bg);border:1px solid var(--yellow);border-radius:7px;padding:10px 16px;text-align:center;margin-bottom:16px}
+.stripe-timer-label{font-size:11px;color:var(--yellow);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.stripe-timer-value{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--yellow)}
+.stripe-email-row{display:flex;gap:10px;margin-bottom:10px}
+.stripe-email-row input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:12px 14px;color:var(--text);font-size:14px;transition:border-color .2s}
+.stripe-email-row input:focus{border-color:var(--green)}
+
+/* Success state */
+.success-box{text-align:center}
+.success-icon{font-size:32px;margin-bottom:12px}
+.success-pos{font-size:48px;font-weight:900;color:var(--green);font-family:var(--mono);line-height:1}
+.success-pos-label{font-size:12px;color:var(--muted);margin-bottom:20px}
+.ref-link-box{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.ref-link-url{font-size:12px;color:#86efac;font-family:var(--mono);word-break:break-all}
+.btn-copy{background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:11px;padding:5px 10px;transition:all .15s;white-space:nowrap}
+.btn-copy:hover{border-color:var(--green);color:var(--green)}
+.share-row{display:flex;gap:8px;margin-bottom:10px}
+.btn-share{flex:1;padding:9px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:11px;text-align:center;transition:all .15s}
+.btn-share:hover{border-color:var(--green);color:var(--green)}
+.ref-stats{font-size:11px;color:var(--muted);text-align:center}
+.ref-stats b{color:var(--green)}
+
+/* Expired state */
+.expired-box{text-align:center}
+.expired-box .ep-label{font-size:13px;color:var(--muted);margin-bottom:16px}
+
+/* ── Pain point ───────────────────────────────────────────────────── */
+.pain{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:60px 24px;text-align:center}
+.pain h2{font-size:clamp(24px,4vw,40px);font-weight:900;color:#fff;letter-spacing:-1px;margin-bottom:12px}
+.pain h2 span{color:var(--red)}
+.pain p{font-size:16px;color:var(--muted);max-width:500px;margin:0 auto 32px;line-height:1.7}
+.pain-stats{display:flex;justify-content:center;gap:40px;flex-wrap:wrap}
+.pain-stat{text-align:center}
+.pain-stat .num{font-size:36px;font-weight:900;color:var(--text);font-family:var(--mono)}
+.pain-stat .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+/* ── Labs section ─────────────────────────────────────────────────── */
+.labs-section{padding:80px 24px}
+.section-label{font-size:11px;font-weight:700;color:var(--green);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px}
+.section-title{font-size:clamp(26px,3.5vw,42px);font-weight:900;color:#fff;letter-spacing:-1px;margin-bottom:10px}
+.section-sub{font-size:16px;color:var(--muted);line-height:1.6;margin-bottom:48px;max-width:560px}
+.labs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.lab-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .2s,transform .2s}
+.lab-card:hover{border-color:var(--green);transform:translateY(-2px)}
+.lab-card-header{background:var(--surface2);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.lab-card-title{font-size:13px;font-weight:700;color:var(--text)}
+.lab-card-meta{display:flex;gap:8px;align-items:center}
+.lab-pill{font-size:10px;font-weight:600;padding:3px 8px;border-radius:100px;white-space:nowrap}
+.pill-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-dim)}
+.pill-blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-dim)}
+.pill-dim{background:#1f2937;color:var(--muted);border:1px solid var(--border)}
+.lab-terminal{background:#0d0d0d;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.7;min-height:130px}
+.t-prompt{color:#6b7280}.t-cmd{color:#60a5fa}.t-out{color:var(--green)}.t-cmt{color:#374151}
+.lab-card-footer{padding:14px 16px;border-top:1px solid var(--border)}
+.lab-objectives{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.lab-tag{font-size:10px;font-weight:500;color:var(--muted);background:#1f2937;border-radius:4px;padding:3px 7px;font-family:var(--mono)}
+.lab-duration{font-size:11px;color:var(--dim);display:flex;align-items:center;gap:5px}
+.lab-num{font-size:10px;font-weight:700;color:var(--dim);font-family:var(--mono);margin-bottom:4px}
+
+/* ── Features grid ────────────────────────────────────────────────── */
+.features{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 24px}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;margin-top:48px}
+.feat{padding:24px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);transition:border-color .2s}
+.feat:hover{border-color:var(--dim)}
+.feat-icon{font-size:28px;margin-bottom:14px}
+.feat-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:7px}
+.feat-desc{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* ── Pricing ──────────────────────────────────────────────────────── */
+.pricing{padding:80px 24px}
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:48px;max-width:760px;margin-left:auto;margin-right:auto}
+.pricing-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;position:relative}
+.pricing-card.featured{border-color:var(--green);background:linear-gradient(135deg,var(--green-bg) 0%,var(--surface) 60%)}
+.pricing-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;font-size:10px;font-weight:800;padding:4px 14px;border-radius:100px;letter-spacing:.5px;white-space:nowrap}
+.pc-tier{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.pc-price{display:flex;align-items:baseline;gap:4px;margin-bottom:4px}
+.pc-price .amount{font-size:48px;font-weight:900;color:var(--text);line-height:1}
+.pc-price .period{font-size:15px;color:var(--muted)}
+.pc-price .was{font-size:13px;color:var(--dim);text-decoration:line-through;margin-left:8px}
+.pc-desc{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.pc-features{list-style:none;margin-bottom:24px}
+.pc-features li{font-size:13px;color:var(--muted);padding:5px 0;display:flex;gap:8px;align-items:flex-start;border-bottom:1px solid var(--border)}
+.pc-features li:last-child{border:none}
+.pc-features li .check{color:var(--green);font-weight:700;flex-shrink:0}
+.pc-features li .cross{color:var(--dim);flex-shrink:0}
+.btn-tier{width:100%;padding:12px;border-radius:7px;font-size:14px;font-weight:700;transition:all .15s}
+.btn-tier-main{background:var(--green);color:#000}
+.btn-tier-main:hover{opacity:.88}
+.btn-tier-ghost{background:none;border:1px solid var(--border);color:var(--muted)}
+.btn-tier-ghost:hover{border-color:var(--dim);color:var(--text)}
+
+/* ── Social proof strip ───────────────────────────────────────────── */
+.proof-strip{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:0 auto 20px;max-width:600px}
+.proof-item{display:flex;align-items:baseline;gap:5px}
+.proof-num{font-size:20px;font-weight:900;color:var(--text);font-family:var(--mono)}
+.proof-lbl{font-size:12px;color:var(--muted)}
+.proof-sep{color:var(--dim);font-size:14px}
+
+
+/* ── Sticky bar ───────────────────────────────────────────────────── */
+#sticky-bar{position:fixed;top:0;left:0;right:0;z-index:99;background:var(--green);color:#000;padding:10px 24px;display:flex;align-items:center;justify-content:center;gap:16px;font-size:13px;font-weight:700;transform:translateY(-100%);transition:transform .35s cubic-bezier(.16,1,.3,1)}
+#sticky-bar.show{transform:translateY(0)}
+#sticky-bar .sb-seats{font-size:15px;font-weight:900}
+#sticky-bar .sb-cta{background:#000;color:var(--green);padding:6px 16px;border-radius:6px;font-size:12px;font-weight:800;white-space:nowrap;transition:opacity .15s}
+#sticky-bar .sb-cta:hover{opacity:.8}
+.nav{top:0;transition:top .35s cubic-bezier(.16,1,.3,1)}
+.nav.pushed{top:40px}
+
+/* ── Mid CTA ──────────────────────────────────────────────────────── */
+.mid-cta{padding:60px 24px;text-align:center}
+.mid-cta-inner{max-width:540px;margin:0 auto;background:linear-gradient(135deg,var(--green-bg),var(--surface));border:1px solid var(--green-dim);border-radius:14px;padding:40px 32px}
+.mid-cta h3{font-size:clamp(22px,3vw,30px);font-weight:900;color:#fff;letter-spacing:-0.5px;margin-bottom:10px}
+.mid-cta p{font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+.mid-cta .btn-primary{max-width:400px;font-size:16px;padding:16px}
+
+/* ── Next steps ───────────────────────────────────────────────────── */
+.next-steps{display:flex;justify-content:center;gap:28px;margin-top:16px;flex-wrap:wrap}
+.ns-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.ns-item .ns-num{width:20px;height:20px;border-radius:50%;background:var(--dim);color:var(--text);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* ── FAQ ──────────────────────────────────────────────────────────── */
+.faq{padding:80px 24px;background:var(--surface);border-top:1px solid var(--border)}
+.faq-list{margin-top:40px;max-width:680px;margin-left:auto;margin-right:auto}
+.faq-item{border-bottom:1px solid var(--border);padding:20px 0}
+.faq-item:first-child{padding-top:0}
+.faq-q{font-size:15px;font-weight:600;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;user-select:none}
+.faq-q .faq-arrow{color:var(--muted);font-size:18px;transition:transform .2s;flex-shrink:0}
+.faq-q.open .faq-arrow{transform:rotate(45deg)}
+.faq-a{font-size:14px;color:var(--muted);line-height:1.7;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .2s}
+.faq-a.open{max-height:400px;padding-top:12px}
+.faq-a a{color:var(--blue);text-decoration:underline}
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+.footer{padding:32px 24px;border-top:1px solid var(--border);text-align:center}
+.footer-logo{display:flex;align-items:baseline;gap:1px;font-weight:900;font-size:18px;justify-content:center;margin-bottom:12px}
+.footer-logo .w{color:#fff}.footer-logo .l{color:var(--green)}
+.footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:12px}
+.footer-links a:hover{color:var(--text)}
+.footer-social{display:flex;justify-content:center;gap:14px;margin-bottom:14px}
+.footer-social a{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);color:var(--muted);font-size:14px;transition:border-color .15s,color .15s,transform .15s}
+.footer-social a:hover{border-color:var(--green);color:var(--green);transform:translateY(-2px)}
+.footer-copy{font-size:11px;color:var(--dim)}
+
+/* ── Legal pages ──────────────────────────────────────────────────── */
+.legal-page{padding:100px 24px 60px}
+.legal-nav{margin-bottom:32px}
+.legal-nav a{font-size:13px;color:var(--blue);display:inline-flex;align-items:center;gap:5px}
+.legal-nav a:hover{opacity:.8}
+.legal-header{margin-bottom:40px}
+.legal-header h1{font-size:clamp(24px,4vw,42px);font-weight:900;color:#fff;letter-spacing:-1px;margin-bottom:10px}
+.legal-header .meta{font-size:12px;color:var(--muted)}
+.legal-body h2{font-size:18px;font-weight:700;color:var(--text);margin:32px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.legal-body h3{font-size:15px;font-weight:600;color:var(--text);margin:20px 0 8px}
+.legal-body p{font-size:14px;color:var(--muted);line-height:1.75;margin-bottom:12px}
+.legal-body ul,.legal-body ol{font-size:14px;color:var(--muted);line-height:1.75;margin:0 0 12px 20px}
+.legal-body li{margin-bottom:4px}
+.legal-body a{color:var(--blue);text-decoration:underline}
+.legal-body table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+.legal-body table th,.legal-body table td{padding:10px 12px;border:1px solid var(--border);color:var(--muted);text-align:left;vertical-align:top}
+.legal-body table th{background:var(--surface2);color:var(--text);font-weight:600}
+.legal-info-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;margin:16px 0}
+.legal-info-box p{margin:0;font-size:13px}
+
+/* ── Cookie banner ────────────────────────────────────────────────── */
+#cookie-banner{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#161616;border-top:1px solid var(--border);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;transform:translateY(110%);transition:transform .4s cubic-bezier(.16,1,.3,1)}
+#cookie-banner.show{transform:translateY(0)}
+.cb-text{font-size:12px;color:var(--muted);line-height:1.6;flex:1;min-width:180px}
+.cb-text strong{color:var(--text);font-size:13px;display:block;margin-bottom:3px}
+.cb-text a{color:var(--blue);text-decoration:underline}
+.cookie-btns{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.btn-cookie{padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;transition:all .15s;cursor:pointer;border:none;font-family:'Inter',sans-serif}
+/* GDPR: Reject and Accept must have equal visual prominence */
+.btn-cookie-reject{background:#f0f0f0;color:#1a1a1a;border:1px solid #d4d4d4}
+.btn-cookie-reject:hover{background:#e0e0e0}
+.btn-cookie-customize{background:none;border:1px solid var(--border);color:var(--muted)}
+.btn-cookie-customize:hover{border-color:var(--dim);color:var(--text)}
+.btn-cookie-accept{background:#f0f0f0;color:#1a1a1a;border:1px solid #d4d4d4}
+.btn-cookie-accept:hover{background:#e0e0e0}
+/* ── Consent modal ────────────────────────────────────────────────── */
+#consent-modal{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.75);align-items:center;justify-content:center;padding:20px}
+#consent-modal.open{display:flex}
+.consent-inner{background:#161616;border:1px solid var(--border);border-radius:12px;width:100%;max-width:460px;overflow:hidden}
+.consent-hdr{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.consent-hdr h3{font-size:15px;font-weight:700;color:var(--text);margin:0}
+.consent-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;line-height:1}
+.consent-close:hover{color:var(--text)}
+.consent-body{padding:18px 22px;display:flex;flex-direction:column;gap:14px}
+.consent-item{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.consent-item-info{flex:1}
+.consent-item-info strong{font-size:13px;color:var(--text);display:block;margin-bottom:3px}
+.consent-item-info span{font-size:11px;color:var(--muted);line-height:1.5}
+.consent-toggle{position:relative;width:40px;height:22px;flex-shrink:0;margin-top:2px}
+.consent-toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:#374151;border-radius:11px;cursor:pointer;transition:background .2s}
+.toggle-slider:before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:transform .2s}
+.consent-toggle input:checked+.toggle-slider{background:var(--green)}
+.consent-toggle input:checked+.toggle-slider:before{transform:translateX(18px)}
+.consent-toggle input:disabled+.toggle-slider{opacity:.5;cursor:not-allowed}
+.consent-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.btn-save-consent{background:var(--green);color:#000;padding:9px 20px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:opacity .15s}
+.btn-save-consent:hover{opacity:.85}
+/* ── Privacy shield widget ────────────────────────────────────────── */
+#privacy-shield{position:fixed;bottom:20px;right:20px;z-index:9998;width:36px;height:36px;background:#161616;border:1px solid var(--border);border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;transition:border-color .2s,transform .15s;font-size:15px;user-select:none}
+#privacy-shield:hover{border-color:var(--green);transform:scale(1.12)}
+#privacy-shield.show{display:flex}
+
+/* ── Animations ───────────────────────────────────────────────────── */
+@keyframes blink{50%{opacity:0}}
+.cursor{animation:blink 1s step-end infinite;color:var(--green)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .6s ease forwards}
+.fade-up-2{animation:fadeUp .6s .15s ease both}
+.fade-up-3{animation:fadeUp .6s .3s ease both}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+
+/* Tablet: demo modal full-screen */
+@media(max-width:768px){
+  .demo-modal{padding:0}
+  .demo-modal-inner{border-radius:0;max-height:100dvh;height:100dvh}
+  .demo-modal-iframe{min-height:0;flex:1}
+  .demo-modal-note{display:none}
+}
+
+@media(max-width:600px){
+  /* ── Nav ── */
+  .nav-links{display:none}
+  #nav-hamburger{display:flex!important}
+  .nav{padding:11px 16px}
+  .nav-cta{padding:8px 14px;font-size:12px}
+
+  /* ── Sticky bar ── */
+  #sticky-bar{padding:8px 14px;gap:8px;font-size:12px;flex-wrap:nowrap}
+  #sticky-bar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+  #sticky-bar .sb-seats{font-size:13px}
+  #sticky-bar .sb-cta{padding:6px 13px;font-size:11px;white-space:nowrap;flex-shrink:0}
+
+  /* ── Sections ── */
+  section{padding:52px 16px}
+
+  /* ── Hero ── */
+  .hero{padding:88px 16px 44px}
+  .hero h1{letter-spacing:-1.5px}
+  .hero-sub{font-size:15px;margin-bottom:24px}
+  .hero-badge{font-size:11px;padding:5px 12px;line-height:1.5}
+
+  /* ── Scenario cards: 2-per-row grid ── */
+  .scenarios-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    max-width:100%;
+    margin-bottom:20px
+  }
+  .sc-card{width:auto;padding:16px 12px}
+  .sc-card-icon{font-size:24px;margin-bottom:8px}
+  .sc-card-name{font-size:12px;margin-bottom:4px}
+  .sc-card-desc{font-size:10px;min-height:22px;margin-bottom:10px}
+  .sc-card-btn{font-size:11px;padding:7px 12px;width:100%}
+
+  /* ── Scarcity ── */
+  .scarcity{grid-template-columns:1fr;gap:10px;padding:16px}
+  .sc-right{text-align:left}
+  .sc-timer{font-size:18px}
+
+  /* ── CTA box ── */
+  .cta-box{padding:20px 16px;border-radius:10px}
+  .form-row{flex-direction:column;gap:8px}
+  .form-row input{font-size:16px} /* prevent iOS zoom */
+  .stripe-email-row{flex-direction:column;gap:8px}
+  .stripe-email-row input{font-size:16px}
+  .stripe-price .amount{font-size:44px}
+  .stripe-timer-value{font-size:17px}
+
+  /* ── Buttons: minimum 48px touch targets ── */
+  .btn-primary{padding:16px;font-size:15px;min-height:52px}
+  .btn-tier{padding:14px;font-size:14px;min-height:50px}
+  .sc-card-btn{min-height:36px}
+
+  /* ── Pain stats ── */
+  .pain-stats{gap:20px}
+  .pain-stat .num{font-size:30px}
+
+  /* ── Labs grid ── */
+  .labs-grid{grid-template-columns:1fr;gap:14px}
+
+  /* ── Features ── */
+  .features-grid{grid-template-columns:1fr;gap:12px;margin-top:28px}
+  .feat{padding:18px}
+  .feat-icon{font-size:24px;margin-bottom:10px}
+
+  /* ── Pricing ── */
+  .pricing-grid{gap:14px;margin-top:28px}
+  .pricing-card{padding:22px 18px}
+  .pc-price .amount{font-size:40px}
+  .pc-features li{font-size:12px}
+
+  /* ── Mid CTA ── */
+  .mid-cta-inner{padding:26px 18px}
+  .mid-cta h3{font-size:clamp(20px,5vw,28px)}
+
+  /* ── Share row ── */
+  .share-row{flex-wrap:wrap;gap:6px}
+  .btn-share{flex:1;min-width:calc(50% - 3px);padding:10px 8px;font-size:12px;min-height:40px}
+
+  /* ── Proof strip ── */
+  .proof-strip{gap:10px}
+  .proof-num{font-size:18px}
+  .proof-sep{display:none}
+
+  /* ── Section text ── */
+  .section-sub{font-size:14px;margin-bottom:32px}
+
+  /* ── Cookie banner ── */
+  #cookie-banner{flex-direction:column;padding:14px 16px;gap:12px}
+  .cookie-btns{width:100%;justify-content:stretch}
+  .btn-cookie{flex:1;padding:11px;min-height:44px;font-size:13px}
+}
+
+/* Very small phones (≤380px): scenario cards single column */
+@media(max-width:380px){
+  .scenarios-grid{grid-template-columns:1fr}
+  .sc-card{
+    display:flex;align-items:center;gap:12px;
+    text-align:left;padding:14px 12px
+  }
+  .sc-card-icon{font-size:28px;margin-bottom:0;flex-shrink:0}
+  .sc-card-desc{min-height:auto}
+  .sc-card-btn{margin-top:auto;width:auto;flex-shrink:0}
+  .hero-badge{font-size:10px;padding:4px 10px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Sticky urgency bar ─────────────────────────────────────────── -->
+<div id="sticky-bar">
+  <span>⚡ Only <span class="sb-seats" id="sb-seats">?</span> seats left at $5/mo</span>
+  <a class="sb-cta" href="#cta">Start your first lab →</a>
+</div>
+
+<!-- ── Navigation ─────────────────────────────────────────────────── -->
+<nav class="nav" id="main-nav">
+  <a class="nav-logo" href="/"><span class="w">WIN</span><span class="l">LAB</span></a>
+  <div class="nav-links">
+    <a href="#labs">Labs</a>
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <a class="nav-cta" href="#cta" id="nav-cta-btn">Start for $5/mo →</a>
+    <button id="nav-hamburger" aria-label="Menu" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:7px 9px;cursor:pointer;color:var(--muted)">
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><rect y="0" width="18" height="2" rx="1" fill="currentColor"/><rect y="6" width="18" height="2" rx="1" fill="currentColor"/><rect y="12" width="18" height="2" rx="1" fill="currentColor"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile menu drawer -->
+<div id="mobile-menu" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)" onclick="closeMobileMenu()">
+  <div onclick="event.stopPropagation()" style="position:absolute;top:0;right:0;width:260px;height:100%;background:#111;border-left:1px solid var(--border);padding:20px;display:flex;flex-direction:column;gap:4px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <span style="font-weight:900;font-size:18px"><span style="color:#fff">WIN</span><span style="color:var(--green)">LAB</span></span>
+      <button onclick="closeMobileMenu()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px">✕</button>
+    </div>
+    <a href="#labs" onclick="closeMobileMenu()" style="display:block;padding:14px 12px;color:var(--text);font-size:15px;font-weight:500;border-radius:8px;transition:background .15s" onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background=''">🖥️ Labs</a>
+    <a href="#features" onclick="closeMobileMenu()" style="display:block;padding:14px 12px;color:var(--text);font-size:15px;font-weight:500;border-radius:8px;transition:background .15s" onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background=''">⚡ Features</a>
+    <a href="#pricing" onclick="closeMobileMenu()" style="display:block;padding:14px 12px;color:var(--text);font-size:15px;font-weight:500;border-radius:8px;transition:background .15s" onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background=''">💰 Pricing</a>
+    <a href="#faq" onclick="closeMobileMenu()" style="display:block;padding:14px 12px;color:var(--text);font-size:15px;font-weight:500;border-radius:8px;transition:background .15s" onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background=''">❓ FAQ</a>
+    <a href="#cta" onclick="closeMobileMenu()" style="display:block;margin-top:16px;padding:15px;background:var(--green);color:#000;font-size:15px;font-weight:800;border-radius:8px;text-align:center">Start for $5/mo →</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     LANDING PAGE
+════════════════════════════════════════════════════════════════════ -->
+<div id="page-landing" class="page" style="display:none">
+
+  <!-- Hero -->
+  <main>
+  <section class="hero">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      <span id="hero-badge-text">Pre-launch April 17 · App live April 20 · 500 seats · $5/mo forever</span>
+    </div>
+    <h1 class="fade-up">The server is down.<br><em>Can you fix it?</em></h1>
+    <p class="hero-sub fade-up-2">
+      5 real incidents. <b>Free. In your browser.</b><br>
+      No setup. No VM. Just you, the shell, and the problem.
+    </p>
+
+    <!-- 5 Scenario cards -->
+    <div class="scenarios-grid fade-up-2" id="scenarios-grid">
+      <div class="sc-card" onclick="launchScenario(this,'apache')">
+        <div class="sc-card-icon">🔴</div>
+        <div class="sc-card-name">Apache down</div>
+        <div class="sc-card-desc">Site not responding — find and fix it</div>
+        <button class="sc-card-btn">Start →</button>
+      </div>
+      <div class="sc-card" onclick="launchScenario(this,'disk')">
+        <div class="sc-card-icon">💾</div>
+        <div class="sc-card-name">Disk full</div>
+        <div class="sc-card-desc">Server is stuck — out of space</div>
+        <button class="sc-card-btn">Start →</button>
+      </div>
+      <div class="sc-card" onclick="launchScenario(this,'selinux')">
+        <div class="sc-card-icon">🔒</div>
+        <div class="sc-card-name">SELinux denial</div>
+        <div class="sc-card-desc">httpd returns 403 — wrong file context</div>
+        <button class="sc-card-btn">Start →</button>
+      </div>
+      <div class="sc-card" onclick="launchScenario(this,'cpu')">
+        <div class="sc-card-icon">🔥</div>
+        <div class="sc-card-name">CPU at 100%</div>
+        <div class="sc-card-desc">Something is hammering the server</div>
+        <button class="sc-card-btn">Start →</button>
+      </div>
+      <div class="sc-card" onclick="launchScenario(this,'ssh')">
+        <div class="sc-card-icon">🚫</div>
+        <div class="sc-card-name">SSH refused</div>
+        <div class="sc-card-desc">Cannot connect — diagnose the firewall</div>
+        <button class="sc-card-btn">Start →</button>
+      </div>
+    </div>
+
+    <!-- Live activity pulse -->
+    <div class="live-pulse fade-up-3" id="live-pulse">
+      <span class="live-dot"></span>
+      <span id="live-count">4</span> users solving incidents right now
+    </div>
+
+    <!-- Scarcity bar -->
+    <div class="scarcity fade-up-3">
+      <div class="sc-left">
+        <div class="sc-seat-label">
+          <span>🔒 Early access seats</span>
+          <span id="seats-text" style="color:var(--green)">loading…</span>
+        </div>
+        <div class="sc-bar"><div class="sc-fill" id="seats-fill"></div></div>
+        <div class="sc-count" id="seats-count"></div>
+      </div>
+      <div class="sc-right" id="sc-right-timer">
+        <div class="sc-timer-label" id="sc-timer-label">Pre-launch in</div>
+        <div class="sc-timer" id="sc-timer">--:--:--</div>
+        <div class="sc-timer-sub" id="sc-timer-sub">Apr 17 · 21:00 CEST · App live Apr 20</div>
+      </div>
+    </div>
+
+    <!-- Social proof strip -->
+    <div class="proof-strip fade-up-3">
+      <div class="proof-item"><span class="proof-num" id="proof-waiting">137</span><span class="proof-lbl">people on waitlist</span></div>
+      <div class="proof-sep">·</div>
+      <div class="proof-item"><span class="proof-num">24</span><span class="proof-lbl">labs ready at launch</span></div>
+      <div class="proof-sep">·</div>
+      <div class="proof-item"><span class="proof-num">500</span><span class="proof-lbl">seats total, ever</span></div>
+    </div>
+
+    <!-- CTA box — three states -->
+    <div class="cta-box fade-up-3" id="cta">
+
+      <!-- STATE 1: Pre-launch — email waitlist -->
+      <div class="cta-state" id="state-waitlist">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;font-family:var(--mono)">$ ./join-waitlist.sh</div>
+          <div style="font-size:11px;color:var(--muted)">🔥 <span id="joining-now">137</span> people already in</div>
+        </div>
+        <div class="form-row">
+          <input type="text"  id="inp-name"  placeholder="Name (optional)" autocomplete="name">
+          <input type="email" id="inp-email" placeholder="work@email.com" autocomplete="email" required>
+        </div>
+        <button class="btn-primary" id="btn-join" onclick="joinWaitlist()">
+          Reserve your seat — early access Friday Apr 17 →
+        </button>
+        <div class="cta-note">
+          500 seats only · <b>$5/mo locked for life</b> · no credit card now · cancel anytime
+        </div>
+        <div class="form-error" id="form-msg"></div>
+      </div>
+
+      <!-- STATE 2: Live — Stripe checkout -->
+      <div class="cta-state" id="state-stripe">
+        <div class="stripe-cta">
+          <div class="stripe-price">
+            <div><span class="amount">$5</span><span class="period">/mo</span></div>
+            <div class="locked">🔒 Locked forever — never goes up</div>
+          </div>
+          <div class="stripe-timer-wrap" id="stripe-urgency" style="display:none">
+            <div class="stripe-timer-label">⚡ Pre-launch price expires in</div>
+            <div class="stripe-timer-value" id="stripe-timer">--:--:--</div>
+          </div>
+          <div class="stripe-email-row">
+            <input type="text"  id="stripe-name"  placeholder="Your name" autocomplete="name">
+            <input type="email" id="stripe-email" placeholder="work@email.com" autocomplete="email" required>
+          </div>
+          <button class="btn-primary" id="btn-stripe" onclick="goStripe()">
+            Reserve my seat at $5/mo — lock it forever →
+          </button>
+          <div class="cta-note">
+            Secure checkout via Stripe · <b>$5/mo locked for life</b> · full access starts <b>Monday April 20</b>
+          </div>
+          <div class="form-error" id="stripe-msg"></div>
+        </div>
+      </div>
+
+      <!-- STATE 3: Waitlist joined — referral -->
+      <div class="cta-state" id="state-success">
+        <div class="success-box">
+          <div class="success-icon">✅</div>
+          <div class="success-pos" id="s-position">#42</div>
+          <div class="success-pos-label">your position in the waitlist</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+            Each referral moves you up <b style="color:var(--green)">2 spots</b>
+          </div>
+          <div class="ref-link-box">
+            <span class="ref-link-url" id="ref-url">winlab.cloud/ref/XXXXXXXX</span>
+            <button class="btn-copy" onclick="copyRef()">copy</button>
+          </div>
+          <div class="share-row">
+            <a class="btn-share" id="share-tw" target="_blank">𝕏 Twitter</a>
+            <a class="btn-share" id="share-li" target="_blank">in LinkedIn</a>
+            <a class="btn-share" id="share-wa" target="_blank">💬 WhatsApp</a>
+          </div>
+          <div class="ref-stats">referred <b id="ref-count">0</b> people · moved up <b id="ref-spots">0</b> spots</div>
+        </div>
+      </div>
+
+      <!-- STATE 4: Early access expired -->
+      <div class="cta-state" id="state-expired">
+        <div class="expired-box">
+          <div style="font-size:22px;margin-bottom:10px">⏰</div>
+          <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">Early access is closed</div>
+          <p class="ep-label">The $5/mo launch price is gone. Regular pricing starts at $19/mo.</p>
+          <button class="btn-primary" onclick="window.location.href='/pricing'">See Current Plans →</button>
+        </div>
+      </div>
+
+    </div><!-- /cta-box -->
+
+    <div class="next-steps">
+      <div class="ns-item"><span class="ns-num">1</span> Enter email</div>
+      <div class="ns-item"><span class="ns-num">2</span> Early access opens Friday Apr 17 at 21:00 IT</div>
+      <div class="ns-item"><span class="ns-num">3</span> Full app live Monday Apr 20 — first lab in 30 seconds</div>
+    </div>
+  </section>
+
+  <!-- Pain point / stats -->
+  <section class="pain">
+    <div class="container-sm">
+      <h2>Tutorials teach you <span>nothing</span> real.</h2>
+      <p>Watching someone else type commands is entertainment, not training. Your brain doesn't store what it never did. WinLab forces you to do it.</p>
+      <div class="pain-stats">
+        <div class="pain-stat"><div class="num">10+</div><div class="lbl">Linux labs</div></div>
+        <div class="pain-stat"><div class="num">0</div><div class="lbl">Setup required</div></div>
+        <div class="pain-stat"><div class="num">100%</div><div class="lbl">Browser-based</div></div>
+        <div class="pain-stat"><div class="num">1</div><div class="lbl">AI Mentor</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mid CTA #1 -->
+  <section class="mid-cta" id="mid-cta-1">
+    <div class="mid-cta-inner">
+      <h3>Early access opens<br>Friday April 17.</h3>
+      <p>Lock in $5/mo now — full access starts <b>Monday April 20</b>.<br>No setup. No VM. First lab in 30 seconds from launch.</p>
+      <button class="btn-primary" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">
+        Reserve your $5/mo seat — <span id="mid-seats-1">500</span> left →
+      </button>
+    </div>
+  </section>
+
+  <!-- Terminal demo — real Lab 01 via iframe -->
+  <section class="try-section" id="try">
+    <div class="demo-wrap">
+      <div style="text-align:center;margin-bottom:28px">
+        <div class="section-label" style="text-align:center">Try it right now — no signup</div>
+        <h2 class="section-title" style="text-align:center">This is what you're getting.</h2>
+        <p class="section-sub" style="text-align:center;margin:0 auto">Real WinLab terminal — Lab 01 preview. Full access activates Monday April 20.</p>
+      </div>
+      <div style="border-radius:12px;overflow:hidden;border:1px solid #1f2937;box-shadow:0 24px 60px rgba(0,0,0,.5)">
+        <iframe
+          src="/demo"
+          title="WinLab Lab 01 — Live Demo"
+          loading="lazy"
+          allow="clipboard-write"
+          style="width:100%;height:560px;border:none;display:block;background:#0a0a0a"
+        ></iframe>
+      </div>
+      <div style="text-align:center;margin-top:16px">
+        <button class="btn-primary" style="max-width:380px;margin:0 auto;display:block" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">
+          Unlock all 24 labs — $5/mo →
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Labs section -->
+  <section class="labs-section" id="labs">
+    <div class="container-lg">
+
+      <!-- Free labs header -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap">
+        <div class="section-label" style="margin:0">Linux Fundamentals Track</div>
+        <span style="background:var(--green-bg);border:1px solid var(--green-dim);color:var(--green);font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;letter-spacing:.3px">FREE — No signup required</span>
+      </div>
+      <h2 class="section-title">Your first 5 labs. On us.</h2>
+      <p class="section-sub">Real terminal sessions in your browser. No setup, no VM, no credit card. Start any lab right now.</p>
+
+      <div class="labs-grid">
+
+        <!-- Lab 01 -->
+        <div class="lab-card">
+          <div class="lab-card-header">
+            <div><div class="lab-num">LAB 01</div><div class="lab-card-title">Filesystem Navigation</div></div>
+            <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~30 min</span></div>
+          </div>
+          <div class="lab-terminal">
+<span class="t-cmt"># Where are you?</span>
+<span class="t-prompt">$ </span><span class="t-cmd">pwd</span>
+<span class="t-out">/home/admin</span>
+<span class="t-prompt">$ </span><span class="t-cmd">find /var -name "*.log" -size +1M</span>
+<span class="t-out">/var/log/nginx/access.log</span>
+<span class="t-out">/var/log/syslog</span>
+          </div>
+          <div class="lab-card-footer">
+            <div class="lab-objectives"><span class="lab-tag">pwd</span><span class="lab-tag">ls -la</span><span class="lab-tag">cd</span><span class="lab-tag">find</span></div>
+            <div class="lab-duration">📁 Navigate the Linux filesystem with confidence</div>
+          </div>
+        </div>
+
+        <!-- Lab 02 -->
+        <div class="lab-card">
+          <div class="lab-card-header">
+            <div><div class="lab-num">LAB 02</div><div class="lab-card-title">File Operations</div></div>
+            <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~25 min</span></div>
+          </div>
+          <div class="lab-terminal">
+<span class="t-cmt"># Back up the nginx config</span>
+<span class="t-prompt">$ </span><span class="t-cmd">cp /etc/nginx/nginx.conf ~/nginx.bak</span>
+<span class="t-prompt">$ </span><span class="t-cmd">cat ~/nginx.bak | grep listen</span>
+<span class="t-out">  listen 80;</span>
+<span class="t-out">  listen 443 ssl;</span>
+          </div>
+          <div class="lab-card-footer">
+            <div class="lab-objectives"><span class="lab-tag">cp</span><span class="lab-tag">mv</span><span class="lab-tag">rm</span><span class="lab-tag">grep</span></div>
+            <div class="lab-duration">📄 Create, copy, move and delete files</div>
+          </div>
+        </div>
+
+        <!-- Lab 03 -->
+        <div class="lab-card">
+          <div class="lab-card-header">
+            <div><div class="lab-num">LAB 03</div><div class="lab-card-title">Permissions &amp; Users</div></div>
+            <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~35 min</span></div>
+          </div>
+          <div class="lab-terminal">
+<span class="t-prompt">$ </span><span class="t-cmd">ls -la /opt/deploy.sh</span>
+<span class="t-out">-rw-r--r-- 1 root root deploy.sh</span>
+<span class="t-prompt">$ </span><span class="t-cmd">chmod +x /opt/deploy.sh &amp;&amp; chown deploy:deploy /opt/deploy.sh</span>
+<span class="t-out" style="color:var(--green)">✓ Task complete</span>
+          </div>
+          <div class="lab-card-footer">
+            <div class="lab-objectives"><span class="lab-tag">chmod</span><span class="lab-tag">chown</span><span class="lab-tag">sudo</span><span class="lab-tag">passwd</span></div>
+            <div class="lab-duration">🔐 Master Unix permissions and users</div>
+          </div>
+        </div>
+
+        <!-- Lab 04 -->
+        <div class="lab-card">
+          <div class="lab-card-header">
+            <div><div class="lab-num">LAB 04</div><div class="lab-card-title">Processes &amp; Services</div></div>
+            <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~30 min</span></div>
+          </div>
+          <div class="lab-terminal">
+<span class="t-cmt"># Something is eating CPU</span>
+<span class="t-prompt">$ </span><span class="t-cmd">ps aux --sort=-%cpu | head -5</span>
+<span class="t-out">root  4821  98.2  0.1  php-fpm: worker</span>
+<span class="t-prompt">$ </span><span class="t-cmd">systemctl restart php-fpm</span>
+<span class="t-out" style="color:var(--green)">✓ Service restored</span>
+          </div>
+          <div class="lab-card-footer">
+            <div class="lab-objectives"><span class="lab-tag">ps</span><span class="lab-tag">top</span><span class="lab-tag">kill</span><span class="lab-tag">systemctl</span></div>
+            <div class="lab-duration">⚙️ Control processes and systemd services</div>
+          </div>
+        </div>
+
+        <!-- Lab 05 -->
+        <div class="lab-card">
+          <div class="lab-card-header">
+            <div><div class="lab-num">LAB 05</div><div class="lab-card-title">Networking Basics</div></div>
+            <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~40 min</span></div>
+          </div>
+          <div class="lab-terminal">
+<span class="t-cmt"># Why can't we reach the DB?</span>
+<span class="t-prompt">$ </span><span class="t-cmd">ss -tlnp | grep 5432</span>
+<span class="t-out">LISTEN 0  128  0.0.0.0:5432</span>
+<span class="t-prompt">$ </span><span class="t-cmd">curl -I http://localhost:5432</span>
+<span class="t-out" style="color:var(--green)">✓ Port reachable — firewall rule missing</span>
+          </div>
+          <div class="lab-card-footer">
+            <div class="lab-objectives"><span class="lab-tag">ss</span><span class="lab-tag">netstat</span><span class="lab-tag">ping</span><span class="lab-tag">curl</span></div>
+            <div class="lab-duration">🌐 Diagnose network and port issues</div>
+          </div>
+        </div>
+
+      </div><!-- /labs-grid -->
+
+      <!-- Locked tracks divider -->
+      <div style="margin-top:56px;margin-bottom:28px;display:flex;align-items:center;gap:16px">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;white-space:nowrap">🔒 Unlock 19 more labs — $5/mo</div>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+
+      <!-- All tracks grid -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+
+        <!-- Jamf MDM — featured -->
+        <div style="background:linear-gradient(135deg,rgba(251,146,60,.08),var(--surface));border:1px solid rgba(251,146,60,.35);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden">
+          <div style="position:absolute;top:10px;right:10px;background:rgba(251,146,60,.15);color:#fb923c;font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;border:1px solid rgba(251,146,60,.3)">HOT</div>
+          <div style="font-size:24px;margin-bottom:10px">🍎</div>
+          <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:5px">Jamf Pro MDM</div>
+          <div style="font-size:12px;color:#9ca3af;line-height:1.5;margin-bottom:12px">Enroll devices, deploy policies, manage compliance. The #1 Apple MDM in enterprise.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">
+            <span class="lab-tag">Enrollment</span><span class="lab-tag">Policies</span><span class="lab-tag">Smart Groups</span><span class="lab-tag">Scripts</span>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:#fb923c;font-weight:600">6 labs · Intermediate → Advanced</div>
+        </div>
+
+        <!-- Microsoft Intune — featured -->
+        <div style="background:linear-gradient(135deg,rgba(59,130,246,.08),var(--surface));border:1px solid rgba(59,130,246,.35);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden">
+          <div style="position:absolute;top:10px;right:10px;background:rgba(59,130,246,.15);color:#60a5fa;font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;border:1px solid rgba(59,130,246,.3)">HOT</div>
+          <div style="font-size:24px;margin-bottom:10px">🪟</div>
+          <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:5px">Microsoft Intune</div>
+          <div style="font-size:12px;color:#9ca3af;line-height:1.5;margin-bottom:12px">Manage Windows, macOS and mobile devices across hybrid environments with Entra ID.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">
+            <span class="lab-tag">Entra ID</span><span class="lab-tag">Compliance</span><span class="lab-tag">Autopilot</span><span class="lab-tag">RBAC</span>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:#60a5fa;font-weight:600">5 labs · Intermediate → Advanced</div>
+        </div>
+
+        <!-- Networking -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+          <div style="font-size:24px;margin-bottom:10px">🌐</div>
+          <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:5px">Networking &amp; DNS</div>
+          <div style="font-size:12px;color:#9ca3af;line-height:1.5;margin-bottom:12px">VLANs, routing, firewall rules, DNS zones, DHCP. Real packet analysis with tcpdump.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">
+            <span class="lab-tag">iptables</span><span class="lab-tag">tcpdump</span><span class="lab-tag">BIND</span><span class="lab-tag">VLANs</span>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--muted);font-weight:600">4 labs · Intermediate</div>
+        </div>
+
+        <!-- SSH & Security -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+          <div style="font-size:24px;margin-bottom:10px">🔑</div>
+          <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:5px">SSH &amp; Hardening</div>
+          <div style="font-size:12px;color:#9ca3af;line-height:1.5;margin-bottom:12px">Key auth, tunneling, port forwarding, fail2ban, SELinux. Lock down production servers.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">
+            <span class="lab-tag">SSH keys</span><span class="lab-tag">SELinux</span><span class="lab-tag">fail2ban</span><span class="lab-tag">firewalld</span>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--muted);font-weight:600">3 labs · Intermediate</div>
+        </div>
+
+        <!-- Docker -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+          <div style="font-size:24px;margin-bottom:10px">🐳</div>
+          <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:5px">Docker &amp; Containers</div>
+          <div style="font-size:12px;color:#9ca3af;line-height:1.5;margin-bottom:12px">Build images, debug running containers, compose multi-service stacks. No Kubernetes fluff.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">
+            <span class="lab-tag">Dockerfile</span><span class="lab-tag">compose</span><span class="lab-tag">volumes</span><span class="lab-tag">logs</span>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--muted);font-weight:600">3 labs · Intermediate</div>
+        </div>
+
+        <!-- Nginx & Web -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+          <div style="font-size:24px;margin-bottom:10px">⚡</div>
+          <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:5px">Nginx &amp; Web Servers</div>
+          <div style="font-size:12px;color:#9ca3af;line-height:1.5;margin-bottom:12px">Virtual hosts, SSL/TLS, reverse proxies, load balancing, log analysis under load.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">
+            <span class="lab-tag">vhosts</span><span class="lab-tag">SSL</span><span class="lab-tag">proxy_pass</span><span class="lab-tag">access.log</span>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--muted);font-weight:600">2 labs · Intermediate</div>
+        </div>
+
+      </div><!-- /tracks grid -->
+
+      <div style="text-align:center;margin-top:32px">
+        <button class="btn-primary" style="max-width:420px;margin:0 auto;display:block" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">
+          Unlock all 24 labs — $5/mo forever →
+        </button>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">First 5 labs always free · No credit card · Cancel anytime</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Mid CTA #2 — after labs -->
+  <section class="mid-cta" id="mid-cta-2" style="padding-top:0">
+    <div class="mid-cta-inner" style="background:linear-gradient(135deg,var(--blue-bg),var(--surface));border-color:var(--blue-dim)">
+      <h3>5 free labs. 19 more unlocked Monday.<br>Right now.</h3>
+      <p>Pre-launch opens <b>Friday Apr 17 at 21:00 CEST</b> — <span id="mid-seats-2">500</span> early access seats at $5/mo.<br>App goes fully live <b>Monday Apr 20</b>. Price locks at $5 if you're in before then.</p>
+      <button class="btn-primary" style="background:var(--blue)" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">
+        Reserve your seat — early access Friday →
+      </button>
+    </div>
+  </section>
+
+  <!-- B2B Lead Capture -->
+  <section id="b2b-team" style="padding:72px 24px;background:#0a0a10;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+    <div class="container-sm" style="max-width:760px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center">
+        <div>
+          <div class="section-label">For IT teams</div>
+          <h2 class="section-title" style="text-align:left;font-size:clamp(22px,3vw,34px)">Training your whole team?</h2>
+          <p style="font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:20px">WinLab Business gives you SSO, admin analytics, team leaderboards, and seat packs starting at $199/mo for 5 engineers.</p>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:24px">
+            <li style="font-size:13px;color:var(--muted);display:flex;gap:8px"><span style="color:var(--green);font-weight:700">✓</span> SSO with Azure AD / Okta</li>
+            <li style="font-size:13px;color:var(--muted);display:flex;gap:8px"><span style="color:var(--green);font-weight:700">✓</span> Admin dashboard + skill gap detection</li>
+            <li style="font-size:13px;color:var(--muted);display:flex;gap:8px"><span style="color:var(--green);font-weight:700">✓</span> PDF report export</li>
+            <li style="font-size:13px;color:var(--muted);display:flex;gap:8px"><span style="color:var(--green);font-weight:700">✓</span> 40+ enterprise crisis scenarios</li>
+          </ul>
+          <a href="/enterprise" style="display:inline-block;background:var(--green);color:#000;font-weight:700;font-size:13px;padding:11px 22px;border-radius:8px;text-decoration:none">See enterprise plans →</a>
+        </div>
+        <div style="background:#0d0d18;border:1px solid var(--border);border-radius:14px;padding:28px" id="b2b-form-wrap">
+          <div id="b2b-success" style="display:none;text-align:center;padding:16px">
+            <div style="font-size:32px;margin-bottom:8px">✅</div>
+            <p style="font-weight:700;margin-bottom:4px">Got it — we'll reach out within 24h</p>
+            <p style="font-size:12px;color:var(--muted)">Or email us directly at <a href="mailto:enterprise@winlab.cloud">enterprise@winlab.cloud</a></p>
+          </div>
+          <form id="b2b-form" onsubmit="submitB2bLead(event)">
+            <p style="font-size:13px;font-weight:700;margin-bottom:16px">Get a team demo →</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <input id="b2b-first" type="text" placeholder="First name" required style="background:#111;border:1px solid var(--border);color:#fff;border-radius:7px;padding:9px 12px;font-size:13px;width:100%;outline:none">
+              <input id="b2b-last" type="text" placeholder="Last name" required style="background:#111;border:1px solid var(--border);color:#fff;border-radius:7px;padding:9px 12px;font-size:13px;width:100%;outline:none">
+            </div>
+            <input id="b2b-email" type="email" placeholder="work@company.com" required style="background:#111;border:1px solid var(--border);color:#fff;border-radius:7px;padding:9px 12px;font-size:13px;width:100%;margin-bottom:10px;outline:none">
+            <input id="b2b-company" type="text" placeholder="Company name" required style="background:#111;border:1px solid var(--border);color:#fff;border-radius:7px;padding:9px 12px;font-size:13px;width:100%;margin-bottom:10px;outline:none">
+            <select id="b2b-size" required style="background:#111;border:1px solid var(--border);color:#fff;border-radius:7px;padding:9px 12px;font-size:13px;width:100%;margin-bottom:14px;outline:none">
+              <option value="">Team size…</option>
+              <option value="1-5">1–5 engineers</option>
+              <option value="6-20">6–20 engineers</option>
+              <option value="21-50">21–50 engineers</option>
+              <option value="50+">50+ engineers</option>
+            </select>
+            <div id="b2b-err" style="font-size:12px;color:#ef4444;margin-bottom:8px;display:none"></div>
+            <button type="submit" id="b2b-btn" style="width:100%;background:var(--green);color:#000;font-weight:700;font-size:13px;padding:11px;border-radius:8px;border:none;cursor:pointer">Request team demo →</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-label">Why WinLab works</div>
+      <h2 class="section-title">Built different.</h2>
+      <p class="section-sub">Every decision was made for one goal: you actually getting hired, promoted, or confident enough to fix the server at 2am.</p>
+      <div class="features-grid">
+        <div class="feat">
+          <div class="feat-icon">⌨️</div>
+          <div class="feat-title">Real terminals</div>
+          <div class="feat-desc">Not a simulator. Not a fake shell. A real Linux environment that responds like production.</div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">🤖</div>
+          <div class="feat-title">AI Mentor</div>
+          <div class="feat-desc">Guides you with hints. Never gives the answer outright. Builds real problem-solving instincts.</div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">📜</div>
+          <div class="feat-title">Verifiable certificates</div>
+          <div class="feat-desc">Complete all labs and earn a certificate you can link on LinkedIn. Backed by evidence.</div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">🔥</div>
+          <div class="feat-title">Daily challenges</div>
+          <div class="feat-desc">A new challenge every day. Streaks. Leaderboard. Because consistency beats cramming.</div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">🏢</div>
+          <div class="feat-title">MSP &amp; enterprise scenarios</div>
+          <div class="feat-desc">Not toy exercises. Real scenarios from real MSP environments: Jamf, Nginx, SSH, systemd.</div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">📱</div>
+          <div class="feat-title">Works everywhere</div>
+          <div class="feat-desc">Any browser, any device. No VM, no Docker, no setup. Open and start in 10 seconds.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <div style="text-align:center;margin-bottom:0">
+        <div class="section-label" style="text-align:center">Simple pricing</div>
+        <h2 class="section-title" style="text-align:center">Get in early. Stay cheap forever.</h2>
+        <p class="section-sub" style="text-align:center;margin:0 auto 48px">The $5/mo price is only available during the 72-hour pre-launch window (Apr 17–20). After that it's $19/mo.</p>
+      </div>
+      <div class="pricing-grid" style="max-width:960px;margin-left:auto;margin-right:auto;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+
+        <div class="pricing-card featured">
+          <div class="pricing-badge">🔒 EARLY ACCESS — LIMITED</div>
+          <div class="pc-tier" style="margin-top:8px">Early Access</div>
+          <div class="pc-price">
+            <span class="amount" style="color:var(--green)">$5</span>
+            <span class="period">/mo</span>
+            <span class="was">$19</span>
+          </div>
+          <div class="pc-desc">Locked forever. Pay $5/mo even when regular price is $19+.</div>
+          <ul class="pc-features">
+            <li><span class="check">✓</span> All Linux labs (10+)</li>
+            <li><span class="check">✓</span> Jamf + Networking tracks</li>
+            <li><span class="check">✓</span> AI Mentor</li>
+            <li><span class="check">✓</span> Verifiable certificate</li>
+            <li><span class="check">✓</span> Daily challenges</li>
+            <li><span class="check">✓</span> All future labs included</li>
+            <li><span class="check">✓</span> Cancel anytime</li>
+          </ul>
+          <button class="btn-tier btn-tier-main" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})" id="pricing-cta-btn">
+            Start your first lab — $5/mo →
+          </button>
+        </div>
+
+        <div class="pricing-card">
+          <div class="pc-tier">Pro Individual</div>
+          <div class="pc-price">
+            <span class="amount">$19</span>
+            <span class="period">/mo</span>
+          </div>
+          <div class="pc-desc">After the launch window closes. Same product, same labs.</div>
+          <ul class="pc-features">
+            <li><span class="check">✓</span> All Linux labs (10+)</li>
+            <li><span class="check">✓</span> Jamf + Networking tracks</li>
+            <li><span class="check">✓</span> AI Mentor</li>
+            <li><span class="check">✓</span> Verifiable certificate</li>
+            <li><span class="check">✓</span> Daily challenges</li>
+            <li><span class="cross">–</span> Locked early access price</li>
+            <li><span class="check">✓</span> Cancel anytime</li>
+          </ul>
+          <button class="btn-tier btn-tier-ghost" disabled>Available after launch window</button>
+        </div>
+
+        <div class="pricing-card" style="border-color:#334155">
+          <div class="pc-tier">🏢 Business Team</div>
+          <div class="pc-price">
+            <span class="amount">$199</span>
+            <span class="period">/mo</span>
+          </div>
+          <div class="pc-desc">5-seat team pack. SSO, admin dashboard, leaderboard, skill gap analytics.</div>
+          <ul class="pc-features">
+            <li><span class="check">✓</span> Everything in Pro</li>
+            <li><span class="check">✓</span> 5 team seats included</li>
+            <li><span class="check">✓</span> SSO (Azure AD / Okta)</li>
+            <li><span class="check">✓</span> Admin dashboard</li>
+            <li><span class="check">✓</span> Team leaderboard</li>
+            <li><span class="check">✓</span> Skill gap detection</li>
+            <li><span class="check">✓</span> PDF report export</li>
+          </ul>
+          <a class="btn-tier btn-tier-ghost" href="/enterprise" style="display:block;text-align:center;padding:13px 0">
+            See enterprise plans →
+          </a>
+        </div>
+
+      </div>
+      <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--dim)">10-seat: $349/mo · 20-seat: $599/mo · 50+ seats: <a href="/enterprise" style="color:var(--green)">contact us</a></p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq" id="faq">
+    <div class="container-sm">
+      <div style="text-align:center">
+        <div class="section-label" style="text-align:center">FAQ</div>
+        <h2 class="section-title" style="text-align:center">Got questions.</h2>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Is it really a real Linux terminal? <span class="faq-arrow">+</span></div>
+          <div class="faq-a">Yes. Each lab spins up an isolated Linux environment. You type real commands, they run on real Linux. Not a fake shell or text parser — actual bash on actual Linux.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Do I need to install anything? <span class="faq-arrow">+</span></div>
+          <div class="faq-a">No. Nothing. Open winlab.cloud in any modern browser and start. Works on Mac, Windows, Linux, even iPad.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">What does the AI Mentor actually do? <span class="faq-arrow">+</span></div>
+          <div class="faq-a">It watches your session and gives contextual hints — like "you're on the right track, try looking at the file permissions." It never just gives you the answer, because that would kill the learning. Think of it as a senior sysadmin watching over your shoulder.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Is $5/mo really locked forever? <span class="faq-arrow">+</span></div>
+          <div class="faq-a">Yes. Your Stripe subscription is locked at $5/mo. We will never raise your price. When you see $19/mo being advertised, you're still paying $5. The only way to lose the price is to cancel.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">What if I'm a complete beginner? <span class="faq-arrow">+</span></div>
+          <div class="faq-a">Perfect. Labs 01–03 assume zero prior knowledge. The AI Mentor adapts to your level. You'll be writing real commands within 10 minutes of starting.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">When does the early access price expire? <span class="faq-arrow">+</span></div>
+          <div class="faq-a">The $5/mo price is available during the 72-hour pre-launch window (April 17–20, 2026). The full app goes live Monday April 20 at 21:00 CEST — after that, the price rises to $19/mo permanently.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Can I cancel anytime? <span class="faq-arrow">+</span></div>
+          <div class="faq-a">Yes. Cancel from your dashboard or email <a href="mailto:hello@winlab.cloud">hello@winlab.cloud</a>. No questions asked, no retention loop. You lose access at the end of your billing period.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </main><!-- /main -->
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-logo"><span class="w">WIN</span><span class="l">LAB</span></div>
+    <div class="footer-social">
+      <a href="https://www.tiktok.com/@winlabcore" target="_blank" rel="noopener" title="TikTok">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/></svg>
+      </a>
+      <a href="https://www.youtube.com/@WinLAb-q5n" target="_blank" rel="noopener" title="YouTube">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
+      </a>
+      <a href="https://it.linkedin.com/in/johnny-spata-52a016100" target="_blank" rel="noopener" title="LinkedIn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      </a>
+      <a href="https://www.instagram.com/winlab.cloud/" target="_blank" rel="noopener" title="Instagram">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+      </a>
+      <a href="https://www.facebook.com/profile.php?id=61573259081594" target="_blank" rel="noopener" title="Facebook">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+      </a>
+    </div>
+    <div class="footer-links">
+      <a href="mailto:hello@winlab.cloud">hello@winlab.cloud</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+      <a href="/cookies">Cookie Policy</a>
+    </div>
+    <div class="footer-copy">© 2026 WinLab · All rights reserved · <a href="mailto:hello@winlab.cloud" style="color:var(--dim)">hello@winlab.cloud</a></div>
+  </footer>
+
+</div><!-- /page-landing -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     PRIVACY POLICY
+════════════════════════════════════════════════════════════════════ -->
+<div id="page-privacy" class="page" style="display:none">
+  <nav class="nav">
+    <a class="nav-logo" href="/"><span class="w">WIN</span><span class="l">LAB</span></a>
+    <div class="nav-links"></div>
+    <a class="nav-cta" href="/">← Back to site</a>
+  </nav>
+  <div class="legal-page">
+    <div class="container-sm">
+      <div class="legal-nav"><a href="/">← Back to WinLab</a></div>
+      <div class="legal-header">
+        <h1>Privacy Policy</h1>
+        <div class="meta">Last updated: April 15, 2026 · Applies from: April 20, 2026</div>
+      </div>
+      <div class="legal-body">
+
+        <div class="legal-info-box">
+          <p><strong>§0 — Data Controller</strong><br>
+          Giovanni Spata — operating as WinLab (winlab.cloud).<br>
+          Contact: <a href="mailto:privacy@winlab.cloud">privacy@winlab.cloud</a> · winlab.cloud</p>
+        </div>
+
+        <h2>1. What data we collect</h2>
+        <table>
+          <tr><th>Category</th><th>Data</th><th>Legal basis (GDPR Art. 6)</th><th>Retention</th></tr>
+          <tr><td>Account</td><td>Email, name, password hash</td><td>Art. 6(1)(b) — contract performance</td><td>Until account deletion + 90 days</td></tr>
+          <tr><td>Billing</td><td>Stripe customer ID, subscription status, last-4 digits</td><td>Art. 6(1)(b) — contract performance</td><td>7 years (legal/tax obligation)</td></tr>
+          <tr><td>Usage</td><td>Lab progress, commands typed, completion events</td><td>Art. 6(1)(b) — service delivery</td><td>Duration of subscription + 90 days</td></tr>
+          <tr><td>Analytics</td><td>Page views, feature usage (anonymised)</td><td>Art. 6(1)(f) — legitimate interest</td><td>12 months rolling</td></tr>
+          <tr><td>AI sessions</td><td>Lab context sent to Anthropic Claude for mentor hints</td><td>Art. 6(1)(b) — contract performance</td><td>Not stored by WinLab; Anthropic policy applies</td></tr>
+          <tr><td>Waitlist</td><td>Email, name, referral code</td><td>Art. 6(1)(a) — consent</td><td>Until account activation or 12 months</td></tr>
+          <tr><td>Cookies</td><td>Session token (httpOnly), consent flag, analytics</td><td>Essential: Art. 6(1)(b); Analytics: Art. 6(1)(a)</td><td>Session or 30 days</td></tr>
+        </table>
+
+        <h2>2. How we use your data</h2>
+        <ul>
+          <li>Provide and operate the WinLab service (account, labs, billing)</li>
+          <li>Send transactional emails (welcome, receipts, password reset) via Resend</li>
+          <li>Power the AI Mentor feature via Anthropic Claude API</li>
+          <li>Process payments securely via Stripe</li>
+          <li>Improve the product through aggregated, anonymised analytics</li>
+          <li>Prevent fraud and abuse</li>
+        </ul>
+        <p>We do <strong>not</strong> sell your data. We do <strong>not</strong> use your data for advertising.</p>
+
+        <h2>3. Third-party processors</h2>
+        <table>
+          <tr><th>Processor</th><th>Purpose</th><th>Transfer basis</th></tr>
+          <tr><td>Stripe (USA)</td><td>Payment processing</td><td>SCCs + Stripe DPA</td></tr>
+          <tr><td>Anthropic (USA)</td><td>AI Mentor — lab context hints</td><td>SCCs + Anthropic DPA</td></tr>
+          <tr><td>Resend (USA)</td><td>Transactional email delivery</td><td>SCCs + Resend DPA</td></tr>
+          <tr><td>Cloudflare (USA/EU)</td><td>CDN, DDoS protection, DNS</td><td>SCCs + Cloudflare DPA</td></tr>
+        </table>
+
+        <h2>4. International transfers</h2>
+        <p>Some processors are based outside the EU/EEA (primarily the USA). All transfers are covered by Standard Contractual Clauses (SCCs) adopted by the European Commission under Art. 46(2)(c) GDPR, supplemented by processor-level data protection agreements.</p>
+
+        <h2>5. Your rights (GDPR)</h2>
+        <ul>
+          <li><strong>Access</strong> — request a copy of your personal data</li>
+          <li><strong>Rectification</strong> — correct inaccurate data</li>
+          <li><strong>Erasure ("right to be forgotten")</strong> — request deletion (subject to legal retention obligations)</li>
+          <li><strong>Restriction</strong> — limit processing while a dispute is resolved</li>
+          <li><strong>Portability</strong> — receive your data in a machine-readable format</li>
+          <li><strong>Objection</strong> — object to legitimate-interest processing</li>
+          <li><strong>Withdraw consent</strong> — for analytics cookies, at any time via the cookie banner</li>
+        </ul>
+        <p>Submit requests to <a href="mailto:privacy@winlab.cloud">privacy@winlab.cloud</a>. We respond within 30 days.</p>
+
+        <h2>6. Right to lodge a complaint</h2>
+        <p>You have the right to complain to a supervisory authority:</p>
+        <ul>
+          <li><strong>Italy</strong>: Garante per la Protezione dei Dati Personali — <a href="https://www.garanteprivacy.it" target="_blank">garanteprivacy.it</a></li>
+          <li><strong>EU (other countries)</strong>: Your national supervisory authority listed on <a href="https://www.edpb.europa.eu" target="_blank">edpb.europa.eu</a></li>
+          <li><strong>UK</strong>: Information Commissioner's Office — <a href="https://ico.org.uk" target="_blank">ico.org.uk</a></li>
+        </ul>
+
+        <h2>7. Children &amp; minimum age</h2>
+        <p>WinLab is intended for users aged 16 and over. We do not knowingly collect data from users under 16. If you believe a minor has registered, contact <a href="mailto:privacy@winlab.cloud">privacy@winlab.cloud</a> and we will delete the account immediately.</p>
+
+        <h2>8. Security</h2>
+        <p>Passwords are hashed using bcrypt. Auth tokens are stored in httpOnly cookies (not accessible to JavaScript). All traffic is encrypted via HTTPS (TLS 1.2+). Access to production systems is restricted to authorised personnel only.</p>
+
+        <h2>9. Changes to this policy</h2>
+        <p>We will notify you of material changes by email at least 14 days before they take effect. The current version is always available at winlab.cloud/privacy.</p>
+
+        <h2 id="ml-training">10. ML Training Data</h2>
+        <p>We may optionally use <strong>anonymized</strong> lab interaction data (commands typed, completion patterns — never personal data) to improve WinLab's training scenarios. This is strictly opt-in:</p>
+        <ul>
+          <li>You can consent at registration or in <strong>Settings → AI Training</strong></li>
+          <li>All data is stripped of personal identifiers before any use</li>
+          <li>You can withdraw this consent at any time without affecting your access to the Service</li>
+          <li>Legal basis: Art. 6(1)(a) GDPR — consent</li>
+        </ul>
+
+        <h2>11. California Privacy Rights (CCPA/CPRA)</h2>
+        <p>If you are a California resident, you have the following rights under the California Consumer Privacy Act (CCPA) as amended by the CPRA:</p>
+        <ul>
+          <li><strong>Know</strong> — request disclosure of the categories and specific pieces of personal information we collect, use, or disclose</li>
+          <li><strong>Delete</strong> — request deletion of your personal information (subject to legal retention exceptions)</li>
+          <li><strong>Correct</strong> — request correction of inaccurate personal information</li>
+          <li><strong>Opt-out of sale/sharing</strong> — we do <strong>not</strong> sell or share personal information for cross-context behavioral advertising</li>
+          <li><strong>Non-discrimination</strong> — we will not discriminate against you for exercising your privacy rights</li>
+        </ul>
+        <p>To exercise your rights, contact us at <a href="mailto:privacy@winlab.cloud">privacy@winlab.cloud</a>. We respond within 45 days. You may designate an authorised agent to submit requests on your behalf.</p>
+
+        <h2>12. Contact</h2>
+        <p>WinLab · <a href="mailto:privacy@winlab.cloud">privacy@winlab.cloud</a> · winlab.cloud</p>
+      </div>
+    </div>
+  </div>
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="/">Home</a><a href="/terms">Terms</a><a href="/cookies">Cookies</a>
+    </div>
+    <div class="footer-copy">© 2026 WinLab</div>
+  </footer>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     TERMS OF SERVICE
+════════════════════════════════════════════════════════════════════ -->
+<div id="page-terms" class="page" style="display:none">
+  <nav class="nav">
+    <a class="nav-logo" href="/"><span class="w">WIN</span><span class="l">LAB</span></a>
+    <div class="nav-links"></div>
+    <a class="nav-cta" href="/">← Back to site</a>
+  </nav>
+  <div class="legal-page">
+    <div class="container-sm">
+      <div class="legal-nav"><a href="/">← Back to WinLab</a></div>
+      <div class="legal-header">
+        <h1>Terms of Service</h1>
+        <div class="meta">Last updated: April 15, 2026 · Effective: April 20, 2026</div>
+      </div>
+      <div class="legal-body">
+
+        <div class="legal-info-box">
+          <p><strong>Service provider:</strong> Giovanni Spata — operating as WinLab (winlab.cloud).<br>
+          <strong>Contact:</strong> <a href="mailto:hello@winlab.cloud">hello@winlab.cloud</a></p>
+        </div>
+
+        <h2>1. Acceptance</h2>
+        <p>By creating an account or using WinLab ("Service"), you agree to these Terms. If you do not agree, do not use the Service. You must be at least 16 years old.</p>
+
+        <h2>2. The Service</h2>
+        <p>WinLab provides browser-based interactive lab environments for learning Linux system administration, Jamf MDM, networking, and related topics. Access is provided on a subscription basis.</p>
+
+        <h2>3. Account</h2>
+        <ul>
+          <li>You are responsible for maintaining the security of your account credentials.</li>
+          <li>One account per person. Account sharing is not permitted.</li>
+          <li>You must provide accurate information when registering.</li>
+          <li>You must notify us immediately of any unauthorised access: <a href="mailto:hello@winlab.cloud">hello@winlab.cloud</a>.</li>
+        </ul>
+
+        <h2>4. Subscription &amp; payments</h2>
+        <h3>4.1 Early access ($5/mo)</h3>
+        <p>The early access price of $5/mo is available only during the 72-hour pre-launch window (April 17–20, 2026). The full platform goes live April 20, 2026. Subscribers who lock in this price retain it for as long as their subscription remains active.</p>
+        <h3>4.2 Billing</h3>
+        <p>Subscriptions are billed monthly via Stripe. By subscribing you authorise recurring charges. Failed payments may result in service suspension after a grace period.</p>
+        <h3>4.3 Cancellation</h3>
+        <p>Cancel anytime from your dashboard or by emailing <a href="mailto:hello@winlab.cloud">hello@winlab.cloud</a>. Access continues until the end of the paid billing period. No refunds for partial months unless required by applicable law.</p>
+        <h3>4.4 EU/UK consumer rights</h3>
+        <p>EU and UK consumers have a 14-day right of withdrawal from the date of subscription, unless the service has been fully performed with your prior express consent. By starting your first lab session you consent to immediate service delivery and acknowledge that the right of withdrawal is exercised on a pro-rata basis.</p>
+        <h3>4.5 Price changes</h3>
+        <p>We will give at least 30 days' notice of any price change via email. Early access subscribers are not subject to price increases for as long as their subscription is active and uninterrupted.</p>
+
+        <h2>5. Acceptable use</h2>
+        <p>You agree not to:</p>
+        <ul>
+          <li>Use the lab environments to attack, probe or scan systems outside WinLab</li>
+          <li>Attempt to break out of the sandboxed environment</li>
+          <li>Share account credentials or resell access</li>
+          <li>Scrape, copy, or redistribute lab content</li>
+          <li>Use automated tools to complete labs or farm certificates</li>
+          <li>Upload, transmit or generate unlawful, harmful or abusive content</li>
+        </ul>
+        <p>Violations may result in immediate account termination without refund.</p>
+
+        <h2>6. Intellectual property</h2>
+        <p>All lab content, curriculum, branding and software remain the exclusive property of WinLab. Nothing in these Terms grants you any IP rights. Your personal lab data (progress, notes) belongs to you.</p>
+
+        <h2>7. AI Mentor</h2>
+        <p>The AI Mentor feature uses Anthropic Claude. It is provided as a learning aid and may occasionally produce incorrect suggestions. WinLab does not warrant the accuracy of AI-generated content. Do not use AI Mentor output in production systems without independent verification.</p>
+
+        <h2>8. Certificates</h2>
+        <p>Certificates are issued upon genuine completion of the required lab modules. WinLab certificates are learning credentials and not professional certifications. WinLab makes no guarantee of employment or certification acceptance by third parties.</p>
+
+        <h2>9. Availability &amp; warranty disclaimer</h2>
+        <p>We aim for high availability but cannot guarantee uninterrupted service. The Service is provided "as is" without warranties of any kind to the extent permitted by applicable law. We are not liable for indirect or consequential damages.</p>
+
+        <h2>10. Governing law &amp; dispute resolution</h2>
+        <p>For EU consumers: these Terms are governed by the law of your country of residence, and EU consumer protection law always applies. For non-EU users: Italian law governs, with exclusive jurisdiction in the courts of Italy. For UK consumers: English law applies.</p>
+        <p><strong>EU Online Dispute Resolution:</strong> The European Commission provides an ODR platform for resolving disputes online at <a href="https://ec.europa.eu/consumers/odr" target="_blank">ec.europa.eu/consumers/odr</a>. Our contact point for ODR purposes: <a href="mailto:hello@winlab.cloud">hello@winlab.cloud</a>.</p>
+
+        <h2>11. Changes to Terms</h2>
+        <p>We will give at least 14 days' notice of material changes via email. Continued use after the effective date constitutes acceptance. If you do not agree, cancel before the effective date.</p>
+
+        <h2>12. Contact</h2>
+        <p><a href="mailto:hello@winlab.cloud">hello@winlab.cloud</a></p>
+      </div>
+    </div>
+  </div>
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="/">Home</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a>
+    </div>
+    <div class="footer-copy">© 2026 WinLab</div>
+  </footer>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     COOKIE POLICY
+════════════════════════════════════════════════════════════════════ -->
+<div id="page-cookies" class="page" style="display:none">
+  <nav class="nav">
+    <a class="nav-logo" href="/"><span class="w">WIN</span><span class="l">LAB</span></a>
+    <div class="nav-links"></div>
+    <a class="nav-cta" href="/">← Back to site</a>
+  </nav>
+  <div class="legal-page">
+    <div class="container-sm">
+      <div class="legal-nav"><a href="/">← Back to WinLab</a></div>
+      <div class="legal-header">
+        <h1>Cookie Policy</h1>
+        <div class="meta">Last updated: April 15, 2026</div>
+      </div>
+      <div class="legal-body">
+
+        <p>This policy explains what cookies WinLab uses, why, and how you can control them. For full privacy details see our <a href="/privacy">Privacy Policy</a>.</p>
+
+        <h2>1. What are cookies</h2>
+        <p>Cookies are small text files stored on your device by your browser when you visit a website. They allow the site to remember information about your visit.</p>
+
+        <h2>2. Cookies we use</h2>
+        <table>
+          <tr><th>Cookie</th><th>Type</th><th>Set by</th><th>Purpose</th><th>Duration</th></tr>
+          <tr><td><code>token</code></td><td>Essential</td><td>WinLab</td><td>Authentication session (httpOnly, not readable by JS)</td><td>30 days</td></tr>
+          <tr><td><code>winlab_logged_in</code></td><td>Essential</td><td>WinLab</td><td>Client-side login state flag</td><td>30 days</td></tr>
+          <tr><td><code>winlab_cookie_consent</code></td><td>Essential</td><td>WinLab</td><td>Stores your cookie preferences</td><td>365 days</td></tr>
+          <tr><td><code>wl_signup</code></td><td>Functional</td><td>WinLab</td><td>Saves waitlist signup state (localStorage)</td><td>Until cleared</td></tr>
+          <tr><td><code>winlab_plan</code></td><td>Analytics</td><td>WinLab</td><td>Stores active subscription plan for anonymous analytics segmentation (localStorage). <strong>Set only after analytics consent.</strong></td><td>Until cleared or consent revoked</td></tr>
+          <tr><td><code>_winlab_analytics</code></td><td>Analytics</td><td>WinLab</td><td>Anonymous usage analytics (self-hosted, no third party)</td><td>12 months</td></tr>
+          <tr><td><code>__cf_bm</code></td><td>Essential</td><td>Cloudflare</td><td>Bot management and DDoS protection — required for the service to function securely. See <a href="https://www.cloudflare.com/privacypolicy/" target="_blank">Cloudflare's Privacy Policy</a>.</td><td>30 minutes</td></tr>
+          <tr><td><code>__stripe_mid</code></td><td>Functional</td><td>Stripe</td><td>Stripe payment session identifier — set only during checkout. See <a href="https://stripe.com/privacy" target="_blank">Stripe's Privacy Policy</a>.</td><td>1 year</td></tr>
+          <tr><td><code>__stripe_sid</code></td><td>Functional</td><td>Stripe</td><td>Stripe short-lived session cookie — set only during checkout. See <a href="https://stripe.com/privacy" target="_blank">Stripe's Privacy Policy</a>.</td><td>30 minutes</td></tr>
+        </table>
+
+        <h2>3. Essential cookies</h2>
+        <p>Essential cookies are required for the service to function. They cannot be disabled. They include your authentication session cookie and your consent preferences. We do not use essential cookies for any purpose beyond service operation.</p>
+
+        <h2>4. Analytics cookies</h2>
+        <p>We use a lightweight, self-hosted analytics system (no Google Analytics, no Facebook Pixel). Analytics cookies collect anonymous data about which features are used and how the site performs. No personal data is shared with third parties for analytics purposes.</p>
+        <p>You can disable analytics cookies at any time using the button below or the banner that appears on first visit.</p>
+        <div style="margin:20px 0">
+          <button class="btn-primary" style="max-width:300px" onclick="openConsentManager()">Manage Cookie Preferences</button>
+        </div>
+
+        <h2>5. Third-party cookies</h2>
+        <p>WinLab does not use third-party advertising or tracking cookies. The following third-party cookies may be set during normal use of the service:</p>
+        <ul>
+          <li><strong>Cloudflare</strong> (<code>__cf_bm</code>) — bot management required for site security. Governed by <a href="https://www.cloudflare.com/privacypolicy/" target="_blank">Cloudflare's Privacy Policy</a>.</li>
+          <li><strong>Stripe</strong> (<code>__stripe_mid</code>, <code>__stripe_sid</code>) — payment session cookies set only during checkout. Governed by <a href="https://stripe.com/privacy" target="_blank">Stripe's Privacy Policy</a>.</li>
+        </ul>
+
+        <h2>6. How to manage cookies</h2>
+        <p>In addition to using our consent manager, you can manage cookies directly through your browser:</p>
+        <ul>
+          <li><a href="https://support.google.com/chrome/answer/95647" target="_blank">Google Chrome</a></li>
+          <li><a href="https://support.mozilla.org/en-US/kb/cookies-information-websites-store-on-your-computer" target="_blank">Mozilla Firefox</a></li>
+          <li><a href="https://support.apple.com/en-gb/guide/safari/sfri11471/mac" target="_blank">Safari</a></li>
+          <li><a href="https://support.microsoft.com/en-us/windows/manage-cookies-in-microsoft-edge" target="_blank">Microsoft Edge</a></li>
+        </ul>
+        <p>Note: disabling essential cookies will prevent you from logging in to WinLab.</p>
+
+        <h2>7. Contact</h2>
+        <p>Questions about cookies: <a href="mailto:privacy@winlab.cloud">privacy@winlab.cloud</a></p>
+      </div>
+    </div>
+  </div>
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="/">Home</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a>
+    </div>
+    <div class="footer-copy">© 2026 WinLab</div>
+  </footer>
+</div>
+
+
+<!-- ── Demo modal ──────────────────────────────────────────────────── -->
+<div class="demo-modal" id="demo-modal" onclick="closeDemoModal(event)">
+  <div class="demo-modal-inner">
+    <div class="demo-modal-hdr">
+      <span class="demo-modal-title" id="demo-modal-title">WinLab — Demo</span>
+      <button class="demo-modal-close" onclick="closeDemoModal(null)">✕</button>
+    </div>
+    <iframe class="demo-modal-iframe" id="demo-modal-iframe" src="" title="WinLab Demo" allow="clipboard-write" loading="lazy"></iframe>
+    <div class="demo-modal-footer">
+      <span class="demo-modal-note">Free demo · Full access from Monday April 20</span>
+      <a href="#cta" class="demo-modal-cta" onclick="closeDemoModal(null)">Lock your seat at $5/mo →</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── Cookie banner ───────────────────────────────────────────────── -->
+<div id="cookie-banner">
+  <div class="cb-text">
+    <strong>Your cookie preferences</strong>
+    We use essential cookies to make WinLab work, and optional analytics to improve the product. <a href="/cookies">Cookie Policy</a> · <a href="/privacy">Privacy Policy</a>
+  </div>
+  <div class="cookie-btns">
+    <button class="btn-cookie btn-cookie-reject" onclick="setCookieConsent('essential')">Reject all</button>
+    <button class="btn-cookie btn-cookie-customize" onclick="openConsentModal()">Customize</button>
+    <button class="btn-cookie btn-cookie-accept" onclick="setCookieConsent('all')">Accept all</button>
+  </div>
+</div>
+
+<!-- ── Consent modal ───────────────────────────────────────────────── -->
+<div id="consent-modal">
+  <div class="consent-inner">
+    <div class="consent-hdr">
+      <h3>Customize cookies</h3>
+      <button class="consent-close" onclick="closeConsentModal()">✕</button>
+    </div>
+    <div class="consent-body">
+      <div class="consent-item">
+        <div class="consent-item-info">
+          <strong>Essential</strong>
+          <span>Required for login, session management and storing your preferences. Always active.</span>
+        </div>
+        <label class="consent-toggle">
+          <input type="checkbox" checked disabled>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="consent-item">
+        <div class="consent-item-info">
+          <strong>Analytics</strong>
+          <span>Anonymous usage data to improve WinLab. Self-hosted — no Google, no Facebook, no ads.</span>
+        </div>
+        <label class="consent-toggle">
+          <input type="checkbox" id="toggle-analytics">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+    <div class="consent-footer">
+      <button class="btn-save-consent" onclick="saveCustomConsent()">Save preferences</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Privacy shield widget ──────────────────────────────────────── -->
+<div id="privacy-shield" title="Cookie preferences" onclick="openConsentManager()" role="button" aria-label="Cookie preferences">🛡</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════════════════════ -->
+<script>
+// ── Router ────────────────────────────────────────────────────────────────────
+const ROUTES = {
+  '/':        'page-landing',
+  '/privacy': 'page-privacy',
+  '/terms':   'page-terms',
+  '/cookies': 'page-cookies',
+};
+function route() {
+  const path = location.pathname.replace(/\/$/, '') || '/';
+  const pageId = ROUTES[path] || 'page-landing';
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  document.getElementById(pageId).style.display = 'block';
+  window.scrollTo(0,0);
+  if (pageId === 'page-landing') initLanding();
+}
+// intercept same-site nav
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href]');
+  if (!a) return;
+  const href = a.getAttribute('href');
+  if (href && href.startsWith('/') && !href.startsWith('//') && !a.target) {
+    const dest = href.split('#')[0];
+    if (ROUTES[dest] !== undefined) {
+      e.preventDefault();
+      history.pushState({}, '', href);
+      route();
+      const hash = href.split('#')[1];
+      if (hash) setTimeout(() => document.getElementById(hash)?.scrollIntoView({behavior:'smooth'}), 80);
+    }
+  }
+});
+window.addEventListener('popstate', route);
+
+// ── Timing constants ──────────────────────────────────────────────────────────
+const LAUNCH_AT       = new Date('2026-04-17T19:00:00Z'); // 21:00 CEST (UTC+2)
+const EARLY_ENDS_AT   = new Date('2026-04-20T19:00:00Z'); // 72h window
+const MAX_SEATS       = 500;
+
+function now()        { return Date.now(); }
+function isLaunched() { return now() >= LAUNCH_AT.getTime(); }
+function isExpired()  { return now() >= EARLY_ENDS_AT.getTime(); }
+
+// ── Init landing ──────────────────────────────────────────────────────────────
+let landingInited = false;
+function initLanding() {
+  if (landingInited) return;
+  landingInited = true;
+  loadSeats();
+  startCountdown();
+  restoreState();
+}
+
+// ── Countdown ─────────────────────────────────────────────────────────────────
+function pad(n) { return String(n).padStart(2,'0'); }
+function fmt(ms) {
+  if (ms <= 0) return '00:00:00';
+  const h = Math.floor(ms/3600000), m = Math.floor(ms%3600000/60000), s = Math.floor(ms%60000/1000);
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+function fmtFull(ms) {
+  if (ms <= 0) return '00d 00:00:00';
+  const d = Math.floor(ms/86400000);
+  return (d > 0 ? `${d}d ` : '') + fmt(ms - d*86400000);
+}
+
+function startCountdown() {
+  function tick() {
+    const timerEl  = document.getElementById('sc-timer');
+    const labelEl  = document.getElementById('sc-timer-label');
+    const subEl    = document.getElementById('sc-timer-sub');
+    const badgeEl  = document.getElementById('hero-badge-text');
+    const stripeTimer = document.getElementById('stripe-timer');
+    const stripeUrgency = document.getElementById('stripe-urgency');
+
+    if (!isLaunched()) {
+      const diff = LAUNCH_AT - now();
+      timerEl.textContent  = fmtFull(diff);
+      labelEl.textContent  = 'Pre-launch in';
+      subEl.textContent    = 'Apr 17 · 21:00 CEST · App live Apr 20';
+      badgeEl.textContent  = 'Pre-launch Apr 17 · App live Apr 20 · 500 seats · $5/mo forever';
+      setCtaState('waitlist');
+    } else if (!isExpired()) {
+      const diff = EARLY_ENDS_AT - now();
+      timerEl.textContent  = fmtFull(diff);
+      labelEl.textContent  = '⚡ Pre-launch price expires in';
+      labelEl.style.color  = 'var(--yellow)';
+      timerEl.style.color  = 'var(--yellow)';
+      subEl.textContent    = 'App live Apr 20 · Then $19/mo — price locked if you\'re in';
+      badgeEl.textContent  = '🔥 PRE-LAUNCH LIVE · App launches Apr 20 · $5/mo locked forever';
+      if (stripeUrgency) { stripeUrgency.style.display = 'block'; stripeTimer.textContent = fmtFull(diff); }
+      // only switch to stripe if not already in success/expired state
+      const cur = document.querySelector('.cta-state.active')?.id;
+      if (!cur || cur === 'state-waitlist') setCtaState('stripe');
+    } else {
+      timerEl.textContent = 'CLOSED';
+      subEl.textContent   = 'Regular: $19/mo';
+      badgeEl.textContent = 'Available at $19/mo';
+      const cur = document.querySelector('.cta-state.active')?.id;
+      if (!cur || cur === 'state-waitlist' || cur === 'state-stripe') setCtaState('expired');
+    }
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ── Live activity counter ─────────────────────────────────────────────────────
+(function() {
+  const el = document.getElementById('live-count');
+  if (!el) return;
+  let current = 3 + Math.floor(Math.random() * 5); // start 3–7
+  el.textContent = current;
+  function update() {
+    const delta = Math.random() < 0.5 ? 1 : -1;
+    current = Math.min(12, Math.max(2, current + delta));
+    el.textContent = current;
+    setTimeout(update, 20000 + Math.random() * 25000); // every 20–45s
+  }
+  setTimeout(update, 20000 + Math.random() * 25000);
+})();
+
+// ── Scenario demo modal ───────────────────────────────────────────────────────
+const SCENARIO_LABELS = {
+  apache:  '🔴 Apache down — Site not responding',
+  disk:    '💾 Disk full — No space left',
+  selinux: '🔒 SELinux denial — httpd 403',
+  cpu:     '🔥 CPU at 100% — Process out of control',
+  ssh:     '🚫 SSH refused — Firewall diagnosis',
+};
+
+function launchScenario(card, scenario) {
+  // Highlight active card
+  document.querySelectorAll('.sc-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+
+  const modal   = document.getElementById('demo-modal');
+  const iframe  = document.getElementById('demo-modal-iframe');
+  const title   = document.getElementById('demo-modal-title');
+
+  title.textContent = 'WinLab Demo · ' + (SCENARIO_LABELS[scenario] || scenario);
+  // Load the real demo iframe — scenario param passed for context
+  const src = '/demo?scenario=' + scenario;
+  if (iframe.src !== location.origin + src) iframe.src = src;
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDemoModal(e) {
+  if (e && e.target !== document.getElementById('demo-modal')) return;
+  document.getElementById('demo-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  document.querySelectorAll('.sc-card').forEach(c => c.classList.remove('active'));
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeDemoModal(null); closeMobileMenu(); }
+});
+
+// ── Mobile menu ───────────────────────────────────────────────────────────────
+document.getElementById('nav-hamburger').addEventListener('click', () => {
+  document.getElementById('mobile-menu').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+});
+function closeMobileMenu() {
+  document.getElementById('mobile-menu').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// ── CTA state machine ─────────────────────────────────────────────────────────
+function setCtaState(state) {
+  document.querySelectorAll('.cta-state').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('state-' + state);
+  if (el) el.classList.add('active');
+}
+
+// ── Seats ─────────────────────────────────────────────────────────────────────
+let seatsRemaining = null;
+async function loadSeats() {
+  try {
+    const r = await fetch('/api/early-access/seats');
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    const claimed = d.claimed || d.count || 0;
+    // If DB is empty, treat as pre-launch state and use social-proof fallback
+    if (claimed === 0) throw new Error('empty');
+    seatsRemaining = MAX_SEATS - claimed;
+    const pct = Math.min(100, Math.round(claimed / MAX_SEATS * 100));
+    document.getElementById('seats-fill').style.width = pct + '%';
+    document.getElementById('seats-text').textContent = `${seatsRemaining} left`;
+    document.getElementById('seats-count').textContent = `${claimed} of ${MAX_SEATS} claimed`;
+    // Sync social proof
+    const pw = document.getElementById('proof-waiting');
+    const jn = document.getElementById('joining-now');
+    if (pw) pw.textContent = claimed;
+    if (jn) jn.textContent = claimed;
+  } catch {
+    seatsRemaining = 363; // fallback: 137 claimed out of 500
+    document.getElementById('seats-fill').style.width = '27%';
+    document.getElementById('seats-text').textContent = '~363 left';
+    document.getElementById('seats-count').textContent = '~137 of 500 claimed';
+  }
+  updateSeatsCopy();
+}
+
+function updateSeatsCopy() {
+  const n = seatsRemaining;
+  if (!n) return;
+  const txt = `Only ${n} left`;
+  const el = document.getElementById('sb-seats');
+  if (el) el.textContent = n;
+  const m1 = document.getElementById('mid-seats-1');
+  const m2 = document.getElementById('mid-seats-2');
+  if (m1) m1.textContent = n;
+  if (m2) m2.textContent = n;
+}
+
+// ── Sticky bar on scroll ───────────────────────────────────────────────────────
+function initStickyBar() {
+  const bar    = document.getElementById('sticky-bar');
+  const nav    = document.getElementById('main-nav');
+  const hero   = document.getElementById('cta');
+  let shown = false;
+  window.addEventListener('scroll', () => {
+    if (!hero) return;
+    const heroBottom = hero.getBoundingClientRect().bottom;
+    if (heroBottom < 0 && !shown) {
+      bar.classList.add('show');
+      nav.classList.add('pushed');
+      shown = true;
+    } else if (heroBottom >= 0 && shown) {
+      bar.classList.remove('show');
+      nav.classList.remove('pushed');
+      shown = false;
+    }
+  }, { passive: true });
+}
+
+// ── Waitlist join ─────────────────────────────────────────────────────────────
+const urlRef = new URLSearchParams(location.search).get('ref');
+
+async function joinWaitlist() {
+  const email = document.getElementById('inp-email').value.trim();
+  const name  = document.getElementById('inp-name').value.trim();
+  const msg   = document.getElementById('form-msg');
+  const btn   = document.getElementById('btn-join');
+  if (!email || !email.includes('@')) { msg.textContent = 'Enter a valid email address.'; return; }
+  btn.disabled = true;
+  btn.textContent = 'Connecting…';
+  msg.textContent = '';
+  try {
+    const r = await fetch('/api/waitlist/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name: name || undefined, ref: urlRef || undefined }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Error joining waitlist');
+    showSuccess(d.signup);
+  } catch(e) {
+    msg.textContent = e.message.includes('fetch') ? '⚠ Server unreachable — try again in a moment.' : '❌ ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Claim Early Access — $5/mo locked forever';
+  }
+}
+
+// ── Stripe checkout ───────────────────────────────────────────────────────────
+async function goStripe() {
+  const email = document.getElementById('stripe-email').value.trim();
+  const name  = document.getElementById('stripe-name').value.trim();
+  const msg   = document.getElementById('stripe-msg');
+  const btn   = document.getElementById('btn-stripe');
+  if (!email || !email.includes('@')) { msg.textContent = 'Enter a valid email address.'; return; }
+  btn.disabled = true;
+  btn.textContent = 'Redirecting to Stripe…';
+  msg.textContent = '';
+  try {
+    const r = await fetch('/api/stripe/early-access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name: name || undefined }),
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      if (d.soldOut) { setCtaState('expired'); return; }
+      throw new Error(d.error || 'Checkout failed');
+    }
+    if (d.url) window.location.href = d.url;
+  } catch(e) {
+    msg.textContent = '❌ ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Reserve my seat at $5/mo →';
+  }
+}
+
+// ── Success / referral state ──────────────────────────────────────────────────
+function showSuccess(signup) {
+  setCtaState('success');
+  document.getElementById('s-position').textContent = '#' + (signup.position || '?');
+  const refUrl = location.origin + '/ref/' + (signup.referralCode || '');
+  document.getElementById('ref-url').textContent = refUrl.replace('https://','');
+  document.getElementById('ref-count').textContent  = signup.referralCount || 0;
+  document.getElementById('ref-spots').textContent  = (signup.referralCount || 0) * 2;
+  const text = encodeURIComponent(`I just joined the WinLab early access list — browser-based Linux labs. $5/mo locked forever. Join: ${refUrl}`);
+  document.getElementById('share-tw').href = `https://twitter.com/intent/tweet?text=${text}`;
+  document.getElementById('share-li').href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(refUrl)}`;
+  document.getElementById('share-wa').href = `https://wa.me/?text=${text}`;
+  localStorage.setItem('wl_signup', JSON.stringify(signup));
+  loadSeats();
+}
+
+async function copyRef() {
+  const url = 'https://' + document.getElementById('ref-url').textContent;
+  try { await navigator.clipboard.writeText(url); } catch {}
+  const btn = document.querySelector('.btn-copy');
+  btn.textContent = 'copied!'; btn.style.color = 'var(--green)';
+  setTimeout(() => { btn.textContent = 'copy'; btn.style.color = ''; }, 2000);
+}
+
+function restoreState() {
+  const saved = localStorage.getItem('wl_signup');
+  if (saved) {
+    try { showSuccess(JSON.parse(saved)); return; } catch {}
+  }
+  // If already launched, show stripe state (countdown handles ongoing)
+}
+
+// ── FAQ accordion ─────────────────────────────────────────────────────────────
+function toggleFaq(el) {
+  const ans = el.nextElementSibling;
+  const isOpen = ans.classList.contains('open');
+  document.querySelectorAll('.faq-q').forEach(q => q.classList.remove('open'));
+  document.querySelectorAll('.faq-a').forEach(a => a.classList.remove('open'));
+  if (!isOpen) { el.classList.add('open'); ans.classList.add('open'); }
+}
+
+// ── Cookie consent ────────────────────────────────────────────────────────────
+function getConsentLevel() {
+  try { return JSON.parse(localStorage.getItem('winlab_cookie_consent') || 'null')?.level; } catch(e) { return null; }
+}
+function analyticsAllowed() { return window.__wl_analytics_allowed === true; }
+
+function setCookieConsent(level) {
+  const record = { level, ts: new Date().toISOString(), userAgent: navigator.userAgent };
+  localStorage.setItem('winlab_cookie_consent', JSON.stringify(record));
+  window.__wl_analytics_allowed = (level === 'all');
+  if (level !== 'all') {
+    localStorage.removeItem('winlab_plan');
+    document.cookie = 'winlab_plan=; Max-Age=0; path=/;';
+  }
+  document.getElementById('cookie-banner').classList.remove('show');
+  document.getElementById('privacy-shield').classList.add('show');
+  // GDPR audit log
+  try { navigator.sendBeacon('/api/consent/log', JSON.stringify(record)); } catch(e) {}
+}
+function openConsentModal() {
+  document.getElementById('toggle-analytics').checked = (getConsentLevel() === 'all');
+  document.getElementById('consent-modal').classList.add('open');
+}
+function closeConsentModal() {
+  document.getElementById('consent-modal').classList.remove('open');
+}
+function saveCustomConsent() {
+  const analyticsOn = document.getElementById('toggle-analytics').checked;
+  setCookieConsent(analyticsOn ? 'all' : 'essential');
+  closeConsentModal();
+}
+function openConsentManager() {
+  openConsentModal();
+}
+function checkCookieBanner() {
+  const level = getConsentLevel();
+  window.__wl_analytics_allowed = (level === 'all');
+  if (!level) {
+    window.__wl_analytics_allowed = false;
+    setTimeout(() => document.getElementById('cookie-banner').classList.add('show'), 800);
+  } else {
+    document.getElementById('privacy-shield').classList.add('show');
+  }
+}
+
+
+// ── B2B lead capture ─────────────────────────────────────────────────────────
+async function submitB2bLead(e) {
+  e.preventDefault();
+  const btn = document.getElementById('b2b-btn');
+  const errEl = document.getElementById('b2b-err');
+  btn.textContent = 'Sending…'; btn.disabled = true; errEl.style.display = 'none';
+  try {
+    const res = await fetch('/api/b2b/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firstName: document.getElementById('b2b-first').value,
+        lastName:  document.getElementById('b2b-last').value,
+        email:     document.getElementById('b2b-email').value,
+        company:   document.getElementById('b2b-company').value,
+        teamSize:  document.getElementById('b2b-size').value,
+        source:    'landing-b2b-section',
+      }),
+    });
+    if (res.ok) {
+      document.getElementById('b2b-form').style.display = 'none';
+      document.getElementById('b2b-success').style.display = 'block';
+    } else { throw new Error(); }
+  } catch {
+    errEl.textContent = 'Something went wrong. Email enterprise@winlab.cloud directly.';
+    errEl.style.display = 'block';
+    btn.textContent = 'Request team demo →'; btn.disabled = false;
+  }
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+route();
+checkCookieBanner();
+initStickyBar();
+</script>
+</body>
+</html>

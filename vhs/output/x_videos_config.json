@@ -1,0 +1,565 @@
+{
+  "videos": [
+    {
+      "name": "x_video_000",
+      "hook": "Connection lost.",
+      "category": "problem",
+      "emotion": "frustration",
+      "command": "docker ps -a",
+      "cta": "Learn by doing \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "Connection lost.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "docker ps -a",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Learn by doing \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_001",
+      "hook": "Your internet shouldn't decide your career.",
+      "category": "inequality",
+      "emotion": "anger",
+      "command": "netstat -tulpn",
+      "cta": "Learn by doing \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "Your internet shouldn't decide your career.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "netstat -tulpn",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Learn by doing \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_002",
+      "hook": "Same skills. Different outcome.",
+      "category": "contrast",
+      "emotion": "realization",
+      "command": "systemctl status nginx",
+      "cta": "Learn by doing \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "Same skills. Different outcome.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "systemctl status nginx",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Learn by doing \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_003",
+      "hook": "3:02 AM. Phone rings.",
+      "category": "urgency",
+      "emotion": "tension",
+      "command": "netstat -tulpn",
+      "cta": "Start practicing \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "3:02 AM. Phone rings.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "netstat -tulpn",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Start practicing \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_004",
+      "hook": "One command can destroy everything.",
+      "category": "fear",
+      "emotion": "caution",
+      "command": "iptables -L -n",
+      "cta": "Practice now \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "One command can destroy everything.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "iptables -L -n",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Practice now \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_005",
+      "hook": "Tutorial hell is real.",
+      "category": "education",
+      "emotion": "agreement",
+      "command": "free -m",
+      "cta": "Try it free: WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "Tutorial hell is real.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "free -m",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Try it free: WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_006",
+      "hook": "You're not behind. You're untrained.",
+      "category": "encouragement",
+      "emotion": "relief",
+      "command": "journalctl -xe",
+      "cta": "Practice now \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "You're not behind. You're untrained.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "journalctl -xe",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Practice now \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_007",
+      "hook": "Production is down.",
+      "category": "urgency",
+      "emotion": "panic",
+      "command": "systemctl status nginx",
+      "cta": "Start practicing \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "Production is down.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "systemctl status nginx",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Start practicing \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_008",
+      "hook": "Break it. Fix it. Learn it.",
+      "category": "method",
+      "emotion": "determination",
+      "command": "iptables -L -n",
+      "cta": "Start practicing \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "Break it. Fix it. Learn it.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "iptables -L -n",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Start practicing \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_009",
+      "hook": "Real sysadmins read logs.",
+      "category": "identity",
+      "emotion": "pride",
+      "command": "systemctl status nginx",
+      "cta": "Try it free: WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "Real sysadmins read logs.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "systemctl status nginx",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Try it free: WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_010",
+      "hook": "Infrastructure inequality is real.",
+      "category": "social",
+      "emotion": "awareness",
+      "command": "df -h",
+      "cta": "Try it free: WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "Infrastructure inequality is real.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "df -h",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Try it free: WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_011",
+      "hook": "Watching \u2260 Doing.",
+      "category": "contrast",
+      "emotion": "realization",
+      "command": "iptables -L -n",
+      "cta": "Start practicing \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "Watching \u2260 Doing.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "iptables -L -n",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Start practicing \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_012",
+      "hook": "11 failures. 1 skill.",
+      "category": "persistence",
+      "emotion": "motivation",
+      "command": "cat /var/log/syslog | tail -50",
+      "cta": "Build real skills \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "11 failures. 1 skill.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "cat /var/log/syslog | tail -50",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Build real skills \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_013",
+      "hook": "No internet? No problem.",
+      "category": "solution",
+      "emotion": "empowerment",
+      "command": "free -m",
+      "cta": "Practice now \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "No internet? No problem.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "free -m",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Practice now \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_014",
+      "hook": "This changes how engineers learn.",
+      "category": "innovation",
+      "emotion": "curiosity",
+      "command": "kubectl get pods",
+      "cta": "Learn by doing \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "This changes how engineers learn.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "kubectl get pods",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Learn by doing \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_015",
+      "hook": "Why juniors panic.",
+      "category": "empathy",
+      "emotion": "understanding",
+      "command": "iptables -L -n",
+      "cta": "Build real skills \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "Why juniors panic.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "iptables -L -n",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Build real skills \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_016",
+      "hook": "Practice > Tutorials.",
+      "category": "method",
+      "emotion": "agreement",
+      "command": "iptables -L -n",
+      "cta": "Learn by doing \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "Practice > Tutorials.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "iptables -L -n",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Learn by doing \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_017",
+      "hook": "Fiber vs SIM: the gap is real.",
+      "category": "inequality",
+      "emotion": "awareness",
+      "command": "systemctl status nginx",
+      "cta": "Practice now \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "Fiber vs SIM: the gap is real.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "systemctl status nginx",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Practice now \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_018",
+      "hook": "It works on his machine.",
+      "category": "humor",
+      "emotion": "relatability",
+      "command": "df -h",
+      "cta": "Try it free: WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "It works on his machine.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "df -h",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Try it free: WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    },
+    {
+      "name": "x_video_019",
+      "hook": "Start before you're ready.",
+      "category": "motivation",
+      "emotion": "action",
+      "command": "cat /var/log/syslog | tail -50",
+      "cta": "Learn by doing \u2192 WinLab.cloud",
+      "duration": 9.5,
+      "format": "square",
+      "scenes": [
+        {
+          "type": "hook",
+          "text": "Start before you're ready.",
+          "duration": 2.5
+        },
+        {
+          "type": "terminal",
+          "cmd": "cat /var/log/syslog | tail -50",
+          "status": "\u2713 Service running",
+          "duration": 5.0
+        },
+        {
+          "type": "cta",
+          "text": "Learn by doing \u2192 WinLab.cloud",
+          "duration": 2.0
+        }
+      ]
+    }
+  ],
+  "generated_at": "2026-04-14T12:50:23.181024"
+}
