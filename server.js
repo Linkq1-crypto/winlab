@@ -142,14 +142,29 @@ app.use("/api/helpdesk", helpdeskRouter);
 // ====================================================================
 
 // POST /api/auth/register
+
 app.post("/api/auth/register", authLimiter, async (req, res) => {
   try {
     const { email, password, name, referralCode } = req.body;
-    if (!email || !password) return res.status(400).json({ error: "Email and password required" });
-    if (password.length < 8) return res.status(400).json({ error: "Password must be at least 8 characters" });
-    const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
-    if (existing) return res.status(409).json({ error: "Email already registered" });
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password required" });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters" });
+    }
+
+    const existing = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() }
+    });
+
+    if (existing) {
+      return res.status(409).json({ error: "Email already registered" });
+    }
+
     const passwordHash = await bcrypt.hash(password, 12);
+
     const user = await prisma.user.create({
       data: {
         email: email.toLowerCase(),
@@ -158,24 +173,74 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
         plan: JSON.stringify({ tier: "free" }),
       },
     });
-    // Handle referral
+
+    // 🎟 SEAT
+    let seatAssigned = null;
+
+    await prisma.$transaction(async (tx) => {
+      const seat = await tx.earlyAccessSeat.findFirst({
+        where: { claimed: false }
+      });
+
+      if (!seat) return;
+
+      await tx.earlyAccessSeat.update({
+        where: { id: seat.id },
+        data: {
+          claimed: true,
+          email: user.email
+        }
+      });
+
+      seatAssigned = seat.id;
+    });
+
+    // 🔐 TOKEN (senza ...)
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        plan: user.plan
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    // 🎁 REFERRAL (opzionale ma corretto)
     if (referralCode) {
       try {
-        const ref = await prisma.referral.findUnique({ where: { token: referralCode } });
+        const ref = await prisma.referral.findUnique({
+          where: { token: referralCode }
+        });
+
         if (ref && ref.active && !ref.converted) {
-          await prisma.referral.update({ where: { token: referralCode }, data: { converted: true, convertedAt: new Date() } });
+          await prisma.referral.update({
+            where: { token: referralCode },
+            data: {
+              converted: true,
+              convertedAt: new Date()
+            }
+          });
         }
       } catch {}
     }
-    const token = generateToken(user);
-    res.cookie("winlab_token", token, { httpOnly: true, secure: IS_PROD, sameSite: "strict", maxAge: 86400000 });
-    res.json({ token, user: { id: user.id, email: user.email, name: user.name, plan: user.plan, isAdmin: user.isAdmin } });
-  } catch (err) {
-    console.error("POST /api/auth/register error:", err);
-    res.status(500).json({ error: "Registration failed" });
-  }
-});
 
+    return res.json({
+      token,
+      user,
+      seatAssigned: !!seatAssigned,
+      seatId: seatAssigned
+    });
+
+  } catch (err) {
+  console.error("REGISTER ERROR FULL:", err);
+  return res.status(500).json({
+    error: "Registration failed",
+    detail: err.message
+  });
+}
+});
 // POST /api/auth/login
 app.post("/api/auth/login", authLimiter, async (req, res) => {
   try {
