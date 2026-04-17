@@ -30,12 +30,12 @@ import {
 } from "./src/services/userLifecycleEmailFlow.js";
 // import { bootstrapAlertFlow } from "./src/core/alertDispatcher.js";
 import helpdeskRouter from "./src/api/routes/helpdesk.js";
-// import { startHelpdeskWorker } from "./src/services/helpdeskWorker.js";
+import { startHelpdeskWorker } from "./src/services/helpdeskWorker.js";
 import { recordDeploy as recordDeployEvent, getDeployHistory as getDeployHistoryFn } from "./src/services/helpdeskEngines/bugDetection.js";
 import { syncLogger, dlqLogger } from "./src/services/logger.js";
 
 // try { bootstrapAlertFlow(); } catch (e) { console.warn("[AlertDispatcher] bootstrap skipped:", e.message); }
-// try { startHelpdeskWorker(); } catch (e) { console.warn("[Helpdesk] worker skipped:", e.message); }
+try { startHelpdeskWorker(); } catch (e) { console.warn("[Helpdesk] worker skipped:", e.message); }
 
 // ── Constants ────────────────────────────────────────────────────────
 const __filename = fileURLToPath(import.meta.url);

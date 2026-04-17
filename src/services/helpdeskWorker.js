@@ -8,6 +8,7 @@
  */
 
 import { helpdeskQueue } from './helpdeskQueue.js';
+import { processIncomingEmail } from './emailEngine/pipeline.js';
 
 // In-memory ticket store (same reference as service)
 // In production, use Prisma DB
@@ -26,21 +27,20 @@ async function processJob(job) {
   console.log(`🎫 Processing ticket: ${ticketId} | ${subject} | Priority: ${priority}`);
 
   try {
-    // TODO: Integrate Qwen AI for:
-    // 1. Analyze email content
-    // 2. Categorize ticket (bug, question, feature request, billing, etc.)
-    // 3. Determine urgency
-    // 4. Suggest auto-response or escalation
-    
-    // Placeholder: Simulate AI processing
+    const { from, subject, body, snippet } = job.data;
+    const result = await processIncomingEmail({ from, subject, body, snippet });
+
     const analysis = {
-      category: 'general', // TODO: Use Qwen to classify
-      urgency: priority > 5 ? 'high' : 'normal',
-      sentiment: 'neutral', // TODO: Use Qwen for sentiment
-      suggestedAction: 'manual_review', // TODO: Use Qwen to suggest action
+      category: result.classification?.intent || 'general',
+      urgency: result.classification?.urgency || (priority > 5 ? 'high' : 'normal'),
+      sentiment: result.classification?.sentiment || 'neutral',
+      suggestedAction: result.action || 'manual_review',
+      aiReply: result.aiReply,
+      team: result.classification?.team,
+      trust: result.trust,
     };
 
-    console.log(`  ✅ Analyzed: ${analysis.category} | ${analysis.urgency}`);
+    console.log(`  ✅ Analyzed: ${analysis.category} | ${analysis.urgency} | team: ${analysis.team}`);
 
     // Mark job as complete
     await helpdeskQueue.complete(job.id, { analysis });

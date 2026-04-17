@@ -85,6 +85,37 @@ router.get('/faqs', getFAQs);
 router.get('/security', getSecurity);
 router.post('/blacklist', blacklistEmail);
 
+// ──── Inbound Email Webhook (Resend) ────
+// Resend sends: { type: "email.received", data: { from, to, subject, text, html } }
+router.post('/webhook/resend', async (req, res) => {
+  try {
+    const { type, data } = req.body;
+    if (type !== 'email.received' || !data) {
+      return res.status(400).json({ error: 'Invalid webhook payload' });
+    }
+
+    const { from, subject, text, html } = data;
+    const body = text || html || '';
+
+    // Reuse ingestEmails logic by building a synthetic req/res
+    const fakeReq = {
+      body: {
+        emails: [{ from, subject, body, snippet: body.slice(0, 200), priority: 5 }],
+      },
+    };
+    const fakeRes = {
+      status: () => fakeRes,
+      json: () => {},
+    };
+
+    await ingestEmails(fakeReq, fakeRes);
+    res.json({ received: true });
+  } catch (err) {
+    console.error('[Helpdesk webhook]', err.message);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
 // ──── AI Learning Cache ────
 router.post('/ai-cache/feedback', async (req, res) => {
   try {
