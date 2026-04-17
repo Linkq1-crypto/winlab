@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WinLab — Live Demo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0a;--surface:#111;--border:#1f2937;
+  --green:#22c55e;--blue:#60a5fa;--yellow:#facc15;--red:#ef4444;
+  --muted:#9ca3af;--dim:#6b7280;
+  --mono:'JetBrains Mono','Fira Mono','Consolas',monospace;
+}
+html,body{height:100%;background:var(--bg);color:#e5e7eb;font-family:var(--mono);font-size:13px}
+body{display:flex;flex-direction:column;overflow:hidden}
+
+/* ── top bar ── */
+.topbar{background:#111;border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-dots{display:flex;gap:6px}
+.dot{width:11px;height:11px;border-radius:50%}
+.dot-r{background:#ef4444}.dot-y{background:#facc15}.dot-g{background:#22c55e}
+.topbar-title{font-size:11px;color:var(--muted)}
+.topbar-badge{font-size:10px;font-weight:700;background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25);padding:2px 10px;border-radius:100px;letter-spacing:.5px}
+
+/* ── scenario tabs ── */
+.tabs{display:flex;gap:2px;background:#0d0d0d;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+.tab{padding:8px 16px;font-size:11px;font-weight:600;color:var(--dim);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.tab:hover{color:var(--muted)}
+.tab.active{color:var(--green);border-bottom-color:var(--green)}
+
+/* ── terminal ── */
+.terminal{flex:1;padding:16px 18px;overflow-y:auto;line-height:1.75}
+.line{display:flex;gap:0;flex-wrap:wrap}
+.prompt{color:var(--green);white-space:nowrap}
+.cmd{color:var(--blue)}
+.out{color:#e5e7eb;width:100%}
+.out.ok{color:var(--green)}
+.out.err{color:var(--red)}
+.out.warn{color:var(--yellow)}
+.out.dim{color:var(--muted)}
+.cmt{color:var(--dim)}
+.gap{height:8px}
+.cursor{display:inline-block;width:8px;height:14px;background:var(--green);animation:blink 1s step-end infinite;vertical-align:text-bottom;margin-left:2px}
+@keyframes blink{50%{opacity:0}}
+
+/* ── cta bar ── */
+.cta-bar{background:#111;border-top:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.cta-bar-note{font-size:11px;color:var(--muted);line-height:1.5}
+.cta-bar-note b{color:#e5e7eb}
+.btn-cta{background:var(--green);color:#000;font-weight:800;font-size:12px;padding:8px 18px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:opacity .15s}
+.btn-cta:hover{opacity:.85}
+
+/* ── replay btn ── */
+.btn-replay{background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;padding:5px 12px;border-radius:5px;cursor:pointer;font-family:var(--mono);transition:border-color .15s,color .15s}
+.btn-replay:hover{border-color:var(--green);color:var(--green)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-dots">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+  </div>
+  <span class="topbar-title" id="top-title">admin@winlab-demo:~</span>
+  <span class="topbar-badge">FREE DEMO</span>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="terminal" id="terminal"></div>
+
+<div class="cta-bar">
+  <div class="cta-bar-note">
+    <b>Full access from Monday April 20.</b> 500 seats · $5/mo locked forever.
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="btn-replay" onclick="replay()">↺ Replay</button>
+    <a class="btn-cta" href="/#cta" target="_parent">Reserve seat →</a>
+  </div>
+</div>
+
+<script>
+const SCENARIOS = {
+  apache: {
+    label: '🔴 Apache down',
+    title: 'admin@web01:~',
+    steps: [
+      { type:'cmt', text:'# The site is down. Let\'s find out why.' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@web01 ~]$ ', cmd:'systemctl status httpd', delay:600 },
+      { type:'out', text:'● httpd.service - The Apache HTTP Server', cls:'warn' },
+      { type:'out', text:'   Loaded: loaded (/lib/systemd/system/httpd.service)', cls:'dim' },
+      { type:'out', text:'   Active: failed (Result: exit-code)', cls:'err' },
+      { type:'out', text:'Process: 3421 ExecStart=/usr/sbin/httpd (code=exited, status=1/FAILURE)', cls:'err' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@web01 ~]$ ', cmd:'journalctl -u httpd --since "5 min ago" | tail -8', delay:800 },
+      { type:'out', text:'AH00526: Syntax error on line 47 of /etc/httpd/conf/httpd.conf:', cls:'err' },
+      { type:'out', text:'Invalid command \'ServerNaame\', perhaps misspelled', cls:'err' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@web01 ~]$ ', cmd:'sed -i \'s/ServerNaame/ServerName/\' /etc/httpd/conf/httpd.conf', delay:700 },
+      { type:'cmd', prompt:'[admin@web01 ~]$ ', cmd:'systemctl start httpd && systemctl status httpd | grep Active', delay:900 },
+      { type:'out', text:'   Active: active (running) since Thu 2026-04-17 21:03:11 CEST', cls:'ok' },
+      { type:'gap' },
+      { type:'out', text:'✓ Apache is back online. Typo in httpd.conf fixed in 90 seconds.', cls:'ok' },
+    ]
+  },
+  disk: {
+    label: '💾 Disk full',
+    title: 'admin@db01:~',
+    steps: [
+      { type:'cmt', text:'# Server is sluggish. Writes are failing.' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@db01 ~]$ ', cmd:'df -h', delay:500 },
+      { type:'out', text:'Filesystem      Size  Used Avail Use% Mounted on', cls:'dim' },
+      { type:'out', text:'/dev/sda1        50G   50G    0B 100% /', cls:'err' },
+      { type:'out', text:'tmpfs           3.9G     0  3.9G   0% /dev/shm', cls:'dim' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@db01 ~]$ ', cmd:'du -sh /var/log/* 2>/dev/null | sort -hr | head -5', delay:700 },
+      { type:'out', text:'38G\t/var/log/nginx/access.log', cls:'warn' },
+      { type:'out', text:'4.1G\t/var/log/syslog', cls:'warn' },
+      { type:'out', text:'712M\t/var/log/mysql', cls:'dim' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@db01 ~]$ ', cmd:'truncate -s 0 /var/log/nginx/access.log', delay:600 },
+      { type:'cmd', prompt:'[admin@db01 ~]$ ', cmd:'find /var/log -name "*.gz" -mtime +7 -delete', delay:800 },
+      { type:'cmd', prompt:'[admin@db01 ~]$ ', cmd:'df -h /', delay:400 },
+      { type:'out', text:'Filesystem      Size  Used Avail Use% Mounted on', cls:'dim' },
+      { type:'out', text:'/dev/sda1        50G  8.2G   42G  17% /', cls:'ok' },
+      { type:'gap' },
+      { type:'out', text:'✓ 42G freed. Log rotation configured to prevent recurrence.', cls:'ok' },
+    ]
+  },
+  selinux: {
+    label: '🔒 SELinux 403',
+    title: 'admin@web02:~',
+    steps: [
+      { type:'cmt', text:'# httpd returns 403. Config looks fine. It\'s SELinux.' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@web02 ~]$ ', cmd:'curl -s -o /dev/null -w "%{http_code}" http://localhost/app/', delay:600 },
+      { type:'out', text:'403', cls:'err' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@web02 ~]$ ', cmd:'ausearch -m avc -ts recent | grep httpd | tail -4', delay:800 },
+      { type:'out', text:'type=AVC msg=audit(1713380400): avc: denied { read } for', cls:'warn' },
+      { type:'out', text:'  path="/var/www/app/index.php" scontext=system_u:system_r:httpd_t', cls:'warn' },
+      { type:'out', text:'  tcontext=unconfined_u:object_r:user_home_t:s0', cls:'err' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@web02 ~]$ ', cmd:'ls -Z /var/www/app/ | head -3', delay:500 },
+      { type:'out', text:'unconfined_u:object_r:user_home_t:s0 index.php', cls:'warn' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@web02 ~]$ ', cmd:'chcon -Rv --type=httpd_sys_content_t /var/www/app/', delay:700 },
+      { type:'out', text:'changing security context of \'/var/www/app/index.php\'', cls:'dim' },
+      { type:'cmd', prompt:'[admin@web02 ~]$ ', cmd:'curl -s -o /dev/null -w "%{http_code}" http://localhost/app/', delay:500 },
+      { type:'out', text:'200', cls:'ok' },
+      { type:'gap' },
+      { type:'out', text:'✓ SELinux file context corrected. Site responding 200 OK.', cls:'ok' },
+    ]
+  },
+  cpu: {
+    label: '🔥 CPU at 100%',
+    title: 'admin@app01:~',
+    steps: [
+      { type:'cmt', text:'# Load average is 24. Something is out of control.' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@app01 ~]$ ', cmd:'uptime', delay:400 },
+      { type:'out', text:' 21:04:12 up 3 days, load average: 24.33, 23.87, 22.10', cls:'err' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@app01 ~]$ ', cmd:'ps aux --sort=-%cpu | head -6', delay:700 },
+      { type:'out', text:'USER       PID %CPU %MEM    VSZ   RSS COMMAND', cls:'dim' },
+      { type:'out', text:'www-data  4821 98.2  0.4 234112 18920 php-fpm: worker', cls:'err' },
+      { type:'out', text:'www-data  4822 97.8  0.4 234108 18880 php-fpm: worker', cls:'err' },
+      { type:'out', text:'www-data  4823 96.1  0.4 234116 18904 php-fpm: worker', cls:'err' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@app01 ~]$ ', cmd:'strace -p 4821 -e trace=read,write 2>&1 | head -5', delay:800 },
+      { type:'out', text:'read(3, "SELECT * FROM sessions WHERE...", 4096) = 312', cls:'warn' },
+      { type:'out', text:'write(3, "SELECT * FROM sessions WHERE...", 312) = 312', cls:'warn' },
+      { type:'out', text:'# Infinite loop — missing query index', cls:'dim' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@app01 ~]$ ', cmd:'mysql -e "ALTER TABLE sessions ADD INDEX idx_token (token);"', delay:900 },
+      { type:'cmd', prompt:'[admin@app01 ~]$ ', cmd:'systemctl restart php-fpm && uptime', delay:1000 },
+      { type:'out', text:' 21:07:44 up 3 days, load average: 0.42, 8.11, 16.03', cls:'ok' },
+      { type:'gap' },
+      { type:'out', text:'✓ Missing DB index caused CPU spiral. Fixed and restarted.', cls:'ok' },
+    ]
+  },
+  ssh: {
+    label: '🚫 SSH refused',
+    title: 'admin@jump01:~',
+    steps: [
+      { type:'cmt', text:'# Can\'t SSH into prod server. Connection refused.' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@jump01 ~]$ ', cmd:'ssh admin@192.168.1.50', delay:600 },
+      { type:'out', text:'ssh: connect to host 192.168.1.50 port 22: Connection refused', cls:'err' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@jump01 ~]$ ', cmd:'nc -zv 192.168.1.50 22 2>&1', delay:700 },
+      { type:'out', text:'nc: connect to 192.168.1.50 port 22 (tcp) failed: Connection refused', cls:'err' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@jump01 ~]$ ', cmd:'# Check firewall from host console', delay:400 },
+      { type:'cmd', prompt:'[admin@192.168.1.50 ~]$ ', cmd:'firewall-cmd --list-all | grep ssh', delay:700 },
+      { type:'out', text:'services: http https', cls:'warn' },
+      { type:'out', text:'# ssh is NOT in the allowed services!', cls:'dim' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@192.168.1.50 ~]$ ', cmd:'firewall-cmd --add-service=ssh --permanent && firewall-cmd --reload', delay:900 },
+      { type:'out', text:'success', cls:'ok' },
+      { type:'out', text:'success', cls:'ok' },
+      { type:'gap' },
+      { type:'cmd', prompt:'[admin@jump01 ~]$ ', cmd:'ssh admin@192.168.1.50', delay:800 },
+      { type:'out', text:'Last login: Thu Apr 17 18:22:10 2026 from 192.168.1.1', cls:'ok' },
+      { type:'cmd', prompt:'[admin@192.168.1.50 ~]$ ', cmd:'', delay:200 },
+      { type:'gap' },
+      { type:'out', text:'✓ Firewall was blocking port 22. SSH restored in 3 commands.', cls:'ok' },
+    ]
+  }
+};
+
+const TABS = ['apache','disk','selinux','cpu','ssh'];
+let activeScenario = null;
+let replayTimeout = null;
+
+function getScenario() {
+  const p = new URLSearchParams(location.search).get('scenario') || 'apache';
+  return SCENARIOS[p] ? p : 'apache';
+}
+
+function buildTabs() {
+  const container = document.getElementById('tabs');
+  TABS.forEach(id => {
+    const s = SCENARIOS[id];
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (id === activeScenario ? ' active' : '');
+    btn.textContent = s.label;
+    btn.onclick = () => switchScenario(id);
+    container.appendChild(btn);
+  });
+}
+
+function switchScenario(id) {
+  if (replayTimeout) clearTimeout(replayTimeout);
+  activeScenario = id;
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', TABS[i] === id));
+  document.getElementById('top-title').textContent = SCENARIOS[id].title;
+  document.getElementById('terminal').innerHTML = '';
+  animateSteps(SCENARIOS[id].steps, 0);
+  history.replaceState({}, '', '?scenario=' + id);
+}
+
+function replay() { switchScenario(activeScenario); }
+
+function animateSteps(steps, idx) {
+  if (idx >= steps.length) {
+    const term = document.getElementById('terminal');
+    const cur = document.createElement('span');
+    cur.className = 'cursor';
+    term.appendChild(cur);
+    term.scrollTop = term.scrollHeight;
+    return;
+  }
+  const step = steps[idx];
+  const term = document.getElementById('terminal');
+  const delay = step.delay || 0;
+
+  replayTimeout = setTimeout(() => {
+    if (step.type === 'gap') {
+      const d = document.createElement('div');
+      d.className = 'gap';
+      term.appendChild(d);
+    } else if (step.type === 'cmt') {
+      const d = document.createElement('div');
+      d.className = 'line';
+      d.innerHTML = `<span class="cmt">${step.text}</span>`;
+      term.appendChild(d);
+    } else if (step.type === 'cmd') {
+      const d = document.createElement('div');
+      d.className = 'line';
+      d.innerHTML = `<span class="prompt">${step.prompt}</span><span class="cmd">${step.cmd}</span>`;
+      term.appendChild(d);
+    } else if (step.type === 'out') {
+      const d = document.createElement('div');
+      d.className = 'line';
+      const cls = step.cls ? ` ${step.cls}` : '';
+      d.innerHTML = `<span class="out${cls}">${step.text}</span>`;
+      term.appendChild(d);
+    }
+    term.scrollTop = term.scrollHeight;
+    animateSteps(steps, idx + 1);
+  }, idx === 0 ? 200 : delay);
+}
+
+activeScenario = getScenario();
+buildTabs();
+animateSteps(SCENARIOS[activeScenario].steps, 0);
+document.getElementById('top-title').textContent = SCENARIOS[activeScenario].title;
+</script>
+</body>
+</html>
