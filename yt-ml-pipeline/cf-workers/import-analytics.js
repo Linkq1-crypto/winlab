@@ -76,7 +76,7 @@ async function importRecord(line, index) {
 
     return true;
   } catch (err) {
-    console.error(`❌ Line ${index + 1}: Network error ${(err as Error).message}`);
+    console.error(`❌ Line ${index + 1}: Network error ${err.message}`);
     return false;
   }
 }
