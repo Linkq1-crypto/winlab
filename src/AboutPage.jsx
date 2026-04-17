@@ -151,6 +151,8 @@ function Blog({ onNeedLogin }) {
   const [commentOpen, setCommentOpen] = useState(null);
   const [comments, setComments] = useState({});
   const [commentInput, setCommentInput] = useState("");
+  const [shareOpen, setShareOpen] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("winlab_token") : null;
 
@@ -206,11 +208,39 @@ function Blog({ onNeedLogin }) {
     }));
     setCommentInput("");
   }
-  function handleShare(i) {
-    const url = `${window.location.origin}/blog/${published[i].id}`;
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(url);
-    }
+  function getPostUrl(post) {
+    return `${window.location.origin}/blog/${post.id}`;
+  }
+
+  function handleCopyLink(post) {
+    const url = getPostUrl(post);
+    navigator.clipboard?.writeText(url).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleShareTwitter(post) {
+    const url = getPostUrl(post);
+    const text = encodeURIComponent(`"${post.title}" — ${post.subtitle}\n\n${url}\n\nvia @WinLabCloud`);
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank', 'noopener');
+  }
+
+  function handleShareLinkedIn(post) {
+    const url = encodeURIComponent(getPostUrl(post));
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank', 'noopener');
+  }
+
+  function handleShareWhatsApp(post) {
+    const url = getPostUrl(post);
+    const text = encodeURIComponent(`Check this out: "${post.title}" — ${url}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener');
+  }
+
+  function handleShareEmail(post) {
+    const url = getPostUrl(post);
+    const subject = encodeURIComponent(`WinLab Field Notes: ${post.title}`);
+    const body = encodeURIComponent(`Hi,\n\nI thought you'd find this interesting:\n\n"${post.title}"\n${post.subtitle}\n\nRead it here: ${url}\n\nCheers`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
   }
 
   return (
@@ -249,9 +279,8 @@ function Blog({ onNeedLogin }) {
                   <p className="text-slate-300 text-sm leading-relaxed mb-4">{post.body}</p>
                 </div>
 
-                {/* Action bar: Like / Dislike / Comment / Share */}
-                <div className="flex items-center gap-4 py-3 border-t border-slate-800/60">
-                  {/* Like */}
+                {/* Action bar */}
+                <div className="flex items-center gap-4 py-3 border-t border-slate-800/60 relative">
                   <button
                     onClick={() => handleLike(i)}
                     className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-blue-400 transition-colors"
@@ -259,8 +288,6 @@ function Blog({ onNeedLogin }) {
                     <span>👍</span>
                     <span>{likes[i] || 0}</span>
                   </button>
-
-                  {/* Dislike */}
                   <button
                     onClick={() => handleDislike(i)}
                     className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-400 transition-colors"
@@ -268,24 +295,63 @@ function Blog({ onNeedLogin }) {
                     <span>👎</span>
                     <span>{dislikes[i] || 0}</span>
                   </button>
-
-                  {/* Comment toggle */}
                   <button
                     onClick={() => setCommentOpen(commentOpen === i ? null : i)}
                     className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-green-400 transition-colors"
                   >
                     <span>💬</span>
-                    <span>{(comments[i] || []).length} Commenti</span>
+                    <span>{(comments[i] || []).length} {(comments[i] || []).length === 1 ? "Comment" : "Comments"}</span>
                   </button>
 
-                  {/* Share */}
-                  <button
-                    onClick={() => handleShare(i)}
-                    className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-purple-400 transition-colors ml-auto"
-                  >
-                    <span>🔗</span>
-                    <span>Condividi</span>
-                  </button>
+                  {/* Share button + dropdown */}
+                  <div className="ml-auto relative">
+                    <button
+                      onClick={() => setShareOpen(shareOpen === i ? null : i)}
+                      className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-purple-400 transition-colors"
+                    >
+                      <span>↗</span>
+                      <span>Share</span>
+                    </button>
+
+                    {shareOpen === i && (
+                      <div className="absolute right-0 bottom-8 w-52 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+                        <div className="px-3 py-2 border-b border-slate-800 text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Share this article</div>
+                        <button
+                          onClick={() => { handleShareTwitter(published[i]); setShareOpen(null); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
+                        >
+                          <span className="text-base">𝕏</span> Post on X / Twitter
+                        </button>
+                        <button
+                          onClick={() => { handleShareLinkedIn(published[i]); setShareOpen(null); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
+                        >
+                          <span className="text-base">💼</span> Share on LinkedIn
+                        </button>
+                        <button
+                          onClick={() => { handleShareWhatsApp(published[i]); setShareOpen(null); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
+                        >
+                          <span className="text-base">💬</span> Send via WhatsApp
+                        </button>
+                        <button
+                          onClick={() => { handleShareEmail(published[i]); setShareOpen(null); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
+                        >
+                          <span className="text-base">✉️</span> Send by email
+                        </button>
+                        <div className="border-t border-slate-800">
+                          <button
+                            onClick={() => { handleCopyLink(published[i]); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
+                          >
+                            <span className="text-base">🔗</span>
+                            {copied ? <span className="text-green-400">Link copied!</span> : "Copy link"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Comment section */}
@@ -311,7 +377,7 @@ function Blog({ onNeedLogin }) {
                           value={commentInput}
                           onChange={e => setCommentInput(e.target.value)}
                           onKeyDown={e => { if (e.key === "Enter") handleComment(i); }}
-                          placeholder="Scrivi un commento…"
+                          placeholder="Write a comment…"
                           className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-600"
                         />
                         <button
@@ -319,17 +385,17 @@ function Blog({ onNeedLogin }) {
                           disabled={!commentInput.trim()}
                           className="px-3 py-2 bg-blue-600/20 border border-blue-600/30 text-blue-400 rounded-lg text-xs font-medium disabled:opacity-40 hover:bg-blue-600/30 transition-colors"
                         >
-                          Invia
+                          Post
                         </button>
                       </div>
                     ) : (
                       <div className="flex items-center gap-3 p-3 rounded-lg border border-slate-700/40 bg-slate-800/30">
-                        <span className="text-xs text-slate-500">Accedi per commentare</span>
+                        <span className="text-xs text-slate-500">Sign in to leave a comment</span>
                         <button
                           onClick={onNeedLogin}
                           className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
                         >
-                          Accedi →
+                          Sign in →
                         </button>
                       </div>
                     )}
