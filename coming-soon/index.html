@@ -2494,6 +2494,92 @@ function _formatOutput(text) {
     .replace(/\x1bok\x1e(.*?)\x1b/g, '<span style="color:#22c55e">$1</span>');
 }
 
+// ── Lab session persistence ───────────────────────────────────────────────
+let _labSid = null;
+
+function _labSidKey(s) { return 'wl_lab_sid_' + s; }
+
+function _getOrCreateSid(scenario) {
+  const k = _labSidKey(scenario);
+  let sid = localStorage.getItem(k);
+  if (!sid) { sid = 'wl_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); localStorage.setItem(k, sid); }
+  return sid;
+}
+
+function _freshSid(scenario) {
+  const sid = 'wl_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+  localStorage.setItem(_labSidKey(scenario), sid);
+  return sid;
+}
+
+function _saveCmd(scenario, cmd, output) {
+  if (!_labSid || !cmd) return;
+  fetch('/api/replay/event', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ sessionId: _labSid, labId: scenario, cmd, output: output || '' })
+  }).catch(()=>{});
+}
+
+async function _loadSavedSession(sid) {
+  try {
+    const r = await fetch('/api/replay/' + sid);
+    if (!r.ok) return [];
+    const d = await r.json();
+    return Array.isArray(d) ? d : [];
+  } catch { return []; }
+}
+
+function _timeAgo(isoStr) {
+  if (!isoStr) return '';
+  const diff = Date.now() - new Date(isoStr).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return min + ' min ago';
+  const h = Math.floor(diff / 3600000);
+  if (h < 24) return h + 'h ago';
+  const d = Math.floor(diff / 86400000);
+  return d === 1 ? 'yesterday' : d + ' days ago';
+}
+
+function _showResumeUI(scenario, events) {
+  const term = document.getElementById('inline-terminal');
+  if (!term) return;
+  term.innerHTML = '';
+  _activeScenario = scenario;
+  if (_demoTimer) { clearTimeout(_demoTimer); _demoTimer = null; }
+  const last = events[events.length - 1];
+  const ago = _timeAgo(last?.ts || last?.createdAt);
+  const banner = document.createElement('div');
+  banner.style.cssText = 'background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:6px;padding:12px 14px;margin-bottom:10px';
+  banner.innerHTML = `<div style="color:#22c55e;font-size:12px;font-weight:700;margin-bottom:8px">📂 Session found — ${events.length} command${events.length>1?'s':''} · ${ago}</div><div style="display:flex;gap:8px"><button onclick="_resumeSession()" style="background:#22c55e;color:#000;font-weight:800;font-size:11px;padding:6px 14px;border-radius:5px;border:none;cursor:pointer;font-family:var(--mono)">▶ Resume</button><button onclick="_startFresh('${scenario}')" style="background:none;border:1px solid #374151;color:#9ca3af;font-size:11px;padding:6px 14px;border-radius:5px;cursor:pointer;font-family:var(--mono)">↺ Start fresh</button></div>`;
+  term.appendChild(banner);
+  window._pendingResumeEvents = events;
+  window._pendingResumeScenario = scenario;
+}
+
+function _resumeSession() {
+  const scenario = window._pendingResumeScenario;
+  const events   = window._pendingResumeEvents;
+  const term = document.getElementById('inline-terminal');
+  if (!term || !events) return;
+  term.innerHTML = '';
+  const hint = SCENARIO_HINTS[scenario];
+  const prompt = hint ? hint.prompt : '[admin@demo ~]$ ';
+  _appendLine(term, '<span style="color:#1f3a2a">── history ──────────────────────────────────────────────</span>');
+  events.forEach(ev => {
+    _appendLine(term, `<span style="color:#1e4035">${prompt}${ev.cmd}</span>`);
+    if (ev.output) ev.output.split('\n').forEach(l => _appendLine(term, `<span style="color:#1a3028">${l}</span>`));
+  });
+  _appendLine(term, '<span style="color:#1f3a2a">── resuming ─────────────────────────────────────────────</span>');
+  _showPrompt(term, scenario);
+}
+
+function _startFresh(scenario) {
+  _labSid = _freshSid(scenario);
+  _renderInlineTerminal(scenario);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function _showPrompt(term, scenario) {
   const hint = SCENARIO_HINTS[scenario];
   const prompt = hint ? hint.prompt : '[admin@demo ~]$ ';
@@ -2519,14 +2605,13 @@ function _showPrompt(term, scenario) {
     inp.style.color = '#60a5fa';
     inp.placeholder = '';
 
-    // echo the command as static line
     const echo = document.createElement('div');
     echo.innerHTML = `<span style="color:#22c55e">${prompt}</span><span style="color:#60a5fa">${cmd}</span>`;
     term.replaceChild(echo, row);
 
+    const outputLines = [];
     if (cmd) {
       const responses = hint ? hint.cmds : {};
-      // prefix matching: 'journalctl' matches 'journalctl -u httpd ...'
       function findCmd(typed) {
         if (typed in responses) return responses[typed];
         const t = typed.toLowerCase();
@@ -2540,20 +2625,24 @@ function _showPrompt(term, scenario) {
         if (out !== '') {
           out.split('\n').forEach(line => {
             _appendLine(term, `<span style="color:#e5e7eb">${_formatOutput(line)}</span>`);
+            outputLines.push(line);
           });
         }
       } else if (cmd === 'clear') {
         term.innerHTML = '';
       } else if (cmd === 'help') {
-        ['Try commands relevant to this scenario.', 'Hint: start with what you\'d run first in a real incident.'].forEach(l =>
-          _appendLine(term, `<span style="color:#6b7280">${l}</span>`)
-        );
+        const helps = ['Try commands relevant to this scenario.', 'Hint: start with what you\'d run first in a real incident.'];
+        helps.forEach(l => { _appendLine(term, `<span style="color:#6b7280">${l}</span>`); outputLines.push(l); });
       } else if (cmd === 'exit' || cmd === 'quit') {
         _appendLine(term, '<span style="color:#6b7280">logout</span>');
+        _saveCmd(scenario, cmd, 'logout');
         return;
       } else {
-        _appendLine(term, `<span style="color:#6b7280">bash: ${cmd}: command not found</span>`);
+        const errMsg = `bash: ${cmd}: command not found`;
+        _appendLine(term, `<span style="color:#6b7280">${errMsg}</span>`);
+        outputLines.push(errMsg);
       }
+      _saveCmd(scenario, cmd, outputLines.join('\n'));
     }
     _showPrompt(term, scenario);
   });
@@ -2596,15 +2685,28 @@ function _renderInlineTerminal(scenario) {
   next();
 }
 
-function launchScenario(card, scenario) {
+async function launchScenario(card, scenario) {
   document.querySelectorAll('.sc-card').forEach(c => c.classList.remove('active'));
   card.classList.add('active');
   const modal = document.getElementById('demo-modal');
   const title = document.getElementById('demo-modal-title');
   title.textContent = 'WinLab Demo · ' + (SCENARIO_LABELS[scenario] || scenario);
-  _renderInlineTerminal(scenario);
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
+
+  // Check for existing saved session
+  const existingSid = localStorage.getItem(_labSidKey(scenario));
+  if (existingSid) {
+    const events = await _loadSavedSession(existingSid);
+    if (events.length > 0) {
+      _labSid = existingSid;
+      _showResumeUI(scenario, events);
+      return;
+    }
+  }
+  // No saved session — start fresh
+  _labSid = _getOrCreateSid(scenario);
+  _renderInlineTerminal(scenario);
 }
 
 function closeDemoModal(e) {
