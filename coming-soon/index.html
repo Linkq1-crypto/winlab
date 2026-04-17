@@ -2273,7 +2273,13 @@ async function joinWaitlist() {
     });
     const d = await parseApiJson(r, 'Temporary server issue. Please retry in a moment.');
     if (!r.ok) throw new Error(d.error || 'Error joining waitlist');
-    if (d.ok || d.existing) {
+    if (d.existing) {
+      btn.disabled = false;
+      btn.textContent = origBtnText;
+      msg.style.color = 'var(--green)';
+      msg.textContent = `✅ Already registered! You're #${d.position} on the list.`;
+      setTimeout(() => { msg.textContent = ''; msg.style.color = ''; }, 6000);
+    } else if (d.ok) {
       showSuccess(d);
       setTimeout(() => loadSeats(), 800);
     } else {
