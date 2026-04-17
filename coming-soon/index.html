@@ -1774,13 +1774,233 @@ const SCENARIO_STEPS = {
   ]
 };
 
-// ── Pseudo-interactive responses per scenario ─────────────────────────────────
+// ── Global Unix commands (work in every scenario) ────────────────────────────
+const GLOBAL_CMDS = {
+  'pwd':'/home/admin',
+  'whoami':'admin',
+  'id':'uid=1000(admin) gid=1000(admin) groups=1000(admin),4(adm),27(sudo)',
+  'hostname':'winlab-demo',
+  'date':'Thu Apr 17 21:00:00 CEST 2026',
+  'uname':'Linux',
+  'uname -a':'Linux winlab-demo 5.15.0-1034-aws #38-Ubuntu SMP x86_64 GNU/Linux',
+  'uptime':'21:00:01 up 3 days,  2:14,  1 user,  load average: 0.42, 0.38, 0.35',
+  'env':'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nHOME=/home/admin\nSHELL=/bin/bash\nUSER=admin',
+  'ls':'Desktop  Documents  Downloads  scripts  logs',
+  'ls -la':'total 40\ndrwxr-xr-x 6 admin admin 4096 Apr 17 20:55 .\ndrwxr-xr-x 4 root  root  4096 Apr 10 09:00 ..\n-rw-r--r-- 1 admin admin  220 Apr 10 .bash_logout\n-rw-r--r-- 1 admin admin 3526 Apr 10 .bashrc\ndrwxr-xr-x 2 admin admin 4096 Apr 17 scripts\ndrwxr-xr-x 2 admin admin 4096 Apr 17 logs',
+  'cat /etc/os-release':'NAME="AlmaLinux"\nVERSION="9.2"\nID=almalinux\nID_LIKE="rhel centos fedora"\nVERSION_ID="9.2"',
+  'cat /etc/hostname':'winlab-demo',
+  'history':'  1  systemctl status\n  2  journalctl -xe\n  3  df -h\n  4  ps aux\n  5  netstat -tlnp',
+  'free':'               total        used        free\nMem:         8048128     2134016     4209664\nSwap:        2097148       10240     2086908',
+  'free -h':'               total        used        free\nMem:           7.7Gi       2.0Gi       4.0Gi\nSwap:          2.0Gi        10Mi       2.0Gi',
+  'df':'Filesystem     1K-blocks     Used Available Use% Mounted on\n/dev/sda1       51473340 16777216  34696124  33% /\ntmpfs            4024064        0   4024064   0% /dev/shm',
+  'df -h':'Filesystem      Size  Used Avail Use% Mounted on\n/dev/sda1        50G   16G   33G  33% /\ntmpfs           3.9G     0  3.9G   0% /dev/shm',
+  'ps':'  PID TTY          TIME CMD\n 1842 pts/0    00:00:00 bash\n 2047 pts/0    00:00:00 ps',
+  'ps aux':'USER       PID %CPU %MEM    VSZ   RSS TTY      STAT CMD\nroot         1  0.0  0.1 170628 13444 ?  Ss   Apr14  0:04 /sbin/init\nroot       420  0.0  0.3 553452 27316 ?  Ssl  Apr14  1:22 /usr/lib/systemd/journald\nadmin     1842  0.0  0.0  27800  5820 pts/0 Ss   20:55  0:00 bash',
+  'top':'top - 21:00:01 up 3 days, load average: 0.42\nTasks: 142 total,   1 running, 141 sleeping\n%Cpu(s):  2.1 us,  0.8 sy,  0.0 ni, 96.8 id\nMiB Mem :   7856.4 total,   4892.2 free\n\nPID  USER     %CPU  COMMAND\n  1  root      0.0  systemd\n420  root      0.0  systemd-journald',
+  'netstat':'\x1bwarn\x1eActive Internet connections\x1b\nProto  Local Address       Foreign Address  State\ntcp    0.0.0.0:22          0.0.0.0:*        LISTEN\ntcp    0.0.0.0:80          0.0.0.0:*        LISTEN\ntcp    0.0.0.0:443         0.0.0.0:*        LISTEN',
+  'netstat -tlnp':'\x1bwarn\x1eActive Internet connections (only servers)\x1b\nProto  Local Address    State    PID/Program\ntcp    0.0.0.0:22      LISTEN   856/sshd\ntcp    0.0.0.0:80      LISTEN   1234/nginx\ntcp    0.0.0.0:443     LISTEN   1234/nginx',
+  'ss -tlnp':'State   Recv-Q  Send-Q  Local Address:Port  Process\nLISTEN  0       128     0.0.0.0:22          users:(("sshd",pid=856))\nLISTEN  0       511     0.0.0.0:80          users:(("nginx",pid=1234))',
+  'ss -tlnp | grep 22':'LISTEN  0  128  0.0.0.0:22  0.0.0.0:*  users:(("sshd",pid=856,fd=3))',
+  'ip a':'1: lo: <LOOPBACK,UP> mtu 65536\n    inet 127.0.0.1/8 scope host lo\n2: eth0: <BROADCAST,MULTICAST,UP> mtu 1500\n    inet 192.168.1.50/24 brd 192.168.1.255 scope global eth0',
+  'ip addr':'1: lo: <LOOPBACK,UP> mtu 65536\n    inet 127.0.0.1/8 scope host lo\n2: eth0: <BROADCAST,MULTICAST,UP> mtu 1500\n    inet 192.168.1.50/24 scope global eth0',
+  'ifconfig':'eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500\n        inet 192.168.1.50  netmask 255.255.255.0\n        ether 02:42:ac:11:00:02  txqueuelen 0',
+  'ping localhost':'PING localhost (127.0.0.1): 56 bytes of data\n64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.052 ms\n64 bytes from 127.0.0.1: icmp_seq=2 ttl=64 time=0.041 ms\n^C --- 2 packets transmitted, 2 received, 0% packet loss',
+  'curl localhost':'\x1bok\x1e200 OK — server responded\x1b',
+  'curl -I localhost':'HTTP/1.1 200 OK\nServer: nginx/1.24.0\nContent-Type: text/html\nConnection: keep-alive',
+  'wget --spider localhost':'Spider mode enabled. Check if remote file exists.\nHTTP request sent, awaiting response... 200 OK',
+  'cat /etc/passwd | head':'root:x:0:0:root:/root:/bin/bash\nbin:x:1:1:bin:/bin:/sbin/nologin\ndaemon:x:2:2:daemon:/sbin:/sbin/nologin\nadmin:x:1000:1000:admin:/home/admin:/bin/bash',
+  'cat /etc/group | grep admin':'admin:x:1000:\nsudo:x:27:admin',
+  'sudo -l':'User admin may run the following commands on this host:\n    (ALL : ALL) ALL',
+  'which systemctl':'/usr/bin/systemctl',
+  'which journalctl':'/usr/bin/journalctl',
+  'which curl':'/usr/bin/curl',
+  'which python':'/usr/bin/python3',
+  'which python3':'/usr/bin/python3',
+  'which bash':'/usr/bin/bash',
+  'ls /etc/':'adjtime  crontab  fstab  group  hosts  hostname  issue  motd\nnetwork  os-release  passwd  resolv.conf  shadow  ssh  sudoers\nsystemd  httpd  nginx  selinux',
+  'ls /var/log/':'audit  btmp  cron  dmesg  httpd  lastlog  messages  nginx  secure\nsyslog  wtmp  yum.log',
+  'ls /etc/systemd/system/':'httpd.service  nginx.service  php-fpm.service  multi-user.target.wants',
+  'systemctl list-units':'UNIT                    LOAD   ACTIVE  SUB     DESCRIPTION\nhttpd.service           loaded active  running Apache HTTP Server\nnginx.service           loaded active  running nginx\nphp-fpm.service         loaded active  running PHP FastCGI Process Manager\nsshd.service            loaded active  running OpenSSH server',
+  'systemctl status sshd':'● sshd.service - OpenSSH server daemon\n   Loaded: loaded\n   \x1bok\x1eActive: active (running)\x1b since Thu 2026-04-17 18:00:00',
+  'journalctl -xe':'-- Logs begin at Mon 2026-04-14 09:00:00. --\nApr 17 20:55:01 systemd[1]: Started Session c2 of user admin.\nApr 17 20:58:12 sshd[1842]: Accepted publickey for admin',
+  'journalctl --since today':'Apr 17 18:00:01 systemd[1]: Started sshd.service.\nApr 17 20:55:01 systemd[1]: Started Session c2 of user admin.',
+  'dmesg | tail':'[123456.789] eth0: renamed from veth1\n[123457.001] IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready',
+  'cat /proc/cpuinfo | grep processor':'processor : 0\nprocessor : 1',
+  'nproc':'2',
+  'lscpu':'Architecture:    x86_64\nCPU(s):          2\nModel name:      Intel(R) Xeon(R) CPU E5-2676 v3\nCPU MHz:         2400.073',
+  'lsblk':'NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS\nsda      8:0    0   50G  0 disk\n└─sda1   8:1    0   50G  0 part /\nsdb      8:16   0   20G  0 disk',
+  'mount':'sysfs on /sys type sysfs (rw,relatime)\nproc on /proc type proc (rw,relatime)\n/dev/sda1 on / type xfs (rw,relatime,attr2)\ntmpfs on /dev/shm type tmpfs (rw,nosuid,nodev)',
+  'crontab -l':'# crontab for admin\n0 2 * * * /usr/local/bin/backup.sh\n*/5 * * * * /usr/local/bin/healthcheck.sh',
+  'cat /var/log/messages | tail':'\x1bwarn\x1eApr 17 20:55 kernel: Out of memory: Kill process\x1b\nApr 17 20:55 systemd: Started Session.',
+  'cat /var/log/secure | tail':'Apr 17 20:55:01 admin : TTY=pts/0 ; PWD=/home/admin ; USER=root\nApr 17 21:00:01 sshd[856]: Accepted publickey for admin',
+  'iptables -L':'Chain INPUT (policy ACCEPT)\ntarget  prot  opt  source    destination\nACCEPT  tcp   --   anywhere  anywhere   tcp dpt:ssh\nACCEPT  tcp   --   anywhere  anywhere   tcp dpt:http',
+  'rpm -qa | head':'basesystem-11-13.el9.noarch\nbash-5.1.8-6.el9.x86_64\nbindutils-9.16.23-11.el9.x86_64\ncoreutils-8.32-34.el9.x86_64',
+  'dnf list installed | head':'Installed Packages\nbash.x86_64         5.1.8-6.el9\ncoreutils.x86_64    8.32-34.el9\nhttpd.x86_64        2.4.57-5.el9',
+  'vim':'[vim] — :q to quit, :wq to save and quit',
+  'vi':'[vi] — :q to quit, :wq to save and quit',
+  'nano':'[nano] — ^X to exit, ^O to save',
+  'echo $PATH':'/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+  'echo $HOME':'/home/admin',
+  'echo $USER':'admin',
+  'echo $SHELL':'/bin/bash',
+  'bash --version':'GNU bash, version 5.1.8(1)-release (x86_64-redhat-linux-gnu)',
+  'python3 --version':'Python 3.9.18',
+  'python --version':'Python 3.9.18',
+  'node --version':'v20.11.0',
+  'npm --version':'10.2.4',
+  'git --version':'git version 2.39.3',
+  'docker --version':'Docker version 24.0.7, build afdd53b',
+  'docker ps':'CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES',
+  'ls /home/':'admin',
+  'ls /root/':'ls: cannot open directory \'/root/\': \x1berr\x1ePermission denied\x1b',
+  'cat /etc/hosts':'127.0.0.1   localhost\n127.0.1.1   winlab-demo\n192.168.1.1 gateway',
+  'cat /etc/resolv.conf':'nameserver 8.8.8.8\nnameserver 8.8.4.4\nsearch winlab.local',
+};
+
+// ── Per-scenario commands (override/extend globals) ───────────────────────────
 const SCENARIO_HINTS = {
-  apache:  { prompt:'[admin@web01 ~]$ ', cmds:{ 'systemctl status httpd':'● httpd.service\n   Active: \x1berr\x1efailed (Result: exit-code)\x1b', 'journalctl -u httpd':'AH00526: Syntax error on line 47: Invalid command \'ServerNaame\'', 'vim /etc/httpd/conf/httpd.conf':'[vim opened — fix ServerNaame → ServerName on line 47]', 'nano /etc/httpd/conf/httpd.conf':'[nano opened — fix ServerNaame → ServerName on line 47]', 'sed -i \'s/ServerNaame/ServerName/\' /etc/httpd/conf/httpd.conf':'', 'systemctl start httpd':'\x1bok\x1eStarted The Apache HTTP Server.\x1b', 'systemctl restart httpd':'\x1bok\x1eRestarted The Apache HTTP Server.\x1b', 'curl localhost':'\x1bok\x1e<!DOCTYPE html><html>... (Apache default page)\x1b', 'ls /etc/httpd/conf/':'httpd.conf  magic  conf.d/  conf.modules.d/' }},
-  disk:    { prompt:'[admin@db01 ~]$ ', cmds:{ 'df -h':'/dev/sda1  50G  \x1berr\x1e50G  0B 100%\x1b  /\ntmpfs      3.9G  0   3.9G  0%  /dev/shm', 'du -sh /var/log/*':'\x1bwarn\x1e38G\x1b  /var/log/nginx/access.log\n4.1G  /var/log/syslog', 'ls -lh /var/log/nginx/':'total 38G\n-rw-r--r-- 1 www-data www-data 38G Apr 17 access.log', 'truncate -s 0 /var/log/nginx/access.log':'', 'find /var/log -name "*.gz" -mtime +7 -delete':'', 'df -h /':'/dev/sda1  50G  \x1bok\x1e8.2G  42G 17%\x1b  /', 'free -h':'              total   used   free\nMem:          7.7Gi  2.1Gi  5.6Gi\nSwap:         2.0Gi   10Mi  1.9Gi' }},
-  selinux: { prompt:'[admin@web02 ~]$ ', cmds:{ 'curl localhost/app/':'\x1berr\x1e403 Forbidden\x1b', 'sestatus':'SELinux status: enabled\nSELinuxfs mount: /sys/fs/selinux\nCurrent mode: enforcing', 'ausearch -m avc -ts recent':'type=AVC avc: \x1bwarn\x1edenied { read }\x1b for path="/var/www/app/index.php"\n  scontext=httpd_t  tcontext=\x1berr\x1euser_home_t\x1b', 'ls -Z /var/www/app/':'unconfined_u:object_r:\x1berr\x1euser_home_t\x1b:s0 index.php', 'chcon -Rv --type=httpd_sys_content_t /var/www/app/':'changing security context of \'/var/www/app/index.php\'', 'restorecon -Rv /var/www/app/':'Relabeled /var/www/app/index.php from user_home_t to httpd_sys_content_t', 'curl localhost/app/':'\x1bok\x1e200 OK — page loaded correctly\x1b' }},
-  cpu:     { prompt:'[admin@app01 ~]$ ', cmds:{ 'uptime':'21:04:12 up 3 days, load average: \x1berr\x1e24.33, 23.87, 22.10\x1b', 'top':'\x1bwarn\x1etop - 21:04 load average: 24.33\x1b\nTasks: 312 total, 4 running\n%Cpu(s): 98.2 us, 0.8 sy\nPID   USER  %CPU COMMAND\n4821  www-data  98.2  php-fpm: worker\n4822  www-data  97.8  php-fpm: worker', 'ps aux --sort=-%cpu':'USER    PID  %CPU COMMAND\nwww-data 4821 \x1berr\x1e98.2\x1b  php-fpm: worker\nwww-data 4822 \x1berr\x1e97.8\x1b  php-fpm: worker', 'kill -9 4821':'', 'systemctl restart php-fpm':'', 'mysql -e "show processlist"':'Id  User  State            Time\n42  app   \x1bwarn\x1eSending data\x1b   847\n43  app   Sending data   843', 'uptime':'21:07:44 up 3 days, load average: \x1bok\x1e0.42, 8.11, 16.03\x1b' }},
-  ssh:     { prompt:'[admin@jump01 ~]$ ', cmds:{ 'ssh admin@192.168.1.50':'\x1berr\x1essh: connect to host 192.168.1.50 port 22: Connection refused\x1b', 'ping 192.168.1.50':'PING 192.168.1.50: 64 bytes from 192.168.1.50: icmp_seq=1 ttl=64 time=0.4ms\n(host is UP, port 22 blocked)', 'nc -zv 192.168.1.50 22':'nc: connect to port 22 \x1berr\x1efailed: Connection refused\x1b', 'firewall-cmd --list-all':'public\n  services: \x1bwarn\x1ehttp https\x1b\n  ports:\n  # ssh is missing!', 'firewall-cmd --add-service=ssh --permanent':'\x1bok\x1esuccess\x1b', 'firewall-cmd --reload':'\x1bok\x1esuccess\x1b', 'ssh admin@192.168.1.50':'Last login: Thu Apr 17 18:22:10 2026\n\x1bok\x1e[admin@192.168.1.50 ~]$\x1b  ← you\'re in!' }}
+  apache: {
+    prompt:'[admin@web01 ~]$ ',
+    cmds:{
+      'systemctl status httpd':'● httpd.service - The Apache HTTP Server\n   Loaded: loaded (/usr/lib/systemd/system/httpd.service)\n   \x1berr\x1eActive: failed (Result: exit-code)\x1b\nProcess: ExecStart=/usr/sbin/httpd (code=exited, status=1/FAILURE)',
+      'systemctl status apache2':'● httpd.service\n   \x1berr\x1eActive: failed\x1b',
+      'journalctl -u httpd':'\x1berr\x1eAH00526: Syntax error on line 47 of /etc/httpd/conf/httpd.conf:\x1b\nInvalid command \'ServerNaame\', perhaps misspelled or defined by a module',
+      'journalctl -u httpd -n 20':'\x1berr\x1eAH00526: Syntax error on line 47 of /etc/httpd/conf/httpd.conf:\x1b\nInvalid command \'ServerNaame\', perhaps misspelled or defined by a module',
+      'journalctl -xe':'\x1berr\x1eAH00526: Syntax error on line 47 of /etc/httpd/conf/httpd.conf:\x1b\nInvalid command \'ServerNaame\'',
+      'journalctl':'-- Logs begin at Mon 2026-04-14.\n\x1berr\x1eApr 17 21:01: httpd: Syntax error on line 47: Invalid command \'ServerNaame\'\x1b',
+      'cat /etc/httpd/conf/httpd.conf':'...\n# Line 45\nServerRoot "/etc/httpd"\n\x1berr\x1eServerNaame web01.winlab.cloud\x1b\nListen 80\n...',
+      'cat /etc/httpd/conf/httpd.conf | grep -n Server':'44: ServerRoot "/etc/httpd"\n\x1berr\x1e47: ServerNaame web01.winlab.cloud\x1b',
+      'grep -n ServerName /etc/httpd/conf/httpd.conf':'44: ServerRoot "/etc/httpd"\n\x1berr\x1e47: ServerNaame web01.winlab.cloud\x1b  ← typo!',
+      'grep ServerN /etc/httpd/conf/httpd.conf':'\x1berr\x1eServerNaame web01.winlab.cloud\x1b',
+      'httpd -t':'\x1berr\x1eAH00526: Syntax error on line 47: Invalid command \'ServerNaame\'\x1b',
+      'apachectl -t':'\x1berr\x1eAH00526: Syntax error on line 47: Invalid command \'ServerNaame\'\x1b',
+      'apachectl configtest':'\x1berr\x1eAH00526: Syntax error on line 47: Invalid command \'ServerNaame\'\x1b',
+      'vim /etc/httpd/conf/httpd.conf':'[vim opened]\nLine 47: \x1berr\x1eServerNaame\x1b → fix to: \x1bok\x1eServerName\x1b\n:wq to save',
+      'nano /etc/httpd/conf/httpd.conf':'[nano opened]\nLine 47: \x1berr\x1eServerNaame\x1b → fix to: \x1bok\x1eServerName\x1b\n^X then Y to save',
+      'sed -i':'\x1bok\x1eFile updated.\x1b',
+      'systemctl start httpd':'\x1bok\x1eStarted The Apache HTTP Server.\x1b',
+      'systemctl restart httpd':'\x1bok\x1eRestarted The Apache HTTP Server.\x1b',
+      'systemctl enable httpd':'\x1bok\x1eCreated symlink /etc/systemd/system/multi-user.target.wants/httpd.service\x1b',
+      'curl localhost':'\x1bok\x1e<!DOCTYPE html><html><body><h1>It works!</h1></body></html>\x1b',
+      'curl -I localhost':'\x1bok\x1eHTTP/1.1 200 OK\x1b\nServer: Apache/2.4.57 (AlmaLinux)\nContent-Type: text/html',
+      'ls /etc/httpd/':'conf  conf.d  conf.modules.d  logs  modules  run  state',
+      'ls /etc/httpd/conf/':'httpd.conf  magic  conf.d/',
+      'ls /var/log/httpd/':'access_log  error_log',
+      'cat /var/log/httpd/error_log':'[Thu Apr 17 21:01:00] [error] AH00526: Syntax error on line 47',
+      'tail /var/log/httpd/error_log':'[Thu Apr 17 21:01:00] [error] AH00526: Syntax error on line 47\n[Thu Apr 17 21:01:00] [error] Invalid command \'ServerNaame\'',
+      'ps aux | grep httpd':'root  1234  0.0  0.0  0  0  ?  S  Apr14  0:00 /usr/sbin/httpd -DFOREGROUND\n\x1bwarn\x1eNo worker processes (httpd is down)\x1b',
+    }
+  },
+  disk: {
+    prompt:'[admin@db01 ~]$ ',
+    cmds:{
+      'df':'/dev/sda1  51473340  \x1berr\x1e51473340  0  100%\x1b  /\ntmpfs       4024064         0  4024064    0%  /dev/shm',
+      'df -h':'Filesystem  Size  Used  Avail  Use%  Mounted on\n/dev/sda1    50G  \x1berr\x1e50G     0B  100%\x1b  /\ntmpfs        3.9G    0   3.9G    0%  /dev/shm',
+      'df -h /':'Filesystem  Size  Used  Avail  Use%  Mounted on\n/dev/sda1    50G  \x1berr\x1e50G     0B  100%\x1b  /',
+      'du -sh /var/log/*':'\x1berr\x1e38G\x1b  /var/log/nginx/access.log\n4.1G  /var/log/syslog\n712M  /var/log/mysql\n230M  /var/log/httpd',
+      'du -sh /var/log/':'\x1berr\x1e43G\x1b  /var/log/',
+      'du -sh /var/*':'\x1berr\x1e43G\x1b  /var/log\n1.2G  /var/lib\n400M  /var/cache',
+      'du -h /var/log/ | sort -hr | head':'38G  /var/log/nginx/access.log\n4.1G /var/log/syslog\n712M /var/log/mysql',
+      'ls -lh /var/log/':'-rw-r--r-- 1 root root  \x1berr\x1e38G\x1b Apr 17 22:00 nginx/access.log\n-rw-r--r-- 1 root root 4.1G Apr 17 syslog',
+      'ls -lh /var/log/nginx/':'-rw-r--r-- 1 www-data www-data \x1berr\x1e38G\x1b Apr 17 22:00 access.log\n-rw-r--r-- 1 www-data www-data 1.2M Apr 17 error.log',
+      'ls /var/log/nginx/':'access.log  error.log',
+      'cat /var/log/nginx/access.log | wc -l':'\x1berr\x1e182456789\x1b',
+      'wc -l /var/log/nginx/access.log':'\x1berr\x1e182456789\x1b  /var/log/nginx/access.log',
+      'tail /var/log/nginx/access.log':'192.168.1.1 - - [17/Apr/2026:22:00:01] "GET / HTTP/1.1" 200 612\n192.168.1.2 - - [17/Apr/2026:22:00:01] "GET /api HTTP/1.1" 200 1024',
+      'truncate -s 0 /var/log/nginx/access.log':'',
+      '> /var/log/nginx/access.log':'',
+      'rm /var/log/nginx/access.log':'',
+      'find /var/log -name "*.gz"':'/var/log/syslog.1.gz\n/var/log/syslog.2.gz\n/var/log/auth.log.1.gz\n/var/log/nginx/access.log.14.gz',
+      'find /var/log -name "*.gz" -mtime +7':'/var/log/syslog.1.gz\n/var/log/nginx/access.log.14.gz',
+      'find /var/log -name "*.gz" -mtime +7 -delete':'',
+      'find /var/log -type f -name "*.log" -size +1G':'/var/log/nginx/access.log',
+      'journalctl --disk-usage':'Archived and active journals take up \x1berr\x1e4.1G\x1b in the file system.',
+      'journalctl --vacuum-size=500M':'\x1bok\x1eVacuuming done, freed 3.6G of archived journals.\x1b',
+      'systemctl restart nginx':'\x1bok\x1eRestarted nginx.\x1b',
+      'touch /tmp/test':'',
+      'touch /tmp/test\n':'\x1berr\x1etouch: cannot touch \'/tmp/test\': No space left on device\x1b',
+    }
+  },
+  selinux: {
+    prompt:'[admin@web02 ~]$ ',
+    cmds:{
+      'curl localhost':'\x1berr\x1e403 Forbidden\x1b',
+      'curl localhost/app':'\x1berr\x1e403 Forbidden\x1b',
+      'curl localhost/app/':'\x1berr\x1e403 Forbidden\x1b',
+      'curl -I localhost':'\x1berr\x1eHTTP/1.1 403 Forbidden\x1b\nServer: Apache/2.4.57',
+      'systemctl status httpd':'● httpd.service\n   \x1bok\x1eActive: active (running)\x1b\n   Main PID: 1234\n   (httpd is UP — the issue is SELinux)',
+      'cat /var/log/httpd/error_log':'[Thu Apr 17] [error] (13)Permission denied: access to /var/www/app/\n[Thu Apr 17] [error] AH01630: client denied by server configuration',
+      'tail /var/log/httpd/error_log':'[error] (13)Permission denied: access to /var/www/app/\n[error] AH01630: client denied by server configuration',
+      'tail /var/log/audit/audit.log':'type=AVC msg=audit: \x1bwarn\x1eavc: denied { read } for\x1b path="/var/www/app/"\nscontext=httpd_t tcontext=\x1berr\x1euser_home_t\x1b',
+      'ausearch -m avc':'\x1bwarn\x1etype=AVC avc: denied { read }\x1b for pid=1234 path="/var/www/app/"\nscontext=system_u:system_r:\x1bwarn\x1ehttpd_t\x1b  tcontext=unconfined_u:object_r:\x1berr\x1euser_home_t\x1b',
+      'ausearch -m avc -ts recent':'type=AVC avc: \x1bwarn\x1edenied { read }\x1b for path="/var/www/app/index.php"\nscontext=httpd_t  tcontext=\x1berr\x1euser_home_t\x1b:s0',
+      'sestatus':'SELinux status:                 \x1bok\x1eenabled\x1b\nSELinuxfs mount:                /sys/fs/selinux\nCurrent mode:                   \x1bwarn\x1eenforcing\x1b\nMode from config file:          enforcing\nPolicy MLS status:              enabled',
+      'getenforce':'\x1bwarn\x1eEnforcing\x1b',
+      'ls -Z /var/www/app/':'unconfined_u:object_r:\x1berr\x1euser_home_t\x1b:s0 index.php\nunconfined_u:object_r:\x1berr\x1euser_home_t\x1b:s0 static/',
+      'ls -laZ /var/www/app/':'total 12\ndrwxr-xr-x. 2 root root unconfined_u:object_r:\x1berr\x1euser_home_t\x1b:s0 4096 Apr 17 .\n-rw-r--r--. 1 root root unconfined_u:object_r:\x1berr\x1euser_home_t\x1b:s0 index.php',
+      'ls -Z /var/www/html/':'system_u:object_r:\x1bok\x1ehttpd_sys_content_t\x1b:s0 index.html  ← correct context',
+      'chcon -Rv --type=httpd_sys_content_t /var/www/app/':'changing security context of \'/var/www/app/index.php\'\nchanging security context of \'/var/www/app/static/style.css\'\n\x1bok\x1eDone.\x1b',
+      'chcon -t httpd_sys_content_t /var/www/app/':'\x1bok\x1eDone.\x1b',
+      'restorecon -Rv /var/www/app/':'\x1bok\x1eRelabeled /var/www/app/index.php from user_home_t to httpd_sys_content_t\x1b',
+      'semanage fcontext -a -t httpd_sys_content_t "/var/www/app(/.*)?"':'',
+      'curl localhost/app/ (after fix)':'\x1bok\x1e200 OK\x1b',
+    }
+  },
+  cpu: {
+    prompt:'[admin@app01 ~]$ ',
+    cmds:{
+      'uptime':'21:04:12 up 3 days, load average: \x1berr\x1e24.33, 23.87, 22.10\x1b',
+      'top':'top - 21:04:12 up 3 days\nTasks: 312 total, \x1berr\x1e4 running\x1b, 308 sleeping\n%Cpu(s): \x1berr\x1e98.2 us\x1b,  0.8 sy,  0.0 ni,  0.4 id\nMiB Mem:  7856.4 total, 1200.2 free\n\nPID    USER     %CPU  %MEM  COMMAND\n\x1berr\x1e4821  www-data  98.2   0.4  php-fpm: worker\x1b\n\x1berr\x1e4822  www-data  97.8   0.4  php-fpm: worker\x1b\n4823  www-data  96.1   0.4  php-fpm: worker',
+      'ps aux':'USER       PID  %CPU  COMMAND\n\x1berr\x1ewww-data  4821  98.2  php-fpm: worker\x1b\n\x1berr\x1ewww-data  4822  97.8  php-fpm: worker\x1b\nroot         1   0.0  /sbin/init',
+      'ps aux --sort=-%cpu':'USER       PID  %CPU  COMMAND\n\x1berr\x1ewww-data  4821  98.2  php-fpm: worker\x1b\n\x1berr\x1ewww-data  4822  97.8  php-fpm: worker\x1b\nwww-data  4823  96.1  php-fpm: worker',
+      'ps aux | grep php':'\x1berr\x1ewww-data  4821  98.2  php-fpm: worker\x1b\nwww-data  4822  97.8  php-fpm: worker',
+      'ps -ef | grep php':'\x1berr\x1ewww-data  4821  1  php-fpm: worker\x1b\nwww-data  4822  1  php-fpm: worker',
+      'htop':'[htop not installed — use top or ps aux]',
+      'cat /proc/loadavg':'\x1berr\x1e24.33 23.87 22.10\x1b  4/312  4823',
+      'strace -p 4821':'Process 4821 attached\nread(3, "SELECT * FROM sessions WHERE token=", 4096) = 45\nwrite(3, "SELECT * FROM sessions WHERE token=", 45) = 45\n\x1bwarn\x1e# infinite loop — query runs forever (missing index)\x1b',
+      'lsof -p 4821':'COMMAND  PID      USER  TYPE  NAME\nphp-fpm  4821  www-data   4u  IPv4  TCP 0.0.0.0:9000\nphp-fpm  4821  www-data  12u  sock  TCP 127.0.0.1:mysql',
+      'kill 4821':'',
+      'kill -9 4821':'\x1bok\x1eProcess 4821 terminated.\x1b',
+      'kill -15 4821':'\x1bok\x1eProcess 4821 gracefully stopped.\x1b',
+      'killall php-fpm':'\x1bok\x1eAll php-fpm workers killed.\x1b',
+      'systemctl restart php-fpm':'\x1bok\x1eRestarted php-fpm.service.\x1b',
+      'systemctl status php-fpm':'● php-fpm.service\n   \x1bok\x1eActive: active (running)\x1b\n   CGroup: /system.slice/php-fpm.service\n           ├─ 5100 php-fpm: master process',
+      'mysql -u root -p':'Enter password: [demo mode]\n\x1bok\x1eWelcome to the MySQL monitor.\x1b  mysql>',
+      'mysql -e "show processlist"':'Id  User  Host       State          Time  Info\n42  app   localhost  \x1bwarn\x1eSending data\x1b  847  SELECT * FROM sessions WHERE token=\'x\'',
+      'mysql -e "show full processlist"':'Id  User  State          Time  Info\n42  app   \x1bwarn\x1eSending data\x1b  847  SELECT * FROM sessions WHERE token=\'abcdef\'...',
+      'mysql -e "SHOW INDEX FROM sessions"':'Table     Non_unique  Key_name  Column_name\nsessions  1           PRIMARY   id\n\x1bwarn\x1e# No index on token column!\x1b',
+      'mysql -e "ALTER TABLE sessions ADD INDEX idx_token (token)"':'\x1bok\x1eQuery OK, 0 rows affected. Records: 0  Duplicates: 0  Warnings: 0\x1b',
+      'mysql -e "EXPLAIN SELECT * FROM sessions WHERE token=\'x\'"':'id  select_type  table     type  \x1berr\x1erows   Extra\x1b\n 1  SIMPLE       sessions  ALL   \x1berr\x1e982341 Using where\x1b  ← full table scan!',
+    }
+  },
+  ssh: {
+    prompt:'[admin@jump01 ~]$ ',
+    cmds:{
+      'ssh admin@192.168.1.50':'\x1berr\x1essh: connect to host 192.168.1.50 port 22: Connection refused\x1b',
+      'ssh -v admin@192.168.1.50':'OpenSSH_8.7p1\ndebug1: Connecting to 192.168.1.50 port 22\n\x1berr\x1edebug1: connect to address 192.168.1.50 port 22: Connection refused\x1b',
+      'ssh root@192.168.1.50':'\x1berr\x1essh: connect to host 192.168.1.50 port 22: Connection refused\x1b',
+      'ping 192.168.1.50':'PING 192.168.1.50: 64 bytes from 192.168.1.50: icmp_seq=1 ttl=64 time=0.4ms\n64 bytes from 192.168.1.50: icmp_seq=2 ttl=64 time=0.4ms\n\x1bwarn\x1e# Host is UP but SSH is blocked\x1b',
+      'nc -zv 192.168.1.50 22':'nc: connect to 192.168.1.50 port 22 (tcp) \x1berr\x1efailed: Connection refused\x1b',
+      'nc -zv 192.168.1.50 80':'Connection to 192.168.1.50 80 port [tcp/http] \x1bok\x1esucceeded!\x1b',
+      'nmap -p 22 192.168.1.50':'PORT   STATE    SERVICE\n22/tcp \x1berr\x1eclosed\x1b  ssh\n\x1bwarn\x1e# Port 22 filtered by firewall\x1b',
+      'nmap -p 22,80,443 192.168.1.50':'PORT    STATE   SERVICE\n22/tcp  \x1berr\x1eclosed\x1b  ssh\n80/tcp  \x1bok\x1eopen\x1b    http\n443/tcp \x1bok\x1eopen\x1b    https',
+      'telnet 192.168.1.50 22':'Trying 192.168.1.50...\n\x1berr\x1etelnet: Unable to connect to remote host: Connection refused\x1b',
+      'telnet 192.168.1.50 80':'Trying 192.168.1.50...\n\x1bok\x1eConnected to 192.168.1.50.\x1b\nEscape character is \'^]\'.',
+      'firewall-cmd --list-all':'public (active)\n  target: default\n  interfaces: eth0\n  services: \x1bwarn\x1ehttp https\x1b\n  ports:\n  rich rules:\n  \x1berr\x1e# ssh service is MISSING from allowed services!\x1b',
+      'firewall-cmd --list-services':'\x1bwarn\x1ehttp https\x1b  ← ssh is missing!',
+      'firewall-cmd --get-active-zones':'public\n  interfaces: eth0',
+      'firewall-cmd --add-service=ssh':'\x1bok\x1esuccess\x1b (temporary, add --permanent to persist)',
+      'firewall-cmd --add-service=ssh --permanent':'\x1bok\x1esuccess\x1b',
+      'firewall-cmd --reload':'\x1bok\x1esuccess\x1b',
+      'firewall-cmd --add-port=22/tcp --permanent':'\x1bok\x1esuccess\x1b',
+      'iptables -L INPUT':'Chain INPUT (policy ACCEPT)\ntarget  prot  opt  source    destination\nACCEPT  tcp   --   anywhere  anywhere   tcp dpt:http\nACCEPT  tcp   --   anywhere  anywhere   tcp dpt:https\n\x1berr\x1e# No rule for port 22!\x1b',
+      'systemctl status sshd':'● sshd.service - OpenSSH server daemon\n   \x1bok\x1eActive: active (running)\x1b\n   sshd IS running — the problem is the firewall',
+      'systemctl status firewalld':'● firewalld.service\n   \x1bok\x1eActive: active (running)\x1b',
+      'cat /etc/ssh/sshd_config | grep Port':'Port 22',
+      'cat /etc/ssh/sshd_config | grep PasswordAuth':'PasswordAuthentication yes',
+      'ssh admin@192.168.1.50 (after fix)':'Last login: Thu Apr 17 18:22:10 2026 from 192.168.1.1\n\x1bok\x1e[admin@192.168.1.50 ~]$\x1b  ← connected!',
+    }
+  }
 };
 
 let _demoTimer = null;
@@ -2040,6 +2260,7 @@ async function joinWaitlist() {
   const msg   = document.getElementById('form-msg');
   const btn   = document.getElementById('btn-join');
   if (!email || !email.includes('@')) { msg.textContent = 'Enter a valid email address.'; return; }
+  const origBtnText = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Connecting…';
   msg.textContent = '';
@@ -2053,7 +2274,7 @@ async function joinWaitlist() {
     if (!r.ok) throw new Error(d.error || 'Error joining waitlist');
     if (d.ok || d.existing) {
       showSuccess(d);
-      setTimeout(() => loadSeats(), 800); // refresh counter after DB write
+      setTimeout(() => loadSeats(), 800);
     } else {
       throw new Error(d.error || 'Temporary server issue');
     }
@@ -2061,7 +2282,7 @@ async function joinWaitlist() {
     const errText = e.message.includes('fetch') ? '⚠ Server unreachable — try again in a moment.' : '❌ ' + e.message;
     msg.textContent = errText;
     btn.disabled = false;
-    btn.textContent = 'Claim Early Access — $5/mo locked forever';
+    btn.textContent = origBtnText;
     setTimeout(() => { if (msg.textContent === errText) msg.textContent = ''; }, 5000);
   }
 }

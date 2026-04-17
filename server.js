@@ -855,46 +855,61 @@ app.get("/api/early-access/seats", (req, res) => {
 
 // POST /api/early-access/signup
 app.post("/api/early-access/signup", authLimiter, async (req, res) => {
-  try {
-    const { email, name, referredBy } = req.body;
-    if (!email) return res.status(400).json({ error: "Email required" });
-    const count = await prisma.earlyAccessSignup.count();
-    if (count >= MAX_SEATS) return res.status(409).json({ error: "All seats claimed" });
-    const referralCode = crypto.randomBytes(4).toString("hex");
-    const position = count + 1;
-    const existing = await prisma.earlyAccessSignup.findUnique({ where: { email: email.toLowerCase() } });
-    if (existing) return res.json({ existing: true, position: existing.position, referralCode: existing.referralCode });
-    const signup = await prisma.earlyAccessSignup.create({
-      data: {
-        email: email.toLowerCase(),
-        name: name || null,
-        accessDate: new Date("2026-04-20"),
-        referralCode,
-        referredBy: referredBy || null,
-        position,
-      },
-    });
-    // Increment referrer count
-    if (referredBy) {
-      await prisma.earlyAccessSignup.updateMany({ where: { referralCode: referredBy }, data: { referralCount: { increment: 1 } } });
-    }
-    // Keep file-based seat counter in sync
+  const { email, name, referredBy } = req.body;
+  if (!email) return res.status(400).json({ error: "Email required" });
+  const emailLower = email.toLowerCase();
+  const referralCode = crypto.randomBytes(4).toString("hex");
+
+  // ── Helper: file-based fallback ──────────────────────────────────────
+  function fileSignup() {
     try {
+      if (!fs.existsSync(path.dirname(EARLY_ACCESS_FILE))) {
+        fs.mkdirSync(path.dirname(EARLY_ACCESS_FILE), { recursive: true });
+      }
       let fileData = [];
       if (fs.existsSync(EARLY_ACCESS_FILE)) {
         try { fileData = JSON.parse(fs.readFileSync(EARLY_ACCESS_FILE, "utf8")); } catch { fileData = []; }
       }
-      if (!fileData.some(e => e.email === email.toLowerCase())) {
-        fileData.push({ email: email.toLowerCase(), position, createdAt: new Date().toISOString() });
-        fs.writeFileSync(EARLY_ACCESS_FILE, JSON.stringify(fileData, null, 2));
-      }
-    } catch (syncErr) {
-      console.warn("seat-file sync error:", syncErr.message);
+      if (fileData.length >= MAX_SEATS) return { error: "All seats claimed", status: 409 };
+      const hit = fileData.find(e => e.email === emailLower);
+      if (hit) return { existing: true, position: hit.position, referralCode: hit.referralCode || referralCode };
+      const position = fileData.length + 1;
+      const rc = crypto.randomBytes(4).toString("hex");
+      fileData.push({ email: emailLower, name: name || null, position, referralCode: rc, referredBy: referredBy || null, createdAt: new Date().toISOString() });
+      fs.writeFileSync(EARLY_ACCESS_FILE, JSON.stringify(fileData, null, 2));
+      return { ok: true, position, referralCode: rc };
+    } catch (fe) {
+      console.error("file-signup error:", fe.message);
+      return null;
     }
-    res.json({ ok: true, position: signup.position, referralCode: signup.referralCode });
+  }
+
+  // ── Try Prisma first, fall back to file ──────────────────────────────
+  try {
+    const count = await prisma.earlyAccessSignup.count();
+    if (count >= MAX_SEATS) return res.status(409).json({ error: "All seats claimed" });
+    const position = count + 1;
+    const existing = await prisma.earlyAccessSignup.findUnique({ where: { email: emailLower } });
+    if (existing) return res.json({ existing: true, position: existing.position, referralCode: existing.referralCode });
+    const signup = await prisma.earlyAccessSignup.create({
+      data: { email: emailLower, name: name || null, accessDate: new Date("2026-04-20"), referralCode, referredBy: referredBy || null, position },
+    });
+    if (referredBy) {
+      await prisma.earlyAccessSignup.updateMany({ where: { referralCode: referredBy }, data: { referralCount: { increment: 1 } } }).catch(() => {});
+    }
+    // keep file in sync
+    try {
+      let fd = [];
+      if (fs.existsSync(EARLY_ACCESS_FILE)) { try { fd = JSON.parse(fs.readFileSync(EARLY_ACCESS_FILE, "utf8")); } catch { fd = []; } }
+      if (!fd.some(e => e.email === emailLower)) { fd.push({ email: emailLower, position, referralCode, createdAt: new Date().toISOString() }); fs.writeFileSync(EARLY_ACCESS_FILE, JSON.stringify(fd, null, 2)); }
+    } catch {}
+    return res.json({ ok: true, position: signup.position, referralCode: signup.referralCode });
   } catch (err) {
-    console.error("POST /api/early-access/signup error:", err);
-    res.status(500).json({ error: "Failed" });
+    console.warn("Prisma signup failed, using file fallback:", err.message);
+    const result = fileSignup();
+    if (!result) return res.status(500).json({ error: "Signup service temporarily unavailable. Please retry." });
+    if (result.status) return res.status(result.status).json({ error: result.error });
+    return res.json(result);
   }
 });
 
