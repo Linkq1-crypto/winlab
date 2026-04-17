@@ -742,7 +742,7 @@ section{padding:80px 24px}
       <div class="labs-grid">
 
         <!-- Lab 01 -->
-        <div class="lab-card">
+        <div class="lab-card" data-scenario="linux_boot" role="button" tabindex="0" aria-label="Open demo lab: Filesystem Navigation">
           <div class="lab-card-header">
             <div><div class="lab-num">LAB 01</div><div class="lab-card-title">Filesystem Navigation</div></div>
             <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~30 min</span></div>
@@ -762,7 +762,7 @@ section{padding:80px 24px}
         </div>
 
         <!-- Lab 02 -->
-        <div class="lab-card">
+        <div class="lab-card" data-scenario="apache_fix" role="button" tabindex="0" aria-label="Open demo lab: File Operations">
           <div class="lab-card-header">
             <div><div class="lab-num">LAB 02</div><div class="lab-card-title">File Operations</div></div>
             <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~25 min</span></div>
@@ -781,7 +781,7 @@ section{padding:80px 24px}
         </div>
 
         <!-- Lab 03 -->
-        <div class="lab-card">
+        <div class="lab-card" data-scenario="ssh_brute" role="button" tabindex="0" aria-label="Open demo lab: Permissions and Users">
           <div class="lab-card-header">
             <div><div class="lab-num">LAB 03</div><div class="lab-card-title">Permissions &amp; Users</div></div>
             <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~35 min</span></div>
@@ -799,7 +799,7 @@ section{padding:80px 24px}
         </div>
 
         <!-- Lab 04 -->
-        <div class="lab-card">
+        <div class="lab-card" data-scenario="service_fail" role="button" tabindex="0" aria-label="Open demo lab: Processes and Services">
           <div class="lab-card-header">
             <div><div class="lab-num">LAB 04</div><div class="lab-card-title">Processes &amp; Services</div></div>
             <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~30 min</span></div>
@@ -818,7 +818,7 @@ section{padding:80px 24px}
         </div>
 
         <!-- Lab 05 -->
-        <div class="lab-card">
+        <div class="lab-card" data-scenario="network_outage" role="button" tabindex="0" aria-label="Open demo lab: Networking Basics">
           <div class="lab-card-header">
             <div><div class="lab-num">LAB 05</div><div class="lab-card-title">Networking Basics</div></div>
             <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~40 min</span></div>
@@ -1699,6 +1699,32 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeDemoModal(null); closeMobileMenu(); }
 });
 
+// Make free lab cards interactive: open in-browser demo instead of navigating away
+document.querySelectorAll('.lab-card[data-scenario]').forEach((card) => {
+  const scenario = card.dataset.scenario;
+  card.style.cursor = 'pointer';
+  card.addEventListener('click', () => launchScenario(card, scenario));
+  card.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      launchScenario(card, scenario);
+    }
+  });
+});
+
+async function parseApiJson(response, fallbackMessage = 'Server response is not valid JSON.') {
+  const contentType = response.headers.get('content-type') || '';
+  const text = await response.text();
+  if (!contentType.includes('application/json')) {
+    throw new Error(fallbackMessage);
+  }
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(fallbackMessage);
+  }
+}
+
 // ── Mobile menu ───────────────────────────────────────────────────────────────
 document.getElementById('nav-hamburger').addEventListener('click', () => {
   document.getElementById('mobile-menu').style.display = 'block';
@@ -1722,8 +1748,8 @@ async function loadSeats() {
   try {
     const r = await fetch('/api/early-access/seats');
     if (!r.ok) throw new Error();
-    const d = await r.json();
-    const claimed = d.claimed || d.count || 0;
+    const d = await parseApiJson(r, 'Seat service unavailable right now.');
+    const claimed = d.claimed || d.count || d.taken || 0;
     // If DB is empty, treat as pre-launch state and use social-proof fallback
     if (claimed === 0) throw new Error('empty');
     seatsRemaining = MAX_SEATS - claimed;
@@ -1796,7 +1822,7 @@ async function joinWaitlist() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, name: name || undefined, ref: urlRef || undefined }),
     });
-    const d = await r.json();
+    const d = await parseApiJson(r, 'Temporary server issue. Please retry in a moment.');
     if (!r.ok) throw new Error(d.error || 'Error joining waitlist');
     showSuccess(d.signup);
   } catch(e) {
@@ -1822,7 +1848,7 @@ async function goStripe() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, name: name || undefined }),
     });
-    const d = await r.json();
+    const d = await parseApiJson(r, 'Checkout service unavailable. Please retry.');
     if (!r.ok) {
       if (d.soldOut) { setCtaState('expired'); return; }
       throw new Error(d.error || 'Checkout failed');

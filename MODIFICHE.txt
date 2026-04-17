@@ -1,0 +1,182 @@
+@@ -742,7 +742,7 @@ section{padding:80px 24px}
+      <div class="labs-grid">
+
+        <!-- Lab 01 -->
+        <div class="lab-card">
+        <div class="lab-card" data-scenario="linux_boot" role="button" tabindex="0" aria-label="Open demo lab: Filesystem Navigation">
+          <div class="lab-card-header">
+            <div><div class="lab-num">LAB 01</div><div class="lab-card-title">Filesystem Navigation</div></div>
+            <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~30 min</span></div>
+@@ -762,7 +762,7 @@ section{padding:80px 24px}
+        </div>
+
+        <!-- Lab 02 -->
+        <div class="lab-card">
+        <div class="lab-card" data-scenario="apache_fix" role="button" tabindex="0" aria-label="Open demo lab: File Operations">
+          <div class="lab-card-header">
+            <div><div class="lab-num">LAB 02</div><div class="lab-card-title">File Operations</div></div>
+            <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~25 min</span></div>
+@@ -781,7 +781,7 @@ section{padding:80px 24px}
+        </div>
+
+        <!-- Lab 03 -->
+        <div class="lab-card">
+        <div class="lab-card" data-scenario="ssh_brute" role="button" tabindex="0" aria-label="Open demo lab: Permissions and Users">
+          <div class="lab-card-header">
+            <div><div class="lab-num">LAB 03</div><div class="lab-card-title">Permissions &amp; Users</div></div>
+            <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~35 min</span></div>
+@@ -799,7 +799,7 @@ section{padding:80px 24px}
+        </div>
+
+        <!-- Lab 04 -->
+        <div class="lab-card">
+        <div class="lab-card" data-scenario="service_fail" role="button" tabindex="0" aria-label="Open demo lab: Processes and Services">
+          <div class="lab-card-header">
+            <div><div class="lab-num">LAB 04</div><div class="lab-card-title">Processes &amp; Services</div></div>
+            <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~30 min</span></div>
+@@ -818,7 +818,7 @@ section{padding:80px 24px}
+        </div>
+
+        <!-- Lab 05 -->
+        <div class="lab-card">
+        <div class="lab-card" data-scenario="network_outage" role="button" tabindex="0" aria-label="Open demo lab: Networking Basics">
+          <div class="lab-card-header">
+            <div><div class="lab-num">LAB 05</div><div class="lab-card-title">Networking Basics</div></div>
+            <div class="lab-card-meta"><span class="lab-pill pill-green">Free</span><span class="lab-pill pill-dim">~40 min</span></div>
+@@ -1699,6 +1699,32 @@ document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeDemoModal(null); closeMobileMenu(); }
+});
+
+// Make free lab cards interactive: open in-browser demo instead of navigating away
+document.querySelectorAll('.lab-card[data-scenario]').forEach((card) => {
+  const scenario = card.dataset.scenario;
+  card.style.cursor = 'pointer';
+  card.addEventListener('click', () => openDemoModal(scenario, card));
+The new `.lab-card` interaction handlers call `openDemoModal(...)`, but that function is not defined in this file (the implemented modal launcher is `launchScenario(card, scenario)`). As soon as a user clicks a free lab card or presses Enter/Space on it, the page throws a `ReferenceError`, so the demo modal never opens and the new keyboard-accessible flow is broken.
+  card.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openDemoModal(scenario, card);
+    }
+  });
+});
+
+async function parseApiJson(response, fallbackMessage = 'Server response is not valid JSON.') {
+  const contentType = response.headers.get('content-type') || '';
+  const text = await response.text();
+  if (!contentType.includes('application/json')) {
+    throw new Error(fallbackMessage);
+  }
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(fallbackMessage);
+  }
+}
+
+// ── Mobile menu ───────────────────────────────────────────────────────────────
+document.getElementById('nav-hamburger').addEventListener('click', () => {
+  document.getElementById('mobile-menu').style.display = 'block';
+@@ -1722,8 +1748,8 @@ async function loadSeats() {
+  try {
+    const r = await fetch('/api/early-access/seats');
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    const claimed = d.claimed || d.count || 0;
+    const d = await parseApiJson(r, 'Seat service unavailable right now.');
+    const claimed = d.claimed || d.count || d.taken || 0;
+    // If DB is empty, treat as pre-launch state and use social-proof fallback
+    if (claimed === 0) throw new Error('empty');
+    seatsRemaining = MAX_SEATS - claimed;
+@@ -1796,7 +1822,7 @@ async function joinWaitlist() {
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name: name || undefined, ref: urlRef || undefined }),
+    });
+    const d = await r.json();
+    const d = await parseApiJson(r, 'Temporary server issue. Please retry in a moment.');
+    if (!r.ok) throw new Error(d.error || 'Error joining waitlist');
+    showSuccess(d.signup);
+  } catch(e) {
+@@ -1822,7 +1848,7 @@ async function goStripe() {
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name: name || undefined }),
+    });
+    const d = await r.json();
+    const d = await parseApiJson(r, 'Checkout service unavailable. Please retry.');
+    if (!r.ok) {
+      if (d.soldOut) { setCtaState('expired'); return; }
+      throw new Error(d.error || 'Checkout failed');
+server.js
+server.js
++20
+-6
+
+@@ -14,9 +14,9 @@ import crypto from "crypto";
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
+import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { existsSync } from "fs";
+import { WebSocketServer } from "ws";
+
+import {
+@@ -43,6 +43,7 @@ const BASE_PORT  = parseInt(process.env.PORT || "3001", 10);
+const IS_PROD    = process.env.NODE_ENV === "production";
+const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
+const ENC_KEY    = (process.env.ENCRYPTION_KEY || "00000000000000000000000000000000").slice(0, 32);
+const EARLY_ACCESS_FILE = path.join(__dirname, "data", "early-access-seats.json");
+
+// ── Clients ──────────────────────────────────────────────────────────
+const prisma    = new PrismaClient();
+@@ -761,14 +762,27 @@ app.get("/api/community/bugs", async (req, res) => {
+const MAX_SEATS = 500;
+
+// GET /api/early-access/seats
+app.get("/api/early-access/seats", async (req, res) => {
+app.get("/api/early-access/seats", (req, res) => {
+  try {
+    const count = await prisma.earlyAccessSignup.count({ where: { activated: true } });
+    const total = await prisma.earlyAccessSignup.count();
+    res.json({ claimed: count, total, remaining: Math.max(0, MAX_SEATS - count) });
+    if (!fs.existsSync(EARLY_ACCESS_FILE)) {
+      fs.writeFileSync(EARLY_ACCESS_FILE, "[]");
+    }
+
+    let data = [];
+    try {
+      data = JSON.parse(fs.readFileSync(EARLY_ACCESS_FILE, "utf8"));
+    } catch {
+      data = [];
+    }
+
+    const total = MAX_SEATS;
+    const taken = Array.isArray(data) ? data.length : 0;
+This endpoint now computes `taken` only from `early-access-seats.json`, but no corresponding write path was added in this commit while signup creation still goes through Prisma in `POST /api/early-access/signup`. In normal operation, successful signups will not update this file-backed counter, so `/api/early-access/seats` can drift from reality and return stale seat availability.
+    const remaining = Math.max(0, total - taken);
+
+    res.json({ total, taken, remaining });
+  } catch (err) {
+    console.error("GET /api/early-access/seats error:", err);
+    res.status(500).json({ error: "Failed" });
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+File (3)
+
+REPO_CHECK_2026-04-17.md
+REPO_CHECK_2026-04-17.md
+Nuovo
+
+index.html
+coming-soon/index.html
++35
+-9
+
+server.js
+server.js
++20
+-

@@ -16,6 +16,7 @@ import cookieParser from "cookie-parser";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 import { existsSync } from "fs";
 import { WebSocketServer } from "ws";
 
@@ -43,6 +44,7 @@ const BASE_PORT  = parseInt(process.env.PORT || "3001", 10);
 const IS_PROD    = process.env.NODE_ENV === "production";
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 const ENC_KEY    = (process.env.ENCRYPTION_KEY || "00000000000000000000000000000000").slice(0, 32);
+const EARLY_ACCESS_FILE = path.join(__dirname, "data", "early-access-seats.json");
 
 // ── Clients ──────────────────────────────────────────────────────────
 const prisma    = new PrismaClient();
@@ -761,14 +763,27 @@ app.get("/api/community/bugs", async (req, res) => {
 const MAX_SEATS = 500;
 
 // GET /api/early-access/seats
-app.get("/api/early-access/seats", async (req, res) => {
+app.get("/api/early-access/seats", (req, res) => {
   try {
-    const count = await prisma.earlyAccessSignup.count({ where: { activated: true } });
-    const total = await prisma.earlyAccessSignup.count();
-    res.json({ claimed: count, total, remaining: Math.max(0, MAX_SEATS - count) });
+    if (!fs.existsSync(EARLY_ACCESS_FILE)) {
+      fs.writeFileSync(EARLY_ACCESS_FILE, "[]");
+    }
+
+    let data = [];
+    try {
+      data = JSON.parse(fs.readFileSync(EARLY_ACCESS_FILE, "utf8"));
+    } catch {
+      data = [];
+    }
+
+    const total = MAX_SEATS;
+    const taken = Array.isArray(data) ? data.length : 0;
+    const remaining = Math.max(0, total - taken);
+
+    res.json({ total, taken, remaining });
   } catch (err) {
     console.error("GET /api/early-access/seats error:", err);
-    res.status(500).json({ error: "Failed" });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -796,6 +811,19 @@ app.post("/api/early-access/signup", authLimiter, async (req, res) => {
     // Increment referrer count
     if (referredBy) {
       await prisma.earlyAccessSignup.updateMany({ where: { referralCode: referredBy }, data: { referralCount: { increment: 1 } } });
+    }
+    // Keep file-based seat counter in sync
+    try {
+      let fileData = [];
+      if (fs.existsSync(EARLY_ACCESS_FILE)) {
+        try { fileData = JSON.parse(fs.readFileSync(EARLY_ACCESS_FILE, "utf8")); } catch { fileData = []; }
+      }
+      if (!fileData.some(e => e.email === email.toLowerCase())) {
+        fileData.push({ email: email.toLowerCase(), position, createdAt: new Date().toISOString() });
+        fs.writeFileSync(EARLY_ACCESS_FILE, JSON.stringify(fileData, null, 2));
+      }
+    } catch (syncErr) {
+      console.warn("seat-file sync error:", syncErr.message);
     }
     res.json({ ok: true, position: signup.position, referralCode: signup.referralCode });
   } catch (err) {
