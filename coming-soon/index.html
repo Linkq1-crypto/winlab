@@ -1622,7 +1622,8 @@ function startCountdown() {
       labelEl.textContent  = 'Pre-launch in';
       subEl.textContent    = 'Apr 17 · 21:00 CEST · App live Apr 20';
       badgeEl.textContent  = 'Pre-launch Apr 17 · App live Apr 20 · 500 seats · $5/mo forever';
-      setCtaState('waitlist');
+      const curState = document.querySelector('.cta-state.active')?.id;
+      if (!curState || curState === 'state-waitlist') setCtaState('waitlist');
     } else if (!isExpired()) {
       const diff = EARLY_ENDS_AT - now();
       timerEl.textContent  = fmtFull(diff);
