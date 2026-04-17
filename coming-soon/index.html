@@ -1772,6 +1772,7 @@ async function loadSeats() {
 }
 
 function updateSeatsCopy() {
+  if (typeof seatsRemaining === 'undefined' || seatsRemaining === null) return;
   const n = seatsRemaining;
   if (!n) return;
   const txt = `Only ${n} left`;
@@ -1817,14 +1818,18 @@ async function joinWaitlist() {
   btn.textContent = 'Connecting…';
   msg.textContent = '';
   try {
-    const r = await fetch('/api/waitlist/join', {
+    const r = await fetch('/api/early-access/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, name: name || undefined, ref: urlRef || undefined }),
+      body: JSON.stringify({ email, name: name || undefined, referredBy: urlRef || undefined }),
     });
     const d = await parseApiJson(r, 'Temporary server issue. Please retry in a moment.');
     if (!r.ok) throw new Error(d.error || 'Error joining waitlist');
-    showSuccess(d.signup);
+    if (d.ok || d.existing) {
+      showSuccess(d);
+    } else {
+      throw new Error(d.error || 'Temporary server issue');
+    }
   } catch(e) {
     msg.textContent = e.message.includes('fetch') ? '⚠ Server unreachable — try again in a moment.' : '❌ ' + e.message;
     btn.disabled = false;
