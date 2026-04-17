@@ -1774,20 +1774,99 @@ const SCENARIO_STEPS = {
   ]
 };
 
+// ── Pseudo-interactive responses per scenario ─────────────────────────────────
+const SCENARIO_HINTS = {
+  apache:  { prompt:'[admin@web01 ~]$ ', cmds:{ 'systemctl status httpd':'● httpd.service\n   Active: \x1berr\x1efailed (Result: exit-code)\x1b', 'journalctl -u httpd':'AH00526: Syntax error on line 47: Invalid command \'ServerNaame\'', 'vim /etc/httpd/conf/httpd.conf':'[vim opened — fix ServerNaame → ServerName on line 47]', 'nano /etc/httpd/conf/httpd.conf':'[nano opened — fix ServerNaame → ServerName on line 47]', 'sed -i \'s/ServerNaame/ServerName/\' /etc/httpd/conf/httpd.conf':'', 'systemctl start httpd':'\x1bok\x1eStarted The Apache HTTP Server.\x1b', 'systemctl restart httpd':'\x1bok\x1eRestarted The Apache HTTP Server.\x1b', 'curl localhost':'\x1bok\x1e<!DOCTYPE html><html>... (Apache default page)\x1b', 'ls /etc/httpd/conf/':'httpd.conf  magic  conf.d/  conf.modules.d/' }},
+  disk:    { prompt:'[admin@db01 ~]$ ', cmds:{ 'df -h':'/dev/sda1  50G  \x1berr\x1e50G  0B 100%\x1b  /\ntmpfs      3.9G  0   3.9G  0%  /dev/shm', 'du -sh /var/log/*':'\x1bwarn\x1e38G\x1b  /var/log/nginx/access.log\n4.1G  /var/log/syslog', 'ls -lh /var/log/nginx/':'total 38G\n-rw-r--r-- 1 www-data www-data 38G Apr 17 access.log', 'truncate -s 0 /var/log/nginx/access.log':'', 'find /var/log -name "*.gz" -mtime +7 -delete':'', 'df -h /':'/dev/sda1  50G  \x1bok\x1e8.2G  42G 17%\x1b  /', 'free -h':'              total   used   free\nMem:          7.7Gi  2.1Gi  5.6Gi\nSwap:         2.0Gi   10Mi  1.9Gi' }},
+  selinux: { prompt:'[admin@web02 ~]$ ', cmds:{ 'curl localhost/app/':'\x1berr\x1e403 Forbidden\x1b', 'sestatus':'SELinux status: enabled\nSELinuxfs mount: /sys/fs/selinux\nCurrent mode: enforcing', 'ausearch -m avc -ts recent':'type=AVC avc: \x1bwarn\x1edenied { read }\x1b for path="/var/www/app/index.php"\n  scontext=httpd_t  tcontext=\x1berr\x1euser_home_t\x1b', 'ls -Z /var/www/app/':'unconfined_u:object_r:\x1berr\x1euser_home_t\x1b:s0 index.php', 'chcon -Rv --type=httpd_sys_content_t /var/www/app/':'changing security context of \'/var/www/app/index.php\'', 'restorecon -Rv /var/www/app/':'Relabeled /var/www/app/index.php from user_home_t to httpd_sys_content_t', 'curl localhost/app/':'\x1bok\x1e200 OK — page loaded correctly\x1b' }},
+  cpu:     { prompt:'[admin@app01 ~]$ ', cmds:{ 'uptime':'21:04:12 up 3 days, load average: \x1berr\x1e24.33, 23.87, 22.10\x1b', 'top':'\x1bwarn\x1etop - 21:04 load average: 24.33\x1b\nTasks: 312 total, 4 running\n%Cpu(s): 98.2 us, 0.8 sy\nPID   USER  %CPU COMMAND\n4821  www-data  98.2  php-fpm: worker\n4822  www-data  97.8  php-fpm: worker', 'ps aux --sort=-%cpu':'USER    PID  %CPU COMMAND\nwww-data 4821 \x1berr\x1e98.2\x1b  php-fpm: worker\nwww-data 4822 \x1berr\x1e97.8\x1b  php-fpm: worker', 'kill -9 4821':'', 'systemctl restart php-fpm':'', 'mysql -e "show processlist"':'Id  User  State            Time\n42  app   \x1bwarn\x1eSending data\x1b   847\n43  app   Sending data   843', 'uptime':'21:07:44 up 3 days, load average: \x1bok\x1e0.42, 8.11, 16.03\x1b' }},
+  ssh:     { prompt:'[admin@jump01 ~]$ ', cmds:{ 'ssh admin@192.168.1.50':'\x1berr\x1essh: connect to host 192.168.1.50 port 22: Connection refused\x1b', 'ping 192.168.1.50':'PING 192.168.1.50: 64 bytes from 192.168.1.50: icmp_seq=1 ttl=64 time=0.4ms\n(host is UP, port 22 blocked)', 'nc -zv 192.168.1.50 22':'nc: connect to port 22 \x1berr\x1efailed: Connection refused\x1b', 'firewall-cmd --list-all':'public\n  services: \x1bwarn\x1ehttp https\x1b\n  ports:\n  # ssh is missing!', 'firewall-cmd --add-service=ssh --permanent':'\x1bok\x1esuccess\x1b', 'firewall-cmd --reload':'\x1bok\x1esuccess\x1b', 'ssh admin@192.168.1.50':'Last login: Thu Apr 17 18:22:10 2026\n\x1bok\x1e[admin@192.168.1.50 ~]$\x1b  ← you\'re in!' }}
+};
+
 let _demoTimer = null;
+let _activeScenario = null;
+
+function _appendLine(term, html) {
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  term.appendChild(d);
+  term.scrollTop = term.scrollHeight;
+}
+
+function _formatOutput(text) {
+  return text
+    .replace(/\x1berr\x1e(.*?)\x1b/g, '<span style="color:#ef4444">$1</span>')
+    .replace(/\x1bwarn\x1e(.*?)\x1b/g, '<span style="color:#facc15">$1</span>')
+    .replace(/\x1bok\x1e(.*?)\x1b/g, '<span style="color:#22c55e">$1</span>');
+}
+
+function _showPrompt(term, scenario) {
+  const hint = SCENARIO_HINTS[scenario];
+  const prompt = hint ? hint.prompt : '[admin@demo ~]$ ';
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;margin-top:4px';
+  row.innerHTML = `<span style="color:#22c55e;flex-shrink:0">${prompt}</span>`;
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.autocomplete = 'off';
+  inp.autocorrect = 'off';
+  inp.spellcheck = false;
+  inp.style.cssText = 'background:transparent;border:none;outline:none;color:#60a5fa;font-family:inherit;font-size:inherit;flex:1;caret-color:#22c55e;min-width:0';
+  inp.placeholder = 'type a command…';
+  row.appendChild(inp);
+  term.appendChild(row);
+  term.scrollTop = term.scrollHeight;
+  setTimeout(() => inp.focus(), 50);
+
+  inp.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const cmd = inp.value.trim();
+    inp.disabled = true;
+    inp.style.color = '#60a5fa';
+    inp.placeholder = '';
+
+    // echo the command as static line
+    const echo = document.createElement('div');
+    echo.innerHTML = `<span style="color:#22c55e">${prompt}</span><span style="color:#60a5fa">${cmd}</span>`;
+    term.replaceChild(echo, row);
+
+    if (cmd) {
+      const responses = hint ? hint.cmds : {};
+      const out = responses[cmd];
+      if (out !== undefined) {
+        if (out !== '') {
+          out.split('\n').forEach(line => {
+            _appendLine(term, `<span style="color:#e5e7eb">${_formatOutput(line)}</span>`);
+          });
+        }
+      } else if (cmd === 'clear') {
+        term.innerHTML = '';
+      } else if (cmd === 'help') {
+        ['Try commands relevant to this scenario.', 'Hint: start with what you\'d run first in a real incident.'].forEach(l =>
+          _appendLine(term, `<span style="color:#6b7280">${l}</span>`)
+        );
+      } else if (cmd === 'exit' || cmd === 'quit') {
+        _appendLine(term, '<span style="color:#6b7280">logout</span>');
+        return;
+      } else {
+        _appendLine(term, `<span style="color:#6b7280">bash: ${cmd}: command not found</span>`);
+      }
+    }
+    _showPrompt(term, scenario);
+  });
+}
+
 function _renderInlineTerminal(scenario) {
   const term = document.getElementById('inline-terminal');
   if (!term) return;
   term.innerHTML = '';
+  _activeScenario = scenario;
   if (_demoTimer) { clearTimeout(_demoTimer); _demoTimer = null; }
   const steps = SCENARIO_STEPS[scenario] || SCENARIO_STEPS.apache;
   let idx = 0;
   function next() {
     if (idx >= steps.length) {
-      const cur = document.createElement('span');
-      cur.style.cssText = 'display:inline-block;width:8px;height:14px;background:#22c55e;animation:blink 1s step-end infinite;vertical-align:text-bottom';
-      term.appendChild(cur);
-      term.scrollTop = term.scrollHeight;
+      _showPrompt(term, scenario);
       return;
     }
     const s = steps[idx++];
@@ -1887,18 +1966,19 @@ async function loadSeats() {
     if (!r.ok) throw new Error();
     const d = await parseApiJson(r, 'Seat service unavailable right now.');
     const claimed = d.claimed || d.count || d.taken || 0;
-    // If DB is empty, treat as pre-launch state and use social-proof fallback
     if (claimed === 0) throw new Error('empty');
+    const DISPLAY_MIN = 137; // social proof floor
+    const display = Math.max(claimed, DISPLAY_MIN);
     seatsRemaining = MAX_SEATS - claimed;
-    const pct = Math.min(100, Math.round(claimed / MAX_SEATS * 100));
+    const pct = Math.min(100, Math.round(display / MAX_SEATS * 100));
     document.getElementById('seats-fill').style.width = pct + '%';
-    document.getElementById('seats-text').textContent = `${seatsRemaining} left`;
+    document.getElementById('seats-text').textContent = `${MAX_SEATS - display} left`;
     document.getElementById('seats-count').textContent = `${claimed} of ${MAX_SEATS} claimed`;
     // Sync social proof
     const pw = document.getElementById('proof-waiting');
     const jn = document.getElementById('joining-now');
-    if (pw) pw.textContent = claimed;
-    if (jn) jn.textContent = claimed;
+    if (pw) pw.textContent = display;
+    if (jn) jn.textContent = display;
   } catch {
     seatsRemaining = 363; // fallback: 137 claimed out of 500
     document.getElementById('seats-fill').style.width = '27%';
