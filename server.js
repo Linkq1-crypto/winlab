@@ -910,6 +910,52 @@ app.get("/api/early-access/seats", (req, res) => {
   }
 });
 
+// GET /api/early-access/list — admin only, anonymized
+app.get("/api/early-access/list", requireAdmin, async (req, res) => {
+  try {
+    const anonymize = (email) => {
+      const [local, domain] = (email || "").split("@");
+      return `${local.slice(0, 2)}***@${domain || "?"}`;
+    };
+
+    let rows = [];
+    try {
+      rows = await prisma.earlyAccessSignup.findMany({
+        orderBy: { position: "asc" },
+        select: { position: true, email: true, name: true, referralCount: true, createdAt: true },
+      });
+    } catch {}
+
+    // Merge file fallback if Prisma empty
+    if (rows.length === 0 && fs.existsSync(EARLY_ACCESS_FILE)) {
+      try {
+        const fileData = JSON.parse(fs.readFileSync(EARLY_ACCESS_FILE, "utf8"));
+        rows = fileData.map((r, i) => ({
+          position: i + 1,
+          email: r.email || "",
+          name: r.name || null,
+          referralCount: r.referralCount || 0,
+          createdAt: r.createdAt || null,
+        }));
+      } catch {}
+    }
+
+    const data = rows.map(r => ({
+      position: r.position,
+      code: `EA-${String(r.position).padStart(4, "0")}`,
+      email: anonymize(r.email),
+      name: r.name ? r.name.slice(0, 1) + "***" : null,
+      referrals: r.referralCount || 0,
+      joinedAt: r.createdAt,
+    }));
+
+    res.json({ total: data.length, signups: data });
+  } catch (err) {
+    console.error("GET /api/early-access/list error:", err);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
 // POST /api/early-access/signup
 app.post("/api/early-access/signup", authLimiter, async (req, res) => {
   const { email, name, referredBy } = req.body;

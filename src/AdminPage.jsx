@@ -486,12 +486,101 @@ function AdminB2bLeads() {
   );
 }
 
+// ── Waitlist Tab ──────────────────────────────────────────────────────────────
+function AdminWaitlist() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem("winlab_token");
+
+  useEffect(() => {
+    fetch("/api/early-access/list", { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [token]);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold text-white">
+          Waitlist{data ? <span className="text-slate-500 font-normal text-sm ml-2">({data.total} signups)</span> : ""}
+        </h2>
+        <div className="flex gap-3 text-xs text-slate-500">
+          <span className="bg-slate-800 px-3 py-1.5 rounded-lg">Anonymized</span>
+        </div>
+      </div>
+
+      {loading ? (
+        <p className="text-slate-500 text-sm">Loading…</p>
+      ) : !data || data.total === 0 ? (
+        <p className="text-slate-500 text-sm">No signups yet.</p>
+      ) : (
+        <>
+          {/* KPI strip */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
+              <p className="text-2xl font-black text-emerald-400">{data.total}</p>
+              <p className="text-xs text-slate-500 mt-1">Total signups</p>
+            </div>
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
+              <p className="text-2xl font-black text-blue-400">{500 - data.total}</p>
+              <p className="text-xs text-slate-500 mt-1">Seats remaining</p>
+            </div>
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
+              <p className="text-2xl font-black text-purple-400">
+                {data.signups.reduce((s, r) => s + (r.referrals || 0), 0)}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">Total referrals</p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto border border-slate-800 rounded-xl">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-slate-900 text-slate-400 uppercase tracking-wider">
+                <tr>
+                  <th className="px-4 py-3">#</th>
+                  <th className="px-4 py-3">Code</th>
+                  <th className="px-4 py-3">Email</th>
+                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Referrals</th>
+                  <th className="px-4 py-3">Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.signups.map((r) => (
+                  <tr key={r.position} className="border-t border-slate-800 hover:bg-slate-900/40">
+                    <td className="px-4 py-2.5 text-slate-500 font-mono">{r.position}</td>
+                    <td className="px-4 py-2.5 font-mono text-white">{r.code}</td>
+                    <td className="px-4 py-2.5 text-slate-300 font-mono">{r.email}</td>
+                    <td className="px-4 py-2.5 text-slate-400">{r.name || "—"}</td>
+                    <td className="px-4 py-2.5">
+                      {r.referrals > 0 ? (
+                        <span className="text-emerald-400 font-medium">+{r.referrals}</span>
+                      ) : (
+                        <span className="text-slate-600">0</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-slate-500">
+                      {r.joinedAt ? new Date(r.joinedAt).toLocaleDateString() : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 const TABS = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
   { id: "blog", label: "Blog Editor", icon: "📝" },
   { id: "leaderboard", label: "Leaderboard", icon: "🏆" },
   { id: "replay", label: "Replay", icon: "▶️" },
   { id: "b2b", label: "B2B Leads", icon: "🏢" },
+  { id: "waitlist", label: "Waitlist", icon: "🎫" },
 ];
 
 // ── Admin Login ───────────────────────────────────────────────────────────────
@@ -635,6 +724,7 @@ export default function AdminPage() {
         {tab === "leaderboard" && <AdminLeaderboard />}
         {tab === "replay" && <AdminReplayTab />}
         {tab === "b2b" && <AdminB2bLeads />}
+        {tab === "waitlist" && <AdminWaitlist />}
       </div>
     </div>
   );
