@@ -368,6 +368,19 @@ model SessionEvent {
   @@index([userId, labId])
 }
 
+// Billing metering — daily usage per tenant
+model TenantUsage {
+  id        String   @id @default(cuid())
+  tenantId  String
+  date      String   // ISO date: "2026-04-19"
+  data      String   // JSON: { events_ingested, devices_active, risk_calculations, ... }
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([tenantId, date])
+  @@index([tenantId])
+  @@index([date])
+}
+
 // Webhook Event Deduplication Table
 model ProcessedWebhookEvent {
   id              String   @id @default(cuid())
