@@ -1682,6 +1682,16 @@ app.get("/demo", (req, res) => {
   }
 });
 
+// ── Funnel landing page ───────────────────────────────────────────────
+app.get("/funnel", (req, res) => {
+  const funnelPage = path.join(__dirname, "coming-soon", "funnel.html");
+  if (existsSync(funnelPage)) {
+    res.sendFile(funnelPage);
+  } else {
+    res.redirect("/");
+  }
+});
+
 // ── Enterprise landing page ───────────────────────────────────────────
 app.get("/enterprise", (req, res) => {
   const enterprisePage = path.join(__dirname, "coming-soon", "enterprise-landing.html");
