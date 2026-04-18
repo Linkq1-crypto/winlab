@@ -1,105 +1,121 @@
-// scripts/state-recovery.js – Event Sourcing State Recovery
-// Called when a node starts up to rebuild state from DB + event log
-// Usage: node scripts/state-recovery.js
+// scripts/state-recovery.js – Pure State Rebuild from Event Log
+// Called on node startup or manual recovery.
+// Usage: node scripts/state-recovery.js [--user <userId>] [--dry-run]
+//
+// State is NEVER read from DB tables directly.
+// It is always recomputed from the Event log — same log = same state.
 
 import { PrismaClient } from '@prisma/client';
+import { rebuildState, rebuildUserState, createSnapshot } from '../src/services/stateRebuildEngine.js';
 
 const prisma = new PrismaClient();
 
-async function getLatestSnapshot() {
-  // Find the most recent completed lab progress as a "snapshot"
-  const completedLabs = await prisma.userProgress.findMany({
-    where: { completed: true },
-    orderBy: { updatedAt: 'desc' },
-  });
-
+function parseArgs() {
+  const args = process.argv.slice(2);
   return {
-    lastEventId: completedLabs.length > 0 ? completedLabs[0].id : null,
-    completedLabs: completedLabs.length,
-    timestamp: new Date().toISOString(),
+    userId:  args.includes('--user')    ? args[args.indexOf('--user') + 1]    : null,
+    dryRun:  args.includes('--dry-run'),
+    verbose: args.includes('--verbose'),
   };
 }
 
-async function getEventsAfter(snapshotId) {
-  if (!snapshotId) {
-    return prisma.event.findMany({
-      orderBy: { createdAt: 'asc' },
-    });
-  }
-
-  // Find events created after the snapshot
-  const snapshot = await prisma.userProgress.findUnique({
-    where: { id: snapshotId },
-  });
-
-  if (!snapshot) return [];
+// ──── Load ordered event log ────
+async function loadEvents(userId = null) {
+  const where = userId
+    ? { OR: [
+        { payload: { contains: `"userId":"${userId}"` } },
+        { payload: { contains: `"userId": "${userId}"` } },
+      ]}
+    : {};
 
   return prisma.event.findMany({
-    where: {
-      createdAt: { gt: snapshot.updatedAt },
-      status: { not: 'done' },
-    },
+    where,
     orderBy: { createdAt: 'asc' },
   });
 }
 
-async function rebuildState(snapshot, events) {
-  console.log(`[Recovery] Snapshot: ${snapshot.completedLabs} labs completed at ${snapshot.timestamp}`);
-  console.log(`[Recovery] Found ${events.length} pending events to process`);
+// ──── Validate rebuilt state against DB ────
+// Compares key fields between rebuilt state and live DB rows.
+// Reports divergences — does NOT fix them (that's the event log's job).
+async function validateState(builtState, opts = {}) {
+  const mismatches = [];
 
-  for (const event of events) {
-    console.log(`[Recovery] Processing event: ${event.type} (${event.id})`);
-
-    try {
-      switch (event.type) {
-        case 'USER_REGISTERED':
-          // User already exists, just log
-          console.log(`  → User ${event.payload.userId} registered`);
-          break;
-
-        case 'LAB_COMPLETED':
-          // Already tracked in UserProgress
-          console.log(`  → Lab ${event.payload.labId} completed by ${event.payload.userId}`);
-          break;
-
-        case 'PAYMENT_DONE':
-          // Already tracked in Stripe webhook handler
-          console.log(`  → Payment processed for ${event.payload.userId}`);
-          break;
-
-        default:
-          console.log(`  → Unknown event type: ${event.type}`);
-      }
-
-      // Mark event as processed
-      await prisma.event.update({
-        where: { id: event.id },
-        data: { status: 'done', processedAt: new Date() },
-      });
-    } catch (err) {
-      console.error(`[Recovery] Failed to process event ${event.id}:`, err.message);
-      await prisma.event.update({
-        where: { id: event.id },
-        data: { status: 'failed', error: err.message },
-      });
+  // Check user account statuses
+  const dbUsers = await prisma.user.findMany({ select: { id: true, accountStatus: true, totalXp: true } });
+  for (const dbUser of dbUsers) {
+    const built = builtState.users[dbUser.id];
+    if (!built) {
+      mismatches.push({ type: 'USER_MISSING_IN_STATE', userId: dbUser.id });
+      continue;
+    }
+    if (built.accountStatus !== dbUser.accountStatus) {
+      mismatches.push({ type: 'ACCOUNT_STATUS_MISMATCH', userId: dbUser.id, built: built.accountStatus, db: dbUser.accountStatus });
     }
   }
 
-  console.log('[Recovery] State rebuild complete');
+  // Check lab completions
+  const dbProgress = await prisma.userProgress.findMany({ where: { completed: true } });
+  for (const row of dbProgress) {
+    const userLabs = builtState.labProgress[row.userId] ?? {};
+    const lab      = userLabs[row.labId];
+    if (!lab?.completed) {
+      mismatches.push({ type: 'LAB_COMPLETION_MISSING_IN_STATE', userId: row.userId, labId: row.labId });
+    }
+  }
+
+  if (opts.verbose) {
+    console.log(`[Validate] Checked ${dbUsers.length} users, ${dbProgress.length} lab completions`);
+  }
+
+  return mismatches;
 }
 
+// ──── Main ────
 async function main() {
-  console.log('[Recovery] Starting state recovery...');
+  const opts = parseArgs();
+  console.log('[Recovery] Starting pure state rebuild from event log...');
+  console.log(`[Recovery] Mode: ${opts.dryRun ? 'DRY RUN' : 'LIVE'} | User filter: ${opts.userId ?? 'ALL'}`);
 
   try {
-    // 1. Get latest snapshot
-    const snapshot = await getLatestSnapshot();
+    // 1. Load ordered event log (source of truth)
+    const events = await loadEvents(opts.userId);
+    console.log(`[Recovery] Loaded ${events.length} events`);
 
-    // 2. Get pending events
-    const events = await getEventsAfter(snapshot.lastEventId);
+    if (events.length === 0) {
+      console.log('[Recovery] No events found — nothing to rebuild');
+      return;
+    }
 
-    // 3. Rebuild state
-    await rebuildState(snapshot, events);
+    // 2. Rebuild state — pure, deterministic
+    const { state, eventsApplied, lastEventId } = opts.userId
+      ? (() => {
+          const s = rebuildUserState(events, opts.userId);
+          return { state: { users: {}, ...s, labProgress: { [opts.userId]: s.labProgress }, subscriptions: { [opts.userId]: s.subscription }, skills: { [opts.userId]: s.skills }, badges: { [opts.userId]: s.badges }, payments: { [opts.userId]: s.payments }, earlyAccess: {} }, eventsApplied: events.length, lastEventId: events.at(-1)?.id };
+        })()
+      : rebuildState(events);
+
+    console.log(`[Recovery] Rebuilt state from ${eventsApplied} events (last: ${lastEventId})`);
+    console.log(`[Recovery] Users in state:  ${Object.keys(state.users).length}`);
+    console.log(`[Recovery] Labs in state:   ${Object.values(state.labProgress).reduce((n, u) => n + Object.keys(u).length, 0)}`);
+    console.log(`[Recovery] Subs in state:   ${Object.values(state.subscriptions).filter(Boolean).length}`);
+
+    // 3. Validate rebuilt state vs live DB (report only — no writes)
+    if (!opts.userId) {
+      const mismatches = await validateState(state, opts);
+      if (mismatches.length > 0) {
+        console.warn(`[Recovery] ⚠️  ${mismatches.length} divergence(s) found between event log and DB:`);
+        mismatches.forEach(m => console.warn('  ', JSON.stringify(m)));
+        console.warn('[Recovery] Divergences mean DB was mutated outside the event log. Re-emit missing events to reconcile.');
+      } else {
+        console.log('[Recovery] ✅ Event log state matches DB — no divergences');
+      }
+    }
+
+    // 4. Create snapshot (performance cache, NOT source of truth)
+    if (!opts.dryRun) {
+      const snapshot = createSnapshot(state, lastEventId);
+      console.log(`[Recovery] Snapshot created at ${new Date(snapshot.createdAt).toISOString()} (v${snapshot.snapshotVersion})`);
+    }
 
     console.log('[Recovery] Node is ready to serve traffic');
   } catch (err) {

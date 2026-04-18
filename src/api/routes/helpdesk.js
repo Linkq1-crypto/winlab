@@ -139,4 +139,121 @@ router.get('/ai-cache/stats', async (req, res) => {
   }
 });
 
+// ──── Edge Sync Routes ────
+
+// POST /api/helpdesk/sync/batch  — receive a batch of edge events
+// Returns { acknowledged: string[], conflicts: { id, serverData }[] }
+router.post('/sync/batch', async (req, res) => {
+  const tenantId = req.tenantId ?? 'default';
+  const { events } = req.body;
+
+  if (!Array.isArray(events) || events.length === 0) {
+    return res.status(400).json({ error: 'events array required' });
+  }
+  if (events.length > 100) {
+    return res.status(400).json({ error: 'batch too large (max 100)' });
+  }
+
+  const acknowledged = [];
+  const conflicts    = [];
+
+  for (const event of events) {
+    const { event_id, id } = event;
+    const eid = event_id ?? id;
+    if (!eid) continue;
+
+    try {
+      const { isEventProcessed, markEventProcessed } = await import('../../services/webhookIdempotency.js');
+
+      if (await isEventProcessed(eid)) {
+        // Already processed — acknowledge so client marks it synced
+        acknowledged.push(eid);
+        continue;
+      }
+
+      // Persist to central event log — enveloped with tenant_id
+      const { default: prisma } = await import('../db/prisma.js');
+      const { envelopeEvent } = await import('../../services/tenantManager.js');
+      const enveloped = envelopeEvent(event, tenantId);
+      await prisma.event.create({
+        data: {
+          id:      eid,
+          type:    event.event_type ?? event.type ?? 'UNKNOWN',
+          version: event.schema_version ?? 1,
+          payload: enveloped.payload,
+          status:  'pending',
+        },
+      });
+
+      await markEventProcessed(eid, event.event_type ?? event.type, {
+        device_id: event.device_id,
+        sequence:  event.sequence,
+      });
+
+      acknowledged.push(eid);
+    } catch (err) {
+      if (err.code === 'P2002') {
+        acknowledged.push(eid);
+      } else {
+        conflicts.push({ id: eid, serverData: { error: err.message } });
+      }
+    }
+  }
+
+  res.json({ acknowledged, conflicts });
+
+  // Billing metering — fire-and-forget, never blocks response
+  import('../../services/billingMetering.js').then(({ meterBatch, meter }) => {
+    meterBatch(tenantId, events);
+    meter(tenantId, 'risk_calculations', acknowledged.length);
+  }).catch(() => {});
+
+  // Trigger intelligence layer asynchronously — fire-and-forget, does not block response
+  const deviceIds = [...new Set(events.map(e => e.device_id).filter(Boolean))];
+  for (const deviceId of deviceIds) {
+    import('../../services/intelligenceLayer.js').then(({ processDeviceEvents }) => {
+      processDeviceEvents(deviceId, {}, async alert => {
+        if (alert.severity === 'CRITICAL') {
+          const { dispatchAlert } = await import('../../core/alertDispatcher.js');
+          await dispatchAlert(alert);
+        }
+      });
+    }).catch(err => console.error('[Intelligence] Trigger failed:', err.message));
+  }
+});
+
+// POST /api/helpdesk/sync  — single-event fallback (used when batch endpoint rejects)
+router.post('/sync', async (req, res) => {
+  const event = req.body;
+  const eid   = event.event_id ?? event.id;
+  if (!eid) return res.status(400).json({ error: 'event_id required' });
+
+  try {
+    const { isEventProcessed, markEventProcessed } = await import('../../services/webhookIdempotency.js');
+
+    if (await isEventProcessed(eid)) return res.json({ acknowledged: [eid] });
+
+    const { default: prisma } = await import('../db/prisma.js');
+    await prisma.event.create({
+      data: {
+        id:      eid,
+        type:    event.event_type ?? event.type ?? 'UNKNOWN',
+        version: event.schema_version ?? 1,
+        payload: JSON.stringify(event.payload ?? {}),
+        status:  'pending',
+      },
+    });
+
+    await markEventProcessed(eid, event.event_type ?? event.type, {
+      device_id: event.device_id,
+      sequence:  event.sequence,
+    });
+
+    res.json({ acknowledged: [eid] });
+  } catch (err) {
+    if (err.code === 'P2002') return res.json({ acknowledged: [eid] });
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

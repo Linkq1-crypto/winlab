@@ -31,6 +31,10 @@ import {
 // import { bootstrapAlertFlow } from "./src/core/alertDispatcher.js";
 import helpdeskRouter from "./src/api/routes/helpdesk.js";
 import { startHelpdeskWorker } from "./src/services/helpdeskWorker.js";
+import publicApiRouter from "./src/api/routes/publicApi.js";
+import { tenantMiddleware } from "./src/services/tenantManager.js";
+import { qosMiddleware } from "./src/services/qosLayer.js";
+import { startMeteringFlush } from "./src/services/billingMetering.js";
 import { recordDeploy as recordDeployEvent, getDeployHistory as getDeployHistoryFn } from "./src/services/helpdeskEngines/bugDetection.js";
 import { syncLogger, dlqLogger } from "./src/services/logger.js";
 
@@ -91,7 +95,7 @@ app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization,x-tenant-id,x-tenant-tier");
   }
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
@@ -136,6 +140,12 @@ function generateToken(user) {
 
 // ── Helpdesk router ──────────────────────────────────────────────────
 app.use("/api/helpdesk", helpdeskRouter);
+
+// ── Health check ─────────────────────────────────────────────────────
+app.get("/api/health", (req, res) => res.json({ ok: true, ts: Date.now() }));
+
+// ── Public API v1 (external integrations + SDK) ──────────────────────
+app.use("/api/v1", tenantMiddleware, qosMiddleware, publicApiRouter);
 
 // ====================================================================
 // AUTH
@@ -1715,7 +1725,10 @@ app.get("*", (req, res) => {
 // START SERVER + WEBSOCKET
 // ====================================================================
 
-const server = app.listen(BASE_PORT, () => console.log(`🚀 WINLAB v7 running on :${BASE_PORT}`));
+const server = app.listen(BASE_PORT, () => {
+  console.log(`🚀 WINLAB v7 running on :${BASE_PORT}`);
+  startMeteringFlush(prisma);
+});
 
 server.on("error", (err) => {
   if (err.code === "EADDRINUSE") {
