@@ -1712,6 +1712,16 @@ app.get("/enterprise", (req, res) => {
   }
 });
 
+// ── Test homepage (new conversion page) ──────────────────────────────
+app.get("/test", (req, res) => {
+  const testPage = path.join(__dirname, "coming-soon", "test.html");
+  if (existsSync(testPage)) {
+    res.sendFile(testPage);
+  } else {
+    res.redirect("/");
+  }
+});
+
 // ── Homepage → coming-soon/funnel.html ───────────────────────────────
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "coming-soon", "funnel.html"));

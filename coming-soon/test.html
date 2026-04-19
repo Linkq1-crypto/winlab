@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WinLab — Your server is down.</title>
+<meta name="description" content="5 real incidents. No setup. No VM. Fix them in your browser.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0a0a'/%3E%3Ctext x='4' y='24' font-family='monospace' font-size='22' font-weight='900' fill='%23ef4444'%3EW%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" onload="this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"></noscript>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080808;--surface:#0f0f0f;--border:#1a1a1a;--border2:#222;
+  --text:#f0f0f0;--muted:#666;--dim:#333;
+  --red:#ef4444;--red-dim:#7f1d1d;--red-bg:#1a0505;
+  --green:#22c55e;--green-bg:#052e16;
+  --yellow:#facc15;--orange:#f97316;
+  --mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{font-family:'Inter',sans-serif;cursor:pointer;border:none;outline:none}
+input{font-family:'Inter',sans-serif;outline:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
+
+/* ── SCANLINE OVERLAY ── */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:999}
+
+/* ── NAV ── */
+.nav{position:sticky;top:0;z-index:100;background:rgba(8,8,8,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:0 5vw;height:52px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:-.5px}
+.nav-logo .dot{color:var(--red);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.nav-status{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--red)}
+.nav-status .pulse{width:7px;height:7px;border-radius:50%;background:var(--red);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.4)}}
+.nav-cta{background:var(--red);color:#fff;font-weight:700;font-size:12px;padding:7px 18px;border-radius:6px;transition:background .15s}
+.nav-cta:hover{background:#dc2626}
+
+/* ── HERO ── */
+.hero{min-height:92vh;display:flex;flex-direction:column;justify-content:center;padding:60px 5vw;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--red),transparent)}
+.alert-bar{display:inline-flex;align-items:center;gap:8px;background:var(--red-bg);border:1px solid var(--red-dim);color:var(--red);font-family:var(--mono);font-size:11px;font-weight:700;padding:6px 14px;border-radius:4px;margin-bottom:32px;letter-spacing:.5px;text-transform:uppercase}
+.alert-bar .icon{font-size:14px}
+.hero h1{font-size:clamp(42px,8vw,96px);font-weight:900;line-height:.95;letter-spacing:-3px;margin-bottom:28px;max-width:700px}
+.hero h1 .red{color:var(--red)}
+.hero-sub{font-family:var(--mono);font-size:clamp(14px,2vw,18px);color:var(--muted);line-height:1.8;margin-bottom:40px;max-width:480px}
+.hero-sub .hl{color:var(--text)}
+.hero-cta-wrap{display:flex;flex-direction:column;gap:12px;max-width:400px}
+.hero-inputs{display:flex;gap:8px}
+.hero-inputs input{flex:1;background:#0f0f0f;border:1px solid var(--border2);color:var(--text);padding:13px 16px;border-radius:6px;font-size:13px;transition:border-color .2s}
+.hero-inputs input:focus{border-color:var(--red)}
+.hero-inputs input::placeholder{color:var(--muted)}
+.btn-main{width:100%;background:var(--red);color:#fff;font-weight:800;font-size:15px;padding:15px;border-radius:6px;transition:all .2s;letter-spacing:-.3px}
+.btn-main:hover{background:#dc2626;transform:translateY(-1px);box-shadow:0 6px 24px rgba(239,68,68,.3)}
+.btn-main:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.hero-note{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.hero-note span{color:var(--green)}
+
+/* ── TERMINAL PREVIEW ── */
+.terminal-wrap{position:absolute;right:5vw;top:50%;transform:translateY(-50%);width:420px;background:#0a0a0a;border:1px solid #1f2937;border-radius:10px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.8)}
+.term-bar{background:#111;padding:10px 14px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #1a1a1a}
+.term-dot{width:10px;height:10px;border-radius:50%}
+.term-title{margin-left:auto;margin-right:auto;font-family:var(--mono);font-size:11px;color:#444}
+.term-body{padding:16px;font-family:var(--mono);font-size:12px;line-height:1.8;min-height:280px}
+.tl{display:flex;gap:6px;margin-bottom:2px}
+.tp{color:var(--green);flex-shrink:0}
+.tc{color:#e2e8f0}
+.to{color:#64748b}
+.te{color:var(--red);font-weight:600}
+.tw{color:var(--yellow)}
+.ts{color:var(--green)}
+.cursor{display:inline-block;width:8px;height:14px;background:var(--green);animation:blink 1s infinite;vertical-align:middle;margin-left:2px}
+
+/* ── PROOF STRIP ── */
+.strip{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:18px 5vw;display:flex;align-items:center;justify-content:center;gap:clamp(24px,5vw,64px);flex-wrap:wrap;background:#0a0a0a}
+.strip-stat{text-align:center}
+.strip-n{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text)}
+.strip-l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+
+/* ── SCREEN MENTAL ── */
+.mental{padding:80px 5vw;max-width:700px;margin:0 auto;text-align:center}
+.mental p{font-family:var(--mono);font-size:clamp(16px,2.5vw,22px);color:var(--muted);line-height:2;margin-bottom:6px}
+.mental p.hl{color:var(--text);font-weight:700}
+.mental p.red{color:var(--red)}
+
+/* ── INCIDENT CARDS ── */
+.incidents{padding:0 5vw 80px;max-width:1100px;margin:0 auto}
+.incidents-label{font-family:var(--mono);font-size:11px;color:var(--red);text-transform:uppercase;letter-spacing:3px;margin-bottom:16px}
+.incidents h2{font-size:clamp(24px,4vw,40px);font-weight:900;letter-spacing:-1.5px;margin-bottom:40px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:22px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--card-color,var(--red));opacity:0;transition:opacity .2s}
+.card:hover{border-color:#333;transform:translateY(-2px)}
+.card:hover::before{opacity:1}
+.card-status{display:flex;align-items:center;gap:6px;margin-bottom:12px}
+.card-dot{width:8px;height:8px;border-radius:50%;background:var(--card-color,var(--red));animation:pulse 1.4s infinite}
+.card-label{font-family:var(--mono);font-size:10px;color:var(--card-color,var(--red));font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.card h3{font-size:16px;font-weight:800;margin-bottom:6px;letter-spacing:-.3px}
+.card p{font-size:12px;color:var(--muted);line-height:1.6}
+.card-tag{display:inline-block;font-family:var(--mono);font-size:10px;color:#444;border:1px solid #222;padding:2px 8px;border-radius:3px;margin-top:12px}
+
+/* ── ANTI COURSE ── */
+.anti{padding:80px 5vw;max-width:600px;margin:0 auto;text-align:center}
+.anti h2{font-size:clamp(28px,5vw,52px);font-weight:900;letter-spacing:-2px;margin-bottom:32px;line-height:1}
+.anti-list{list-style:none;margin-bottom:32px}
+.anti-list li{font-family:var(--mono);font-size:16px;color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border);text-decoration:line-through}
+.anti-list li:last-child{border:none}
+.anti-arrow{font-family:var(--mono);font-size:clamp(20px,3vw,28px);color:var(--text);font-weight:700;line-height:1.6}
+.anti-arrow span{color:var(--red)}
+
+/* ── OUTCOME ── */
+.outcome{padding:80px 5vw;max-width:700px;margin:0 auto}
+.outcome h2{font-size:clamp(24px,4vw,40px);font-weight:900;letter-spacing:-1.5px;margin-bottom:12px}
+.outcome-sub{font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:36px}
+.outcome-items{display:flex;flex-direction:column;gap:0}
+.outcome-item{display:flex;align-items:flex-start;gap:16px;padding:20px 0;border-bottom:1px solid var(--border)}
+.outcome-item:last-child{border:none}
+.outcome-check{width:28px;height:28px;border-radius:4px;background:var(--green-bg);border:1px solid #1a4a28;display:flex;align-items:center;justify-content:center;color:var(--green);font-size:13px;font-weight:800;flex-shrink:0;margin-top:2px}
+.outcome-item h3{font-size:16px;font-weight:700;margin-bottom:4px}
+.outcome-item p{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* ── SOCIAL PROOF ── */
+.proof{padding:80px 5vw;max-width:700px;margin:0 auto;text-align:center}
+.proof-numbers{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:40px}
+.proof-cell{background:var(--surface);padding:28px 16px;text-align:center}
+.proof-n{font-family:var(--mono);font-size:28px;font-weight:700;color:var(--text)}
+.proof-l{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}
+.proof-twist{font-family:var(--mono);font-size:14px;color:var(--muted);line-height:2}
+.proof-twist strong{color:var(--text)}
+.proof-twist .red{color:var(--red)}
+
+/* ── PRICING ── */
+.pricing{padding:80px 5vw;max-width:420px;margin:0 auto;text-align:center}
+.pricing h2{font-size:clamp(28px,5vw,44px);font-weight:900;letter-spacing:-2px;margin-bottom:8px}
+.pricing-sub{font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:36px}
+.price-card{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:32px;margin-bottom:16px}
+.price-amount{font-family:var(--mono);font-size:52px;font-weight:900;color:var(--text);letter-spacing:-2px;line-height:1}
+.price-amount sup{font-size:20px;vertical-align:super;font-weight:700}
+.price-period{font-size:13px;color:var(--muted);margin:8px 0 20px;font-family:var(--mono)}
+.price-perks{list-style:none;text-align:left;margin-bottom:24px;display:flex;flex-direction:column;gap:10px}
+.price-perks li{font-size:13px;color:var(--muted);display:flex;gap:10px;align-items:flex-start}
+.price-perks li::before{content:'→';color:var(--red);font-family:var(--mono);flex-shrink:0}
+.price-note{font-size:11px;color:var(--muted);font-family:var(--mono)}
+
+/* ── FINAL CLOSE ── */
+.close{padding:100px 5vw;text-align:center;position:relative;overflow:hidden}
+.close::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 50% 100%,rgba(239,68,68,.05),transparent 70%);pointer-events:none}
+.close h2{font-size:clamp(32px,6vw,72px);font-weight:900;letter-spacing:-3px;line-height:.95;margin-bottom:24px}
+.close h2 .dim{color:var(--muted)}
+.close p{font-family:var(--mono);font-size:16px;color:var(--muted);margin-bottom:40px;line-height:1.8}
+.close-form{max-width:380px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.close-form input{background:#0f0f0f;border:1px solid var(--border2);color:var(--text);padding:14px 18px;border-radius:6px;font-size:14px;text-align:center;transition:border-color .2s}
+.close-form input:focus{border-color:var(--red)}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.footer-logo{font-family:var(--mono);font-weight:700;font-size:13px}
+.footer-logo span{color:var(--red)}
+.footer-links{display:flex;gap:20px}
+.footer-links a{font-size:11px;color:var(--muted);transition:color .15s}
+.footer-links a:hover{color:var(--text)}
+.footer-copy{font-size:11px;color:var(--dim)}
+
+/* ── UPSELL MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:#0f0f0f;border:1px solid #1f2937;border-radius:12px;width:100%;max-width:480px;overflow:hidden;transform:translateY(16px);transition:transform .25s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-top{background:var(--red-bg);border-bottom:1px solid var(--red-dim);padding:20px 24px;display:flex;align-items:center;gap:10px}
+.modal-top-dot{width:10px;height:10px;border-radius:50%;background:var(--red);animation:pulse 1.4s infinite}
+.modal-top-txt{font-family:var(--mono);font-size:12px;color:var(--red);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.modal-body{padding:28px 24px}
+.modal-body h2{font-size:22px;font-weight:900;letter-spacing:-1px;margin-bottom:8px}
+.modal-body p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+.modal-offer{background:#0a0a0a;border:1px solid var(--border2);border-radius:8px;padding:18px;margin-bottom:20px}
+.modal-offer-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.modal-offer-name{font-weight:700;font-size:14px}
+.modal-offer-price{font-family:var(--mono);font-weight:900;color:var(--green)}
+.modal-offer-price del{color:var(--muted);font-size:12px;margin-right:4px;font-weight:400}
+.modal-perks{list-style:none;display:flex;flex-direction:column;gap:6px}
+.modal-perks li{font-size:12px;color:var(--muted);display:flex;gap:8px}
+.modal-perks li::before{content:'→';color:var(--green);font-family:var(--mono);flex-shrink:0}
+.modal-actions{display:flex;flex-direction:column;gap:8px}
+.btn-yes{width:100%;padding:14px;border-radius:8px;background:var(--green);color:#000;font-weight:800;font-size:14px;transition:all .2s}
+.btn-yes:hover{background:#16a34a;transform:translateY(-1px)}
+.btn-no{width:100%;padding:11px;border-radius:8px;background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:12px;font-family:var(--mono)}
+.btn-no:hover{border-color:#333;color:var(--text)}
+.modal-guarantee{text-align:center;font-size:10px;color:var(--dim);margin-top:8px;font-family:var(--mono)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){.terminal-wrap{display:none}.hero{min-height:auto;padding:80px 5vw 60px}.hero h1{font-size:clamp(36px,10vw,64px)}}
+@media(max-width:600px){.hero-inputs{flex-direction:column}.proof-numbers{grid-template-columns:1fr 1fr}.proof-cell:last-child{grid-column:span 2}footer{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">Win<span class="dot">█</span>Lab</div>
+  <div class="nav-status"><div class="pulse"></div> INCIDENT ACTIVE</div>
+  <a class="nav-cta" href="#signup">Fix it — $5/mo</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="alert-bar"><span class="icon">🔴</span> STATUS: CRITICAL — 1 service down</div>
+  <h1>Your server<br>is <span class="red">down.</span></h1>
+  <p class="hero-sub">
+    <span class="hl">5 real incidents.</span><br>
+    No setup. No VM.<br>
+    Fix them in your browser.
+  </p>
+  <div class="hero-cta-wrap" id="signup">
+    <div class="hero-inputs">
+      <input type="text" id="h-name" placeholder="Name" autocomplete="name">
+      <input type="email" id="h-email" placeholder="Email" required autocomplete="email">
+    </div>
+    <button class="btn-main" id="hero-btn" onclick="heroSignup()">Fix your first incident →</button>
+    <div class="hero-note">🔒 <span id="seats-txt">500 seats</span> at $5/mo · locked forever · cancel anytime</div>
+  </div>
+
+  <!-- Terminal -->
+  <div class="terminal-wrap">
+    <div class="term-bar">
+      <div class="term-dot" style="background:#ef4444"></div>
+      <div class="term-dot" style="background:#facc15"></div>
+      <div class="term-dot" style="background:#22c55e"></div>
+      <div class="term-title">prod-server-01 — bash</div>
+    </div>
+    <div class="term-body" id="term-body">
+      <div class="tl"><span class="tp">$ </span><span class="tc">systemctl status apache2</span></div>
+      <div class="tl"><span class="te">● apache2.service - The Apache HTTP Server</span></div>
+      <div class="tl"><span class="te">   Loaded: loaded (/lib/systemd/system/apache2.service)</span></div>
+      <div class="tl"><span class="te">   Active: failed (Result: exit-code)</span></div>
+      <div class="tl"><span class="to">   Process: 1847 ExecStart=... (code=exited, status=1/FAILURE)</span></div>
+      <div class="tl" style="margin-top:8px"><span class="tp">$ </span><span class="tc">journalctl -xe | tail -5</span></div>
+      <div class="tl"><span class="tw">Apr 19 03:14:21 apache2[1847]: AH00526: Syntax error on line 23</span></div>
+      <div class="tl"><span class="tw">Apr 19 03:14:21 apache2[1847]: Invalid command 'SSLEngine'</span></div>
+      <div class="tl" style="margin-top:8px"><span class="tp">$ </span><span class="tc">a2enmod ssl</span></div>
+      <div class="tl"><span class="ts">Enabling module ssl.</span></div>
+      <div class="tl"><span class="tp">$ </span><span class="tc">systemctl restart apache2</span></div>
+      <div class="tl"><span class="ts">● apache2.service: active (running) ✓</span></div>
+      <div class="tl" style="margin-top:8px"><span class="tp">$ </span><span class="cursor"></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- STRIP -->
+<div class="strip">
+  <div class="strip-stat"><div class="strip-n">500+</div><div class="strip-l">Engineers on waitlist</div></div>
+  <div class="strip-stat"><div class="strip-n">6 min</div><div class="strip-l">Avg solve time</div></div>
+  <div class="strip-stat"><div class="strip-n">40+</div><div class="strip-l">Real incidents</div></div>
+  <div class="strip-stat"><div class="strip-n">$5</div><div class="strip-l">Early access / mo</div></div>
+</div>
+
+<!-- SCREEN MENTAL -->
+<div class="mental">
+  <p class="hl">You click.</p>
+  <p>A terminal opens.</p>
+  <p>The system is broken.</p>
+  <p style="margin-top:12px">Logs are messy.</p>
+  <p>Services are failing.</p>
+  <p style="margin-top:12px">Nothing is explained.</p>
+  <p class="red" style="margin-top:16px;font-size:clamp(18px,3vw,26px);font-weight:700">You figure it out.</p>
+</div>
+
+<!-- INCIDENT CARDS -->
+<div class="incidents">
+  <div class="incidents-label">Live incidents</div>
+  <h2>Real problems.<br>Not exercises.</h2>
+  <div class="cards">
+    <div class="card" style="--card-color:#ef4444">
+      <div class="card-status"><div class="card-dot"></div><span class="card-label">Critical</span></div>
+      <h3>Apache down</h3>
+      <p>Site offline — service failed at 3 AM. Find why. Fix it.</p>
+      <span class="card-tag">HTTP · SSL · systemd</span>
+    </div>
+    <div class="card" style="--card-color:#f97316">
+      <div class="card-status"><div class="card-dot"></div><span class="card-label">Warning</span></div>
+      <h3>Disk full</h3>
+      <p>Server frozen. No space left on device. Recover it fast.</p>
+      <span class="card-tag">df · du · find</span>
+    </div>
+    <div class="card" style="--card-color:#facc15">
+      <div class="card-status"><div class="card-dot"></div><span class="card-label">Blocked</span></div>
+      <h3>Permission denied</h3>
+      <p>Access blocked. SELinux or chmod? You decide.</p>
+      <span class="card-tag">chmod · SELinux · ACL</span>
+    </div>
+    <div class="card" style="--card-color:#ef4444">
+      <div class="card-status"><div class="card-dot"></div><span class="card-label">Critical</span></div>
+      <h3>Memory leak</h3>
+      <p>App crashing under load. Find the leak before prod dies.</p>
+      <span class="card-tag">top · htop · strace</span>
+    </div>
+    <div class="card" style="--card-color:#f97316">
+      <div class="card-status"><div class="card-dot"></div><span class="card-label">Down</span></div>
+      <h3>Database dead</h3>
+      <p>Queries failing. Service unreachable. Recover the data.</p>
+      <span class="card-tag">MySQL · pg · recovery</span>
+    </div>
+  </div>
+</div>
+
+<!-- ANTI COURSE -->
+<div class="anti">
+  <h2>This is not<br>a course.</h2>
+  <ul class="anti-list">
+    <li>No videos</li>
+    <li>No theory</li>
+    <li>No step-by-step</li>
+  </ul>
+  <div class="anti-arrow">
+    Just <span class="red">problems.</span><br>
+    Real ones.<br>
+    You learn by fixing them.
+  </div>
+</div>
+
+<!-- OUTCOME -->
+<div class="outcome">
+  <h2>After a few labs:</h2>
+  <p class="outcome-sub">What actually changes</p>
+  <div class="outcome-items">
+    <div class="outcome-item">
+      <div class="outcome-check">✓</div>
+      <div>
+        <h3>You debug faster</h3>
+        <p>You've seen the failure modes before. Your hands know what to type.</p>
+      </div>
+    </div>
+    <div class="outcome-item">
+      <div class="outcome-check">✓</div>
+      <div>
+        <h3>You stop panicking</h3>
+        <p>3 AM alerts stop being a crisis. You've fixed worse in the lab.</p>
+      </div>
+    </div>
+    <div class="outcome-item">
+      <div class="outcome-check">✓</div>
+      <div>
+        <h3>You become useful under pressure</h3>
+        <p>Your team notices. Your manager notices. The incidents still happen — but you handle them.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SOCIAL PROOF -->
+<div class="proof">
+  <div class="proof-numbers">
+    <div class="proof-cell"><div class="proof-n">500+</div><div class="proof-l">devs already<br>on the list</div></div>
+    <div class="proof-cell"><div class="proof-n">6 min</div><div class="proof-l">average<br>solve time</div></div>
+    <div class="proof-cell"><div class="proof-n">73%</div><div class="proof-l">fail their<br>first lab</div></div>
+  </div>
+  <div class="proof-twist">
+    <strong>Most users fail the first lab.</strong><br>
+    <span class="red">That's the point.</span><br>
+    You can't fail in prod.<br>
+    You can fail here.
+  </div>
+</div>
+
+<!-- PRICING -->
+<div class="pricing">
+  <h2>Simple.</h2>
+  <p class="pricing-sub">Early access — limited seats</p>
+  <div class="price-card">
+    <div class="price-amount"><sup>$</sup>5</div>
+    <div class="price-period">/ month · locked forever</div>
+    <ul class="price-perks">
+      <li>Unlimited labs</li>
+      <li>New incidents every week</li>
+      <li>AI Mentor on standby</li>
+      <li>Verifiable certificates</li>
+      <li>Cancel anytime</li>
+    </ul>
+    <button class="btn-main" onclick="document.getElementById('h-email').focus();window.scrollTo({top:0,behavior:'smooth'})">Claim your seat →</button>
+  </div>
+  <p class="price-note">After 500 seats: $29/mo. No exceptions.</p>
+</div>
+
+<!-- FINAL CLOSE -->
+<div class="close">
+  <h2>Your server<br><span class="dim">will go down.</span></h2>
+  <p>
+    It's not "if".<br>
+    It's "when".<br><br>
+    Better break things here first.
+  </p>
+  <div class="close-form">
+    <input type="email" id="footer-email" placeholder="your@email.com" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border2)'">
+    <button class="btn-main" onclick="footerSignup()">Start now →</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Win<span>Lab</span></div>
+  <div class="footer-links">
+    <a href="/funnel">Waitlist</a>
+    <a href="mailto:hello@winlab.cloud">Contact</a>
+    <a href="/privacy">Privacy</a>
+  </div>
+  <div class="footer-copy">© 2026 WinLab</div>
+</footer>
+
+<!-- UPSELL MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-top"><div class="modal-top-dot"></div><div class="modal-top-txt">You're in — one more thing</div></div>
+    <div class="modal-body">
+      <h2>Lock your price<br>before seats run out.</h2>
+      <p>You're <strong id="modal-pos" style="color:var(--green)">#—</strong> on the list. 500 seats at $5/mo — after that it's $29/mo. No exceptions.</p>
+      <div class="modal-offer">
+        <div class="modal-offer-row">
+          <span class="modal-offer-name">Early Access Pro</span>
+          <span class="modal-offer-price"><del>$29</del> $5/mo</span>
+        </div>
+        <ul class="modal-perks">
+          <li>All 40+ labs, unlimited</li>
+          <li>AI Mentor — full access</li>
+          <li>Verifiable certificates</li>
+          <li>New labs every week, forever</li>
+          <li>Price locked for life</li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-yes" onclick="goToPro()">Yes — lock $5/mo now →</button>
+        <button class="btn-no" onclick="closeModal()">No thanks, I'll pay $29/mo later</button>
+      </div>
+      <div class="modal-guarantee">🔒 Cancel anytime · Stripe-secured · No commitment</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const utmParams = {};
+new URLSearchParams(window.location.search).forEach((v,k) => { if(k.startsWith('utm_')) utmParams[k]=v; });
+
+async function loadSeats() {
+  try {
+    const r = await fetch('/api/early-access/seats');
+    const d = await r.json();
+    const n = d.remaining ?? '—';
+    document.getElementById('seats-txt').textContent = `Only ${n} seats`;
+  } catch {}
+}
+loadSeats();
+
+async function doSignup(email, name) {
+  const btn = document.getElementById('hero-btn') || document.querySelector('.btn-main');
+  const orig = btn?.textContent;
+  if(btn){ btn.disabled=true; btn.textContent='Joining…'; }
+  try {
+    const r = await fetch('/api/early-access/signup', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, name, meta: utmParams})
+    });
+    const d = await r.json();
+    if(d.existing){
+      if(btn){ btn.disabled=false; btn.textContent=orig; }
+      toast(`✓ Already in — you're #${d.position}`, 'green');
+      return;
+    }
+    if(d.ok || d.success){
+      document.getElementById('modal-pos').textContent = '#'+(d.position??'—');
+      openModal();
+      loadSeats();
+      track('signup_done', {position: d.position, ...utmParams});
+    } else {
+      if(btn){ btn.disabled=false; btn.textContent=orig; }
+      toast(d.error || 'Something went wrong.', 'red');
+    }
+  } catch {
+    if(btn){ btn.disabled=false; btn.textContent=orig; }
+    toast('Connection error. Try again.', 'red');
+  }
+}
+
+function heroSignup() {
+  const email = document.getElementById('h-email').value.trim();
+  const name  = document.getElementById('h-name').value.trim();
+  if(!email || !email.includes('@')){ toast('Enter a valid email.','red'); document.getElementById('h-email').focus(); return; }
+  doSignup(email, name);
+}
+
+function footerSignup() {
+  const email = document.getElementById('footer-email').value.trim();
+  if(!email || !email.includes('@')){ toast('Enter a valid email.','red'); document.getElementById('footer-email').focus(); return; }
+  doSignup(email, '');
+}
+
+function openModal(){ document.getElementById('modal').classList.add('open'); track('upsell_shown', utmParams); }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); track('upsell_declined', utmParams); }
+function goToPro(){ track('upsell_accepted', utmParams); window.location.href='/?checkout=early-access'; }
+document.getElementById('modal').addEventListener('click', e => { if(e.target===document.getElementById('modal')) closeModal(); });
+
+function toast(msg, type) {
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:${type==='green'?'#052e16':'#1a0505'};border:1px solid ${type==='green'?'#1a4a28':'#7f1d1d'};color:${type==='green'?'#4ade80':'#f87171'};padding:11px 22px;border-radius:8px;font-size:13px;font-weight:600;z-index:400;white-space:nowrap;font-family:monospace`;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 4000);
+}
+
+function track(event, meta) {
+  fetch('/api/analytics/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({event,meta})}).catch(()=>{});
+}
+
+track('page_view', {page:'test', ...utmParams});
+document.getElementById('h-email').addEventListener('keydown', e => { if(e.key==='Enter') heroSignup(); });
+document.getElementById('footer-email').addEventListener('keydown', e => { if(e.key==='Enter') footerSignup(); });
+</script>
+</body>
+</html>
