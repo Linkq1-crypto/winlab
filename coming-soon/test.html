@@ -14,7 +14,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#080808;--surface:#0f0f0f;--border:#1a1a1a;--border2:#222;
-  --text:#f0f0f0;--muted:#666;--dim:#333;
+  --text:#f0f0f0;--muted:#999;--dim:#555;
   --red:#ef4444;--red-dim:#7f1d1d;--red-bg:#1a0505;
   --green:#22c55e;--green-bg:#052e16;
   --yellow:#facc15;--orange:#f97316;
@@ -221,9 +221,6 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
 .term-live{font-family:var(--mono);font-size:10px;color:var(--green);display:flex;align-items:center;gap:5px}
 .pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite;flex-shrink:0}
 
-/* ── TRUSTED BY ── */
-.trusted-by{text-align:center;padding:12px 5vw;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.5px}
-.trusted-by strong{color:var(--text)}
 
 /* ── RESPONSIVE ── */
 @media(max-width:900px){.terminal-wrap{display:none}.hero{min-height:auto;padding:80px 5vw 60px}.hero h1{font-size:clamp(36px,10vw,64px)}}
@@ -294,7 +291,6 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
 </section>
 
 <!-- STRIP -->
-<div class="trusted-by">Trusted by <strong>1,000+ SREs</strong> · Linux Foundation · AWS Certified Engineers · CNCF members</div>
 <div class="strip">
   <div class="strip-stat"><div class="strip-n" id="strip-seats">137</div><div class="strip-l">Seats remaining</div></div>
   <div class="strip-stat"><div class="strip-n">6 min</div><div class="strip-l">Avg solve time</div></div>
