@@ -14,10 +14,10 @@ import crypto from "crypto";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import { existsSync } from "fs";
 import { WebSocketServer } from "ws";
 
 import {
@@ -49,7 +49,7 @@ const BASE_PORT  = parseInt(process.env.PORT || "3001", 10);
 const IS_PROD    = process.env.NODE_ENV === "production";
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 const ENC_KEY    = (process.env.ENCRYPTION_KEY || "00000000000000000000000000000000").slice(0, 32);
-const EARLY_ACCESS_FILE = path.join(process.cwd(), "data", "early-access-seats.json");
+const EARLY_ACCESS_FILE = path.join(__dirname, "data", "early-access-seats.json");
 
 // ── Clients ──────────────────────────────────────────────────────────
 const prisma    = new PrismaClient();
@@ -911,13 +911,13 @@ app.get("/api/early-access/seats", (req, res) => {
       data = [];
     }
 
-    const total = 500;
-    const taken = data.length;
-    const remaining = total - taken;
+    const total = MAX_SEATS;
+    const taken = Array.isArray(data) ? data.length : 0;
+    const remaining = Math.max(0, total - taken);
 
     return res.json({ total, taken, remaining });
   } catch (err) {
-    console.error("SEATS ERROR:", err);
+    console.error("GET /api/early-access/seats error:", err);
     return res.status(500).json({ error: "Server error" });
   }
 });
