@@ -10,8 +10,7 @@
  */
 
 import express from 'express';
-import { tenantMiddleware }                       from '../../services/tenantManager.js';
-import { qosMiddleware, recordIngestionLatency, recordSyncOutcome } from '../../services/qosLayer.js';
+import { recordIngestionLatency, recordSyncOutcome } from '../../services/qosLayer.js';
 import { meterBatch, meter }                      from '../../services/billingMetering.js';
 import { loadTenantEvents }                       from '../../services/tenantManager.js';
 import { loadPartitionRange }                     from '../../services/eventPartition.js';
@@ -23,9 +22,7 @@ import prisma from '../db/prisma.js';
 
 const router = express.Router();
 
-// Apply tenant + QoS middleware to all public API routes
-router.use(tenantMiddleware);
-router.use(qosMiddleware);
+// Note: tenantMiddleware + qosMiddleware are applied in server.js before this router.
 
 // ──── POST /events/ingest ────
 router.post('/events/ingest', async (req, res) => {

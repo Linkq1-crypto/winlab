@@ -190,12 +190,11 @@ async function flushToDB(prisma) {
   for (const [tenantId, days] of _meters) {
     for (const [date, counters] of days) {
       try {
-        // Upsert daily usage record
-        await prisma.$executeRawUnsafe(
-          `INSERT OR REPLACE INTO TenantUsage (tenantId, date, data, updatedAt)
-           VALUES (?, ?, ?, ?)`,
-          tenantId, date, JSON.stringify(counters), new Date().toISOString()
-        );
+        await prisma.tenantUsage.upsert({
+          where: { tenantId_date: { tenantId, date } },
+          update: { data: JSON.stringify(counters) },
+          create: { tenantId, date, data: JSON.stringify(counters) },
+        });
       } catch {
         // Fail silently — next flush will retry
       }
