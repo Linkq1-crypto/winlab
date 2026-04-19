@@ -16,7 +16,68 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { LABS, buildVictory, ts, tsLine } from "./labs/labEngine.js";
 
 // ─── Heavy commands (realistic latency 200-400ms) ─────────────────────────
-const HEAVY = new Set(["systemctl", "journalctl", "apt", "yum", "dnf", "find", "du", "top", "ps"]);
+const HEAVY = new Set(["systemctl", "journalctl", "apt", "yum", "dnf", "find", "du", "top", "ps", "dmesg"]);
+
+// ─── Random instance ID per session ───────────────────────────────────────
+function genInstanceId() {
+  const chars = "abcdefghjkmnpqrstuvwxyz0123456789";
+  let s = "srv-";
+  for (let i = 0; i < 2; i++) s += chars[Math.floor(Math.random() * 24)];
+  for (let i = 0; i < 3; i++) s += chars[24 + Math.floor(Math.random() * 10)];
+  return s;
+}
+
+// ─── /proc virtual files ──────────────────────────────────────────────────
+const PROC_FILES = {
+  "/proc/cpuinfo": [
+    "processor\t: 0",
+    "vendor_id\t: GenuineIntel",
+    "cpu family\t: 6",
+    "model\t\t: 85",
+    "model name\t: Intel(R) Xeon(R) Gold 6148 CPU @ 2.40GHz",
+    "stepping\t: 4",
+    "cpu MHz\t\t: 2399.926",
+    "cache size\t: 28160 KB",
+    "physical id\t: 0",
+    "siblings\t: 4",
+    "core id\t\t: 0",
+    "cpu cores\t: 2",
+    "flags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov",
+    "bogomips\t: 4799.85",
+    "clflush size\t: 64",
+    "cache_alignment\t: 64",
+    "address sizes\t: 46 bits physical, 48 bits virtual",
+  ],
+  "/proc/meminfo": [
+    "MemTotal:        8192000 kB",
+    "MemFree:          412340 kB",
+    "MemAvailable:    1823400 kB",
+    "Buffers:          182400 kB",
+    "Cached:          1624188 kB",
+    "SwapCached:        12344 kB",
+    "Active:          4218320 kB",
+    "Inactive:        1834240 kB",
+    "SwapTotal:       2097148 kB",
+    "SwapFree:        1834240 kB",
+    "Dirty:              1024 kB",
+    "Writeback:             0 kB",
+    "AnonPages:       4232188 kB",
+    "Mapped:           823400 kB",
+    "Shmem:             34120 kB",
+    "KReclaimable:     382400 kB",
+    "Slab:             512320 kB",
+    "VmallocTotal:   34359738367 kB",
+    "HugePages_Total:       0",
+    "HugePages_Free:        0",
+    "HugePages_Rsvd:        0",
+    "HugePages_Surp:        0",
+    "Hugepagesize:       2048 kB",
+  ],
+  "/proc/version": [
+    "Linux version 5.15.0-101-generic (buildd@lcy02-amd64-046) (gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, GNU ld (GNU Binutils for Ubuntu) 2.38) #111-Ubuntu SMP Tue Mar 5 20:16:58 UTC 2024",
+  ],
+  "/proc/uptime": ["347214.82 1243812.44"],
+};
 
 // ─── Fake editor ────────────────────────────────────────────────────────────
 function FakeEditor({ path, lines: initial, onClose }) {
@@ -128,13 +189,26 @@ export default function LabTerminal({ initialLabIndex = 0, onUpgrade = () => {} 
   const [startTime]                     = useState(Date.now());
   const [cmdCount, setCmdCount]         = useState(0);
   const [hintIdx, setHintIdx]           = useState(0);
+  const [instanceId]                    = useState(genInstanceId);
+  const [idleDelay, setIdleDelay]       = useState(false);
 
-  const endRef   = useRef(null);
-  const inputRef = useRef(null);
-  const lab      = LABS[labIndex];
+  const endRef          = useRef(null);
+  const inputRef        = useRef(null);
+  const lastActivityRef = useRef(Date.now());
+  const lab             = LABS[labIndex];
 
   // Auto-scroll
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [lines]);
+
+  // Session idle simulation — after 30s inactivity, flag delay
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (Date.now() - lastActivityRef.current > 30000) {
+        setIdleDelay(true);
+      }
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
 
   // Boot sequence on lab change
   useEffect(() => {
@@ -149,7 +223,7 @@ export default function LabTerminal({ initialLabIndex = 0, onUpgrade = () => {} 
 
     const boot = [
       { text: "Connecting to incident environment...", type: "info", d: 0 },
-      { text: `SSH session established → ${lab.subtitle}`, type: "success", d: 500 },
+      { text: `SSH session established → ${instanceId} (${lab.subtitle})`, type: "success", d: 500 },
       { text: "", type: "out", d: 700 },
       { text: `⚠  ACTIVE INCIDENT: ${lab.title}`, type: "err", d: 900 },
       { text: `Difficulty: ${lab.difficulty.toUpperCase()} · Est. ${lab.estimatedMin} min`, type: "info", d: 1100 },
@@ -280,7 +354,55 @@ export default function LabTerminal({ initialLabIndex = 0, onUpgrade = () => {} 
     if (cmd === "id")     { addLine("uid=0(root) gid=0(root) groups=0(root)", "out"); return; }
 
     // uname
-    if (cmd === "uname") { addLine("Linux web01 5.14.0-362.8.1.el9.x86_64 #1 SMP x86_64 GNU/Linux", "out"); return; }
+    if (cmd === "uname") { addLine("Linux web01 5.15.0-101-generic #111-Ubuntu SMP x86_64 GNU/Linux", "out"); return; }
+
+    // history (with timestamps)
+    if (cmd === "history") {
+      const now = Date.now();
+      addLines(cmdHistory.slice().reverse().slice(0, 20).reverse().map((c, i) => ({
+        text: `${String(i + 1).padStart(4)}  ${new Date(now - (cmdHistory.length - i) * 37000).toISOString().slice(0,19).replace("T"," ")}  ${c}`,
+        type: "out",
+      })));
+      return;
+    }
+
+    // free
+    if (cmd === "free") {
+      addLines([
+        { text: "               total        used        free      shared  buff/cache   available", type: "out" },
+        { text: "Mem:         8192000     5903488      412340       34120     1876172     1823400", type: "out" },
+        { text: "Swap:        2097148      262908     1834240", type: "out" },
+      ]);
+      return;
+    }
+
+    // dmesg
+    if (cmd === "dmesg") {
+      const t = (n) => `[${n.toFixed(6).padStart(12)}]`;
+      const jitter = () => (Math.random() * 0.0005).toFixed(6);
+      addLines([
+        { text: `${t(0.000000)} Linux version 5.15.0-101-generic (buildd@lcy02-amd64-046) (gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0)`, type: "out" },
+        { text: `${t(0.000000)} Command line: BOOT_IMAGE=/boot/vmlinuz-5.15.0-101-generic root=UUID=7f1b2c3d-4e5f-6a7b console=ttyS0`, type: "out" },
+        { text: `${t(0.000000)} KERNEL supported cpus:`, type: "out" },
+        { text: `${t(0.000000)}   Intel GenuineIntel`, type: "out" },
+        { text: `${t(0.000000)}   AMD AuthenticAMD`, type: "out" },
+        { text: `${t(0.012456)} x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256`, type: "out" },
+        { text: `${t(0.054321)} ACPI: Core revision 20210930`, type: "out" },
+        { text: `${t(0.187654)} PCI: Using configuration type 1 for base access`, type: "out" },
+        { text: `${t(0.432109)} bootcon [uart0] enabled`, type: "out" },
+        { text: `${t(0.876543)} pci 0000:00:01.0: [8086:7010] reg 0x10: [io  0x01f0-0x01f7]`, type: "out" },
+        { text: `${t(1.102938)} Spectre V2 : Mitigation: Retpolines`, type: "warn" },
+        { text: `${t(1.245678)} audit: initializing netlink subsys (enabled)`, type: "out" },
+        { text: `${t(2.001234)} thermal LNXTHERM:00: registered as thermal_zone0`, type: "out" },
+        { text: `${t(2.456789)} scsi host0: virtio_scsi`, type: "out" },
+        { text: `${t(2.890123)} eth0: hyperv_netvsc: adapter sn: 00155d01-a2b3-c4d5`, type: "out" },
+        { text: `${t(3.123456)} EXT4-fs (sda1): mounted filesystem with ordered data mode. Opts: (null). Quota mode: none.`, type: "out" },
+        { text: `${t(4.567890)} systemd[1]: systemd 249.11-0ubuntu3.12 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR)`, type: "out" },
+        { text: `${t(5.012345)} systemd[1]: Detected architecture x86-64.`, type: "out" },
+        { text: `${t(5.876543)} systemd[1]: Set hostname to <${instanceId}>.`, type: "out" },
+      ]);
+      return;
+    }
 
     // cd
     if (cmd === "cd") {
@@ -326,6 +448,13 @@ export default function LabTerminal({ initialLabIndex = 0, onUpgrade = () => {} 
       const target = args[0];
       if (!target) { addLine("cat: missing operand", "err"); return; }
       const path   = target.startsWith("/") ? target : `${cwd === "/" ? "" : cwd}/${target}`;
+
+      // /proc virtual filesystem
+      if (PROC_FILES[path]) {
+        addLines(PROC_FILES[path].map(l => ({ text: l, type: "out" })));
+        return;
+      }
+
       const file   = files[path];
       if (file) {
         addLines(file.content.map(l => ({
@@ -696,9 +825,30 @@ export default function LabTerminal({ initialLabIndex = 0, onUpgrade = () => {} 
 
   // ── Keyboard handler ──────────────────────────────────────────────────────
   const handleKeyDown = useCallback((e) => {
+    lastActivityRef.current = Date.now();
+
+    // Ctrl+C — interrupt
+    if (e.ctrlKey && e.key === "c") {
+      e.preventDefault();
+      addLines([
+        { text: `[root@web01 ${cwd === "/root" ? "~" : cwd.split("/").pop()}]# ${input}^C`, type: "prompt" },
+      ]);
+      setInput("");
+      setProcessing(false);
+      return;
+    }
+
     if (e.key === "Enter" && !processing) {
       const val = input.trim();
       setInput("");
+
+      // Idle wake-up: add one-time latency
+      if (idleDelay) {
+        setIdleDelay(false);
+        setTimeout(() => { if (val) processCommand(val); }, 280 + Math.random() * 120);
+        return;
+      }
+
       if (val) processCommand(val);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -722,7 +872,7 @@ export default function LabTerminal({ initialLabIndex = 0, onUpgrade = () => {} 
         setInput(parts.join(" "));
       }
     }
-  }, [input, processing, cmdHistory, histIdx, processCommand]);
+  }, [input, processing, cmdHistory, histIdx, processCommand, idleDelay, cwd, addLines]);
 
   const promptDir = cwd === "/root" ? "~" : cwd.split("/").pop();
 

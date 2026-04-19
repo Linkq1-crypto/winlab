@@ -61,6 +61,12 @@ export const opsLabScenarios = [
       "sudo systemctl reload nginx",
       "curl -I https://app.example.com",
     ],
+    guards: {
+      "sudo systemctl reload nginx": "sudo nginx -t",
+    },
+    failureMessages: {
+      "sudo nginx -t": "💥 nginx: [emerg] invalid number of arguments in 'server_name' directive — config is broken. Nginx failed to reload. Site is DOWN. Fix the config and run `sudo nginx -t` before reloading.",
+    },
   },
   {
     id: "pm2-crash-recovery",
@@ -80,6 +86,20 @@ export const opsLabScenarios = [
       "pm2 start ecosystem.config.js",
       "pm2 save",
     ],
+    // Simulated crash output when user inspects logs — shows emoji SyntaxError
+    commandOutputs: {
+      "pm2 logs myapp --err --lines 50": [
+        "0|myapp  | /var/www/myapp/src/routes/api.js:47",
+        "0|myapp  |   const msg = \"✅ Deployment complete 🚀\";",
+        "0|myapp  |                ^",
+        "0|myapp  | SyntaxError: Invalid or unexpected token",
+        "0|myapp  |     at wrapSafe (internal/modules/cjs/loader.js:915:16)",
+        "0|myapp  |     at Module._compile (internal/modules/cjs/loader.js:963:27)",
+        "0|myapp  | [PM2] App [myapp] with id [0] restarting... (restart #47)",
+        "# Emoji in backend source code — Node.js can't parse them without --experimental-vm-modules",
+        "# Fix: remove emoji from server-side JS, or add BOM + utf-8 pragma to the file",
+      ],
+    },
   },
   {
     id: "ssl-certificate-renewal",
@@ -174,6 +194,46 @@ export const opsLabScenarios = [
       "pm2 restart myapp",
       "pm2 logs myapp --lines 20",
     ],
+  },
+  {
+    id: "ghost-asset-incident",
+    title: "🔴 The 70-Hour Bug",
+    objective: "White Screen of Death after deploy. Browser console: GET 404 /assets/index-A1B2C3D4.js. The file doesn't exist in dist/. Find why and fix it.",
+    incident: "⚠ INCIDENT: Users report blank white page after latest deploy. Nginx logs show 404 on all JS/CSS assets. The app process is running. No errors in PM2.",
+    checklist: [
+      "Check what asset hashes Nginx is currently serving via the index.html",
+      "List actual files in dist/assets to find the hash mismatch",
+      "Identify why the build wasn't completed or points to the wrong dist",
+      "Rebuild the frontend with npm run build",
+      "Restart PM2 to pick up the new dist",
+      "Test Nginx config before reloading",
+      "Reload Nginx",
+      "Purge Cloudflare cache (stale HTML still points to old hashes at CDN edge)",
+      "Verify the site loads correctly",
+    ],
+    runbook: [
+      "curl -s https://app.example.com | grep 'src='",
+      "ls dist/assets/",
+      "cat nginx.conf | grep root",
+      "npm run build",
+      "pm2 restart myapp",
+      "sudo nginx -t",
+      "sudo systemctl reload nginx",
+      "cloudflare-cli purge --zone winlab.io --all",
+      "curl -I https://app.example.com | grep -E 'cf-cache-status|200'",
+    ],
+    // Steps that MUST be completed before others (skip = failure)
+    guards: {
+      // Must run nginx -t before reload
+      "sudo systemctl reload nginx": "sudo nginx -t",
+      // Must purge CF before final verification
+      "curl -I https://app.example.com | grep -E 'cf-cache-status|200'": "cloudflare-cli purge --zone winlab.io --all",
+    },
+    failureMessages: {
+      "sudo nginx -t": "💥 nginx: [emerg] unexpected end of file — you skipped the syntax check. Nginx config is now broken. Run `sudo nginx -t` first.",
+      "cloudflare-cli purge --zone winlab.io --all": "⚠ Site loads on direct hit but Cloudflare edge still serves old index.html pointing to A1B2C3D4. Users on CDN still see blank page.",
+    },
+    solvedMessage: '✅ INCIDENT SOLVED.\n"Hai domato l\'Hash di Vite. Questo bug ha fatto piangere ingegneri con 10 anni di esperienza. La discrepanza tra build e distribuzione è il motivo per cui il DevOps esiste. Benvenuto nel club dei sopravvissuti."',
   },
   {
     id: "disk-full-recovery",

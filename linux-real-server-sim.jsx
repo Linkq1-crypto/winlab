@@ -2,22 +2,58 @@ import { useState, useRef, useEffect } from "react";
 import { useLabTelemetry } from "./src/hooks/useLabTelemetry";
 import { getRealismWorker, destroyRealismWorker } from "./src/hooks/realism-worker";
 
+// ─── Random instance ID per session ──────────────────────────────────────────
+function genInstanceId() {
+  const chars = "abcdefghjkmnpqrstuvwxyz0123456789";
+  let s = "srv-";
+  for (let i = 0; i < 2; i++) s += chars[Math.floor(Math.random() * 24)];
+  for (let i = 0; i < 3; i++) s += chars[24 + Math.floor(Math.random() * 10)];
+  return s;
+}
+
+// ─── /proc virtual filesystem ────────────────────────────────────────────────
+const PROC_FILES = {
+  "/proc/cpuinfo": [
+    "processor\t: 0",
+    "vendor_id\t: GenuineIntel",
+    "model name\t: Intel(R) Xeon(R) Gold 6148 CPU @ 2.40GHz",
+    "cpu MHz\t\t: 2399.926",
+    "cache size\t: 28160 KB",
+    "cpu cores\t: 2",
+    "flags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov",
+    "bogomips\t: 4799.85",
+  ],
+  "/proc/meminfo": [
+    "MemTotal:        8192000 kB",
+    "MemFree:          412340 kB",
+    "MemAvailable:    1823400 kB",
+    "Buffers:          182400 kB",
+    "Cached:          1624188 kB",
+    "SwapTotal:       2097148 kB",
+    "SwapFree:        1834240 kB",
+  ],
+  "/proc/version": [
+    "Linux version 5.15.0-206.153.7.el8uek.x86_64 (mockbuild@oraclelinux) (gcc 8.5.0) #2 SMP",
+  ],
+  "/proc/uptime": ["347214.82 1243812.44"],
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SCENARIOS
 // ─────────────────────────────────────────────────────────────────────────────
 const SCENARIOS = [
-  { id: "iowait",    label: "I/O Wait alto",          desc: "iostat 98% — disco saturo, app bloccate",      icon: "💿", cat: "storage" },
-  { id: "apachewrk", label: "Apache workers esauriti", desc: "MaxRequestWorkers raggiunto — server sotto carico", icon: "🕸", cat: "web"     },
-  { id: "mysqlslow", label: "MySQL slow queries",      desc: "DB lentissimo — query bloccate in SHOW PROCESSLIST", icon: "🐢", cat: "db"      },
-  { id: "netflap",   label: "NIC flapping",            desc: "eth0 va su e giù — dmesg mostra errori link",  icon: "🔌", cat: "net"     },
-  { id: "timewait",  label: "TIME_WAIT flood",         desc: "Port exhaustion — 28k connessioni TIME_WAIT",  icon: "⏳", cat: "net"     },
-  { id: "tcpdump",   label: "Traffico anomalo",        desc: "tcpdump per identificare connessione sospetta", icon: "🦈", cat: "net"     },
-  { id: "strace",    label: "Processo hung",           desc: "Processo bloccato — strace rivela la causa",   icon: "🔬", cat: "debug"   },
-  { id: "coredump",  label: "Core dump crash",         desc: "Applicazione crasha — analisi con gdb/coredump", icon: "💣", cat: "debug"   },
-  { id: "syslogflood", label: "Syslog flood",          desc: "Syslog intasato — 50k msg/sec da un processo", icon: "📡", cat: "log"     },
-  { id: "fsck",      label: "Filesystem corrotto",     desc: "Errori EXT4 — filesystem da riparare con fsck", icon: "🔧", cat: "storage" },
-  { id: "oomkiller", label: "OOM killer selettivo",    desc: "Java heap leak — OOM che uccide il processo sbagliato", icon: "🩸", cat: "memory"  },
-  { id: "infoblox",  label: "Infoblox DNS timeout",    desc: "Le sedi non risolvono — DHCP/DNS Infoblox ko",  icon: "🏛", cat: "net"     },
+  { id: "iowait",    label: "High I/O Wait",           desc: "iostat 98% — disk saturated, apps stalled",        icon: "💿", cat: "storage" },
+  { id: "apachewrk", label: "Apache workers exhausted",desc: "MaxRequestWorkers reached — server under load",     icon: "🕸", cat: "web"     },
+  { id: "mysqlslow", label: "MySQL slow queries",      desc: "DB very slow — queries stuck in SHOW PROCESSLIST",  icon: "🐢", cat: "db"      },
+  { id: "netflap",   label: "NIC flapping",            desc: "eth0 going up and down — dmesg shows link errors",  icon: "🔌", cat: "net"     },
+  { id: "timewait",  label: "TIME_WAIT flood",         desc: "Port exhaustion — 28k TIME_WAIT connections",       icon: "⏳", cat: "net"     },
+  { id: "tcpdump",   label: "Anomalous traffic",       desc: "tcpdump to identify a suspicious outbound connection", icon: "🦈", cat: "net"  },
+  { id: "strace",    label: "Hung process",            desc: "Process stuck — strace reveals the cause",          icon: "🔬", cat: "debug"   },
+  { id: "coredump",  label: "Core dump crash",         desc: "App crashing — analysis with gdb/coredump",         icon: "💣", cat: "debug"   },
+  { id: "syslogflood", label: "Syslog flood",          desc: "Syslog overwhelmed — 50k msg/sec from one process", icon: "📡", cat: "log"     },
+  { id: "fsck",      label: "Corrupted filesystem",    desc: "EXT4 errors — filesystem needs repair with fsck",   icon: "🔧", cat: "storage" },
+  { id: "oomkiller", label: "Selective OOM killer",    desc: "Java heap leak — OOM killing the wrong process",    icon: "🩸", cat: "memory"  },
+  { id: "infoblox",  label: "Infoblox DNS timeout",    desc: "Sites not resolving — Infoblox DHCP/DNS down",      icon: "🏛", cat: "net"     },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -57,8 +93,16 @@ function runCommand(raw, state, setState) {
 
   // ── uptime ────────────────────────────────────────────────────────────────
   if (cmd === "uptime") {
+    const lsKey = `winlab_lab_start_${s}`;
+    if (!localStorage.getItem(lsKey)) localStorage.setItem(lsKey, String(Date.now()));
+    const elSec = Math.floor((Date.now() - parseInt(localStorage.getItem(lsKey), 10)) / 1000);
+    const d = Math.floor(elSec / 86400);
+    const h = Math.floor((elSec % 86400) / 3600);
+    const m = Math.floor((elSec % 3600) / 60);
+    const upStr = d > 0 ? `${d} day${d>1?'s':''}, ${h}:${String(m).padStart(2,'0')}` : `${h}:${String(m).padStart(2,'0')}`;
     const load = s==="iowait"?"12.44, 11.98, 10.21":s==="apachewrk"?"8.32, 7.80, 6.50":s==="oomkiller"?"6.10, 5.88, 5.21":"0.32, 0.28, 0.22";
-    return lines([` 11:03:14 up 47 days,  3:22,  3 users,  load average: ${load}`]);
+    const now = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+    return lines([` ${now} up ${upStr},  1 user,  load average: ${load}`]);
   }
 
   // ── iostat ────────────────────────────────────────────────────────────────
@@ -67,10 +111,10 @@ function runCommand(raw, state, setState) {
       "Linux 5.15.0-206.153.7.el8uek.x86_64   03/04/2026   _x86_64_   (8 CPU)",
       "",
       "avg-cpu:  %user   %nice %system %iowait  %steal   %idle",
-      "           3.12    0.00    1.88   92.45    0.00    2.55  ← I/O WAIT CRITICO",
+      "           3.12    0.00    1.88   92.45    0.00    2.55  ← I/O WAIT CRITICAL",
       "",
       "Device            r/s     w/s     rkB/s   wkB/s  await  %util",
-      "sda              0.10  1842.33      1.2 921166.0  498.3   98.7%  ← SATURO",
+      "sda              0.10  1842.33      1.2 921166.0  498.3   98.7%  ← SATURATED",
       "sdb              0.08     0.12      0.8      0.6    1.2    0.1%",
       "dm-0             0.10  1842.33      1.2 921166.0  498.3   98.7%",
     ]);
@@ -88,10 +132,10 @@ function runCommand(raw, state, setState) {
     if (s === "iowait") return lines([
       "Total DISK READ: 1.2 K/s  |  Total DISK WRITE: 900.0 M/s",
       "  TID  PRIO  USER   DISK READ   DISK WRITE   COMMAND",
-      " 4821  be/4  mysql       0 B/s  898.4 M/s    mysqld --skip-networking ← SCRIVE 900MB/s",
+      " 4821  be/4  mysql       0 B/s  898.4 M/s    mysqld --skip-networking ← WRITING 900MB/s",
       " 4822  be/4  mysql       0 B/s    1.6 M/s    mysqld (innodb flush thread)",
       "  892  be/4  root        0 B/s    0.0 B/s    sshd",
-      "# CAUSA: InnoDB flush thread scrive in modo incontrollato",
+      "# ROOT CAUSE: InnoDB flush thread writing uncontrollably",
     ]);
     return lines(["No excessive I/O detected."]);
   }
@@ -102,7 +146,7 @@ function runCommand(raw, state, setState) {
       "COMMAND   PID  USER  FD  TYPE  DEVICE    SIZE/OFF     NODE NAME",
       "mysqld   4821 mysql  12u  REG  253,0  1099511627776  12345 /var/lib/mysql/ibdata1",
       "mysqld   4821 mysql  13u  REG  253,0   549755813888  12346 /var/lib/mysql/ib_logfile0",
-      "# ibdata1 è 1TB — crescita incontrollata, innodb_file_per_table=OFF",
+      "# ibdata1 is 1TB — uncontrolled growth, innodb_file_per_table=OFF",
     ]);
   }
 
@@ -110,16 +154,16 @@ function runCommand(raw, state, setState) {
   if (cmd === "cat" && raw.includes("my.cnf")) {
     if (s === "iowait") return lines([
       "[mysqld]",
-      "innodb_file_per_table = 0          ← ogni tabella scrive su ibdata1 unico",
-      "innodb_flush_log_at_trx_commit = 1  ← flush su ogni commit → I/O massimo",
+      "innodb_file_per_table = 0          ← every table writes to single ibdata1",
+      "innodb_flush_log_at_trx_commit = 1  ← flush on every commit → maximum I/O",
       "innodb_flush_method = fsync",
-      "# FIX: innodb_flush_log_at_trx_commit=2 e innodb_io_capacity=200",
+      "# FIX: innodb_flush_log_at_trx_commit=2 and innodb_io_capacity=200",
     ]);
   }
   if ((cmd === "vi" || cmd === "nano") && raw.includes("my.cnf")) {
     if (s === "iowait") {
       setState(st => ({ ...st, iowaitFixed: true }));
-      return ok("my.cnf aggiornato: innodb_flush_log_at_trx_commit=2, innodb_io_capacity=200\nOra: systemctl restart mysqld");
+      return ok("my.cnf updated: innodb_flush_log_at_trx_commit=2, innodb_io_capacity=200\nNow: systemctl restart mysqld");
     }
   }
 
@@ -136,8 +180,8 @@ function runCommand(raw, state, setState) {
       "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
       "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
       "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-      "# TUTTI 256 worker in stato W (Sending) — MaxRequestWorkers raggiunto",
-      "# Nuove richieste in coda — errore 503 per gli utenti",
+      "# ALL 256 workers in W state (Sending) — MaxRequestWorkers reached",
+      "# New requests queuing — 503 errors for users",
     ]);
     return lines(["_W_WR___WW_W_R  8 workers active, 248 idle"]);
   }
@@ -148,7 +192,7 @@ function runCommand(raw, state, setState) {
       "    StartServers          5",
       "    MinSpareServers       5",
       "    MaxSpareServers      20",
-      "    MaxRequestWorkers   256  ← RAGGIUNTO — aumenta o passa a event MPM",
+      "    MaxRequestWorkers   256  ← REACHED — increase or switch to event MPM",
       "    MaxConnectionsPerChild 0",
       "</IfModule>",
     ]);
@@ -156,7 +200,7 @@ function runCommand(raw, state, setState) {
   if ((cmd === "vi" || cmd === "nano") && raw.includes("httpd.conf")) {
     if (s === "apachewrk") {
       setState(st => ({ ...st, apacheFixed: true }));
-      return ok("MaxRequestWorkers aumentato a 512, MPM event configurato.\nOra: apachectl configtest && systemctl restart httpd");
+      return ok("MaxRequestWorkers increased to 512, MPM event configured.\nNow: apachectl configtest && systemctl restart httpd");
     }
   }
   if (cmd === "apachectl" && raw.includes("configtest")) return ok("Syntax OK");
@@ -170,7 +214,7 @@ function runCommand(raw, state, setState) {
   if (cmd === "systemctl" && parts[1]==="start" && parts[2]==="mysqld") {
     if (s === "iowait" && state.iowaitFixed) {
       setState(st => ({ ...st, iowaitFixed: true }));
-      return ok("mysqld started — I/O throttling attivo.");
+      return ok("mysqld started — I/O throttling active.");
     }
     return ok("mysqld started.");
   }
@@ -188,16 +232,16 @@ function runCommand(raw, state, setState) {
         "| 12344 | report   | 10.0.1.20 | proddb   |    8234 | Sending data | SELECT * FROM orders JOIN shipments JOIN... (full table scan) |",
         "| ...   | ...      | ...       | ...      |    ...  | ...  | 89 query in lock wait           |",
         "+-------+----------+-----------+----------+---------+------+--------------------------------+",
-        "# PID 12344 (report user) fa full scan da 8234 sec — blocca tutta la tabella",
+        "# PID 12344 (report user) doing full scan for 8234 sec — locking entire table",
       ]);
     }
     if (raw.includes("KILL") || raw.includes("kill")) {
       const pid = parts.find(p => /^\d{4,}$/.test(p));
       if (s === "mysqlslow" && pid === "12344") {
         setState(st => ({ ...st, mysqlFixed: true }));
-        return ok(`Query 12344 terminata. Lock rilasciato — 89 query sbloccate.`);
+        return ok(`Query 12344 killed. Lock released — 89 queries unblocked.`);
       }
-      return ok(`Query ${pid||""} terminata.`);
+      return ok(`Query ${pid||""} killed.`);
     }
     if (raw.includes("slow") || raw.includes("slow_query_log")) {
       if (s === "mysqlslow") return lines([
@@ -208,8 +252,8 @@ function runCommand(raw, state, setState) {
         "SELECT * FROM orders o",
         "  JOIN shipments s ON o.id = s.order_id",
         "  JOIN line_items li ON o.id = li.order_id",
-        "WHERE o.created_at > '2020-01-01'  -- full table scan, nessun indice",
-        "# 142 MILIONI di righe esaminate — manca indice su created_at",
+        "WHERE o.created_at > '2020-01-01'  -- full table scan, no index",
+        "# 142 MILLION rows examined — missing index on created_at",
       ]);
     }
     if (raw.includes("explain") || raw.includes("EXPLAIN")) {
@@ -218,7 +262,7 @@ function runCommand(raw, state, setState) {
         "| id | select_type | table | type | possible_keys | key  | key_len | ref  | rows      | Extra       |",
         "+----+-------------+-------+------+---------------+------+---------+------+-----------+-------------+",
         "|  1 | SIMPLE      | o     | ALL  | NULL          | NULL | NULL    | NULL | 142857192 | Using where |",
-        "# type=ALL → FULL TABLE SCAN su 142M righe — nessun indice usato",
+        "# type=ALL → FULL TABLE SCAN on 142M rows — no index used",
       ]);
     }
   }
@@ -232,14 +276,14 @@ function runCommand(raw, state, setState) {
       "[1234571.412345] e1000e: eth0 NIC Link is Up 1000 Mbps Full Duplex",
       "[1234575.009812] e1000e: eth0 NIC Link is Down",
       "[1234575.432101] e1000e: eth0 NIC Link is Up 1000 Mbps Full Duplex",
-      "# eth0 flappa ogni ~4 secondi — cavo difettoso o switch port problem",
+      "# eth0 flapping every ~4 seconds — faulty cable or switch port problem",
     ]);
     if (s === "fsck") return lines([
       "[  182.123456] EXT4-fs error (device dm-0): ext4_find_entry:1455: inode #131073: comm httpd: reading directory lblock 0",
       "[  182.234567] EXT4-fs error (device dm-0): ext4_validate_block_bitmap:376: comm kjournald2: bg 4: bad block bitmap checksum",
       "[  182.345678] SCSI error: return code = 0x08000002",
       "[  182.456789] end_request: I/O error, dev sda, sector 293601280",
-      "# Errori EXT4 + I/O error su sda — filesystem corrotto",
+      "# EXT4 errors + I/O error on sda — corrupted filesystem",
     ]);
     if (s === "oomkiller") return lines([
       "[ 3210.123456] java invoked oom-killer: gfp_mask=0x6200ca(GFP_HIGHUSER_MOVABLE), order=0",
@@ -248,7 +292,7 @@ function runCommand(raw, state, setState) {
       "[ 3210.456789] oom_reaper: reaped process 8921 (java), now anon-rss:0kB, file-rss:0kB",
       "[ 3215.001234] java invoked oom-killer: gfp_mask=0x6200ca",
       "[ 3215.123456] Out of memory: Killed process 8944 (java) total-vm:24576000kB",
-      "# OOM uccide java ogni 5 minuti — heap leak in corso",
+      "# OOM killing java every 5 minutes — heap leak in progress",
     ]);
     return lines(["[ 0.000000] Linux version 5.15.0-206.153.7.el8uek.x86_64","[    0.123] BIOS-provided physical RAM map"]);
   }
@@ -260,11 +304,11 @@ function runCommand(raw, state, setState) {
         "NIC statistics:",
         "     rx_packets: 84123891",
         "     rx_errors: 0",
-        "     rx_crc_errors: 18482  ← CRC ERRORS — cavo/SFP difettoso",
+        "     rx_crc_errors: 18482  ← CRC ERRORS — faulty cable/SFP",
         "     rx_missed_errors: 0",
         "     tx_packets: 76234901",
         "     tx_errors: 0",
-        "     link_state_change: 214  ← 214 cambi di stato in 47 giorni (ANORMALE)",
+        "     link_state_change: 214  ← 214 state changes in 47 days (ABNORMAL)",
       ]);
       return lines([
         "Settings for eth0:",
@@ -292,31 +336,31 @@ function runCommand(raw, state, setState) {
     if (s === "timewait" && (raw.includes("-s") || raw.includes("summary"))) return lines([
       "Netid  State      Recv-Q  Send-Q",
       "Total: 29412 (kernel 30001)",
-      "TCP:   28934 (estab 42, closed 28810, orphaned 0, timewait 28810)  ← 28.810 TIME_WAIT!",
+      "TCP:   28934 (estab 42, closed 28810, orphaned 0, timewait 28810)  ← 28,810 TIME_WAIT!",
       "UDP:   18",
-      "# 28.810 connessioni TIME_WAIT — port exhaustion imminente",
+      "# 28,810 TIME_WAIT connections — port exhaustion imminent",
     ]);
     if (s === "timewait" && raw.includes("TIME-WAIT")) return lines([
       "ESTAB       0  0  10.0.1.100:80   10.0.2.50:52141",
       "TIME-WAIT   0  0  10.0.1.100:80   10.0.2.50:52140  (10.0 sec)",
       "TIME-WAIT   0  0  10.0.1.100:80   10.0.2.50:52139  (10.1 sec)",
       "TIME-WAIT   0  0  10.0.1.100:80   10.0.2.50:52138  (10.2 sec)",
-      "# ... 28.810 righe TIME-WAIT tutte da 10.0.2.50 (load balancer)",
+      "# ... 28,810 TIME-WAIT rows all from 10.0.2.50 (load balancer)",
     ]);
     return lines(["ESTAB  0  0  10.0.1.100:80  10.0.2.50:52141","LISTEN 0  0  0.0.0.0:22   0.0.0.0:*"]);
   }
   if (cmd === "sysctl" && raw.includes("net.ipv4")) {
     if (s === "timewait") return lines([
-      "net.ipv4.tcp_tw_reuse = 0           ← deve essere 1",
-      "net.ipv4.tcp_fin_timeout = 60       ← troppo alto, abbassa a 15",
-      "net.ipv4.ip_local_port_range = 32768 60999  ← range ristretto",
+      "net.ipv4.tcp_tw_reuse = 0           ← should be 1",
+      "net.ipv4.tcp_fin_timeout = 60       ← too high, lower to 15",
+      "net.ipv4.ip_local_port_range = 32768 60999  ← narrow range",
     ]);
     return lines(["net.ipv4.tcp_tw_reuse = 1","net.ipv4.tcp_fin_timeout = 15"]);
   }
   if (cmd === "sysctl" && raw.includes("-w")) {
     if (s === "timewait" && raw.includes("tw_reuse=1")) {
       setState(st => ({ ...st, timewaitFixed: true }));
-      return ok("net.ipv4.tcp_tw_reuse = 1\nnet.ipv4.tcp_fin_timeout = 15\nConnessioni TIME_WAIT si risolveranno in ~15 sec.");
+      return ok("net.ipv4.tcp_tw_reuse = 1\nnet.ipv4.tcp_fin_timeout = 15\nTIME_WAIT connections will drain in ~15 sec.");
     }
     return ok(`sysctl: applicato.`);
   }
@@ -324,7 +368,7 @@ function runCommand(raw, state, setState) {
     if (s === "timewait") return lines([
       "# /etc/sysctl.conf",
       "vm.swappiness = 10",
-      "# MANCANO le impostazioni TCP TIME_WAIT",
+      "# MISSING TCP TIME_WAIT tuning settings",
     ]);
   }
 
@@ -338,8 +382,8 @@ function runCommand(raw, state, setState) {
       "11:03:14.234567 IP 10.0.1.100.45322 > 185.220.101.48.443: Flags [S], seq 2345678",
       "11:03:14.345678 IP 10.0.1.100.45323 > 185.220.101.48.443: Flags [S], seq 3456789",
       "11:03:14.456789 IP 10.0.1.100.45324 > 185.220.101.48.443: Flags [S], seq 4567890",
-      "# Connessioni verso 185.220.101.48:443 (Tor exit node!) ogni 0.1s",
-      "# Probabilmente cryptominer/malware — identifica il processo",
+      "# Connections to 185.220.101.48:443 (Tor exit node!) every 0.1s",
+      "# Likely cryptominer/malware — identify the process",
     ]);
     return lines(["tcpdump: listening on eth0, link-type EN10MB","11:03:14.123456 IP 10.0.1.100.80 > 10.0.2.50.52141: Flags [.], ack 1"]);
   }
@@ -348,20 +392,20 @@ function runCommand(raw, state, setState) {
       "COMMAND     PID   USER  FD  TYPE  DEVICE    NODE NAME",
       "xmrig      6612   www    8u  IPv4  0t0       TCP 10.0.1.100:45321->185.220.101.48:443 (ESTABLISHED)",
       "xmrig      6612   www    9u  IPv4  0t0       TCP 10.0.1.100:45322->185.220.101.48:443 (ESTABLISHED)",
-      "# xmrig — cryptominer! Processo 6612 avviato dall'utente www",
+      "# xmrig — cryptominer! Process 6612 started by user www",
     ]);
   }
   if (cmd === "kill" && raw.includes("6612")) {
     if (s === "tcpdump") {
       setState(st => ({ ...st, tcpdumpFound: true }));
-      return ok("xmrig (6612) terminato.\nCRITICO: controlla come è entrato — verifica log Apache, crontab di www, file PHP backdoor.");
+      return ok("xmrig (6612) killed.\nCRITICAL: investigate entry vector — check Apache logs, www crontab, PHP backdoor files.");
     }
   }
   if (cmd === "ps" && raw.includes("xmrig")) {
     if (s === "tcpdump") return lines([
       "  PID  PPID USER  %CPU %MEM COMMAND",
       " 6612  4501 www   98.2  0.4 /tmp/.cache/xmrig --pool pool.minexmr.com:443 --donate-level=0",
-      "# Eseguito da /tmp/.cache/ — nascosto come file di cache",
+      "# Running from /tmp/.cache/ — disguised as a cache file",
     ]);
   }
 
@@ -375,7 +419,7 @@ function runCommand(raw, state, setState) {
       "connect(7, {sa_family=AF_INET, sin_port=htons(5432), sin_addr=inet_addr(\"10.0.3.50\")}, 16) = -1 ETIMEDOUT (Connection timed out)",
       "epoll_wait(5, [], 1, 5000)             = 0",
       "connect(7, {sa_family=AF_INET, sin_port=htons(5432), sin_addr=inet_addr(\"10.0.3.50\")}, 16) = -1 ETIMEDOUT",
-      "# Il processo aspetta connessione a 10.0.3.50:5432 (PostgreSQL) — DB irraggiungibile",
+      "# Process waiting for connection to 10.0.3.50:5432 (PostgreSQL) — DB unreachable",
     ]);
   }
   if (cmd === "ping" && raw.includes("10.0.3.50")) {
@@ -383,22 +427,22 @@ function runCommand(raw, state, setState) {
       "PING 10.0.3.50: 56 bytes of data",
       "Request timeout for icmp_seq 0",
       "Request timeout for icmp_seq 1",
-      "# 10.0.3.50 non risponde — host down o firewall",
+      "# 10.0.3.50 not responding — host down or firewall",
     ]);
   }
   if (cmd === "telnet" && raw.includes("5432")) {
-    if (s === "strace") return lines(["Trying 10.0.3.50...", "telnet: connect to address 10.0.3.50: Connection refused","# Porta 5432 rifiutata — PostgreSQL down o firewall"]);
+    if (s === "strace") return lines(["Trying 10.0.3.50...", "telnet: connect to address 10.0.3.50: Connection refused","# Port 5432 refused — PostgreSQL down or firewall blocking"]);
   }
   if (cmd === "firewall-cmd" && raw.includes("add-rich-rule") && raw.includes("5432")) {
     if (s === "strace") {
       setState(st => ({ ...st, straceFound: true }));
-      return ok("Regola firewall aggiunta. Connessione a PostgreSQL sbloccata.");
+      return ok("Firewall rule added. Connection to PostgreSQL unblocked.");
     }
   }
   if (cmd === "ssh" && raw.includes("10.0.3")) {
     if (s === "strace") {
       setState(st => ({ ...st, straceFound: true }));
-      return ok("Connesso a 10.0.3.50. Verifica che PostgreSQL sia attivo: systemctl status postgresql");
+      return ok("Connected to 10.0.3.50. Verify PostgreSQL is running: systemctl status postgresql");
     }
   }
 
@@ -408,7 +452,7 @@ function runCommand(raw, state, setState) {
       "-rw------- 1 root root 2.1G Mar  4 08:42 core.app_server.9022",
       "-rw------- 1 root root 2.0G Mar  3 22:18 core.app_server.7891",
       "-rw------- 1 root root 1.9G Mar  3 10:05 core.app_server.6134",
-      "# 3 core dump da app_server — crash ricorrente",
+      "# 3 core dumps from app_server — recurring crash",
     ]);
   }
   if (cmd === "coredumpctl") {
@@ -417,7 +461,7 @@ function runCommand(raw, state, setState) {
       "Mon 2026-03-04 08:42:11 UTC    9022 1001 1001  11 present   /opt/app/bin/app_server",
       "Sun 2026-03-03 22:18:33 UTC    7891 1001 1001  11 present   /opt/app/bin/app_server",
       "Sun 2026-03-03 10:05:12 UTC    6134 1001 1001  11 present   /opt/app/bin/app_server",
-      "# Signal 11 = SIGSEGV — segmentation fault ricorrente",
+      "# Signal 11 = SIGSEGV — recurring segmentation fault",
     ]);
     if (raw.includes("info") || raw.includes("gdb")) return lines([
       "           PID: 9022",
@@ -427,7 +471,7 @@ function runCommand(raw, state, setState) {
       "  #0  0x00007f8b4c2a1234 in parse_json_request () at src/request.c:291",
       "  #1  0x00007f8b4c291000 in handle_client () at src/server.c:148",
       "  #2  0x00007f8b4c290500 in main () at src/server.c:82",
-      "# CRASH in parse_json_request() — probabilmente input malformato non gestito",
+      "# CRASH in parse_json_request() — likely unhandled malformed input",
     ]);
   }
   if (cmd === "gdb") {
@@ -440,11 +484,11 @@ function runCommand(raw, state, setState) {
       "(gdb) bt",
       "#0  parse_json_request (buf=0x0) at src/request.c:291",
       "#1  handle_client (conn=0x55ab12cd3e40) at src/server.c:148",
-      "# NULL pointer dereference — client manda richiesta vuota → crash",
+      "# NULL pointer dereference — client sends empty request → crash",
     ]);
     if (raw.includes("core")) {
       setState(st => ({ ...st, coredumpFixed: true }));
-      return ok("Crash identificato: NULL pointer in parse_json_request() — richiesta HTTP vuota causa segfault.\nRiporta al team dev: validare input prima di dereferenziare.");
+      return ok("Crash identified: NULL pointer in parse_json_request() — empty HTTP request causes segfault.\nReport to dev team: validate input before dereferencing.");
     }
   }
 
@@ -454,7 +498,7 @@ function runCommand(raw, state, setState) {
       "Mar  4 11:03:14 server01 snmpd[2210]: Connection from UDP: [10.0.5.1]:161->[10.0.1.100]:161",
       "Mar  4 11:03:14 server01 snmpd[2210]: Connection from UDP: [10.0.5.1]:161->[10.0.1.100]:161",
       "Mar  4 11:03:14 server01 snmpd[2210]: Connection from UDP: [10.0.5.1]:161->[10.0.1.100]:161",
-      "# ... 50.000 volte al secondo — NMS manda SNMP poll ogni 0.02ms",
+      "# ... 50,000 times per second — NMS sending SNMP poll every 0.02ms",
     ]);
   }
   if (cmd === "journalctl" && raw.includes("--disk-usage")) {
@@ -464,19 +508,19 @@ function runCommand(raw, state, setState) {
   if (cmd === "cat" && raw.includes("rsyslog.conf")) {
     if (s === "syslogflood") return lines([
       "# /etc/rsyslog.conf",
-      "# nessun rate limiting configurato  ← PROBLEMA",
+      "# no rate limiting configured  ← PROBLEM",
       "module(load=\"imjournal\")",
-      "# FIX: aggiungere SystemLogRateLimitInterval=60 SystemLogRateLimitBurst=1000",
+      "# FIX: add SystemLogRateLimitInterval=60 SystemLogRateLimitBurst=1000",
     ]);
   }
   if ((cmd === "vi" || cmd === "nano") && raw.includes("rsyslog")) {
     if (s === "syslogflood") {
       setState(st => ({ ...st, syslogFixed: true }));
-      return ok("Rate limiting configurato: SystemLogRateLimitBurst=1000.\nOra: systemctl restart rsyslog");
+      return ok("Rate limiting configured: SystemLogRateLimitBurst=1000.\nNow: systemctl restart rsyslog");
     }
   }
   if (cmd === "systemctl" && parts[1]==="restart" && parts[2]==="rsyslog") {
-    if (s === "syslogflood" && state.syslogFixed) return ok("rsyslog restarted — rate limiting attivo. Log flood arrestato.");
+    if (s === "syslogflood" && state.syslogFixed) return ok("rsyslog restarted — rate limiting active. Log flood stopped.");
     return ok("rsyslog restarted.");
   }
 
@@ -494,22 +538,22 @@ function runCommand(raw, state, setState) {
         "Pass 4: Checking reference counts",
         "Pass 5: Checking group summary information",
         "/dev/sda1: 48291/3276800 files, 12345678/13107200 blocks",
-        "# Errori trovati — esegui fsck -y su filesystem smontato",
+        "# Errors found — run fsck -y on unmounted filesystem",
       ]);
       if (raw.includes("-y") || raw.includes("-p")) {
         setState(st => ({ ...st, fsckDone: true }));
         return ok("e2fsck: 14 inodes corrected, 3 orphaned inodes deleted, 1 bad block recovered.\n/dev/sda1: REPAIRED");
       }
     }
-    return lines(["fsck: nessun errore rilevato."]);
+    return lines(["fsck: no errors detected."]);
   }
   if (cmd === "umount") {
-    return ok(`Filesystem smontato: ${parts[1]||"/dev/sda1"}`);
+    return ok(`Filesystem unmounted: ${parts[1]||"/dev/sda1"}`);
   }
   if (cmd === "mount" && !raw.includes("nfs")) {
     if (s === "fsck" && state.fsckDone) {
       setState(st => ({ ...st, fsckDone: true }));
-      return ok("Filesystem rimontato. Verifica: dmesg | grep EXT4");
+      return ok("Filesystem remounted. Verify: dmesg | grep EXT4");
     }
     return ok(`Mount completato.`);
   }
@@ -518,7 +562,7 @@ function runCommand(raw, state, setState) {
   if (cmd === "free") {
     if (s === "oomkiller") return lines([
       "               total        used        free      shared  buff/cache   available",
-      "Mem:          31.3Gi      30.8Gi       102Mi       430Mi       380Mi       120Mi  ← CRITICO",
+      "Mem:          31.3Gi      30.8Gi       102Mi       430Mi       380Mi       120Mi  ← CRITICAL",
       "Swap:          7.9Gi       7.9Gi          0B",
     ]);
     return lines(["Mem: 31.3Gi  8.2Gi  21.1Gi","Swap: 7.9Gi  0B  7.9Gi"]);
@@ -528,10 +572,10 @@ function runCommand(raw, state, setState) {
       "Heap Configuration:",
       "   MaxHeapSize              = 16106127360 (15.0GB)  ← -Xmx15g",
       "Heap Usage:",
-      "   Young Generation: 14.9GB used / 15.0GB max  ← HEAP PIENO",
+      "   Young Generation: 14.9GB used / 15.0GB max  ← HEAP FULL",
       "   Old  Generation: 14.8GB used / 15.0GB max",
-      "# GC non riesce a liberare memoria — memory leak nell'applicazione",
-      "# Oggetti non rilasciati: SessionCache (6.2GB), QueryResultCache (4.1GB)",
+      "# GC unable to free memory — memory leak in the application",
+      "# Unreleased objects: SessionCache (6.2GB), QueryResultCache (4.1GB)",
     ]);
   }
   if (cmd === "jstack" || (raw.includes("jcmd") && raw.includes("thread"))) {
@@ -539,16 +583,16 @@ function runCommand(raw, state, setState) {
       `"main" #1 prio=5 os_prio=0 tid=0x00007f8b4c001800 nid=0x22e1 waiting on condition`,
       `"GC Thread#0" daemon prio=10 ... in GC`,
       `"GC Thread#1" daemon prio=10 ... in GC`,
-      `# 48 thread GC attivi contemporaneamente — thrashing GC`,
+      `# 48 GC threads active simultaneously — GC thrashing`,
     ]);
   }
   if (cmd === "kill" && raw.includes("9022")) {
-    if (s === "oomkiller") return warn("PID 9022 già terminato dall'OOM killer. Il processo si riavvia automaticamente e crasha di nuovo.");
+    if (s === "oomkiller") return warn("PID 9022 already killed by OOM killer. Process restarts automatically and crashes again.");
   }
   if ((cmd === "vi" || cmd === "nano") && (raw.includes("jvm") || raw.includes(".conf") || raw.includes("Xmx"))) {
     if (s === "oomkiller") {
       setState(st => ({ ...st, oomFixed: true }));
-      return ok("JVM heap ridotto: -Xmx8g. Heap dump abilitato: -XX:+HeapDumpOnOutOfMemoryError\nOra: systemctl restart app && analizza heap dump con jmap");
+      return ok("JVM heap reduced: -Xmx8g. Heap dump enabled: -XX:+HeapDumpOnOutOfMemoryError\nNow: systemctl restart app && analyze heap dump with jmap");
     }
   }
 
@@ -565,43 +609,43 @@ function runCommand(raw, state, setState) {
     if (s === "infoblox") return lines([
       `PING 10.0.10.1: 56 bytes of data`,
       `64 bytes from 10.0.10.1: icmp_seq=0 ttl=64 time=0.4 ms`,
-      `# Infoblox risponde al ping — problema al servizio DNS, non all'host`,
+      `# Infoblox responds to ping — DNS service problem, not the host`,
     ]);
   }
   if (cmd === "curl" && raw.includes("infoblox")) {
     if (s === "infoblox") return lines([
       "HTTP/1.1 200 OK",
       '{"result":[{"status":"WORKING","services":{"dns":{"status":"FAILED","description":"named service not running"},"dhcp":{"status":"WORKING"}}}]}',
-      "# Infoblox risponde all'API — il servizio named è DOWN sul Infoblox stesso",
+      "# Infoblox API responds — named service is DOWN on Infoblox itself",
     ]);
     return ok("HTTP/1.1 200 OK");
   }
   if (cmd === "cat" && raw.includes("resolv.conf")) {
     if (s === "infoblox") return lines([
       "# /etc/resolv.conf",
-      "nameserver 10.0.10.1   ← Infoblox Primary (DNS down)",
-      "nameserver 10.0.10.2   ← Infoblox Secondary (DNS down)",
+      "nameserver 10.0.10.1   ← Infoblox Primary (DNS service down)",
+      "nameserver 10.0.10.2   ← Infoblox Secondary (DNS service down)",
       "search lab.local",
     ]);
   }
   if ((cmd === "vi" || cmd === "nano") && raw.includes("resolv.conf")) {
     if (s === "infoblox") {
       setState(st => ({ ...st, infobloxFixed: true }));
-      return ok("Aggiunto nameserver 8.8.8.8 come fallback temporaneo.\nApertura ticket su Infoblox — named service crash — richiedi restart.");
+      return ok("Added nameserver 8.8.8.8 as temporary fallback.\nOpen ticket with Infoblox team — named service crash — request restart.");
     }
   }
   if (cmd === "nmcli" && raw.includes("dns")) {
     if (s === "infoblox") {
       setState(st => ({ ...st, infobloxFixed: true }));
-      return ok("DNS fallback 8.8.8.8 configurato via nmcli. Risoluzione temporanea attiva.");
+      return ok("DNS fallback 8.8.8.8 configured via nmcli. Temporary resolution active.");
     }
   }
 
   // ── generici ─────────────────────────────────────────────────────────────
   if (cmd === "ps" || cmd === "top") {
-    if (s === "iowait")   return lines(["USER    PID %CPU %MEM COMMAND","mysql  4821  8.2  4.1 mysqld","# I/O bound — usa iostat/iotop"]);
+    if (s === "iowait")   return lines(["USER    PID %CPU %MEM COMMAND","mysql  4821  8.2  4.1 mysqld","# I/O bound — use iostat/iotop"]);
     if (s === "oomkiller")return lines(["USER    PID %CPU %MEM COMMAND","tomcat 8944 12.3 98.8 java -Xmx15g -jar app.jar  ← 98.8% RAM"]);
-    if (s === "tcpdump")  return lines(["USER  PID %CPU %MEM COMMAND","www   6612 98.2  0.4 /tmp/.cache/xmrig  ← MINER!"]);
+    if (s === "tcpdump")  return lines(["USER  PID %CPU %MEM COMMAND","www   6612 98.2  0.4 /tmp/.cache/xmrig  ← CRYPTOMINER!"]);
     return lines(["USER    PID %CPU %MEM COMMAND","root      1  0.0  0.1 /sbin/init","apache  901  0.3  1.1 /usr/sbin/httpd"]);
   }
   if (cmd === "df") return lines([
@@ -620,20 +664,20 @@ function runCommand(raw, state, setState) {
 
   if (cmd === "hint") {
     const H = {
-      iowait:    "iostat -x 1 3 → sda 98% → iotop → mysqld scrive 900MB/s → cat /etc/my.cnf → innodb_flush_log_at_trx_commit=2",
-      apachewrk: "curl localhost/server-status → workers tutti W → cat /etc/httpd/conf/httpd.conf → aumenta MaxRequestWorkers",
-      mysqlslow: "mysql -e 'SHOW PROCESSLIST' → PID 12344 da 8234 sec → KILL 12344 → EXPLAIN sulla query",
-      netflap:   "dmesg | grep eth0 → flapping → ethtool -S eth0 → CRC errors → cavo/SFP difettoso",
+      iowait:    "iostat -x 1 3 → sda 98% → iotop → mysqld writing 900MB/s → cat /etc/my.cnf → innodb_flush_log_at_trx_commit=2",
+      apachewrk: "curl localhost/server-status → all workers W → cat /etc/httpd/conf/httpd.conf → increase MaxRequestWorkers",
+      mysqlslow: "mysql -e 'SHOW PROCESSLIST' → PID 12344 for 8234 sec → KILL 12344 → EXPLAIN the query",
+      netflap:   "dmesg | grep eth0 → flapping → ethtool -S eth0 → CRC errors → faulty cable/SFP",
       timewait:  "ss -s → 28k TIME_WAIT → sysctl net.ipv4.tcp_tw_reuse → sysctl -w tcp_tw_reuse=1",
-      tcpdump:   "tcpdump -i eth0 -n → connessioni a Tor IP → ps aux | grep xmrig → kill il miner",
-      strace:    "strace -p <PID> → ETIMEDOUT verso 10.0.3.50:5432 → ping → telnet 5432 → firewall",
-      coredump:  "coredumpctl list → gdb con core → backtrace → NULL pointer in parse_json_request",
-      syslogflood:"tail /var/log/syslog → snmpd flood → cat /etc/rsyslog.conf → aggiungi rate limit → restart",
-      fsck:      "dmesg | grep EXT4 → umount → fsck -n (dry run) → fsck -y → rimonta",
-      oomkiller: "dmesg | grep oom → free -h → jmap PID → heap leak → riduci -Xmx → heap dump",
+      tcpdump:   "tcpdump -i eth0 -n → connections to Tor IP → ps aux | grep xmrig → kill the miner",
+      strace:    "strace -p <PID> → ETIMEDOUT to 10.0.3.50:5432 → ping → telnet 5432 → firewall",
+      coredump:  "coredumpctl list → gdb with core → backtrace → NULL pointer in parse_json_request",
+      syslogflood:"tail /var/log/syslog → snmpd flood → cat /etc/rsyslog.conf → add rate limit → restart",
+      fsck:      "dmesg | grep EXT4 → umount → fsck -n (dry run) → fsck -y → remount",
+      oomkiller: "dmesg | grep oom → free -h → jmap PID → heap leak → reduce -Xmx → heap dump",
       infoblox:  "dig google.com → timeout → ping 10.0.10.1 → curl Infoblox API → named down → nmcli dns fallback",
     };
-    return warn("💡 " + (H[s]||"Usa help per i comandi disponibili."));
+    return warn("💡 " + (H[s]||"Use help for available commands."));
   }
 
   if (cmd === "help") return lines([
@@ -675,7 +719,7 @@ function runCommand(raw, state, setState) {
     "  systemctl restart rsyslog",
     "━━ Infoblox ━━",
     "  curl -k https://10.0.10.1/wapi/v2.10/grid?_return_fields=name,service_status",
-    "  hint — suggerimento specifico per lo scenario",
+    "  hint — scenario-specific hint",
   ]);
 
   return err(`-bash: ${cmd}: command not found`);
@@ -733,6 +777,9 @@ export default function App({ scenario: scenarioProp } = {}) {
   const [input, setInput] = useState("");
   const [cmdHist, setCmdHist] = useState([]);
   const [histIdx, setHistIdx] = useState(-1);
+  const [instanceId] = useState(genInstanceId);
+  const [idleDelay, setIdleDelay] = useState(false);
+  const lastActivityRef = useRef(Date.now());
   const bottomRef = useRef();
   const inputRef  = useRef();
 
@@ -766,6 +813,13 @@ export default function App({ scenario: scenarioProp } = {}) {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [history]);
 
+  useEffect(() => {
+    const iv = setInterval(() => {
+      if (Date.now() - lastActivityRef.current > 30000) setIdleDelay(true);
+    }, 5000);
+    return () => clearInterval(iv);
+  }, []);
+
   // Auto-start when a scenario prop is passed (demo modal from landing page)
   useEffect(() => {
     if (!scenarioProp || scenario) return;
@@ -778,24 +832,28 @@ export default function App({ scenario: scenarioProp } = {}) {
   function start(s) {
     setScenario(s);
     setState(makeState(s.id));
+    // Persistent uptime — set only on first visit, survives browser close
+    const lsKey = `winlab_lab_start_${s.id}`;
+    if (!localStorage.getItem(lsKey)) localStorage.setItem(lsKey, String(Date.now()));
     startSession();
     const intro = {
-      iowait:     "⚠  ALERT: load average 12.44. I/O Wait al 92%. Server bloccato su disco.",
-      apachewrk:  "⚠  ALERT: sito lentissimo. Apache restituisce 503. Picco di traffico in corso.",
-      mysqlslow:  "⚠  ALERT: applicazione timeout. MySQL non risponde. DBA non disponibile.",
-      netflap:    "⚠  ALERT: monitoring segnala eth0 flapping. Connessioni di rete intermittenti.",
-      timewait:   "⚠  ALERT: applicazione non riesce ad aprire nuove connessioni. Port exhaustion.",
-      tcpdump:    "⚠  ALERT: IDS segnala traffico anomalo in uscita verso IP sconosciuti.",
-      strace:     "⚠  ALERT: processo app_worker (PID 9321) bloccato da 40 minuti. CPU 0%. Hung.",
-      coredump:   "⚠  ALERT: app_server crasha ogni ~10 ore. 3 core dump in /var/core da ieri.",
-      syslogflood:"⚠  ALERT: /var/log cresce 2GB/ora. Disco al 88%. Syslog intasato.",
-      fsck:       "⚠  ALERT: dmesg mostra errori EXT4 e I/O error su sda. Filesystem corrotto.",
-      oomkiller:  "⚠  ALERT: OOM killer attivo. Java crasha ogni 5 minuti. Heap leak sospetto.",
-      infoblox:   "⚠  ALERT: 40 sedi non risolvono i nomi. DNS Infoblox irraggiungibile.",
-    }[s.id] || "Shell pronta.";
+      iowait:     "⚠  ALERT: load average 12.44. I/O Wait at 92%. Server stalled on disk.",
+      apachewrk:  "⚠  ALERT: site very slow. Apache returning 503. Traffic spike in progress.",
+      mysqlslow:  "⚠  ALERT: application timing out. MySQL not responding. DBA unavailable.",
+      netflap:    "⚠  ALERT: monitoring reports eth0 flapping. Intermittent network connections.",
+      timewait:   "⚠  ALERT: application unable to open new connections. Port exhaustion.",
+      tcpdump:    "⚠  ALERT: IDS reports anomalous outbound traffic to unknown IPs.",
+      strace:     "⚠  ALERT: app_worker process (PID 9321) hung for 40 minutes. CPU 0%.",
+      coredump:   "⚠  ALERT: app_server crashing every ~10 hours. 3 core dumps in /var/core since yesterday.",
+      syslogflood:"⚠  ALERT: /var/log growing 2GB/hour. Disk at 88%. Syslog flooded.",
+      fsck:       "⚠  ALERT: dmesg shows EXT4 errors and I/O errors on sda. Filesystem corrupted.",
+      oomkiller:  "⚠  ALERT: OOM killer active. Java crashing every 5 minutes. Suspected heap leak.",
+      infoblox:   "⚠  ALERT: 40 sites not resolving names. Infoblox DNS unreachable.",
+    }[s.id] || "Shell ready.";
     setHistory([
+      { text: `SSH session established → ${instanceId} (Oracle Linux 8.9)`, type: "dim" },
       { text: intro, type: "warn" },
-      { text: "Digita 'help' per i comandi disponibili, 'hint' per un suggerimento.", type: "dim" },
+      { text: "Type 'help' for available commands, 'hint' for a scenario hint.", type: "dim" },
     ]);
     setCmdHist([]); setHistIdx(-1);
     setTimeout(() => inputRef.current?.focus(), 100);
@@ -803,14 +861,47 @@ export default function App({ scenario: scenarioProp } = {}) {
 
   function submit() {
     if (!input.trim()) return;
-    const cmd = input.trim();
+    submit_val(input.trim());
+    setInput("");
+  }
+
+  function submit_val(cmd) {
+    lastActivityRef.current = Date.now();
     const startTime = Date.now();
     setCmdHist(h => [cmd, ...h].slice(0, 100));
     setHistIdx(-1);
+
+    // ── realism: dmesg ──────────────────────────────────────────────────────
+    if (cmd === "dmesg" || cmd.startsWith("dmesg ")) {
+      // handled in runCommand, but patch hostname
+      const out = runCommand(cmd, state, setState);
+      const patched = out.map(o => ({ ...o, text: o.text?.replace(/\bserver01\b/g, instanceId) }));
+      setHistory(h => [...h, { text: `[root@${instanceId} ~]# ${cmd}`, type: "prompt" }, ...patched]);
+      return;
+    }
+
+    // ── realism: /proc files ────────────────────────────────────────────────
+    if (cmd.startsWith("cat ") && PROC_FILES[cmd.slice(4).trim()]) {
+      const lines = PROC_FILES[cmd.slice(4).trim()].map(t => ({ text: t, type: "out" }));
+      setHistory(h => [...h, { text: `[root@${instanceId} ~]# ${cmd}`, type: "prompt" }, ...lines]);
+      return;
+    }
+
+    // ── realism: history ────────────────────────────────────────────────────
+    if (cmd === "history") {
+      const base = new Date("2026-03-04T08:00:00Z");
+      const lines = cmdHist.slice().reverse().map((c, i) => {
+        const t = new Date(base.getTime() + i * 37000).toISOString().replace("T"," ").slice(0,19);
+        return { text: `  ${String(i+1).padStart(3)}  ${t}  ${c}`, type: "out" };
+      });
+      setHistory(h => [...h, { text: `[root@${instanceId} ~]# ${cmd}`, type: "prompt" }, ...lines]);
+      return;
+    }
+
     const out = runCommand(cmd, state, setState);
     const durationMs = Date.now() - startTime;
-    if (out.some(o => o.type === "clear")) { setHistory([]); setInput(""); return; }
-    setHistory(h => [...h, { text: `[root@server01 ~]# ${cmd}`, type: "prompt" }, ...out]);
+    if (out.some(o => o.type === "clear")) { setHistory([]); return; }
+    setHistory(h => [...h, { text: `[root@${instanceId} ~]# ${cmd}`, type: "prompt" }, ...out]);
 
     // Record command telemetry
     const [cmdName, ...cmdArgs] = cmd.split(/\s+/);
@@ -822,12 +913,11 @@ export default function App({ scenario: scenarioProp } = {}) {
       stdoutLength, stderrLength, serviceStates: {}, logCount: 0, newLogs: 0,
     });
 
-    setInput("");
     setTimeout(() => {
       setState(st => {
         if (!st || st.solved) return st;
         if (checkSolved(st)) {
-          setHistory(h => [...h, { text: "✅  PROBLEMA IDENTIFICATO E RISOLTO — ottimo lavoro!", type: "ok" }]);
+          setHistory(h => [...h, { text: "✅  PROBLEM IDENTIFIED AND RESOLVED — great work!", type: "ok" }]);
           endSession(true);
           return { ...st, solved: true };
         }
@@ -837,7 +927,22 @@ export default function App({ scenario: scenarioProp } = {}) {
   }
 
   function handleKey(e) {
-    if (e.key === "Enter")     { submit(); return; }
+    lastActivityRef.current = Date.now();
+    if (e.ctrlKey && e.key === "c") {
+      e.preventDefault();
+      setHistory(h => [...h, { text: `[root@${instanceId} ~]# ${input}^C`, type: "prompt" }]);
+      setInput(""); return;
+    }
+    if (e.key === "Enter") {
+      if (!input.trim()) return;
+      if (idleDelay) {
+        setIdleDelay(false);
+        const val = input.trim(); setInput("");
+        setTimeout(() => submit_val(val), 280 + Math.random() * 120);
+        return;
+      }
+      submit(); return;
+    }
     if (e.key === "ArrowUp")   { e.preventDefault(); const i=Math.min(histIdx+1,cmdHist.length-1); setHistIdx(i); setInput(cmdHist[i]||""); }
     if (e.key === "ArrowDown") { e.preventDefault(); const i=Math.max(histIdx-1,-1); setHistIdx(i); setInput(i===-1?"":cmdHist[i]||""); }
   }
@@ -850,7 +955,7 @@ export default function App({ scenario: scenarioProp } = {}) {
         <div style={{ marginBottom:32, textAlign:"center" }}>
           <div style={{ fontSize:10, letterSpacing:5, color:"#3a5a3a", textTransform:"uppercase", marginBottom:4 }}>Production Server Scenarios</div>
           <div style={{ fontSize:22, fontWeight:900, color:"#1a3020" }}>Real Linux Troubleshooting</div>
-          <div style={{ fontSize:11, color:"#334", marginTop:4 }}>Comandi reali — output realistici da produzione enterprise</div>
+          <div style={{ fontSize:11, color:"#334", marginTop:4 }}>Real commands — realistic enterprise production output</div>
         </div>
         <div style={{ width:"100%", maxWidth:1000 }}>
           {cats.map(cat => (
@@ -889,7 +994,7 @@ export default function App({ scenario: scenarioProp } = {}) {
         <div style={{ display:"flex", gap:5 }}>
           {["#ff5f57","#febc2e","#28c840"].map(c=><div key={c} style={{ width:9,height:9,borderRadius:"50%",background:c }}/>)}
         </div>
-        <span style={{ color:"#3a6a3a", fontSize:11, marginLeft:4 }}>root@server01.prod</span>
+        <span style={{ color:"#3a6a3a", fontSize:11, marginLeft:4 }}>root@{instanceId}</span>
         <span style={{ color:catInfo.color, fontSize:10, marginLeft:6 }}>{scenario.icon} {scenario.label}</span>
         <span style={{ fontSize:9, background:catInfo.color+"22", color:catInfo.color, padding:"1px 6px", borderRadius:3 }}>{catInfo.label}</span>
         {state?.solved && <span style={{ fontSize:10, background:"#1a3520", color:"#4caf84", padding:"2px 8px", borderRadius:4 }}>✅ SOLVED</span>}
@@ -900,7 +1005,7 @@ export default function App({ scenario: scenarioProp } = {}) {
           setScenario(null);setState(null);setHistory([]);
         }}
           style={{ marginLeft:"auto", padding:"2px 10px", background:"#1c2030", border:"1px solid #2c3040", borderRadius:4, color:"#4a5a6a", cursor:"pointer", fontSize:10, fontFamily:"inherit" }}>
-          ← Scenari
+          ← Scenarios
         </button>
       </div>
 
@@ -916,11 +1021,11 @@ export default function App({ scenario: scenarioProp } = {}) {
 
       {/* input */}
       <div style={{ borderTop:"1px solid #1c2030", padding:"9px 16px", display:"flex", alignItems:"center", gap:8, background:"#080b0e", flexShrink:0 }}>
-        <span style={{ color:"#3a6a3a", fontSize:12, whiteSpace:"nowrap" }}>[root@server01 ~]#</span>
+        <span style={{ color:"#3a6a3a", fontSize:12, whiteSpace:"nowrap" }}>{`[root@${instanceId} ~]#`}</span>
         <input ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKey}
           autoFocus spellCheck={false} autoComplete="off" autoCorrect="off"
           style={{ flex:1, background:"none", border:"none", outline:"none", color:"#c8d8c8", fontFamily:"inherit", fontSize:12.5, caretColor:"#4caf84" }}
-          placeholder="digita un comando reale..."/>
+          placeholder="type a real command..."/>
       </div>
     </div>
   );

@@ -493,7 +493,7 @@ export function DemoShell() {
           WIN<span style={{color:"#fff"}}>LAB</span>
         </span>
         <span style={{ color:"#6b7280", fontSize:12 }}>
-          {labLabel} &nbsp;·&nbsp; Free demo
+          {labLabel}
         </span>
         <a
           href="/#cta"
