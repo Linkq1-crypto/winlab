@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useLabTelemetry } from "./src/hooks/useLabTelemetry.js";
 import { getRealismWorker, destroyRealismWorker } from "./src/hooks/realism-worker.js";
-import { runBashLayer, promptDir } from "./src/hooks/bashEngine.js";
+import { runBashLayer, promptDir, tabComplete } from "./src/hooks/bashEngine.js";
 
 // ─── Random instance ID per session ──────────────────────────────────────────
 function genInstanceId() {
@@ -889,7 +889,7 @@ export default function App({ region = "US", labProgress = { completed: 0, total
     }
 
     // ── bash engine (cd, ls, pipes, &&, date, echo, pwd …) ───────────────
-    const { out, newCwd } = runBashLayer(cmd, cwd, instanceId, (raw) => {
+    const { out, newCwd, clear: doClear, exit: doExit } = runBashLayer(cmd, cwd, instanceId, (raw) => {
       if (raw === "dmesg" || raw.startsWith("dmesg ")) {
         const T = n => `[${n.toFixed(6).padStart(12)}]`;
         return [
@@ -906,7 +906,7 @@ export default function App({ region = "US", labProgress = { completed: 0, total
     if (newCwd !== cwd) setCwd(newCwd);
 
     const durationMs = Date.now() - startTime;
-    if (out.some(o => o.type === "clear")) { setHistory([]); return; }
+    if (doClear) { setHistory([]); return; }
     setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }, ...out]);
 
     // Record command telemetry
@@ -990,8 +990,19 @@ export default function App({ region = "US", labProgress = { completed: 0, total
       submit();
       return;
     }
-    if (e.key === "ArrowUp")   { e.preventDefault(); const i=Math.min(histIdx+1,cmdHist.length-1); setHistIdx(i); setInput(cmdHist[i]||""); }
-    if (e.key === "ArrowDown") { e.preventDefault(); const i=Math.max(histIdx-1,-1); setHistIdx(i); setInput(i===-1?"":cmdHist[i]||""); }
+    if (e.key === "ArrowUp")   { e.preventDefault(); const i=Math.min(histIdx+1,cmdHist.length-1); setHistIdx(i); setInput(cmdHist[i]||""); return; }
+    if (e.key === "ArrowDown") { e.preventDefault(); const i=Math.max(histIdx-1,-1); setHistIdx(i); setInput(i===-1?"":cmdHist[i]||""); return; }
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const { completed, suggestions } = tabComplete(input, cwd);
+      if (suggestions.length > 1) {
+        setHistory(h => [...h,
+          { text: `[root@${instanceId} ${promptDir(cwd)}]$ ${input}`, type: "prompt" },
+          { text: suggestions.join("  "), type: "out" },
+        ]);
+      }
+      setInput(completed);
+    }
   }
 
   const col = { out:"#b8d0c8", err:"#e06060", ok:"#4caf84", warn:"#ffaa00", prompt:"#6ab0f5", info:"#7788aa" };

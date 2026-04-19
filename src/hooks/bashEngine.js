@@ -172,7 +172,7 @@ function splitPipes(raw) {
   return segs.filter(Boolean);
 }
 
-// ── Split on && / ; (respecting quotes) ──────────────────────────────────────
+// ── Split on && / || / ; (respecting quotes) ─────────────────────────────────
 function splitChain(raw) {
   const ops  = [];
   const cmds = [];
@@ -183,6 +183,7 @@ function splitChain(raw) {
     if (!inQ && (ch==='"'||ch==="'")) { inQ=true; qc=ch; cur+=ch; }
     else if (inQ && ch===qc)          { inQ=false; cur+=ch; }
     else if (!inQ && raw[i]==='&' && raw[i+1]==='&') { cmds.push(cur.trim()); ops.push('&&'); cur=''; i++; }
+    else if (!inQ && raw[i]==='|' && raw[i+1]==='|') { cmds.push(cur.trim()); ops.push('||'); cur=''; i++; }
     else if (!inQ && ch===';')        { cmds.push(cur.trim()); ops.push(';'); cur=''; }
     else cur+=ch;
     i++;
@@ -338,7 +339,6 @@ function execSingle(raw, cwd, instanceId) {
   }
 
   if (cmd === 'grep') {
-    // Standalone grep on a file
     const pattern = args.find(a => !a.startsWith('-'));
     const fileArg = args[args.length - 1];
     if (!pattern) return { handled:true, out: err('Usage: grep [OPTIONS] PATTERN [FILE]'), newCwd: cwd };
@@ -354,7 +354,77 @@ function execSingle(raw, cwd, instanceId) {
     return { handled: false, out: [], newCwd: cwd };
   }
 
+  if (cmd === 'uname') {
+    if (args.includes('-r')) return { handled:true, out: lines(['5.15.0-206.153.7.el8uek.x86_64']), newCwd: cwd };
+    if (args.includes('-m')) return { handled:true, out: lines(['x86_64']), newCwd: cwd };
+    if (args.includes('-a') || args.includes('--all')) {
+      return { handled:true, out: lines([`Linux ${instanceId} 5.15.0-206.153.7.el8uek.x86_64 #2 SMP Wed Apr  2 08:00:00 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux`]), newCwd: cwd };
+    }
+    return { handled:true, out: lines(['Linux']), newCwd: cwd };
+  }
+
+  if (cmd === 'hostname') {
+    if (args.includes('-f') || args.includes('--fqdn')) return { handled:true, out: lines([`${instanceId}.prod.lab.local`]), newCwd: cwd };
+    return { handled:true, out: lines([instanceId]), newCwd: cwd };
+  }
+
+  if (cmd === 'clear') {
+    return { handled:true, out: [], newCwd: cwd, clear: true };
+  }
+
+  if (cmd === 'exit' || cmd === 'logout') {
+    return { handled:true, out: [{ text: 'logout', type: 'out' }], newCwd: cwd, exit: true };
+  }
+
+  if (cmd === 'rm') {
+    if (!args.length) return { handled:true, out: err('rm: missing operand'), newCwd: cwd };
+    const target = resolvePath(cwd, args[args.length-1].replace(/^~/, '/root'));
+    if (!VFS[target] && !args.includes('-f') && !args.includes('-rf') && !args.includes('-r')) {
+      return { handled:true, out: err(`rm: cannot remove '${args[args.length-1]}': No such file or directory`), newCwd: cwd };
+    }
+    return { handled:true, out: [], newCwd: cwd };
+  }
+
+  if (cmd === 'cp') {
+    if (args.length < 2) return { handled:true, out: err('cp: missing destination'), newCwd: cwd };
+    return { handled:true, out: [], newCwd: cwd };
+  }
+
+  if (cmd === 'mv') {
+    if (args.length < 2) return { handled:true, out: err('mv: missing destination'), newCwd: cwd };
+    return { handled:true, out: [], newCwd: cwd };
+  }
+
+  if (cmd === 'chmod' || cmd === 'chown') {
+    return { handled:true, out: [], newCwd: cwd };
+  }
+
+  if (cmd === 'ln') {
+    return { handled:true, out: [], newCwd: cwd };
+  }
+
+  if (cmd === 'alias') {
+    if (!args.length) return { handled:true, out: lines(["alias ll='ls -lah'", "alias grep='grep --color=auto'"]), newCwd: cwd };
+    return { handled:true, out: [], newCwd: cwd };
+  }
+
+  if (cmd === 'export') {
+    return { handled:true, out: [], newCwd: cwd };
+  }
+
+  if (cmd === 'source' || cmd === '.') {
+    return { handled:true, out: [], newCwd: cwd };
+  }
+
   return { handled: false, out: [], newCwd: cwd };
+}
+
+// ── Output redirect parser (>, >>) ───────────────────────────────────────────
+// Returns { cmd: string without redirect, file: string|null, append: bool }
+function parseRedirect(raw) {
+  const m = raw.match(/^([\s\S]+?)\s*(>>|>)\s*(\S+)\s*$/);
+  if (!m) return { cmd: raw, file: null, append: false };
+  return { cmd: m[1].trim(), file: m[3], append: m[2] === '>>' };
 }
 
 // ── Public API: run a full command (with pipes + chains) ─────────────────────
@@ -364,25 +434,33 @@ export function runBashLayer(raw, cwd, instanceId, runScenarioCmd) {
   let currentCwd = cwd;
   let allOut     = [];
   let lastOk     = true;
+  let doClear    = false;
+  let doExit     = false;
 
   for (let ci = 0; ci < cmds.length; ci++) {
     const op = ops[ci - 1];
     if (op === '&&' && !lastOk) break;
+    if (op === '||' && lastOk)  break;
 
-    const segments = splitPipes(cmds[ci]);
+    // Strip sudo prefix transparently
+    let cmdRaw = cmds[ci].replace(/^sudo\s+/, '');
+
+    // Parse output redirect (>, >>)
+    const { cmd: cmdNoRedir, file: redirFile } = parseRedirect(cmdRaw);
+    if (redirFile) cmdRaw = cmdNoRedir;
+
+    const segments = splitPipes(cmdRaw);
     let linesBuf   = [];
-    let handled    = false;
 
     // First segment
     const first = execSingle(segments[0], currentCwd, instanceId);
     if (first.handled) {
       linesBuf   = first.out;
       currentCwd = first.newCwd;
-      handled    = true;
+      if (first.clear) doClear = true;
+      if (first.exit)  doExit  = true;
     } else {
-      // Fall through to scenario engine
       linesBuf = runScenarioCmd(segments[0], currentCwd);
-      handled  = true;
     }
 
     // Remaining pipe segments (filters)
@@ -390,9 +468,75 @@ export function runBashLayer(raw, cwd, instanceId, runScenarioCmd) {
       linesBuf = applyPipeFilter(segments[pi], linesBuf);
     }
 
-    lastOk  = !linesBuf.some(l => l.type === 'err');
-    allOut  = [...allOut, ...linesBuf];
+    // Redirect: suppress output, show a silent write confirmation
+    if (redirFile) {
+      linesBuf = [];
+    }
+
+    lastOk = !linesBuf.some(l => l.type === 'err');
+    allOut = [...allOut, ...linesBuf];
   }
 
-  return { out: allOut, newCwd: currentCwd };
+  return { out: allOut, newCwd: currentCwd, clear: doClear, exit: doExit };
+}
+
+// ── Tab completion ────────────────────────────────────────────────────────────
+const KNOWN_CMDS = ['ls','cd','pwd','cat','grep','awk','sed','top','ps','df','du','free','kill',
+  'chmod','chown','mkdir','rm','cp','mv','touch','find','curl','wget','ssh','scp','tar','gzip',
+  'vim','nano','systemctl','journalctl','dmesg','ifconfig','ip','ss','netstat','ping','traceroute',
+  'dig','nslookup','nmap','tcpdump','strace','lsof','iostat','iotop','vmstat','mpstat','sar',
+  'uptime','uname','hostname','who','w','id','env','echo','date','history','man','sudo',
+  'apt','yum','dnf','rpm','service','chkconfig','firewall-cmd','semanage','restorecon',
+  'pm2','nginx','node','npm','git','docker','kubectl','helm','terraform'];
+
+export function tabComplete(input, cwd) {
+  const trimmed = input.trimStart();
+
+  // Split into tokens — complete the last token
+  const tokens = trimmed.split(/\s+/);
+  const last   = tokens[tokens.length - 1];
+  const prefix = tokens.length === 1 ? '' : tokens.slice(0, -1).join(' ') + ' ';
+
+  // If first token (command completion)
+  if (tokens.length === 1) {
+    const matches = KNOWN_CMDS.filter(c => c.startsWith(last));
+    if (matches.length === 1) return { completed: matches[0] + ' ', suggestions: [] };
+    if (matches.length > 1)   return { completed: input, suggestions: matches };
+    return { completed: input, suggestions: [] };
+  }
+
+  // Path completion
+  const pathTokenRaw = last.replace(/^~/, '/root');
+  const isAbs = pathTokenRaw.startsWith('/');
+  const base  = isAbs ? pathTokenRaw : resolvePath(cwd, pathTokenRaw);
+
+  // Try exact match first (last char is /)
+  if (base.endsWith('/') || VFS[base]?.type === 'd') {
+    const node = VFS[base] || VFS[base.replace(/\/$/, '')];
+    if (node?.children) {
+      const children = node.children;
+      if (children.length === 1) {
+        const full = (base.replace(/\/$/, '')) + '/' + children[0];
+        return { completed: prefix + full, suggestions: [] };
+      }
+      return { completed: input, suggestions: children };
+    }
+  }
+
+  // Prefix match on parent dir
+  const lastSlash = base.lastIndexOf('/');
+  const parentDir = lastSlash >= 0 ? base.slice(0, lastSlash) || '/' : cwd;
+  const partial   = lastSlash >= 0 ? base.slice(lastSlash + 1) : base;
+  const parentNode = VFS[parentDir];
+  if (parentNode?.children) {
+    const matches = parentNode.children.filter(c => c.startsWith(partial));
+    if (matches.length === 1) {
+      const fullPath = (parentDir === '/' ? '' : parentDir) + '/' + matches[0];
+      const isDir = VFS[fullPath]?.type === 'd';
+      return { completed: prefix + fullPath + (isDir ? '/' : ''), suggestions: [] };
+    }
+    if (matches.length > 1) return { completed: input, suggestions: matches };
+  }
+
+  return { completed: input, suggestions: [] };
 }
