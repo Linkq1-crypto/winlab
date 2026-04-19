@@ -670,12 +670,18 @@ export default function SaaSOrchestrator() {
   const [isHoneypot, setIsHoneypot] = useState(() => {
     return typeof window !== "undefined" && window.location.pathname === "/dash_board";
   });
+  const [isProfileRoute, setIsProfileRoute] = useState(() => {
+    return typeof window !== "undefined" && window.location.pathname === "/profile";
+  });
 
   useEffect(() => {
     const handlePop = () => {
       setIsMyRootRoute(window.location.pathname.startsWith("/myrooting"));
       setMyRootPath(getMyRootPath());
       setIsHoneypot(window.location.pathname === "/dash_board");
+      const onProfile = window.location.pathname === "/profile";
+      setIsProfileRoute(onProfile);
+      if (onProfile) setView("profile");
     };
     window.addEventListener("popstate", handlePop);
     return () => window.removeEventListener("popstate", handlePop);
@@ -734,6 +740,13 @@ export default function SaaSOrchestrator() {
   function navigate(v) {
     setView(v);
     if (v !== "lab") setActiveLabId(null);
+    if (v === "profile") {
+      window.history.pushState({}, "", "/profile");
+      setIsProfileRoute(true);
+    } else if (isProfileRoute) {
+      window.history.pushState({}, "", "/");
+      setIsProfileRoute(false);
+    }
   }
 
   function requireAuth(action) {
@@ -786,6 +799,16 @@ export default function SaaSOrchestrator() {
   // Honeypot: fake admin dashboard at /dash_board
   if (isHoneypot) {
     return <FakeTerminal />;
+  }
+
+  // Direct URL: /profile
+  if (isProfileRoute || view === "profile") {
+    return (
+      <ProfilePage
+        onBack={() => navigate("dashboard")}
+        onNavigate={(section) => navigate(section)}
+      />
+    );
   }
 
   // MyRoot dashboards
@@ -879,15 +902,6 @@ export default function SaaSOrchestrator() {
           <AISettings language={isIndia ? "hi" : "en"} token={token} />
         </div>
       </div>
-    );
-  }
-
-  if (view === "profile") {
-    return (
-      <ProfilePage
-        onBack={() => navigate("dashboard")}
-        onNavigate={(section) => navigate(section)}
-      />
     );
   }
 
