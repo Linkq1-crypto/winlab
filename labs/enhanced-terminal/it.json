@@ -1,0 +1,48 @@
+{
+  "id": "enhanced-terminal",
+  "meta": {
+    "difficulty": "easy",
+    "estimatedMinutes": 20,
+    "tags": ["linux", "apache", "disk", "security", "guided"],
+    "tier": "starter"
+  },
+  "content": {
+    "title": "Lab Guidato — 3 incidenti reali con AI Mentor",
+    "description": "Tre incidenti reali in sequenza con AI Mentor disponibile. Ideale per chi inizia. Ogni lab ha suggerimenti progressivi se sei bloccato.",
+    "incident": "Tre servizi sono rotti. Uno alla volta. Risolvi nell'ordine.",
+    "labs": [
+      {
+        "id": "lab1",
+        "title": "Lab 1 di 3: Apache è giù",
+        "description": "Il web server non risponde. Trova e risolvi il problema.",
+        "hint": "Prova: systemctl status httpd"
+      },
+      {
+        "id": "lab2",
+        "title": "Lab 2 di 3: Crisi disco pieno",
+        "description": "Il server non riesce a scrivere. Libera spazio.",
+        "hint": "Prova: df -h per controllare lo spazio disco"
+      },
+      {
+        "id": "lab3",
+        "title": "Lab 3 di 3: Configurazione di sicurezza sbagliata",
+        "description": "Il firewall blocca il traffico legittimo. Identifica e correggi.",
+        "hint": "Prova: systemctl status firewalld"
+      }
+    ],
+    "hints": [
+      "Digita 'ai' nel terminale per chiedere aiuto all'AI Mentor",
+      "Ogni lab ha 3 livelli di suggerimento — più aspetti, più dettagli ricevi",
+      "Puoi completare i lab nell'ordine che preferisci"
+    ],
+    "feedback": {
+      "success": "Tutti e tre i lab completati. Sei pronto per gli scenari avanzati.",
+      "partial": "Alcuni lab completati. Continua.",
+      "fail": "Usa l'AI Mentor per un suggerimento."
+    },
+    "success_message": "COMPLETATO — Lab Guidato — +80 XP"
+  },
+  "non_translatable": {
+    "commands": ["systemctl status httpd", "df -h", "systemctl status firewalld"]
+  }
+}

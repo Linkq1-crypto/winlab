@@ -1,0 +1,78 @@
+{
+  "id": "advanced-scenarios",
+  "meta": {
+    "difficulty": "hard",
+    "estimatedMinutes": 20,
+    "tags": ["nginx", "mysql", "disk", "ssl", "cron", "java", "oom", "production"],
+    "tier": "pro"
+  },
+  "content": {
+    "title": "Scenari avanzati — 6 incidenti reali di produzione",
+    "description": "Sei incidenti reali che accadono in produzione. Ogni scenario ha una causa nascosta da trovare nei log. Nessuna guida — solo comandi reali.",
+    "incident": "Scegli un incidente e risolvilo. Il sistema è in produzione. Gli utenti stanno aspettando.",
+    "scenarios": [
+      {
+        "id": "phpfpm",
+        "title": "502 Bad Gateway",
+        "subtitle": "Nginx + PHP-FPM · deploy rotto",
+        "alert": "HTTP check FAILED — 502 Bad Gateway\nStack: Nginx · PHP-FPM 8.1 · MySQL 8\nUltimo evento: deploy v2.4.1 alle 09:10",
+        "cause": "www.conf copiato da staging Apache → produzione Nginx: user=apache non esiste",
+        "steps": ["Diagnosi iniziale", "502 identificato", "php-fpm down", "Causa nel journal", "Config analizzata", "www.conf corretto", "php-fpm riavviato", "Sito operativo"]
+      },
+      {
+        "id": "mysql_repl",
+        "title": "MySQL Replica Rotta",
+        "subtitle": "Replica slave lag · dati inconsistenti",
+        "alert": "DB-02 replication lag: 14.823 secondi — CRITICO\nSlave SQL: No\nUltimo evento: UPDATE massivo su tabella orders",
+        "cause": "Deadlock su slave durante UPDATE massivo → SQL thread stopped con errore 1213",
+        "steps": ["Stato replica", "Errore identificato", "Relay log letto", "Skip errore/fix", "Replica riavviata", "Lag azzerato", "Replica OK"]
+      },
+      {
+        "id": "diskfull",
+        "title": "Disco al 100%",
+        "subtitle": "/var esaurito · scritture bloccate",
+        "alert": "disk usage CRITICAL: /var 100% on app01.prod\nScritture su DB e log bloccate · app non risponde\nLogrotate ultimo run: 18 giorni fa",
+        "cause": "access.log non ruotato — cresciuto a 89G. logrotate.d/nginx ha errore di sintassi",
+        "steps": ["Disco analizzato", "File colpevole trovato", "Causa logrotate", "Log svuotato", "Logrotate fixato", "Disco libero"]
+      },
+      {
+        "id": "ssl",
+        "title": "Certificato SSL Scaduto",
+        "subtitle": "HTTPS down · Let's Encrypt renewal fallito",
+        "alert": "SSL cert EXPIRED: api.acmecorp.com\nSCADUTO: Feb 28 2026\nRinnovo automatico fallito — certbot cron non gira",
+        "cause": "certbot cronjob disabilitato dopo hardening. Porta 80 bloccata da firewall → challenge HTTP fallisce",
+        "steps": ["HTTPS down verificato", "Cert scaduto confermato", "Certbot status", "Firewall analizzato", "Porta 80 aperta", "Cert rinnovato", "HTTPS operativo"]
+      },
+      {
+        "id": "cron_load",
+        "title": "Load Spike da Cron",
+        "subtitle": "Load average 45 · server irresponsivo",
+        "alert": "load average: 45.12, 42.88, 38.21 — CRITICO\nServer quasi irresponsivo · utenti segnalano timeout\nNessun deploy recente",
+        "cause": "Script di report lanciato ogni minuto per errore (*/1 invece di 0 */1). 45 istanze parallele di report.py",
+        "steps": ["Load analizzato", "Processo trovato", "Crontab letto", "Processi killati", "Cron corretto", "Load normale"]
+      },
+      {
+        "id": "oom_java",
+        "title": "OOM · Java Heap Leak",
+        "subtitle": "Microservizio crasha ogni 2 ore",
+        "alert": "payment-service DOWN — OOM killer attivo\nPID 12891 (java) killed · riavviato automaticamente\nFrequenza crash: ogni ~2 ore dall'ultimo deploy",
+        "cause": "SessionCache non svuota le sessioni scadute. Heap 8G pieno in 2h.",
+        "steps": ["Servizio down", "OOM confermato", "Heap analizzato", "Leak identificato", "Heap dump generato", "Config JVM fixata", "Stabile"]
+      }
+    ],
+    "hints": [
+      "Per ogni scenario: inizia sempre da systemctl status e journalctl",
+      "I log contengono la causa. Leggi tutto prima di toccare qualcosa.",
+      "In produzione: diagnosi prima, fix dopo"
+    ],
+    "feedback": {
+      "success": "Incidente risolto. Sistema stabile.",
+      "partial": "Sintomo rimosso ma causa radice non trovata.",
+      "fail": "Il sistema è ancora degradato. Rileggi i log."
+    }
+  },
+  "non_translatable": {
+    "commands": ["systemctl status", "journalctl -xe", "df -h", "top", "SHOW PROCESSLIST", "certbot renew"],
+    "error_codes": ["502 Bad Gateway", "OOM", "ENOSPC", "SSL EXPIRED", "Slave SQL: No"]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "sssd-ldap",
+  "meta": {
+    "difficulty": "hard",
+    "estimatedMinutes": 25,
+    "tags": ["sssd", "ldap", "active-directory", "authentication", "linux", "enterprise"],
+    "tier": "pro"
+  },
+  "content": {
+    "title": "SSSD / LDAP — Gli utenti sono spariti",
+    "description": "Gli utenti di dominio non riescono ad accedere al server. L'autenticazione LDAP è rotta. I sistemi enterprise dipendono da questo servizio.",
+    "incident": "Nessun utente AD riesce a fare login. sssd è in stato degradato. I log mostrano errori di connessione al domain controller.",
+    "tasks": [
+      "Controlla lo stato del servizio sssd",
+      "Analizza i log di sssd per l'errore specifico",
+      "Verifica la connettività al domain controller",
+      "Controlla la configurazione in /etc/sssd/sssd.conf",
+      "Ripara o rigenera il keytab Kerberos se necessario",
+      "Riavvia sssd e verifica che gli utenti siano di nuovo visibili"
+    ],
+    "hints": [
+      "systemctl status sssd mostra lo stato corrente",
+      "sssctl domain-status <domain> per diagnostica veloce",
+      "realm list mostra il dominio joinato",
+      "klist -k /etc/krb5.keytab verifica il keytab",
+      "id <username>@<domain> testa se un utente è risolvibile"
+    ],
+    "feedback": {
+      "success": "Autenticazione ripristinata. Gli utenti di dominio accedono correttamente.",
+      "partial": "sssd attivo ma alcuni utenti ancora non risolvibili.",
+      "fail": "Autenticazione ancora rotta. Controlla connettività e keytab."
+    },
+    "success_message": "COMPLETATO — SSSD Recovery — +120 XP"
+  },
+  "non_translatable": {
+    "commands": ["systemctl status sssd", "sssctl domain-status", "realm list", "klist -k", "id"],
+    "error_codes": ["LDAP connection failed", "KRB5_CC_NOTFOUND", "sssd[be]: LDAP search failed"]
+  }
+}

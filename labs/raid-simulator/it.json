@@ -1,0 +1,38 @@
+{
+  "id": "raid-simulator",
+  "meta": {
+    "difficulty": "medium",
+    "estimatedMinutes": 20,
+    "tags": ["raid", "storage", "mdadm", "linux", "disk-recovery"],
+    "tier": "pro"
+  },
+  "content": {
+    "title": "RAID Configuration — Gestione array e recovery",
+    "description": "Configura e gestisci array RAID in Linux con mdadm. Simula guasti di disco, ricostruisci array degradati, pianifica la ridondanza storage.",
+    "incident": "Un disco dell'array RAID è guasto. Il sistema è degradato. Intervieni prima del secondo guasto.",
+    "tasks": [
+      "Controlla lo stato dell'array RAID con mdadm --detail",
+      "Identifica il disco guasto",
+      "Rimuovi il disco guasto dall'array",
+      "Aggiungi il disco di ricambio",
+      "Monitora la ricostruzione dell'array",
+      "Verifica che l'array sia tornato healthy"
+    ],
+    "hints": [
+      "cat /proc/mdstat mostra lo stato di tutti gli array RAID",
+      "mdadm --detail /dev/md0 mostra i dettagli dell'array",
+      "mdadm /dev/md0 --remove /dev/sdb rimuove un disco",
+      "mdadm /dev/md0 --add /dev/sdc aggiunge un disco sostitutivo"
+    ],
+    "feedback": {
+      "success": "Array RAID ricostruito. Sistema ridondante. Dati al sicuro.",
+      "partial": "Array degradato ma funzionante. Completa la ricostruzione.",
+      "fail": "Array in stato critico. Intervieni subito prima del secondo guasto."
+    },
+    "success_message": "COMPLETATO — RAID Recovery — +100 XP"
+  },
+  "non_translatable": {
+    "commands": ["mdadm --detail", "mdadm --remove", "mdadm --add", "cat /proc/mdstat", "mdadm --monitor"],
+    "error_codes": ["degraded", "failed", "removed", "spare rebuilding"]
+  }
+}

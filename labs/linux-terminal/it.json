@@ -1,0 +1,36 @@
+{
+  "id": "linux-terminal",
+  "meta": {
+    "difficulty": "easy",
+    "estimatedMinutes": 15,
+    "tags": ["linux", "bash", "terminal", "basics", "filesystem"],
+    "tier": "starter"
+  },
+  "content": {
+    "title": "Linux Terminal — Le basi dalla riga di comando",
+    "description": "Impara i comandi fondamentali di Linux in un terminale reale. Navigazione, gestione file, permessi, processi. Nessuna teoria — solo pratica.",
+    "incident": "Hai accesso a un server Linux Ubuntu 22.04. Completa le sfide usando i comandi giusti.",
+    "tasks": [
+      "Naviga il filesystem con ls, cd, pwd",
+      "Crea, copia e sposta file con touch, cp, mv",
+      "Gestisci permessi con chmod e chown",
+      "Analizza i processi con ps e kill",
+      "Leggi file di log con tail, grep, less"
+    ],
+    "hints": [
+      "man <comando> mostra la documentazione di ogni comando",
+      "Tab completa il nome del file automaticamente",
+      "Ctrl+C interrompe un comando in esecuzione",
+      "history mostra i comandi precedenti"
+    ],
+    "feedback": {
+      "success": "Ottimo. Conosci le basi di Linux.",
+      "partial": "Quasi. Riprova con i comandi suggeriti.",
+      "fail": "Non ancora. Usa 'help' per i suggerimenti."
+    },
+    "success_message": "COMPLETATO — Linux Terminal — +60 XP"
+  },
+  "non_translatable": {
+    "commands": ["ls", "cd", "pwd", "touch", "cp", "mv", "chmod", "chown", "ps", "kill", "tail", "grep", "less", "man", "history"]
+  }
+}

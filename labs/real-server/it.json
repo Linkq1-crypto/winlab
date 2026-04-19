@@ -1,0 +1,44 @@
+{
+  "id": "real-server",
+  "meta": {
+    "difficulty": "hard",
+    "estimatedMinutes": 25,
+    "tags": ["iostat", "apache", "mysql", "tcpdump", "strace", "oom", "fsck", "dns", "linux"],
+    "tier": "pro"
+  },
+  "content": {
+    "title": "Incidenti server reali — 12 scenari di produzione",
+    "description": "Dodici scenari reali estratti da incident report aziendali. Ogni scenario richiede diagnosi completa con strumenti professionali. Nessun tutorial.",
+    "incident": "Scegli uno scenario. Il server è in produzione. Hai accesso root e strumenti reali.",
+    "scenarios": [
+      { "id": "iowait",     "title": "I/O Wait alto",           "description": "iostat 98% — disco saturo, app bloccate" },
+      { "id": "apachewrk",  "title": "Apache workers esauriti",  "description": "MaxRequestWorkers raggiunto — server sotto carico" },
+      { "id": "mysqlslow",  "title": "MySQL slow queries",       "description": "DB lentissimo — query bloccate in SHOW PROCESSLIST" },
+      { "id": "netflap",    "title": "NIC flapping",             "description": "eth0 va su e giù — dmesg mostra errori link" },
+      { "id": "timewait",   "title": "TIME_WAIT flood",          "description": "Port exhaustion — 28k connessioni TIME_WAIT" },
+      { "id": "tcpdump",    "title": "Traffico anomalo",         "description": "tcpdump per identificare connessione sospetta" },
+      { "id": "strace",     "title": "Processo hung",            "description": "Processo bloccato — strace rivela la causa" },
+      { "id": "coredump",   "title": "Core dump crash",          "description": "Applicazione crasha — analisi con gdb/coredump" },
+      { "id": "syslogflood","title": "Syslog flood",             "description": "Syslog intasato — 50k msg/sec da un processo" },
+      { "id": "fsck",       "title": "Filesystem corrotto",      "description": "Errori EXT4 — filesystem da riparare con fsck" },
+      { "id": "oomkiller",  "title": "OOM killer selettivo",     "description": "Java heap leak — OOM che uccide il processo sbagliato" },
+      { "id": "infoblox",   "title": "Infoblox DNS timeout",     "description": "Le sedi non risolvono — DHCP/DNS Infoblox ko" }
+    ],
+    "hints": [
+      "iostat -x 1 per analisi I/O in tempo reale",
+      "strace -p PID per vedere le syscall di un processo hung",
+      "ss -s per contare le connessioni per stato",
+      "journalctl --since '10 min ago' per log recenti",
+      "gdb core per analizzare un core dump"
+    ],
+    "feedback": {
+      "success": "Sistema stabilizzato. Causa radice identificata e corretta.",
+      "partial": "Sintomo risolto ma non la causa radice.",
+      "fail": "Il sistema è ancora degradato."
+    }
+  },
+  "non_translatable": {
+    "commands": ["iostat -x 1", "strace -p", "ss -s", "gdb core", "tcpdump", "fsck", "journalctl"],
+    "error_codes": ["OOM", "EXT4-fs error", "TIME_WAIT", "MaxRequestWorkers", "Slave SQL: No"]
+  }
+}
