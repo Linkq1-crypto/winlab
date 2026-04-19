@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { protect, restore } from './tokenProtect.js';
 import { applyGlossary } from './glossary.js';
 import { fallbackTranslateJSON } from './fallback.js';
@@ -15,15 +15,15 @@ Rules:
 - Return ONLY the translated JSON, no markdown fences, no explanation`;
 
 const TONES = {
-  aggressive:   'Short, intense, high-pressure, incident-driven. Max 8 words per sentence.',
-  neutral:      'Clear and professional DevOps language.',
-  educational:  'Step-by-step, explanatory, beginner-friendly SRE language.',
+  aggressive:  'Short, intense, high-pressure, incident-driven. Max 8 words per sentence.',
+  neutral:     'Clear and professional DevOps language.',
+  educational: 'Step-by-step, explanatory, beginner-friendly SRE language.',
 };
 
-let _openai = null;
+let _client = null;
 function getClient() {
-  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  return _openai;
+  if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return _client;
 }
 
 export async function translateJSON(json, targetLang = 'en', tone = 'aggressive') {
@@ -34,24 +34,20 @@ export async function translateJSON(json, targetLang = 'en', tone = 'aggressive'
   const prompt = `Translate this JSON to ${targetLang}.\nTone: ${toneInstr}\n\nJSON:\n${protectedText}`;
 
   try {
-    const res = await getClient().chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user',   content: prompt },
-      ],
-      temperature: 0.2,
+    const res = await getClient().messages.create({
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 4096,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    let translated = res.choices[0].message.content.trim();
-    // strip markdown fences if model wraps anyway
+    let translated = res.content[0].text.trim();
     translated = translated.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
     translated = applyGlossary(translated);
     translated = restore(translated, tokens);
     return JSON.parse(translated);
   } catch (err) {
-    console.warn('[i18n] LLM failed, using fallback:', err.message);
+    console.warn('[i18n] Claude Haiku failed, using fallback:', err.message);
     return fallbackTranslateJSON(json, targetLang);
   }
 }
