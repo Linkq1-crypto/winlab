@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useLabTelemetry } from "./src/hooks/useLabTelemetry.js";
 import { getRealismWorker, destroyRealismWorker } from "./src/hooks/realism-worker.js";
+import { runBashLayer, promptDir } from "./src/hooks/bashEngine.js";
 
 // ─── Random instance ID per session ──────────────────────────────────────────
 function genInstanceId() {
@@ -718,6 +719,7 @@ export default function App({ region = "US", labProgress = { completed: 0, total
   const [solvedAt, setSolvedAt] = useState(null);
   const [instanceId] = useState(genInstanceId);
   const [idleDelay, setIdleDelay] = useState(false);
+  const [cwd, setCwd] = useState('/root');
   const lastActivityRef = useRef(Date.now());
   const bottomRef = useRef();
   const inputRef  = useRef();
@@ -808,6 +810,7 @@ export default function App({ region = "US", labProgress = { completed: 0, total
     // Persistent uptime — set only on first visit, survives browser close
     const lsKey = `winlab_lab_start_${s.id}`;
     if (!localStorage.getItem(lsKey)) localStorage.setItem(lsKey, String(Date.now()));
+    setCwd('/root');
 
     // Start telemetry session
     startSession();
@@ -857,69 +860,54 @@ export default function App({ region = "US", labProgress = { completed: 0, total
     setTimeout(() => inputRef.current?.focus(), 100);
   }
 
-  function submit() { if (input.trim()) submit_val(input.trim()); }
+  function submit() { if (input.trim()) { submit_val(input.trim()); setInput(""); } }
   function submit_val(val) {
     const cmd = val;
     const startTime = Date.now();
-
     setCmdHist(h => [cmd, ...h].slice(0, 50));
     setHistIdx(-1);
 
-    // ── Realism commands handled before runCommand ────────────────────────
-    const [cmdName, ...cmdArgs] = cmd.split(/\s+/);
+    const prompt = `[root@${instanceId} ${promptDir(cwd)}]$`;
 
-    if (cmdName === "dmesg") {
-      const T = (n) => `[${n.toFixed(6).padStart(12)}]`;
-      const dmesgLines = [
-        { text: `${T(0.000000)} Linux version 5.15.0-101-generic (buildd@lcy02-amd64-046) (gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0)`, type: "out" },
-        { text: `${T(0.000000)} Command line: BOOT_IMAGE=/boot/vmlinuz-5.15.0-101-generic root=UUID=7f1b2c3d-4e5f-6a7b console=ttyS0`, type: "out" },
-        { text: `${T(0.012456)} x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256`, type: "out" },
-        { text: `${T(0.054321)} ACPI: Core revision 20210930`, type: "out" },
-        { text: `${T(0.187654)} PCI: Using configuration type 1 for base access`, type: "out" },
-        { text: `${T(0.432109)} bootcon [uart0] enabled`, type: "out" },
-        { text: `${T(0.876543)} pci 0000:00:01.0: [8086:7010] reg 0x10: [io  0x01f0-0x01f7]`, type: "out" },
-        { text: `${T(1.102938)} Spectre V2 : Mitigation: Retpolines`, type: "warn" },
-        { text: `${T(1.245678)} audit: initializing netlink subsys (enabled)`, type: "out" },
-        { text: `${T(2.001234)} thermal LNXTHERM:00: registered as thermal_zone0`, type: "out" },
-        { text: `${T(2.456789)} scsi host0: virtio_scsi`, type: "out" },
-        { text: `${T(2.890123)} eth0: hyperv_netvsc: adapter sn: 00155d01-a2b3-c4d5`, type: "out" },
-        { text: `${T(3.123456)} EXT4-fs (sda1): mounted filesystem with ordered data mode. Opts: (null). Quota mode: none.`, type: "out" },
-        { text: `${T(4.567890)} systemd[1]: systemd 249.11-0ubuntu3.12 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR)`, type: "out" },
-        { text: `${T(5.012345)} systemd[1]: Detected architecture x86-64.`, type: "out" },
-        { text: `${T(5.876543)} systemd[1]: Set hostname to <${instanceId}>.`, type: "out" },
-      ];
-      setHistory(h => [...h, { text: `[root@${instanceId} ~]$ ${cmd}`, type: "prompt" }, ...dmesgLines]);
-      setInput("");
-      return;
-    }
-
-    if (cmdName === "history") {
+    // ── history (pre-bash) ────────────────────────────────────────────────
+    if (cmd === "history") {
       const now = Date.now();
       const histLines = cmdHist.slice().reverse().slice(0, 20).reverse().map((c, i) => ({
-        text: `${String(i + 1).padStart(4)}  ${new Date(now - (cmdHist.length - i) * 37000).toISOString().slice(0,19).replace("T"," ")}  ${c}`,
+        text: `${String(i+1).padStart(4)}  ${new Date(now-(cmdHist.length-i)*37000).toISOString().slice(0,19).replace("T"," ")}  ${c}`,
         type: "out",
       }));
-      setHistory(h => [...h, { text: `[root@${instanceId} ~]$ ${cmd}`, type: "prompt" }, ...histLines]);
-      setInput("");
+      setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }, ...histLines]);
       return;
     }
 
-    if (cmdName === "cat") {
-      const path = cmdArgs[0] || "";
-      if (PROC_FILES[path]) {
-        const procLines = PROC_FILES[path].map(l => ({ text: l, type: "out" }));
-        setHistory(h => [...h, { text: `[root@${instanceId} ~]$ ${cmd}`, type: "prompt" }, ...procLines]);
-        setInput("");
-        return;
-      }
+    // ── /proc special files ───────────────────────────────────────────────
+    const [cmdName, ...cmdArgs] = cmd.split(/\s+/);
+    if (cmdName === "cat" && PROC_FILES[cmdArgs[0]]) {
+      const procLines = PROC_FILES[cmdArgs[0]].map(l => ({ text: l, type: "out" }));
+      setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }, ...procLines]);
+      return;
     }
-    // ─────────────────────────────────────────────────────────────────────
 
-    const out = runCommand(cmd, termState, setTermState);
+    // ── bash engine (cd, ls, pipes, &&, date, echo, pwd …) ───────────────
+    const { out, newCwd } = runBashLayer(cmd, cwd, instanceId, (raw) => {
+      if (raw === "dmesg" || raw.startsWith("dmesg ")) {
+        const T = n => `[${n.toFixed(6).padStart(12)}]`;
+        return [
+          { text: `${T(0.000000)} Linux version 5.15.0-101-generic (buildd@lcy02-amd64-046)`, type:"out" },
+          { text: `${T(1.102938)} Spectre V2 : Mitigation: Retpolines`, type:"warn" },
+          { text: `${T(2.456789)} scsi host0: virtio_scsi`, type:"out" },
+          { text: `${T(2.890123)} eth0: hyperv_netvsc: adapter sn: 00155d01-a2b3-c4d5`, type:"out" },
+          { text: `${T(5.876543)} systemd[1]: Set hostname to <${instanceId}>.`, type:"out" },
+        ];
+      }
+      return runCommand(raw, termState, setTermState);
+    });
+
+    if (newCwd !== cwd) setCwd(newCwd);
+
     const durationMs = Date.now() - startTime;
-
-    if (out.some(o => o.type === "clear")) { setHistory([]); setInput(""); return; }
-    setHistory(h => [...h, { text: `[root@${instanceId} ~]$ ${cmd}`, type: "prompt" }, ...out]);
+    if (out.some(o => o.type === "clear")) { setHistory([]); return; }
+    setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }, ...out]);
 
     // Record command telemetry
     const exitCode = out.some(o => o.type === "err") ? 1 : 0;
@@ -984,7 +972,7 @@ export default function App({ region = "US", labProgress = { completed: 0, total
     // Ctrl+C — interrupt current input
     if (e.ctrlKey && e.key === "c") {
       e.preventDefault();
-      setHistory(h => [...h, { text: `[root@${instanceId} ~]$ ${input}^C`, type: "prompt" }]);
+      setHistory(h => [...h, { text: `[root@${instanceId} ${promptDir(cwd)}]$ ${input}^C`, type: "prompt" }]);
       setInput("");
       return;
     }
@@ -1133,7 +1121,7 @@ export default function App({ region = "US", labProgress = { completed: 0, total
         <div ref={bottomRef}/>
       </div>
       <div style={{ borderTop:"1px solid #1a2530",padding:"10px 18px",display:"flex",alignItems:"center",gap:8,background:"#080d12" }}>
-        <span style={{ color:"#4caf84",fontSize:12.5,whiteSpace:"nowrap" }}>{`[root@${instanceId} ~]$`}</span>
+        <span style={{ color:"#4caf84",fontSize:12.5,whiteSpace:"nowrap" }}>{`[root@${instanceId} ${promptDir(cwd)}]$`}</span>
         <input ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKey}
           autoFocus spellCheck={false} autoComplete="off"
           style={{ flex:1,background:"none",border:"none",outline:"none",color:"#ddeedd",fontFamily:"inherit",fontSize:13,caretColor:"#4caf84" }}

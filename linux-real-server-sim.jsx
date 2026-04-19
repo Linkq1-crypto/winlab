@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useLabTelemetry } from "./src/hooks/useLabTelemetry";
 import { getRealismWorker, destroyRealismWorker } from "./src/hooks/realism-worker";
+import { runBashLayer, promptDir } from "./src/hooks/bashEngine";
 
 // ─── Random instance ID per session ──────────────────────────────────────────
 function genInstanceId() {
@@ -779,6 +780,7 @@ export default function App({ scenario: scenarioProp } = {}) {
   const [histIdx, setHistIdx] = useState(-1);
   const [instanceId] = useState(genInstanceId);
   const [idleDelay, setIdleDelay] = useState(false);
+  const [cwd, setCwd] = useState('/root');
   const lastActivityRef = useRef(Date.now());
   const bottomRef = useRef();
   const inputRef  = useRef();
@@ -835,6 +837,7 @@ export default function App({ scenario: scenarioProp } = {}) {
     // Persistent uptime — set only on first visit, survives browser close
     const lsKey = `winlab_lab_start_${s.id}`;
     if (!localStorage.getItem(lsKey)) localStorage.setItem(lsKey, String(Date.now()));
+    setCwd('/root');
     startSession();
     const intro = {
       iowait:     "⚠  ALERT: load average 12.44. I/O Wait at 92%. Server stalled on disk.",
@@ -871,37 +874,43 @@ export default function App({ scenario: scenarioProp } = {}) {
     setCmdHist(h => [cmd, ...h].slice(0, 100));
     setHistIdx(-1);
 
-    // ── realism: dmesg ──────────────────────────────────────────────────────
-    if (cmd === "dmesg" || cmd.startsWith("dmesg ")) {
-      // handled in runCommand, but patch hostname
-      const out = runCommand(cmd, state, setState);
-      const patched = out.map(o => ({ ...o, text: o.text?.replace(/\bserver01\b/g, instanceId) }));
-      setHistory(h => [...h, { text: `[root@${instanceId} ~]# ${cmd}`, type: "prompt" }, ...patched]);
-      return;
-    }
-
-    // ── realism: /proc files ────────────────────────────────────────────────
-    if (cmd.startsWith("cat ") && PROC_FILES[cmd.slice(4).trim()]) {
-      const lines = PROC_FILES[cmd.slice(4).trim()].map(t => ({ text: t, type: "out" }));
-      setHistory(h => [...h, { text: `[root@${instanceId} ~]# ${cmd}`, type: "prompt" }, ...lines]);
-      return;
-    }
+    const prompt = `[root@${instanceId} ${promptDir(cwd)}]#`;
 
     // ── realism: history ────────────────────────────────────────────────────
     if (cmd === "history") {
       const base = new Date("2026-03-04T08:00:00Z");
-      const lines = cmdHist.slice().reverse().map((c, i) => {
+      const histLines = cmdHist.slice().reverse().map((c, i) => {
         const t = new Date(base.getTime() + i * 37000).toISOString().replace("T"," ").slice(0,19);
         return { text: `  ${String(i+1).padStart(3)}  ${t}  ${c}`, type: "out" };
       });
-      setHistory(h => [...h, { text: `[root@${instanceId} ~]# ${cmd}`, type: "prompt" }, ...lines]);
+      setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }, ...histLines]);
       return;
     }
 
-    const out = runCommand(cmd, state, setState);
+    // ── /proc special files ─────────────────────────────────────────────────
+    const procTarget = cmd.startsWith("cat ") ? cmd.slice(4).trim() : null;
+    if (procTarget && PROC_FILES[procTarget]) {
+      const procLines = PROC_FILES[procTarget].map(t => ({ text: t, type: "out" }));
+      setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }, ...procLines]);
+      return;
+    }
+
+    // ── bash engine (cd, ls, pipes, &&, date, echo, pwd …) ─────────────────
+    const { out, newCwd } = runBashLayer(cmd, cwd, instanceId, (raw) => {
+      // dmesg: patch hostname before returning
+      if (raw === "dmesg" || raw.startsWith("dmesg ")) {
+        return runCommand(raw, state, setState).map(o => ({
+          ...o, text: o.text?.replace(/\bserver01\b/g, instanceId)
+        }));
+      }
+      return runCommand(raw, state, setState);
+    });
+
+    if (newCwd !== cwd) setCwd(newCwd);
+
     const durationMs = Date.now() - startTime;
     if (out.some(o => o.type === "clear")) { setHistory([]); return; }
-    setHistory(h => [...h, { text: `[root@${instanceId} ~]# ${cmd}`, type: "prompt" }, ...out]);
+    setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }, ...out]);
 
     // Record command telemetry
     const [cmdName, ...cmdArgs] = cmd.split(/\s+/);
@@ -930,7 +939,7 @@ export default function App({ scenario: scenarioProp } = {}) {
     lastActivityRef.current = Date.now();
     if (e.ctrlKey && e.key === "c") {
       e.preventDefault();
-      setHistory(h => [...h, { text: `[root@${instanceId} ~]# ${input}^C`, type: "prompt" }]);
+      setHistory(h => [...h, { text: `[root@${instanceId} ${promptDir(cwd)}]# ${input}^C`, type: "prompt" }]);
       setInput(""); return;
     }
     if (e.key === "Enter") {
@@ -1021,7 +1030,7 @@ export default function App({ scenario: scenarioProp } = {}) {
 
       {/* input */}
       <div style={{ borderTop:"1px solid #1c2030", padding:"9px 16px", display:"flex", alignItems:"center", gap:8, background:"#080b0e", flexShrink:0 }}>
-        <span style={{ color:"#3a6a3a", fontSize:12, whiteSpace:"nowrap" }}>{`[root@${instanceId} ~]#`}</span>
+        <span style={{ color:"#3a6a3a", fontSize:12, whiteSpace:"nowrap" }}>{`[root@${instanceId} ${promptDir(cwd)}]#`}</span>
         <input ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKey}
           autoFocus spellCheck={false} autoComplete="off" autoCorrect="off"
           style={{ flex:1, background:"none", border:"none", outline:"none", color:"#c8d8c8", fontFamily:"inherit", fontSize:12.5, caretColor:"#4caf84" }}
