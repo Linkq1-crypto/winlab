@@ -1712,6 +1712,11 @@ app.get("/enterprise", (req, res) => {
   }
 });
 
+// ── Homepage → coming-soon/index.html ────────────────────────────────
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "coming-soon", "index.html"));
+});
+
 // ── SPA fallback ─────────────────────────────────────────────────────
 app.get("*", (req, res) => {
   if (!req.path.startsWith("/api/")) {
