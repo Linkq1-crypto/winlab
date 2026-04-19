@@ -1,0 +1,37 @@
+{
+  "id": "permission-denied",
+  "meta": {
+    "difficulty": "medium",
+    "estimatedMinutes": 10,
+    "tags": ["permissions", "chmod", "selinux", "acl", "linux"],
+    "tier": "pro"
+  },
+  "content": {
+    "title": "Accesso bloccato — Permission denied",
+    "description": "L'applicazione non riesce ad accedere ai suoi file di configurazione. Errore 403 sulle API. Il servizio si avvia ma crasha subito.",
+    "incident": "Permission denied su /etc/app/config.json. L'utente del servizio non ha i permessi corretti.",
+    "tasks": [
+      "Identifica quale utente sta eseguendo il servizio",
+      "Controlla i permessi del file di configurazione",
+      "Verifica se SELinux o AppArmor stiano bloccando l'accesso",
+      "Correggi i permessi o il contesto SELinux",
+      "Riavvia il servizio e verifica che funzioni"
+    ],
+    "hints": [
+      "ps aux | grep app per vedere l'utente del processo",
+      "ls -la /etc/app/ per vedere i permessi attuali",
+      "audit2why per leggere i denial SELinux",
+      "chown app:app /etc/app/config.json per cambiare proprietario"
+    ],
+    "feedback": {
+      "success": "Accesso ripristinato. Servizio attivo. Nessun errore 403.",
+      "partial": "Permessi corretti ma SELinux ancora blocca.",
+      "fail": "Accesso ancora negato. Controlla sia permessi che SELinux."
+    },
+    "success_message": "INCIDENTE RISOLTO — Permessi corretti — Servizio attivo — +100 XP"
+  },
+  "non_translatable": {
+    "commands": ["ps aux", "ls -la", "audit2why", "chown app:app /etc/app/config.json", "chmod 640"],
+    "error_codes": ["Permission denied", "EACCES", "403 Forbidden"]
+  }
+}

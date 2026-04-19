@@ -1,0 +1,38 @@
+{
+  "id": "db-dead",
+  "meta": {
+    "difficulty": "hard",
+    "estimatedMinutes": 20,
+    "tags": ["database", "mysql", "postgresql", "recovery", "linux"],
+    "tier": "pro"
+  },
+  "content": {
+    "title": "Database irraggiungibile — Servizio offline",
+    "description": "Le query del database falliscono tutte. Il backend non riesce a connettersi. Le transazioni vengono rifiutate. I dati sembrano inaccessibili.",
+    "incident": "Connection refused sulla porta 3306. Il processo MySQL non è in esecuzione. L'ultimo avvio è fallito con un errore nel file di log.",
+    "tasks": [
+      "Controlla lo stato del servizio database",
+      "Leggi i log di errore del database",
+      "Identifica il motivo del crash (corruzione, spazio, permessi)",
+      "Ripara o recupera il database",
+      "Riavvia il servizio e verifica le connessioni",
+      "Controlla l'integrità dei dati"
+    ],
+    "hints": [
+      "systemctl status mysql per lo stato del servizio",
+      "tail -100 /var/log/mysql/error.log per l'errore specifico",
+      "mysqlcheck --all-databases --repair per riparare tabelle corrotte",
+      "Controlla se il disco è pieno con df -h"
+    ],
+    "feedback": {
+      "success": "Database attivo. Connessioni ripristinate. Dati integri.",
+      "partial": "Database attivo ma alcune tabelle sono ancora corrotte.",
+      "fail": "Il database non si avvia ancora. Controlla i log."
+    },
+    "success_message": "INCIDENTE RISOLTO — Database recuperato — Dati integri — +150 XP"
+  },
+  "non_translatable": {
+    "commands": ["systemctl status mysql", "tail -100 /var/log/mysql/error.log", "mysqlcheck --all-databases --repair", "df -h"],
+    "error_codes": ["Connection refused", "ECONNREFUSED", "InnoDB: Corruption detected", "Table './db/users' is marked as crashed"]
+  }
+}

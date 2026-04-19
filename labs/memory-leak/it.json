@@ -1,0 +1,38 @@
+{
+  "id": "memory-leak",
+  "meta": {
+    "difficulty": "hard",
+    "estimatedMinutes": 15,
+    "tags": ["memory", "performance", "debug", "linux", "nodejs"],
+    "tier": "pro"
+  },
+  "content": {
+    "title": "Memory leak — App crasha sotto carico",
+    "description": "L'applicazione Node.js crasha ogni 30 minuti sotto carico. Il server diventa irresponsivo. Gli utenti vedono 502. OOM killer entra in azione.",
+    "incident": "Out Of Memory. Il processo è stato terminato dal kernel. RAM al 99% prima del crash.",
+    "tasks": [
+      "Monitora l'utilizzo di memoria in tempo reale",
+      "Identifica il processo che consuma più RAM",
+      "Analizza il trend di crescita della memoria",
+      "Trova la sorgente del leak (heap dump o log)",
+      "Implementa un workaround temporaneo",
+      "Verifica la stabilità dopo il fix"
+    ],
+    "hints": [
+      "top o htop per vedere l'utilizzo RAM in tempo reale",
+      "free -h per vedere la RAM totale disponibile",
+      "node --expose-gc per forzare garbage collection",
+      "Controlla se ci sono array o cache che crescono senza limiti"
+    ],
+    "feedback": {
+      "success": "Memoria stabile. Nessun crash nelle ultime 10 simulazioni di carico.",
+      "partial": "Leak ridotto ma non eliminato. Memoria ancora in crescita.",
+      "fail": "Il processo crasha ancora. Il leak è attivo."
+    },
+    "success_message": "INCIDENTE RISOLTO — Memory leak identificato e fixato — +150 XP"
+  },
+  "non_translatable": {
+    "commands": ["top", "htop", "free -h", "node --expose-gc", "kill -9"],
+    "error_codes": ["OOM", "Out Of Memory", "ENOMEM", "Killed process"]
+  }
+}

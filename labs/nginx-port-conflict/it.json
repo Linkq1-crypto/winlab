@@ -1,0 +1,37 @@
+{
+  "id": "nginx-port-conflict",
+  "meta": {
+    "difficulty": "easy",
+    "estimatedMinutes": 6,
+    "tags": ["nginx", "port", "systemd", "linux"],
+    "tier": "starter"
+  },
+  "content": {
+    "title": "Conflitto di porta — Nginx non parte",
+    "description": "Nginx è offline. Il server web non risponde. Gli utenti vedono una pagina bianca. Hai accesso root.",
+    "incident": "Nginx non riesce ad avviarsi. Un altro processo occupa la porta 80.",
+    "tasks": [
+      "Controlla lo stato del servizio nginx",
+      "Leggi i log per capire l'errore",
+      "Identifica quale processo occupa la porta 80",
+      "Ferma il processo in conflitto",
+      "Riavvia nginx e verifica che sia attivo"
+    ],
+    "hints": [
+      "Usa systemctl status nginx per vedere l'errore",
+      "journalctl -u nginx mostra i log dettagliati",
+      "ss -tlnp | grep :80 mostra chi usa la porta",
+      "systemctl stop apache2 libera la porta se Apache è il colpevole"
+    ],
+    "feedback": {
+      "success": "Nginx attivo. Porta 80 libera. Incidente risolto.",
+      "partial": "Nginx sta girando ma la porta è ancora in conflitto.",
+      "fail": "Nginx è ancora offline. Rileggi i log."
+    },
+    "success_message": "INCIDENTE RISOLTO — Nginx attivo sulla porta 80 — +80 XP"
+  },
+  "non_translatable": {
+    "commands": ["systemctl status nginx", "journalctl -u nginx", "ss -tlnp | grep :80", "systemctl stop apache2", "systemctl start nginx"],
+    "error_codes": ["EADDRINUSE", "bind() failed", "Port 80 already in use"]
+  }
+}

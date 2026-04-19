@@ -32,6 +32,7 @@ import {
 import helpdeskRouter from "./src/api/routes/helpdesk.js";
 import { startHelpdeskWorker } from "./src/services/helpdeskWorker.js";
 import publicApiRouter from "./src/api/routes/publicApi.js";
+import i18nRouter from "./src/api/routes/i18n.js";
 import { tenantMiddleware } from "./src/services/tenantManager.js";
 import { qosMiddleware } from "./src/services/qosLayer.js";
 import { startMeteringFlush } from "./src/services/billingMetering.js";
@@ -146,6 +147,7 @@ app.get("/api/health", (req, res) => res.json({ ok: true, ts: Date.now() }));
 
 // ── Public API v1 (external integrations + SDK) ──────────────────────
 app.use("/api/v1", tenantMiddleware, qosMiddleware, publicApiRouter);
+app.use("/api/i18n", i18nRouter);
 
 // ====================================================================
 // AUTH

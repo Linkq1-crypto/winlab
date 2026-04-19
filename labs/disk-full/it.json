@@ -1,0 +1,37 @@
+{
+  "id": "disk-full",
+  "meta": {
+    "difficulty": "easy",
+    "estimatedMinutes": 8,
+    "tags": ["disk", "storage", "linux", "find"],
+    "tier": "starter"
+  },
+  "content": {
+    "title": "Disco pieno — Server bloccato",
+    "description": "Il server è congelato. I processi non riescono a scrivere su disco. Nessun log viene registrato. I deploy falliscono.",
+    "incident": "Errore: No space left on device. Il filesystem root è al 100%.",
+    "tasks": [
+      "Controlla lo spazio disponibile su tutti i filesystem",
+      "Identifica la directory che occupa più spazio",
+      "Trova i file più grandi o i log da rimuovere",
+      "Libera almeno 2GB di spazio",
+      "Verifica che i servizi siano tornati operativi"
+    ],
+    "hints": [
+      "df -h mostra l'utilizzo per filesystem",
+      "du -sh /* ordina le directory per dimensione",
+      "find /var/log -name '*.log' -size +100M per trovare log giganti",
+      "journalctl --vacuum-size=200M pulisce i log di systemd"
+    ],
+    "feedback": {
+      "success": "Spazio liberato. Server operativo. Filesystem al 45%.",
+      "partial": "Spazio liberato ma sotto la soglia minima.",
+      "fail": "Disco ancora pieno. Cerca file più grandi."
+    },
+    "success_message": "INCIDENTE RISOLTO — 2.3GB liberati — Server operativo — +80 XP"
+  },
+  "non_translatable": {
+    "commands": ["df -h", "du -sh /*", "find /var/log -name '*.log' -size +100M", "journalctl --vacuum-size=200M"],
+    "error_codes": ["No space left on device", "ENOSPC"]
+  }
+}
