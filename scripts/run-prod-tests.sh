@@ -114,7 +114,7 @@ fi
 log "3. Playwright — E2E Browser (user simulation, 2G, mobile)"
 if command -v npx &>/dev/null; then
   if BASE_URL="$BASE_URL" PROD=1 npx playwright test \
-      tests/winlab.spec.ts tests/landing.spec.ts tests/health.spec.ts tests/lighthouse.spec.ts \
+      tests/winlab.spec.ts tests/landing.spec.ts tests/health.spec.ts tests/lighthouse.spec.ts tests/network-conditions.spec.ts \
       --reporter=list \
       2>&1 | tee "$REPORT_DIR/playwright.log"; then
     ok "Playwright E2E: PASS"
