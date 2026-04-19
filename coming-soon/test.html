@@ -193,9 +193,27 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
 .modal-guarantee{text-align:center;font-size:10px;color:var(--dim);margin-top:8px;font-family:var(--mono)}
 
 /* ── BADGES ── */
-.hero-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px}
+.hero-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px}
 .badge{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:4px;border:1px solid var(--border2);color:var(--muted);text-transform:uppercase;background:var(--surface)}
 .badge-red{border-color:var(--red-dim);color:var(--red);background:var(--red-bg)}
+
+/* ── SCARCITY BAR ── */
+.scarcity{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:6px}
+.scarcity strong{color:var(--text)}
+.scarcity .warn{color:var(--yellow)}
+
+/* ── SIGNUP MODAL ── */
+.signup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.signup-overlay.open{opacity:1;pointer-events:all}
+.signup-box{background:#0f0f0f;border:1px solid #1f2937;border-radius:12px;width:100%;max-width:400px;padding:32px;transform:translateY(16px);transition:transform .25s}
+.signup-overlay.open .signup-box{transform:translateY(0)}
+.signup-box h3{font-size:20px;font-weight:900;letter-spacing:-1px;margin-bottom:6px}
+.signup-box p{font-size:13px;color:var(--muted);margin-bottom:20px;font-family:var(--mono)}
+.signup-box input{width:100%;background:#0a0a0a;border:1px solid var(--border2);color:var(--text);padding:13px 16px;border-radius:6px;font-size:14px;margin-bottom:10px;transition:border-color .2s;font-family:'Inter',sans-serif}
+.signup-box input:focus{border-color:var(--red);outline:none}
+.signup-box input::placeholder{color:var(--muted)}
+.signup-cancel{width:100%;padding:10px;background:transparent;border:none;color:var(--muted);font-size:11px;font-family:var(--mono);cursor:pointer;margin-top:4px}
+.signup-cancel:hover{color:var(--text)}
 
 /* ── TERM FOOTER ── */
 .term-footer{border-top:1px solid #1a1a1a;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;background:#0a0a0a}
@@ -209,7 +227,7 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
 
 /* ── RESPONSIVE ── */
 @media(max-width:900px){.terminal-wrap{display:none}.hero{min-height:auto;padding:80px 5vw 60px}.hero h1{font-size:clamp(36px,10vw,64px)}}
-@media(max-width:600px){.hero-inputs{flex-direction:column}.proof-numbers{grid-template-columns:1fr 1fr}.proof-cell:last-child{grid-column:span 2}footer{flex-direction:column}}
+@media(max-width:600px){.proof-numbers{grid-template-columns:1fr 1fr}.proof-cell:last-child{grid-column:span 2}footer{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -218,30 +236,32 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
 <nav class="nav">
   <div class="nav-logo">Win<span class="dot">█</span>Lab</div>
   <div class="nav-status"><div class="pulse"></div> INCIDENT ACTIVE</div>
-  <a class="nav-cta" href="#signup">Fix it — $5/mo</a>
+  <a class="nav-cta" href="#" onclick="openSignup();return false">Enter the incident →</a>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="alert-bar"><span class="icon">🔴</span> STATUS: CRITICAL — 1 service down</div>
+  <div class="alert-bar"><span class="icon">🔴</span> STATUS: CRITICAL — 1 service failed</div>
   <h1>Your server<br>is <span class="red">down.</span></h1>
   <p class="hero-sub">
-    <span class="hl">Master Production Incidents.</span><br>
-    Escape tutorial hell. Fix real Linux,<br>Cloud, and SRE failures in a live sandbox.
+    <span class="hl">Fix real outages under pressure.</span><br>
+    Stop watching. Start fixing.<br>
+    Linux · Cloud · SRE — live sandbox.
+  </p>
+  <p style="font-family:var(--mono);font-size:clamp(14px,2vw,17px);color:var(--muted);margin-bottom:8px;line-height:1.8">
+    You have root access.<br>
+    <span style="color:var(--text);font-weight:700">Can you fix it?</span>
   </p>
   <div class="hero-badges">
-    <span class="badge">REAL CLI SANDBOX</span>
-    <span class="badge">UBUNTU 22.04</span>
-    <span class="badge">DOCKER</span>
+    <span class="badge">REAL CLI</span>
+    <span class="badge">NO SIMULATION</span>
+    <span class="badge">REAL FAILURES</span>
     <span class="badge badge-red">SRE-LEVEL</span>
   </div>
   <div class="hero-cta-wrap" id="signup">
-    <div class="hero-inputs">
-      <input type="text" id="h-name" placeholder="Name" autocomplete="name">
-      <input type="email" id="h-email" placeholder="Email" required autocomplete="email">
-    </div>
-    <button class="btn-main" id="hero-btn" onclick="heroSignup()">Launch Free Lab →</button>
-    <div class="hero-note">🔒 <span id="seats-txt">500 seats</span> at $5/mo · locked forever · cancel anytime</div>
+    <div class="scarcity">🔒 <strong><span id="seats-left">137</span> / 500 seats</strong> left at $5/mo · <span class="warn">price goes to $29 after</span></div>
+    <button class="btn-main" id="hero-btn" onclick="openSignup()" style="max-width:320px">Enter the incident →</button>
+    <div class="hero-note">No credit card · Cancel anytime · Locked price forever</div>
   </div>
 
   <!-- Terminal -->
@@ -250,7 +270,7 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
       <div class="term-dot" style="background:#ef4444"></div>
       <div class="term-dot" style="background:#facc15"></div>
       <div class="term-dot" style="background:#22c55e"></div>
-      <div class="term-title">prod-server-01 — bash</div>
+      <div class="term-title">prod-server-01 — LIVE INCIDENT</div>
     </div>
     <div class="term-body" id="term-body">
       <div class="tl"><span class="tp">$ </span><span class="tc">systemctl status nginx</span></div>
@@ -276,7 +296,7 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
 <!-- STRIP -->
 <div class="trusted-by">Trusted by <strong>1,000+ SREs</strong> · Linux Foundation · AWS Certified Engineers · CNCF members</div>
 <div class="strip">
-  <div class="strip-stat"><div class="strip-n">1,000+</div><div class="strip-l">SREs on the list</div></div>
+  <div class="strip-stat"><div class="strip-n" id="strip-seats">137</div><div class="strip-l">Seats remaining</div></div>
   <div class="strip-stat"><div class="strip-n">6 min</div><div class="strip-l">Avg solve time</div></div>
   <div class="strip-stat"><div class="strip-n">40+</div><div class="strip-l">Real incidents</div></div>
   <div class="strip-stat"><div class="strip-n">$5</div><div class="strip-l">Early access / mo</div></div>
@@ -284,13 +304,10 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
 
 <!-- SCREEN MENTAL -->
 <div class="mental">
-  <p class="hl">You click.</p>
-  <p>A terminal opens.</p>
-  <p>The system is broken.</p>
-  <p style="margin-top:12px">Logs are messy.</p>
-  <p>Services are failing.</p>
-  <p style="margin-top:12px">Nothing is explained.</p>
-  <p class="red" style="margin-top:16px;font-size:clamp(18px,3vw,26px);font-weight:700">You figure it out.</p>
+  <p class="hl">No tutorials.</p>
+  <p>No hand-holding.</p>
+  <p style="margin-top:12px">Just broken systems.</p>
+  <p class="red" style="margin-top:16px;font-size:clamp(18px,3vw,26px);font-weight:700">You fix them.</p>
 </div>
 
 <!-- INCIDENT CARDS -->
@@ -392,19 +409,20 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
 
 <!-- PRICING -->
 <div class="pricing">
-  <h2>Simple.</h2>
-  <p class="pricing-sub">Early access — limited seats</p>
+  <h2>$5/month.</h2>
+  <p class="pricing-sub">Early access — <span id="seats-left-2">137</span> seats remaining</p>
   <div class="price-card">
     <div class="price-amount"><sup>$</sup>5</div>
-    <div class="price-period">/ month · locked forever</div>
+    <div class="price-period">/ month · early access · locked forever</div>
     <ul class="price-perks">
-      <li>Unlimited labs</li>
-      <li>New incidents every week</li>
-      <li>AI Mentor on standby</li>
+      <li>Unlimited incidents</li>
+      <li>New failures every week</li>
+      <li>AI Mentor — full access</li>
       <li>Verifiable certificates</li>
+      <li>Locked price forever</li>
       <li>Cancel anytime</li>
     </ul>
-    <button class="btn-main" onclick="document.getElementById('h-email').focus();window.scrollTo({top:0,behavior:'smooth'})">Claim your seat →</button>
+    <button class="btn-main" onclick="openSignup()">Enter the incident →</button>
   </div>
   <p class="price-note">After 500 seats: $29/mo. No exceptions.</p>
 </div>
@@ -413,14 +431,13 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
 <div class="close">
   <h2>Your server<br><span class="dim">will go down.</span></h2>
   <p>
-    It's not "if".<br>
-    It's "when".<br><br>
-    Better break things here first.
+    Not "if".<br>
+    <strong style="color:var(--text)">When.</strong><br><br>
+    You won't have time to Google.<br><br>
+    Train for that moment.
   </p>
-  <div class="close-form">
-    <input type="email" id="footer-email" placeholder="your@email.com" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border2)'">
-    <button class="btn-main" onclick="footerSignup()">Start now →</button>
-  </div>
+  <button class="btn-main" onclick="openSignup()" style="max-width:280px;margin:0 auto;display:block">Enter the incident →</button>
+  <p style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:16px">🔒 <span id="seats-left-3">137</span> seats at $5/mo · No card required to start</p>
 </div>
 
 <!-- FOOTER -->
@@ -433,6 +450,17 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
   </div>
   <div class="footer-copy">© 2026 WinLab</div>
 </footer>
+
+<!-- SIGNUP MODAL -->
+<div class="signup-overlay" id="signup-modal">
+  <div class="signup-box">
+    <h3>Enter the incident</h3>
+    <p>One email. Claim your seat at $5/mo — locked forever.</p>
+    <input type="email" id="s-email" placeholder="your@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')doSignupModal()">
+    <button class="btn-main" id="signup-modal-btn" onclick="doSignupModal()">Claim seat →</button>
+    <button class="signup-cancel" onclick="closeSignup()">cancel</button>
+  </div>
+</div>
 
 <!-- UPSELL MODAL -->
 <div class="modal-overlay" id="modal">
@@ -480,58 +508,68 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
 const utmParams = {};
 new URLSearchParams(window.location.search).forEach((v,k) => { if(k.startsWith('utm_')) utmParams[k]=v; });
 
+function updateSeatsUI(n) {
+  ['seats-left','seats-left-2','seats-left-3','strip-seats'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = n;
+  });
+}
+
 async function loadSeats() {
   try {
     const r = await fetch('/api/early-access/seats');
     const d = await r.json();
-    const n = d.remaining ?? '—';
-    document.getElementById('seats-txt').textContent = `Only ${n} seats`;
+    if (d.remaining != null) updateSeatsUI(d.remaining);
   } catch {}
 }
 loadSeats();
 
-async function doSignup(email, name) {
-  const btn = document.getElementById('hero-btn') || document.querySelector('.btn-main');
-  const orig = btn?.textContent;
-  if(btn){ btn.disabled=true; btn.textContent='Joining…'; }
+function openSignup() {
+  document.getElementById('signup-modal').classList.add('open');
+  setTimeout(() => document.getElementById('s-email')?.focus(), 100);
+  track('signup_modal_open', utmParams);
+}
+function closeSignup() {
+  document.getElementById('signup-modal').classList.remove('open');
+}
+document.getElementById('signup-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeSignup();
+});
+
+async function doSignupModal() {
+  const email = document.getElementById('s-email').value.trim();
+  if (!email || !email.includes('@')) {
+    toast('Enter a valid email.', 'red');
+    document.getElementById('s-email').focus();
+    return;
+  }
+  const btn = document.getElementById('signup-modal-btn');
+  btn.disabled = true; btn.textContent = 'Joining…';
   try {
     const r = await fetch('/api/early-access/signup', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({email, name, meta: utmParams})
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({email, name: '', meta: utmParams})
     });
     const d = await r.json();
-    if(d.existing){
-      if(btn){ btn.disabled=false; btn.textContent=orig; }
+    closeSignup();
+    if (d.existing) {
       toast(`✓ Already in — you're #${d.position}`, 'green');
       return;
     }
-    if(d.ok || d.success){
-      document.getElementById('modal-pos').textContent = '#'+(d.position??'—');
+    if (d.ok || d.success) {
+      document.getElementById('modal-pos').textContent = '#' + (d.position ?? '—');
       openModal();
       loadSeats();
       track('signup_done', {position: d.position, ...utmParams});
     } else {
-      if(btn){ btn.disabled=false; btn.textContent=orig; }
       toast(d.error || 'Something went wrong.', 'red');
     }
   } catch {
-    if(btn){ btn.disabled=false; btn.textContent=orig; }
     toast('Connection error. Try again.', 'red');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Claim seat →';
   }
-}
-
-function heroSignup() {
-  const email = document.getElementById('h-email').value.trim();
-  const name  = document.getElementById('h-name').value.trim();
-  if(!email || !email.includes('@')){ toast('Enter a valid email.','red'); document.getElementById('h-email').focus(); return; }
-  doSignup(email, name);
-}
-
-function footerSignup() {
-  const email = document.getElementById('footer-email').value.trim();
-  if(!email || !email.includes('@')){ toast('Enter a valid email.','red'); document.getElementById('footer-email').focus(); return; }
-  doSignup(email, '');
 }
 
 function openModal(){ document.getElementById('modal').classList.add('open'); track('upsell_shown', utmParams); }
