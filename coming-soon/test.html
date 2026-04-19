@@ -192,6 +192,21 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
 .btn-no:hover{border-color:#333;color:var(--text)}
 .modal-guarantee{text-align:center;font-size:10px;color:var(--dim);margin-top:8px;font-family:var(--mono)}
 
+/* ── BADGES ── */
+.hero-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px}
+.badge{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:4px;border:1px solid var(--border2);color:var(--muted);text-transform:uppercase;background:var(--surface)}
+.badge-red{border-color:var(--red-dim);color:var(--red);background:var(--red-bg)}
+
+/* ── TERM FOOTER ── */
+.term-footer{border-top:1px solid #1a1a1a;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;background:#0a0a0a}
+.term-scenario{font-family:var(--mono);font-size:10px;color:#555;letter-spacing:.5px}
+.term-live{font-family:var(--mono);font-size:10px;color:var(--green);display:flex;align-items:center;gap:5px}
+.pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite;flex-shrink:0}
+
+/* ── TRUSTED BY ── */
+.trusted-by{text-align:center;padding:12px 5vw;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.5px}
+.trusted-by strong{color:var(--text)}
+
 /* ── RESPONSIVE ── */
 @media(max-width:900px){.terminal-wrap{display:none}.hero{min-height:auto;padding:80px 5vw 60px}.hero h1{font-size:clamp(36px,10vw,64px)}}
 @media(max-width:600px){.hero-inputs{flex-direction:column}.proof-numbers{grid-template-columns:1fr 1fr}.proof-cell:last-child{grid-column:span 2}footer{flex-direction:column}}
@@ -211,16 +226,21 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
   <div class="alert-bar"><span class="icon">🔴</span> STATUS: CRITICAL — 1 service down</div>
   <h1>Your server<br>is <span class="red">down.</span></h1>
   <p class="hero-sub">
-    <span class="hl">5 real incidents.</span><br>
-    No setup. No VM.<br>
-    Fix them in your browser.
+    <span class="hl">Master Production Incidents.</span><br>
+    Escape tutorial hell. Fix real Linux,<br>Cloud, and SRE failures in a live sandbox.
   </p>
+  <div class="hero-badges">
+    <span class="badge">REAL CLI SANDBOX</span>
+    <span class="badge">UBUNTU 22.04</span>
+    <span class="badge">DOCKER</span>
+    <span class="badge badge-red">SRE-LEVEL</span>
+  </div>
   <div class="hero-cta-wrap" id="signup">
     <div class="hero-inputs">
       <input type="text" id="h-name" placeholder="Name" autocomplete="name">
       <input type="email" id="h-email" placeholder="Email" required autocomplete="email">
     </div>
-    <button class="btn-main" id="hero-btn" onclick="heroSignup()">Fix your first incident →</button>
+    <button class="btn-main" id="hero-btn" onclick="heroSignup()">Launch Free Lab →</button>
     <div class="hero-note">🔒 <span id="seats-txt">500 seats</span> at $5/mo · locked forever · cancel anytime</div>
   </div>
 
@@ -233,26 +253,30 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
       <div class="term-title">prod-server-01 — bash</div>
     </div>
     <div class="term-body" id="term-body">
-      <div class="tl"><span class="tp">$ </span><span class="tc">systemctl status apache2</span></div>
-      <div class="tl"><span class="te">● apache2.service - The Apache HTTP Server</span></div>
-      <div class="tl"><span class="te">   Loaded: loaded (/lib/systemd/system/apache2.service)</span></div>
-      <div class="tl"><span class="te">   Active: failed (Result: exit-code)</span></div>
-      <div class="tl"><span class="to">   Process: 1847 ExecStart=... (code=exited, status=1/FAILURE)</span></div>
-      <div class="tl" style="margin-top:8px"><span class="tp">$ </span><span class="tc">journalctl -xe | tail -5</span></div>
-      <div class="tl"><span class="tw">Apr 19 03:14:21 apache2[1847]: AH00526: Syntax error on line 23</span></div>
-      <div class="tl"><span class="tw">Apr 19 03:14:21 apache2[1847]: Invalid command 'SSLEngine'</span></div>
-      <div class="tl" style="margin-top:8px"><span class="tp">$ </span><span class="tc">a2enmod ssl</span></div>
-      <div class="tl"><span class="ts">Enabling module ssl.</span></div>
-      <div class="tl"><span class="tp">$ </span><span class="tc">systemctl restart apache2</span></div>
-      <div class="tl"><span class="ts">● apache2.service: active (running) ✓</span></div>
+      <div class="tl"><span class="tp">$ </span><span class="tc">systemctl status nginx</span></div>
+      <div class="tl"><span class="te">● nginx.service - A high performance web server</span></div>
+      <div class="tl"><span class="te">   Active: <strong>failed</strong> (Result: exit-code)</span></div>
+      <div class="tl"><span class="to">   Process: 2341 ExecStart=/usr/sbin/nginx (code=exited, status=1)</span></div>
+      <div class="tl" style="margin-top:8px"><span class="tp">$ </span><span class="tc">journalctl -u nginx --no-pager | tail -4</span></div>
+      <div class="tl"><span class="tw">nginx[2341]: nginx: [emerg] bind() to 0.0.0.0:80 failed</span></div>
+      <div class="tl"><span class="te">nginx[2341]: <strong>Error: Port 80 already in use.</strong></span></div>
+      <div class="tl" style="margin-top:8px"><span class="tp">$ </span><span class="tc">ss -tlnp | grep :80</span></div>
+      <div class="tl"><span class="tw">LISTEN  0  128  0.0.0.0:80  users:(("apache2",pid=1193))</span></div>
+      <div class="tl" style="margin-top:8px"><span class="tp">$ </span><span class="tc">systemctl stop apache2 &amp;&amp; systemctl start nginx</span></div>
+      <div class="tl"><span class="ts">● nginx.service: active (running) since 03:17:44 ✓</span></div>
       <div class="tl" style="margin-top:8px"><span class="tp">$ </span><span class="cursor"></span></div>
+    </div>
+    <div class="term-footer">
+      <span class="term-scenario">Scenario 1 · The Port Conflict</span>
+      <span class="term-live"><span class="pulse-dot"></span> <span id="eng-count">29</span> engineers fixing this now</span>
     </div>
   </div>
 </section>
 
 <!-- STRIP -->
+<div class="trusted-by">Trusted by <strong>1,000+ SREs</strong> · Linux Foundation · AWS Certified Engineers · CNCF members</div>
 <div class="strip">
-  <div class="strip-stat"><div class="strip-n">500+</div><div class="strip-l">Engineers on waitlist</div></div>
+  <div class="strip-stat"><div class="strip-n">1,000+</div><div class="strip-l">SREs on the list</div></div>
   <div class="strip-stat"><div class="strip-n">6 min</div><div class="strip-l">Avg solve time</div></div>
   <div class="strip-stat"><div class="strip-n">40+</div><div class="strip-l">Real incidents</div></div>
   <div class="strip-stat"><div class="strip-n">$5</div><div class="strip-l">Early access / mo</div></div>
@@ -440,6 +464,19 @@ footer{border-top:1px solid var(--border);padding:24px 5vw;display:flex;align-it
 </div>
 
 <script>
+// Live engineer counter — fluctuates realistically
+(function() {
+  const el = document.getElementById('eng-count');
+  if (!el) return;
+  let base = 24 + Math.floor(Math.random() * 14); // 24-37
+  el.textContent = base;
+  setInterval(() => {
+    const delta = Math.random() < 0.5 ? 1 : -1;
+    base = Math.max(18, Math.min(47, base + delta));
+    el.textContent = base;
+  }, 3700 + Math.random() * 2000);
+})();
+
 const utmParams = {};
 new URLSearchParams(window.location.search).forEach((v,k) => { if(k.startsWith('utm_')) utmParams[k]=v; });
 
