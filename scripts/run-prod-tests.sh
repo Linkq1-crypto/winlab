@@ -70,7 +70,17 @@ else
   fail "Vitest resilience: FAIL"
 fi
 
-# ── 2b. Vitest — Security Headers ────────────────────────────────────────────
+# ── 2b. Vitest — Session Persistence ────────────────────────────────────────
+log "2b. Vitest — Session Persistence & Resume"
+if BASE_URL="$BASE_URL" npx vitest run tests/session-persistence.spec.ts \
+    --reporter=verbose \
+    2>&1 | tee "$REPORT_DIR/vitest-session-persistence.log"; then
+  ok "Session persistence: PASS"
+else
+  fail "Session persistence: FAIL"
+fi
+
+# ── 2c. Vitest — Security Headers ────────────────────────────────────────────
 log "2b. Vitest — Security Headers"
 if BASE_URL="$BASE_URL" npx vitest run tests/security-headers.spec.ts \
     --reporter=verbose \
@@ -114,7 +124,7 @@ fi
 log "3. Playwright — E2E Browser (user simulation, 2G, mobile)"
 if command -v npx &>/dev/null; then
   if BASE_URL="$BASE_URL" PROD=1 npx playwright test \
-      tests/winlab.spec.ts tests/landing.spec.ts tests/health.spec.ts tests/lighthouse.spec.ts tests/network-conditions.spec.ts \
+      tests/winlab.spec.ts tests/landing.spec.ts tests/health.spec.ts tests/lighthouse.spec.ts tests/network-conditions.spec.ts tests/session-resume-ui.spec.ts \
       --reporter=list \
       2>&1 | tee "$REPORT_DIR/playwright.log"; then
     ok "Playwright E2E: PASS"
