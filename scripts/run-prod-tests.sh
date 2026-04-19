@@ -70,11 +70,51 @@ else
   fail "Vitest resilience: FAIL"
 fi
 
+# ── 2b. Vitest — Security Headers ────────────────────────────────────────────
+log "2b. Vitest — Security Headers"
+if BASE_URL="$BASE_URL" npx vitest run tests/security-headers.spec.ts \
+    --reporter=verbose \
+    2>&1 | tee "$REPORT_DIR/vitest-security-headers.log"; then
+  ok "Security headers: PASS"
+else
+  fail "Security headers: FAIL"
+fi
+
+# ── 2c. Vitest — Rate Limiting ────────────────────────────────────────────────
+log "2c. Vitest — Rate Limiting"
+if BASE_URL="$BASE_URL" npx vitest run tests/rate-limiting.spec.ts \
+    --reporter=verbose \
+    2>&1 | tee "$REPORT_DIR/vitest-rate-limiting.log"; then
+  ok "Rate limiting: PASS"
+else
+  fail "Rate limiting: FAIL"
+fi
+
+# ── 2d. Vitest — I18N Integrity ───────────────────────────────────────────────
+log "2d. Vitest — I18N Integrity"
+if BASE_URL="$BASE_URL" npx vitest run tests/i18n-integrity.spec.ts \
+    --reporter=verbose \
+    2>&1 | tee "$REPORT_DIR/vitest-i18n-integrity.log"; then
+  ok "I18N integrity: PASS"
+else
+  fail "I18N integrity: FAIL"
+fi
+
+# ── 2e. Vitest — Stripe Webhook ───────────────────────────────────────────────
+log "2e. Vitest — Stripe Webhook Guard"
+if BASE_URL="$BASE_URL" npx vitest run tests/stripe-webhook.spec.ts \
+    --reporter=verbose \
+    2>&1 | tee "$REPORT_DIR/vitest-stripe-webhook.log"; then
+  ok "Stripe webhook guard: PASS"
+else
+  fail "Stripe webhook guard: FAIL"
+fi
+
 # ── 3. Playwright — E2E Browser ───────────────────────────────────────────────
 log "3. Playwright — E2E Browser (user simulation, 2G, mobile)"
 if command -v npx &>/dev/null; then
   if BASE_URL="$BASE_URL" PROD=1 npx playwright test \
-      tests/winlab.spec.ts tests/landing.spec.ts tests/health.spec.ts \
+      tests/winlab.spec.ts tests/landing.spec.ts tests/health.spec.ts tests/lighthouse.spec.ts \
       --reporter=list \
       2>&1 | tee "$REPORT_DIR/playwright.log"; then
     ok "Playwright E2E: PASS"
@@ -83,6 +123,16 @@ if command -v npx &>/dev/null; then
   fi
 else
   warn "Playwright non installato — skip (npx playwright install)"
+fi
+
+# ── 3b. Vitest — WebSocket Stability ─────────────────────────────────────────
+log "3b. Vitest — WebSocket Stability"
+if BASE_URL="$BASE_URL" npx vitest run tests/websocket.spec.ts \
+    --reporter=verbose \
+    2>&1 | tee "$REPORT_DIR/vitest-websocket.log"; then
+  ok "WebSocket stability: PASS"
+else
+  fail "WebSocket stability: FAIL"
 fi
 
 # ── 4. K6 — Stress Test ───────────────────────────────────────────────────────
