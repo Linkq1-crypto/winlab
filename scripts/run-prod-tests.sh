@@ -161,6 +161,16 @@ else
   echo -e "     ${YELLOW}Installa con: brew install k6 | choco install k6 | apt install k6${RESET}"
 fi
 
+# ── 4b. Vitest — Helpdesk Suite ──────────────────────────────────────────────
+log "4b. Vitest — Helpdesk Full API Suite"
+if BASE_URL="$BASE_URL" npx vitest run tests/helpdesk.spec.ts \
+    --reporter=verbose \
+    2>&1 | tee "$REPORT_DIR/vitest-helpdesk.log"; then
+  ok "Helpdesk suite: PASS"
+else
+  fail "Helpdesk suite: FAIL"
+fi
+
 # ── 5. Launch Checklist ───────────────────────────────────────────────────────
 log "5. Launch Checklist (seats, idempotency, webhooks)"
 if BASE_URL="$BASE_URL" node scripts/test-launch-checklist.js \
