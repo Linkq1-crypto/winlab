@@ -132,6 +132,114 @@ const LABS = [
   },
 ];
 
+// ── Simulated filesystem ─────────────────────────────────────────────────────
+const FILESYSTEM = {
+  "/": ["etc", "var", "tmp", "home", "usr", "root"],
+  "/etc": ["httpd", "nginx", "ssh", "systemd", "hosts", "passwd", "fstab"],
+  "/etc/httpd": ["conf", "conf.d", "logs"],
+  "/etc/httpd/conf": ["httpd.conf"],
+  "/etc/nginx": ["nginx.conf", "conf.d"],
+  "/var": ["log", "cache", "lib", "spool"],
+  "/var/log": ["httpd", "nginx", "messages", "secure", "dmesg"],
+  "/var/log/httpd": ["access_log", "error_log"],
+  "/tmp": [],
+  "/home": ["admin"],
+  "/home/admin": [".bash_history", ".bashrc"],
+  "/root": [".bash_history", ".bashrc"],
+};
+
+const FILE_CONTENTS = {
+  "/etc/httpd/conf/httpd.conf": [
+    "# Apache HTTP Server configuration",
+    "ServerRoot \"/etc/httpd\"",
+    "Listen 80",
+    "# Listen 8080",
+    "ServerName web01.local:80",
+    "DocumentRoot \"/var/www/html\"",
+    "ErrorLog \"/var/log/httpd/error_log\"",
+    "# ERROR: Port 80 already in use by nginx",
+    "# Fix: change Listen to 8080 or stop nginx first",
+  ],
+  "/etc/nginx/nginx.conf": [
+    "worker_processes auto;",
+    "events { worker_connections 1024; }",
+    "http {",
+    "  server {",
+    "    listen 80;",
+    "    server_name _;",
+    "  }",
+    "}",
+  ],
+  "/var/log/httpd/error_log": [
+    "[error] (98)Address already in use: AH00072: make_sock: could not bind to address 0.0.0.0:80",
+    "[error] no listening sockets available, shutting down",
+    "[error] AH00015: Unable to open logs",
+  ],
+  "/etc/hosts": [
+    "127.0.0.1   localhost",
+    "127.0.0.1   web01.local",
+    "::1         localhost",
+  ],
+};
+
+// Lab 2: hidden giant file for disk-full scenario
+const DISK_FULL_FS = {
+  "/var/log": ["httpd", "nginx", "messages", "secure", ".debug_dump_20240101.gz"],
+  "/var/log/httpd": ["access_log", "error_log"],
+  "/tmp": [".swap_core_dump"],
+  "/root": [".bash_history", "backup_archive_2023.tar.gz"],
+};
+const DISK_FULL_FILES = {
+  "/var/log/.debug_dump_20240101.gz": { size: "38G", hidden: true },
+  "/tmp/.swap_core_dump": { size: "8G", hidden: true },
+  "/root/backup_archive_2023.tar.gz": { size: "4G", hidden: false },
+};
+
+// ── Simulated nano/vim editor ────────────────────────────────────────────────
+function FakeEditor({ path, content, onClose }) {
+  const [lines, setLines] = useState(content);
+  const [cursor, setCursor] = useState(content.length - 1);
+  const isNano = true;
+
+  return (
+    <div className="fixed inset-0 bg-black z-50 font-mono text-sm flex flex-col">
+      {/* Header */}
+      <div className="bg-white text-black px-4 py-1 text-center text-xs">
+        GNU nano — {path}
+      </div>
+      {/* Content */}
+      <div className="flex-1 overflow-auto p-2 text-green-400">
+        {lines.map((line, i) => (
+          <div key={i} className={`${i === cursor ? "bg-slate-700" : ""} px-1`}>
+            <span className="text-slate-500 mr-3 select-none">{String(i + 1).padStart(3)}</span>
+            {line}
+          </div>
+        ))}
+      </div>
+      {/* Footer */}
+      <div className="bg-white text-black grid grid-cols-4 gap-x-4 px-2 py-1 text-xs">
+        <span><kbd>^X</kbd> Exit</span>
+        <span><kbd>^O</kbd> Write Out</span>
+        <span><kbd>^W</kbd> Where Is</span>
+        <span><kbd>^G</kbd> Get Help</span>
+      </div>
+      {/* Capture Ctrl+X */}
+      <input
+        autoFocus
+        className="opacity-0 absolute"
+        onKeyDown={(e) => {
+          if ((e.ctrlKey && e.key === "x") || e.key === "Escape") {
+            e.preventDefault();
+            onClose(lines);
+          }
+          if (e.key === "ArrowUp")   setCursor(c => Math.max(0, c - 1));
+          if (e.key === "ArrowDown") setCursor(c => Math.min(lines.length - 1, c + 1));
+        }}
+      />
+    </div>
+  );
+}
+
 // ── Terminal Component ───────────────────────────────────────────────────────
 export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "starter", onUpgrade = () => {} }) {
   const analytics = getAnalytics();
@@ -142,6 +250,8 @@ export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "s
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [cwd, setCwd] = useState("/root");
+  const [editorState, setEditorState] = useState(null); // { path, content }
   const [labCompleted, setLabCompleted] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [skillUnlocked, setSkillUnlocked] = useState(null);
@@ -394,8 +504,152 @@ export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "s
       let responseLines = [];
       let commandSuccess = false;
 
+      // ── cd ────────────────────────────────────────────────────────────
+      if (command === "cd") {
+        const target = args[0] || "/root";
+        const resolved = target.startsWith("/")
+          ? target
+          : target === ".." ? (cwd.split("/").slice(0, -1).join("/") || "/") : `${cwd}/${target}`.replace(/\/+/g, "/");
+        const fs = currentLabIndex === 1 ? DISK_FULL_FS : FILESYSTEM;
+        if (fs[resolved] !== undefined || FILESYSTEM[resolved] !== undefined) {
+          setCwd(resolved);
+          commandSuccess = true;
+        } else {
+          responseLines = [{ text: `bash: cd: ${target}: No such file or directory`, type: "err" }];
+          setErrorCount(prev => prev + 1);
+        }
+
+      // ── ls ────────────────────────────────────────────────────────────
+      } else if (command === "ls") {
+        const showHidden = args.includes("-a") || args.includes("-la") || args.includes("-al");
+        const dir = args.find(a => a.startsWith("/")) || cwd;
+        const fs = currentLabIndex === 1 ? { ...FILESYSTEM, ...DISK_FULL_FS } : FILESYSTEM;
+        const entries = fs[dir] || [];
+        const visible = showHidden ? entries : entries.filter(e => !e.startsWith("."));
+        if (visible.length === 0) {
+          commandSuccess = true;
+        } else {
+          responseLines = visible.map(e => ({ text: e, type: "out" }));
+          commandSuccess = true;
+        }
+
+      // ── cat ───────────────────────────────────────────────────────────
+      } else if (command === "cat") {
+        const filePath = args[0]?.startsWith("/") ? args[0] : `${cwd}/${args[0]}`.replace(/\/+/g, "/");
+        const content = FILE_CONTENTS[filePath];
+        if (!args[0]) {
+          responseLines = [{ text: "cat: missing operand", type: "err" }];
+          setErrorCount(prev => prev + 1);
+        } else if (content) {
+          responseLines = content.map(line => ({
+            text: line,
+            type: line.startsWith("#") ? "info" : line.toLowerCase().includes("error") ? "err" : "out",
+          }));
+          commandSuccess = true;
+        } else {
+          responseLines = [{ text: `cat: ${args[0]}: No such file or directory`, type: "err" }];
+          setErrorCount(prev => prev + 1);
+        }
+
+      // ── nano / vim / vi ───────────────────────────────────────────────
+      } else if (command === "nano" || command === "vim" || command === "vi") {
+        const filePath = args[0]?.startsWith("/") ? args[0] : args[0] ? `${cwd}/${args[0]}`.replace(/\/+/g, "/") : null;
+        if (!filePath) {
+          responseLines = [{ text: `${command}: missing file operand`, type: "err" }];
+        } else {
+          const content = FILE_CONTENTS[filePath] || [`# New file: ${filePath}`];
+          setEditorState({ path: filePath, content: [...content] });
+          setIsProcessing(false);
+          return;
+        }
+
+      // ── find ──────────────────────────────────────────────────────────
+      } else if (command === "find") {
+        const searchPath = args[0] || cwd;
+        const nameFlag = args.indexOf("-name");
+        const sizeFlag = args.indexOf("+1G");
+        const pattern = nameFlag !== -1 ? args[nameFlag + 1]?.replace(/\*/g, "") : null;
+
+        if (currentLabIndex === 1) {
+          // Disk full scenario — reveal hidden files
+          const found = Object.entries(DISK_FULL_FILES)
+            .filter(([path]) => path.startsWith(searchPath))
+            .filter(([path, info]) => {
+              if (pattern) return path.includes(pattern);
+              if (sizeFlag !== -1) return true; // +1G shows all big files
+              return true;
+            })
+            .map(([path, info]) => `${path} (${info.size})`);
+          if (found.length > 0) {
+            responseLines = found.map(f => ({ text: f, type: "warn" }));
+            responseLines.push({ text: "", type: "out" });
+            responseLines.push({ text: "💡 Found large files. Remove with: rm <path>", type: "hint" });
+          } else {
+            responseLines = [{ text: `find: no matches in ${searchPath}`, type: "out" }];
+          }
+          commandSuccess = true;
+        } else {
+          responseLines = [{ text: `find: no matches in ${searchPath}`, type: "out" }];
+          commandSuccess = true;
+        }
+
+      // ── du ────────────────────────────────────────────────────────────
+      } else if (command === "du") {
+        if (currentLabIndex === 1) {
+          responseLines = [
+            { text: "38G\t/var/log/.debug_dump_20240101.gz", type: "err" },
+            { text: "8G\t/tmp/.swap_core_dump",              type: "err" },
+            { text: "4G\t/root/backup_archive_2023.tar.gz",  type: "warn" },
+            { text: "50G\ttotal",                             type: "err" },
+            { text: "", type: "out" },
+            { text: "💡 Largest file: /var/log/.debug_dump_20240101.gz (38G)", type: "hint" },
+          ];
+        } else {
+          responseLines = [
+            { text: "12G\t/var/log", type: "out" },
+            { text: "2G\t/tmp",      type: "out" },
+            { text: "14G\ttotal",    type: "out" },
+          ];
+          commandSuccess = true;
+        }
+
+      // ── rm ────────────────────────────────────────────────────────────
+      } else if (command === "rm") {
+        const target = args.find(a => !a.startsWith("-"));
+        if (currentLabIndex === 1 && target && DISK_FULL_FILES[target]) {
+          const freed = DISK_FULL_FILES[target].size;
+          // Check if it's enough to free the disk
+          const totalFreed = ["38G", "8G", "4G"].filter(s =>
+            Object.entries(DISK_FULL_FILES).some(([p, f]) => p === target && f.size === s)
+          );
+          const timeToComplete = Date.now() - labStartTime;
+          setLabCompleted(true);
+          setSkillUnlocked("Storage Management");
+          responseLines = [
+            { text: `Removed '${target}'`, type: "success" },
+            { text: `Freed ${freed} of disk space.`, type: "success" },
+            { text: "", type: "out" },
+            { text: "🎉 Disk space recovered!", type: "success" },
+            { text: "+1 Real Skill Unlocked: Storage Management", type: "success" },
+            { text: `⏱️  Time to complete: ${(timeToComplete / 1000).toFixed(1)}s`, type: "info" },
+          ];
+          analytics.track("lab_complete", { labId: currentLab.id, difficulty, timeMs: timeToComplete });
+          setTimeout(() => setShowPaywall(true), 2000);
+        } else if (!target) {
+          responseLines = [{ text: "rm: missing operand", type: "err" }];
+          setErrorCount(prev => prev + 1);
+        } else {
+          responseLines = [{ text: `rm: cannot remove '${target}': No such file or directory`, type: "err" }];
+          setErrorCount(prev => prev + 1);
+        }
+
+      // ── pwd ───────────────────────────────────────────────────────────
+      } else if (command === "pwd") {
+        responseLines = [{ text: cwd, type: "out" }];
+        commandSuccess = true;
+
       // ── systemctl ─────────────────────────────────────────────────────
-      if (command === "systemctl") {
+      } else if (command === "systemctl") {
         const subcmd = args[0];
         const service = args[1]?.replace(/\.service$/, "");
 
@@ -404,11 +658,16 @@ export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "s
             responseLines = [{ text: REAL_ERRORS.systemctl, type: "err" }];
             setErrorCount(prev => prev + 1);
           } else if (service === "httpd" && currentLabIndex === 0) {
+            const ts = new Date().toLocaleString();
             responseLines = [
               { text: "● httpd.service - The Apache HTTP Server", type: "out" },
               { text: "   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled)", type: "out" },
-              { text: "   Active: inactive (dead) since " + new Date().toLocaleString(), type: "err" },
-              { text: "  Process: 3412 ExecStart=/usr/sbin/httpd (code=exited, status=1/FAILURE)", type: "err" },
+              { text: `   Active: failed (Result: exit-code) since ${ts}`, type: "err" },
+              { text: "  Process: 3412 ExecStart=/usr/sbin/httpd $OPTIONS (code=exited, status=1/FAILURE)", type: "err" },
+              { text: " Main PID: 3412 (code=exited, status=1/FAILURE)", type: "err" },
+              { text: "", type: "out" },
+              { text: `${ts} web01 httpd[3412]: (98)Address already in use: AH00072: make_sock: could not bind to address 0.0.0.0:80`, type: "err" },
+              { text: `${ts} web01 httpd[3412]: no listening sockets available, shutting down`, type: "err" },
               { text: "", type: "out" },
               { text: "⚠️  Service is DOWN — Start it with: systemctl start httpd", type: "warn" },
             ];
@@ -416,10 +675,14 @@ export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "s
               responseLines.push({ text: "💡 Use 'systemctl start httpd' to fix this.", type: "hint" });
             }
           } else if (service === "firewalld" && currentLabIndex === 2) {
+            const ts = new Date().toLocaleString();
             responseLines = [
               { text: "● firewalld.service - firewalld - dynamic firewall daemon", type: "out" },
               { text: "   Loaded: loaded (/usr/lib/systemd/system/firewalld.service; disabled)", type: "out" },
-              { text: "   Active: inactive (dead)", type: "err" },
+              { text: `   Active: inactive (dead) since ${ts}`, type: "err" },
+              { text: "", type: "out" },
+              { text: `${ts} web01 systemd[1]: firewalld.service: Service not started, skipping.`, type: "err" },
+              { text: `${ts} web01 systemd[1]: Stopped firewalld - dynamic firewall daemon.`, type: "err" },
               { text: "", type: "out" },
               { text: "⚠️  Firewall is DISABLED — Security risk! Enable with: systemctl start firewalld", type: "warn" },
             ];
@@ -506,7 +769,8 @@ export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "s
             { text: "/dev/sda1        50G   50G     0 100% /", type: "err" },
             { text: "tmpfs           3.9G     0  3.9G   0% /tmp", type: "out" },
             { text: "", type: "out" },
-            { text: "⚠️  Disk is FULL! Clean up with: journalctl --vacuum-size=100M", type: "warn" },
+            { text: "⚠️  Disk is FULL! Find the culprit: du -sh /* | sort -rh", type: "warn" },
+            { text: "💡 Hint: there's a hidden file consuming 38G. Try: find / -name '.*' -size +1G", type: "hint" },
           ];
         } else {
           responseLines = [
@@ -557,7 +821,15 @@ export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "s
           { text: "Available commands:", type: "info" },
           { text: "  systemctl [status|start|stop] <service>", type: "out" },
           { text: "  df [-h]                    - Check disk space", type: "out" },
+          { text: "  du [-sh]                   - Disk usage by path", type: "out" },
+          { text: "  find <path> [-name] [-size] - Find files", type: "out" },
           { text: "  journalctl [--vacuum-size=N] - Manage logs", type: "out" },
+          { text: "  ls [-a] [path]             - List directory", type: "out" },
+          { text: "  cd <path>                  - Change directory", type: "out" },
+          { text: "  cat <file>                 - Show file content", type: "out" },
+          { text: "  nano / vim <file>          - Edit file", type: "out" },
+          { text: "  rm <file>                  - Remove file", type: "out" },
+          { text: "  pwd                        - Print working dir", type: "out" },
           { text: "  whoami / id                - Check user", type: "out" },
           { text: "  clear                      - Clear terminal", type: "out" },
           { text: "  ai <question>              - Ask AI Mentor", type: "out" },
@@ -620,7 +892,7 @@ export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "s
       // Record command result in invisible guide
       guide.recordCommand(trimmed, responseLines.some(r => r.type === "success" || r.type === "out"), null);
     }, latency + Math.random() * 400);
-  }, [currentLabIndex, latency, difficulty, hintLevel, commandCount, errorCount, labStartTime, diffSettings, resetInactivityTimer, addLine, processAiQuestion]);
+  }, [currentLabIndex, latency, difficulty, hintLevel, commandCount, errorCount, labStartTime, diffSettings, resetInactivityTimer, addLine, processAiQuestion, cwd]);
 
   // ── Handle Enter key ───────────────────────────────────────────────────────
   const handleKeyDown = useCallback((e) => {
@@ -737,10 +1009,25 @@ export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "s
         <div ref={endRef} />
       </div>
 
+      {/* ── Fake Editor Overlay ──────────────────────────────────────────── */}
+      {editorState && (
+        <FakeEditor
+          path={editorState.path}
+          content={editorState.content}
+          onClose={(savedLines) => {
+            setEditorState(null);
+            addLine(`[nano] Closed ${editorState.path}`, "info");
+            setTimeout(() => inputRef.current?.focus(), 100);
+          }}
+        />
+      )}
+
       {/* ── Input Area ───────────────────────────────────────────────────── */}
       <div className="border-t border-slate-800 bg-slate-900/30 px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-green-400 font-mono text-sm">$</span>
+          <span className="text-green-400 font-mono text-sm select-none">
+            [root@web01 {cwd === "/root" ? "~" : cwd.split("/").pop()}]#
+          </span>
           <input
             ref={inputRef}
             type="text"
