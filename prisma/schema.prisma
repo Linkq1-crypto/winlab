@@ -384,11 +384,20 @@ model TenantUsage {
 // Webhook Event Deduplication Table
 model ProcessedWebhookEvent {
   id              String   @id @default(cuid())
-  eventId         String   @unique  // Stripe/Razorpay event ID
-  eventType       String   // checkout.session.completed, etc.
+  eventId         String   @unique
+  eventType       String
   processedAt     DateTime @default(now())
-  metadata        String?  // JSON for additional data
+  metadata        String?
 
   @@index([eventId])
   @@index([processedAt])
+}
+
+model EarlyAccessSeat {
+  id        String   @id @default(cuid())
+  claimed   Boolean  @default(false)
+  email     String?
+  createdAt DateTime @default(now())
+
+  @@index([claimed])
 }
