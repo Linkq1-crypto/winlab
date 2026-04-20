@@ -22,6 +22,7 @@ export default defineConfig({
       "tests/security-headers.spec.ts",
       "tests/websocket.spec.ts",
       "tests/stripe-webhook.spec.ts",
+      "tests/rate-limiting.spec.ts",
     ],
     testTimeout: 30000,
   },
