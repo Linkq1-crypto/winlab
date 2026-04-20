@@ -251,7 +251,7 @@ function Hero({ onCTA, seatsClaimed, totalSeats }) {
 // ─── Launch countdown card ────────────────────────────────────────────────────
 function LaunchCountdownCard() {
   // Launch ends April 20, 2026 at 18:00 (Monday)
-  const deadline = "2026-04-20T18:00:00";
+  const deadline = "2026-04-24T21:00:00";
   const left = useCountdown(deadline);
 
   if (!left || left.expired) {
@@ -575,7 +575,7 @@ function UrgencySection() {
               Start your first lab now → $5
             </h3>
             <p className="text-slate-400 mb-6">
-              Offer ends Monday. No second chance.
+              Offer ends Thursday. No second chance.
             </p>
             <StripeCTA />
           </div>
@@ -650,7 +650,7 @@ function FinalCTA({ onCTA }) {
             Start your first lab → $5
           </button>
           <p className="text-xs text-slate-400 mt-4 relative">
-            Launch offer ends Monday · No second chance
+            Launch offer ends Thursday · No second chance
           </p>
         </div>
       </div>
@@ -705,8 +705,8 @@ export default function LaunchLanding({ onCTA, onLogin, onNavigate, onStartLab }
     }
   };
 
-  // Launch deadline: April 20, 2026 at 18:00
-  const deadline = "2026-04-20T18:00:00";
+  // Launch deadline: April 24, 2026 at 21:00
+  const deadline = "2026-04-24T21:00:00";
 
   return (
     <div className="bg-[#0a0a0b] text-white min-h-screen overflow-x-hidden">
