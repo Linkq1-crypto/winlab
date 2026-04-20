@@ -437,6 +437,89 @@ function HowItWorks() {
   );
 }
 
+// ─── Labs preview ─────────────────────────────────────────────────────────────
+const PREVIEW_LABS = [
+  { icon: "🔴", title: "Apache down",    desc: "Site not responding — find and fix it" },
+  { icon: "💾", title: "Disk full",      desc: "Server is stuck — out of space" },
+  { icon: "🔒", title: "SELinux denial", desc: "httpd returns 403 — wrong file context" },
+  { icon: "🔥", title: "CPU at 100%",    desc: "Something is hammering the server" },
+  { icon: "🚫", title: "SSH refused",    desc: "Cannot connect — diagnose the firewall" },
+  { icon: "🗄️", title: "DB split-brain", desc: "Cluster diverged — replica out of sync" },
+];
+
+const FAQ = [
+  { q: "Is this a real VM?", a: "Yes. You get full root access in an isolated environment. Real commands, real errors, real feedback." },
+  { q: "Do I need Linux experience?", a: "Some basics help, but every lab has step-by-step hints and an AI mentor to guide you." },
+  { q: "What happens after the 72h offer?", a: "The price goes to $29/month. Your access and progress are never lost." },
+  { q: "Can I cancel anytime?", a: "Yes. One click in your dashboard. No questions asked." },
+];
+
+function LabsPreview({ onCTA }) {
+  return (
+    <section className="py-24">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="text-center mb-4">
+          <span className="text-xs text-green-400 uppercase tracking-widest">100+ Labs</span>
+          <h2 className="text-4xl font-black text-white mt-3 mb-3">
+            Every real incident you'll face on the job.
+          </h2>
+          <p className="text-slate-400 max-w-2xl mx-auto">
+            From Nginx misconfiguration to database cluster split-brain. Each lab is a real incident — not a tutorial.
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-10 mb-12">
+          {PREVIEW_LABS.map((lab, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.07 }}
+              className="flex items-start gap-4 p-5 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-green-600/30 transition-colors"
+            >
+              <span className="text-2xl shrink-0">{lab.icon}</span>
+              <div>
+                <p className="font-bold text-white text-sm">{lab.title}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{lab.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="text-center">
+          <button
+            onClick={onCTA}
+            className="px-8 py-4 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl transition-all hover:scale-[1.02]"
+          >
+            Start your first lab → $5
+          </button>
+        </div>
+
+        {/* Mini FAQ */}
+        <div className="mt-20">
+          <h3 className="text-2xl font-black text-white text-center mb-8">Quick answers</h3>
+          <div className="max-w-2xl mx-auto grid gap-4">
+            {FAQ.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                className="rounded-xl border border-slate-800 bg-slate-900/50 p-5"
+              >
+                <p className="font-bold text-white text-sm mb-1">{item.q}</p>
+                <p className="text-sm text-slate-400">{item.a}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Urgency section ──────────────────────────────────────────────────────────
 function UrgencySection() {
   return (
@@ -618,6 +701,7 @@ export default function LaunchLanding({ onCTA }) {
       <Hero onCTA={handleCTA} seatsClaimed={seatsClaimed} totalSeats={totalSeats} />
       <TerminalDemoSection onCTA={handleCTA} />
       <HowItWorks />
+      <LabsPreview onCTA={handleCTA} />
       <UrgencySection />
       <FinalCTA onCTA={handleCTA} />
       <Footer />

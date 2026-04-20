@@ -1,6 +1,7 @@
-// TerminalDemo.jsx - Realistic terminal with typing effect + AI mentor
+// TerminalDemo.jsx - Realistic terminal with typing effect + AI mentor + interactive input
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { runBashLayer, VFS } from "../hooks/bashEngine";
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -43,6 +44,10 @@ export default function TerminalDemo({ onRun, onStepComplete }) {
   const [running, setRunning] = useState(false);
   const [step, setStep] = useState(0);
   const [showResume, setShowResume] = useState(false);
+  const [interactive, setInteractive] = useState(false);
+  const [input, setInput] = useState("");
+  const [cwd, setCwd] = useState("/root");
+  const inputRef = useRef(null);
   const terminalRef = useRef(null);
 
   // Check for saved progress on mount
@@ -125,6 +130,25 @@ export default function TerminalDemo({ onRun, onStepComplete }) {
     }
 
     setRunning(false);
+    setInteractive(true);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
+
+  const handleInput = (e) => {
+    if (e.key !== "Enter") return;
+    const cmd = input.trim();
+    if (!cmd) return;
+    const prompt = `winlab@lab:${cwd === "/root" ? "~" : cwd}$`;
+    const { out, newCwd } = runBashLayer(cmd, cwd, "demo", () => {});
+    setCwd(newCwd || cwd);
+    setLines((prev) => [
+      ...prev.slice(0, -1),
+      `${prompt} ${cmd}`,
+      ...out.map((o) => o.text),
+      `winlab@lab:${(newCwd || cwd) === "/root" ? "~" : newCwd || cwd}$`,
+    ]);
+    setInput("");
+    if (onRun) onRun(step);
   };
 
   const resumeSession = () => {
@@ -221,21 +245,35 @@ export default function TerminalDemo({ onRun, onStepComplete }) {
           )}
         </div>
 
-        {/* Run button */}
+        {/* Input / Run button */}
         <div className="px-5 py-4 border-t border-green-500/20 bg-[#050505]">
-          <button
-            onClick={() => (step === 0 ? runStep(0) : runStep(step))}
-            disabled={running || step >= DEMO_STEPS.length}
-            className="w-full py-3 bg-green-500/10 border border-green-500/40 text-green-400 font-mono text-sm rounded-lg hover:bg-green-500/20 hover:border-green-500/60 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-          >
-            {running
-              ? "Running..."
-              : step >= DEMO_STEPS.length
-                ? "✓ Demo complete"
+          {interactive ? (
+            <div className="flex items-center gap-2 font-mono text-sm text-green-400">
+              <span className="shrink-0 text-green-500">$</span>
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleInput}
+                placeholder="type a command…"
+                className="flex-1 bg-transparent outline-none text-green-300 placeholder-green-800 caret-green-400"
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </div>
+          ) : (
+            <button
+              onClick={() => (step === 0 ? runStep(0) : runStep(step))}
+              disabled={running || step >= DEMO_STEPS.length}
+              className="w-full py-3 bg-green-500/10 border border-green-500/40 text-green-400 font-mono text-sm rounded-lg hover:bg-green-500/20 hover:border-green-500/60 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              {running
+                ? "Running..."
                 : step === 0
                   ? "▶ Run simulation"
                   : `▶ Continue (step ${step + 1}/6)`}
-          </button>
+            </button>
+          )}
         </div>
       </div>
     </div>
