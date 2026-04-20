@@ -87,7 +87,7 @@ export default function TerminalTail({ path, instanceId, onExit }) {
   return (
     <div ref={ref} tabIndex={0} onKeyDown={handleKey}
       style={{ position:"absolute", inset:0, background:"#060809", fontFamily:"'JetBrains Mono','Fira Code',monospace", fontSize:12, color:"#c8d8c8", overflowY:"auto", padding:"8px 12px", outline:"none" }}>
-      <div style={{ color:"#334", marginBottom:4 }}>==> {path} &lt;==</div>
+      <div style={{ color:"#334", marginBottom:4 }}>{"==> "}{path}{" <=="}</div>
       {lines.map((l, i) => (
         <div key={i} style={{ lineHeight:1.55, color: l.text.includes("error")||l.text.includes("Error") ? "#e06060" : l.text.includes("warn") ? "#ffaa00" : "#b8d0c8", whiteSpace:"pre-wrap" }}>
           {l.text}
