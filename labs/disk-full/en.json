@@ -1,0 +1,37 @@
+{
+  "id": "disk-full",
+  "meta": {
+    "difficulty": "easy",
+    "estimatedMinutes": 8,
+    "tags": ["disk", "storage", "linux", "find"],
+    "tier": "starter"
+  },
+  "content": {
+    "title": "Disk full — Server frozen",
+    "description": "The server is frozen. Processes cannot write to disk. No logs are being recorded. Deployments are failing.",
+    "incident": "Error: No space left on device. The root filesystem is at 100%.",
+    "tasks": [
+      "Check available space on all filesystems",
+      "Identify the directory consuming the most space",
+      "Find the largest files or logs to remove",
+      "Free at least 2GB of space",
+      "Verify that services are back online"
+    ],
+    "hints": [
+      "df -h shows usage per filesystem",
+      "du -sh /* sorts directories by size",
+      "find /var/log -name '*.log' -size +100M to find large log files",
+      "journalctl --vacuum-size=200M cleans up systemd logs"
+    ],
+    "feedback": {
+      "success": "Space freed. Server operational. Filesystem at 45%.",
+      "partial": "Space freed but below the minimum threshold.",
+      "fail": "Disk still full. Look for larger files."
+    },
+    "success_message": "INCIDENT RESOLVED — 2.3GB freed — Server operational — +80 XP"
+  },
+  "non_translatable": {
+    "commands": ["df -h", "du -sh /*", "find /var/log -name '*.log' -size +100M", "journalctl --vacuum-size=200M"],
+    "error_codes": ["No space left on device", "ENOSPC"]
+  }
+}

@@ -9,7 +9,7 @@ export type { Env as EnvType, ServiceState, LogEntry, LogLevel, Service, Virtual
 export { DependencyGraph, createDefaultDependencyGraph } from "./deps";
 export { Noise, createDefaultNoise, createTestNoise } from "./noise";
 export { emitLog, genLogs, queryLogs, formatLog, rotateLogs } from "./logs";
-export { snapshot, diffSnapshots, loadBaseline, saveBaseline, normalize, compareOutputs } from "./snapshots";
+export { snapshot, diffSnapshots, normalize, compareOutputs } from "./snapshots";
 
 // ─── Self-Learning ───────────────────────────────────────────────────────────
 export { TelemetryCollector, InMemoryStorage, createCommandTelemetry } from "./telemetry";
