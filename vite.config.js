@@ -41,13 +41,20 @@ export default defineConfig({
   },
 
   build: {
+    minify: "terser",
+    terserOptions: {
+      compress: { drop_console: true, passes: 2 },
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Keep React in the main chunk so every lab chunk imports the same copy
           if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) {
             return "vendor-react";
           }
+          if (id.includes("node_modules/framer-motion")) return "vendor-motion";
+          if (id.includes("node_modules/@stripe") || id.includes("node_modules/stripe")) return "vendor-stripe";
+          if (id.includes("node_modules/lucide-react")) return "vendor-icons";
+          if (id.includes("node_modules/@prisma") || id.includes("node_modules/prisma")) return "vendor-prisma";
           for (const [file, chunk] of Object.entries(LAB_CHUNKS)) {
             if (id.includes(file)) return chunk;
           }
