@@ -1048,9 +1048,21 @@ app.get("/api/pricing", (req, res) => {
   res.json({
     launchTierActive: false,
     plans: [
-      { id: "early", name: "Early Access", price: 5, currency: "usd", interval: "month", features: ["All labs", "AI Mentor", "Certificates", "Daily challenges"] },
-      { id: "pro",   name: "Pro",          price: 19, currency: "usd", interval: "month", features: ["All labs", "AI Mentor", "Certificates", "Daily challenges"] },
-      { id: "business", name: "Business",  price: 199, currency: "usd", interval: "month", features: ["Everything in Pro", "Team analytics", "SSO/Azure AD", "Leaderboard"] },
+      {
+        id: "early", name: "Early Access", price: 5, currency: "usd", interval: "month",
+        badge: "72H Launch",
+        features: ["All 100+ Linux labs", "Unlimited AI Mentor", "Verifiable certificate", "Daily challenges", "Cancel anytime", "Price locked for life"],
+      },
+      {
+        id: "pro", name: "Pro Individual", price: 19, currency: "usd", interval: "month",
+        badge: "After launch",
+        features: ["All 100+ Linux labs", "Jamf + Networking tracks", "Unlimited AI Mentor", "Verifiable certificate", "Daily challenges", "Cancel anytime"],
+      },
+      {
+        id: "business", name: "Business Team", price: 199, currency: "usd", interval: "month",
+        badge: "5 seats",
+        features: ["Everything in Pro", "5 team seats included", "SSO (Azure AD / Okta)", "Admin dashboard", "Team leaderboard", "Skill gap analytics"],
+      },
     ],
   });
 });

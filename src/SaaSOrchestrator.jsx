@@ -839,27 +839,20 @@ export default function SaaSOrchestrator() {
   }
 
   if (view === "landing") {
-    // During 72h launch window: show early access landing (LandingPage.jsx)
-    // After 72h: show normal landing (WinLabHome.jsx) with 5 free labs
-    if (launchTierActive) {
-      return (
-        <LandingPage
-          onCTA={() => navigate("auth")}
-          onNavigate={(section) => {
-            if (section === "india") navigate("india");
-            else if (section === "pricing") navigate("pricing");
-            else navigate("landing");
-          }}
-        />
-      );
-    }
     return (
-      <WinLabHome
-        onCTA={() => { openLab("linux-terminal"); if (canAccessLab("linux-terminal")) setView("lab"); }}
+      <LaunchLanding
+        onCTA={() => token ? (openLab("linux-terminal") || navigate("lab")) : navigate("auth")}
+        onLogin={() => navigate("auth")}
         onNavigate={(section) => {
-          if (section === "india") navigate("india");
-          else if (section === "pricing") navigate("pricing");
+          if (section === "pricing")    navigate("pricing");
+          else if (section === "about") navigate("about");
+          else if (section === "india") navigate("india");
+          else if (section === "dashboard") navigate("dashboard");
           else navigate("landing");
+        }}
+        onStartLab={(labId) => {
+          if (token) { openLab(labId || "linux-terminal"); navigate("lab"); }
+          else navigate("auth");
         }}
       />
     );

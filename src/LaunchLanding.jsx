@@ -73,7 +73,7 @@ function CountdownBanner({ deadline }) {
 }
 
 // ─── Nav ──────────────────────────────────────────────────────────────────────
-function Nav({ hasBanner }) {
+function Nav({ hasBanner, onLogin, onNavigate }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -92,19 +92,30 @@ function Nav({ hasBanner }) {
       } ${scrolled ? "bg-[#0a0a0b]/90 backdrop-blur-md border-b border-slate-800/60" : ""}`}
     >
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => onNavigate?.("landing")}>
           <span className="text-green-500 font-black text-xl tracking-tight">WIN</span>
           <span className="text-white font-black text-xl tracking-tight">LAB</span>
-          <span className="text-[10px] text-red-400 border border-red-700 px-1.5 py-0.5 rounded ml-1">
-            72H
-          </span>
         </div>
-        <a
-          href="#terminal"
-          className="text-sm px-4 py-2.5 min-h-[44px] bg-green-600 hover:bg-green-500 text-white rounded-lg font-medium transition-colors"
-        >
-          Try Demo →
-        </a>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => onNavigate?.("pricing")}
+            className="hidden sm:block text-sm text-slate-400 hover:text-white transition-colors px-3 py-2"
+          >
+            Pricing
+          </button>
+          <button
+            onClick={() => onLogin?.()}
+            className="text-sm text-slate-300 hover:text-white transition-colors px-3 py-2"
+          >
+            Log in
+          </button>
+          <a
+            href="#terminal"
+            className="text-sm px-4 py-2.5 min-h-[44px] bg-green-600 hover:bg-green-500 text-white rounded-lg font-medium transition-colors"
+          >
+            Try Demo →
+          </a>
+        </div>
       </div>
     </motion.nav>
   );
@@ -439,12 +450,12 @@ function HowItWorks() {
 
 // ─── Labs preview ─────────────────────────────────────────────────────────────
 const PREVIEW_LABS = [
-  { icon: "🔴", title: "Apache down",    desc: "Site not responding — find and fix it" },
-  { icon: "💾", title: "Disk full",      desc: "Server is stuck — out of space" },
-  { icon: "🔒", title: "SELinux denial", desc: "httpd returns 403 — wrong file context" },
-  { icon: "🔥", title: "CPU at 100%",    desc: "Something is hammering the server" },
-  { icon: "🚫", title: "SSH refused",    desc: "Cannot connect — diagnose the firewall" },
-  { icon: "🗄️", title: "DB split-brain", desc: "Cluster diverged — replica out of sync" },
+  { icon: "🔴", title: "Apache down",    desc: "Site not responding — find and fix it",     labId: "linux-terminal" },
+  { icon: "💾", title: "Disk full",      desc: "Server is stuck — out of space",             labId: "linux-terminal" },
+  { icon: "🔒", title: "SELinux denial", desc: "httpd returns 403 — wrong file context",     labId: "linux-terminal" },
+  { icon: "🔥", title: "CPU at 100%",    desc: "Something is hammering the server",          labId: "linux-terminal" },
+  { icon: "🚫", title: "SSH refused",    desc: "Cannot connect — diagnose the firewall",     labId: "linux-terminal" },
+  { icon: "🗄️", title: "DB split-brain", desc: "Cluster diverged — replica out of sync",    labId: "real-server"    },
 ];
 
 const FAQ = [
@@ -454,7 +465,7 @@ const FAQ = [
   { q: "Can I cancel anytime?", a: "Yes. One click in your dashboard. No questions asked." },
 ];
 
-function LabsPreview({ onCTA }) {
+function LabsPreview({ onCTA, onStartLab }) {
   return (
     <section className="py-24">
       <div className="max-w-6xl mx-auto px-6">
@@ -476,13 +487,17 @@ function LabsPreview({ onCTA }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.07 }}
-              className="flex items-start gap-4 p-5 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-green-600/30 transition-colors"
+              onClick={() => onStartLab?.(lab.labId)}
+              className="flex items-start gap-4 p-5 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-green-600/40 hover:bg-slate-900 transition-colors cursor-pointer group"
             >
               <span className="text-2xl shrink-0">{lab.icon}</span>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="font-bold text-white text-sm">{lab.title}</p>
                 <p className="text-xs text-slate-400 mt-0.5">{lab.desc}</p>
               </div>
+              <span className="text-xs text-green-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 self-center">
+                Start →
+              </span>
             </motion.div>
           ))}
         </div>
@@ -642,22 +657,18 @@ function FinalCTA({ onCTA }) {
 }
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
-function Footer() {
+function Footer({ onNavigate }) {
   return (
     <footer className="border-t border-slate-800 py-12">
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <p>© {new Date().getFullYear()} WINLAB. All rights reserved.</p>
           <div className="flex gap-4 sm:gap-6 flex-wrap items-center justify-center">
-            <a href="/privacy" className="hover:text-slate-300 transition-colors px-3 py-2 min-h-[44px]">
-              Privacy
-            </a>
-            <a href="/terms" className="hover:text-slate-300 transition-colors px-3 py-2 min-h-[44px]">
-              Terms
-            </a>
-            <a href="mailto:support@winlab.cloud" className="hover:text-slate-300 transition-colors px-3 py-2 min-h-[44px]">
-              Support
-            </a>
+            <button onClick={() => onNavigate?.("pricing")} className="hover:text-slate-300 transition-colors px-3 py-2 min-h-[44px]">Pricing</button>
+            <button onClick={() => onNavigate?.("about")}   className="hover:text-slate-300 transition-colors px-3 py-2 min-h-[44px]">About</button>
+            <a href="/privacy" className="hover:text-slate-300 transition-colors px-3 py-2 min-h-[44px]">Privacy</a>
+            <a href="/terms"   className="hover:text-slate-300 transition-colors px-3 py-2 min-h-[44px]">Terms</a>
+            <a href="mailto:support@winlab.cloud" className="hover:text-slate-300 transition-colors px-3 py-2 min-h-[44px]">Support</a>
           </div>
         </div>
       </div>
@@ -666,7 +677,7 @@ function Footer() {
 }
 
 // ─── Root export ──────────────────────────────────────────────────────────────
-export default function LaunchLanding({ onCTA }) {
+export default function LaunchLanding({ onCTA, onLogin, onNavigate, onStartLab }) {
   const [seatsClaimed, setSeatsClaimed] = useState(347);
   const totalSeats = 500;
 
@@ -697,14 +708,14 @@ export default function LaunchLanding({ onCTA }) {
   return (
     <div className="bg-[#0a0a0b] text-white min-h-screen overflow-x-hidden">
       <CountdownBanner deadline={deadline} />
-      <Nav hasBanner />
+      <Nav hasBanner onLogin={onLogin} onNavigate={onNavigate} />
       <Hero onCTA={handleCTA} seatsClaimed={seatsClaimed} totalSeats={totalSeats} />
       <TerminalDemoSection onCTA={handleCTA} />
       <HowItWorks />
-      <LabsPreview onCTA={handleCTA} />
+      <LabsPreview onCTA={handleCTA} onStartLab={onStartLab} />
       <UrgencySection />
       <FinalCTA onCTA={handleCTA} />
-      <Footer />
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }
