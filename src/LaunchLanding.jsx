@@ -1,10 +1,12 @@
 // LaunchLanding.jsx - 72H launch landing page with countdown, terminal demo, and aggressive CTA
 import { useState, useEffect, useRef } from "react";
-import { motion, useInView, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import TerminalDemo from "./components/TerminalDemo";
 import PressureMode from "./components/PressureMode";
 import { trackEvent, initPosthog } from "./services/posthog";
 import { saveDemoProgress } from "./utils/demoProgress";
+
+import TrialGate from "./components/TrialGate";
 
 // ─── Countdown helpers ────────────────────────────────────────────────────────
 function useCountdown(deadline) {
@@ -680,6 +682,7 @@ function Footer({ onNavigate }) {
 export default function LaunchLanding({ onCTA, onLogin, onNavigate, onStartLab }) {
   const [seatsClaimed, setSeatsClaimed] = useState(347);
   const totalSeats = 500;
+  const [trialOpen, setTrialOpen] = useState(false);
 
   // Initialize PostHog
   useEffect(() => {
@@ -712,10 +715,19 @@ export default function LaunchLanding({ onCTA, onLogin, onNavigate, onStartLab }
       <Hero onCTA={handleCTA} seatsClaimed={seatsClaimed} totalSeats={totalSeats} />
       <TerminalDemoSection onCTA={handleCTA} />
       <HowItWorks />
-      <LabsPreview onCTA={handleCTA} onStartLab={onStartLab} />
+      <LabsPreview onCTA={handleCTA} onStartLab={() => setTrialOpen(true)} />
       <UrgencySection />
       <FinalCTA onCTA={handleCTA} />
       <Footer onNavigate={onNavigate} />
+
+      <AnimatePresence>
+        {trialOpen && (
+          <TrialGate
+            onSignup={() => { setTrialOpen(false); onCTA?.(); }}
+            onClose={() => setTrialOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
