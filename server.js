@@ -1046,6 +1046,7 @@ app.post("/api/early-access/signup", authLimiter, async (req, res) => {
 // GET /api/pricing
 app.get("/api/pricing", (req, res) => {
   res.json({
+    launchTierActive: false,
     plans: [
       { id: "early", name: "Early Access", price: 5, currency: "usd", interval: "month", features: ["All labs", "AI Mentor", "Certificates", "Daily challenges"] },
       { id: "pro",   name: "Pro",          price: 19, currency: "usd", interval: "month", features: ["All labs", "AI Mentor", "Certificates", "Daily challenges"] },
