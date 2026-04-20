@@ -87,6 +87,18 @@ app.use(cookieParser());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+// ── Request ID (must be before all routes) ───────────────────────────
+app.use((req, res, next) => {
+  const id = req.headers["x-request-id"] || uuidv4();
+  req.requestId = id;
+  res.setHeader("x-request-id", id);
+  next();
+});
+
+// ── Health / Readiness probes (no rate limit, no auth) ───────────────
+app.get("/health", (req, res) => res.json({ status: "ok", ts: Date.now() }));
+app.get("/ready",  (req, res) => res.json({ status: "ok", ts: Date.now() }));
+
 // CORS
 app.use((req, res, next) => {
   const origin = req.headers.origin;
@@ -108,7 +120,7 @@ app.use(express.static(path.join(__dirname, "dist")));
 const authLimiter    = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false });
 const aiLimiter      = rateLimit({ windowMs: 60_000, max: 30 });
 const paymentLimiter = rateLimit({ windowMs: 60_000, max: 5 });
-const generalLimiter = rateLimit({ windowMs: 60_000, max: 200 });
+const generalLimiter = rateLimit({ windowMs: 60_000, max: 2_000 });
 app.use("/api/", generalLimiter);
 
 // ── Auth middleware ──────────────────────────────────────────────────
