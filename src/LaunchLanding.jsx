@@ -1,695 +1,238 @@
-// LaunchLanding.jsx - 72H launch landing page with countdown, terminal demo, and aggressive CTA
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import TerminalDemo from "./components/TerminalDemo";
-import PressureMode from "./components/PressureMode";
-import { trackEvent, initPosthog } from "./services/posthog";
-import { saveDemoProgress } from "./utils/demoProgress";
-
+// LaunchLanding.jsx — Jobs-Dark redesign
+// OLED black · JetBrains Mono · Terminal as hero · No emoji · No bouncy animations
+import { useState, useEffect } from "react";
+import { AnimatePresence } from "framer-motion";
 import TrialGate from "./components/TrialGate";
-
-// ─── Countdown helpers ────────────────────────────────────────────────────────
-function useCountdown(deadline) {
-  const calc = () => {
-    if (!deadline) return null;
-    const diff = new Date(deadline).getTime() - Date.now();
-    if (diff <= 0) return { d: 0, h: 0, m: 0, s: 0, expired: true };
-    const d = Math.floor(diff / 86400000);
-    const h = Math.floor((diff % 86400000) / 3600000);
-    const m = Math.floor((diff % 3600000) / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
-    return { d, h, m, s, expired: false };
-  };
-  const [left, setLeft] = useState(calc);
-  useEffect(() => {
-    if (!deadline) return;
-    const id = setInterval(() => setLeft(calc()), 1000);
-    return () => clearInterval(id);
-  }, [deadline]);
-  return left;
-}
-
-function Pad({ n }) {
-  return <span>{String(n).padStart(2, "0")}</span>;
-}
-
-// ─── Sticky countdown banner ──────────────────────────────────────────────────
-function CountdownBanner({ deadline }) {
-  const left = useCountdown(deadline);
-  if (!left || left.expired) return null;
-
-  return (
-    <div className="fixed top-0 inset-x-0 z-[60] bg-gradient-to-r from-red-700 via-red-600 to-red-700 border-b border-red-500/40 shadow-lg shadow-red-900/40">
-      <div className="max-w-6xl mx-auto px-4 py-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-        <span className="text-xs font-bold text-red-100 uppercase tracking-wider whitespace-nowrap">
-          🔥 72H Launch — $5 offer ends in
-        </span>
-        <div className="flex items-center gap-1">
-          {left.d > 0 && (
-            <>
-              <span className="text-white font-black text-sm tabular-nums">{left.d}d</span>
-              <span className="text-red-300 mx-0.5">:</span>
-            </>
-          )}
-          <span className="text-white font-black text-sm tabular-nums">
-            <Pad n={left.h} />
-          </span>
-          <span className="text-red-300 mx-0.5">:</span>
-          <span className="text-white font-black text-sm tabular-nums">
-            <Pad n={left.m} />
-          </span>
-          <span className="text-red-300 mx-0.5">:</span>
-          <span className="text-white font-black text-sm tabular-nums">
-            <Pad n={left.s} />
-          </span>
-        </div>
-        <a
-          href="#cta"
-          className="text-xs font-bold bg-white text-red-700 px-3 py-1 rounded-full hover:bg-red-50 transition-colors whitespace-nowrap"
-        >
-          Lock $5 →
-        </a>
-      </div>
-    </div>
-  );
-}
+import { trackEvent, initPosthog } from "./services/posthog";
 
 // ─── Nav ──────────────────────────────────────────────────────────────────────
-function Nav({ hasBanner, onLogin, onNavigate }) {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", fn);
-    return () => window.removeEventListener("scroll", fn);
-  }, []);
-
+function Nav({ onLogin, onNavigate }) {
   return (
-    <motion.nav
-      initial={{ y: -60, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className={`fixed inset-x-0 z-50 transition-all duration-300 ${
-        hasBanner ? "top-9" : "top-0"
-      } ${scrolled ? "bg-[#0a0a0b]/90 backdrop-blur-md border-b border-slate-800/60" : ""}`}
-    >
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => onNavigate?.("landing")}>
-          <span className="text-green-500 font-black text-xl tracking-tight">WIN</span>
-          <span className="text-white font-black text-xl tracking-tight">LAB</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => onNavigate?.("pricing")}
-            className="hidden sm:block text-sm text-slate-400 hover:text-white transition-colors px-3 py-2"
-          >
-            Pricing
-          </button>
-          <button
-            onClick={() => onLogin?.()}
-            className="text-sm text-slate-300 hover:text-white transition-colors px-3 py-2"
-          >
-            Log in
-          </button>
-          <a
-            href="#terminal"
-            className="text-sm px-4 py-2.5 min-h-[44px] bg-green-600 hover:bg-green-500 text-white rounded-lg font-medium transition-colors"
-          >
-            Try Demo →
-          </a>
-        </div>
+    <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-8 py-5">
+      <span
+        className="font-mono text-sm tracking-[0.3em] text-gray-500 uppercase cursor-pointer hover:text-white transition-colors duration-300"
+        onClick={() => onNavigate?.("landing")}
+      >
+        WINLAB
+      </span>
+      <div className="flex items-center gap-8 font-mono text-xs tracking-widest text-gray-700 uppercase">
+        <span className="cursor-pointer hover:text-gray-300 transition-colors duration-300" onClick={() => onNavigate?.("pricing")}>Pricing</span>
+        <span className="cursor-pointer hover:text-gray-300 transition-colors duration-300" onClick={() => onNavigate?.("about")}>About</span>
+        <span className="cursor-pointer hover:text-white transition-colors duration-300" onClick={onLogin}>Login</span>
       </div>
-    </motion.nav>
+    </nav>
   );
 }
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 function Hero({ onCTA, seatsClaimed, totalSeats }) {
-  const claimedPct = Math.round((seatsClaimed / totalSeats) * 100);
+  const remaining = totalSeats - seatsClaimed;
 
   return (
-    <section className="relative min-h-screen flex flex-col justify-center pt-16 overflow-hidden">
-      {/* Background glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-green-600/[0.08] rounded-full blur-3xl" />
-        <div className="absolute top-1/3 right-0 w-[400px] h-[400px] bg-green-800/[0.06] rounded-full blur-3xl" />
-      </div>
-
-      {/* Grid dots */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      <div className="relative max-w-6xl mx-auto px-6 py-24 grid lg:grid-cols-2 gap-16 items-center">
-        {/* Copy */}
-        <div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border border-red-600/30 bg-red-600/10 text-red-400 mb-8"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-            ⚠️ Only {totalSeats - seatsClaimed} spots remaining
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-[1.05] mb-6"
-          >
-            Break real servers.
-            <br />
-            <span className="text-green-500">Become job-ready.</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-lg text-slate-400 leading-relaxed mb-6 max-w-lg"
-          >
-            Train on real sysadmin incidents with an AI mentor. No videos. No theory. Just real
-            problems.
-          </motion.p>
-
-          {/* Countdown card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mb-8"
-          >
-            <LaunchCountdownCard />
-          </motion.div>
-
-          {/* Scarcity bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mb-8"
-          >
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-slate-400">
-                <span className="text-white font-bold">{seatsClaimed}</span> / {totalSeats} seats
-                claimed
-              </span>
-              <span className="text-red-400 font-bold">{claimedPct}%</span>
-            </div>
-            <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-red-600 to-orange-600 rounded-full transition-all duration-1000"
-                style={{ width: `${claimedPct}%` }}
-              />
-            </div>
-          </motion.div>
-
-          {/* CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="flex flex-col gap-4"
-          >
-            <button
-              onClick={onCTA}
-              className="relative group px-8 py-5 bg-green-600 text-white font-bold rounded-xl text-lg overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <span className="absolute inset-0 bg-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <span className="absolute -inset-1 bg-green-600/40 blur-lg opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
-              <span className="relative">Start your first lab → $5</span>
-            </button>
-
-            <div className="flex flex-wrap gap-4 text-xs text-slate-400">
-              <span>✓ Instant access</span>
-              <span>✓ AI mentor included</span>
-              <span>✓ Cancel anytime</span>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Terminal preview */}
-        <motion.div
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="hidden lg:block"
-        >
-          <TerminalPreview />
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Launch countdown card ────────────────────────────────────────────────────
-function LaunchCountdownCard() {
-  // Launch ends April 20, 2026 at 18:00 (Monday)
-  const deadline = "2026-04-24T21:00:00";
-  const left = useCountdown(deadline);
-
-  if (!left || left.expired) {
-    return (
-      <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-center">
-        <p className="text-sm font-bold text-red-400">Launch period has ended.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-xl border border-orange-500/30 bg-orange-500/5 p-4">
-      <p className="text-center text-xs font-bold text-orange-400 uppercase tracking-widest mb-3">
-        Launch offer ends in
+    <section className="min-h-screen flex flex-col justify-center px-8 md:px-16 pt-28 pb-16 max-w-5xl mx-auto">
+      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-700 uppercase mb-10">
+        // SYSTEM: TRAINING_ENVIRONMENT_v7
       </p>
-      <div className="flex items-center justify-center gap-3">
-        <TimeBlock value={left.d} label="days" />
-        {left.d > 0 && <span className="text-2xl font-black text-slate-600 mb-3">:</span>}
-        <TimeBlock value={left.h} label="hours" />
-        <span className="text-2xl font-black text-slate-600 mb-3">:</span>
-        <TimeBlock value={left.m} label="min" />
-        <span className="text-2xl font-black text-slate-600 mb-3">:</span>
-        <TimeBlock value={left.s} label="sec" />
+
+      <h1 className="font-mono text-5xl md:text-7xl lg:text-8xl font-black text-white leading-none mb-6 tracking-tight">
+        BECOME THE<br />
+        <span className="text-[#FF3B30]">EXPERT.</span>
+      </h1>
+
+      <p className="font-mono text-sm md:text-base text-gray-600 mb-16 max-w-lg leading-relaxed">
+        Real servers. No theory. Pure incidents.
+      </p>
+
+      {/* Terminal — the only lit thing in the dark */}
+      <div className="bg-[#050505] border border-[#1a1a1a] p-6 font-mono text-sm max-w-2xl mb-16">
+        <div className="text-gray-700 mb-5 text-[10px] tracking-widest uppercase">
+          // LIVE INCIDENT — PRIORITY: CRITICAL
+        </div>
+        <div className="text-gray-500 mb-1">
+          <span className="text-green-600">winlab@prod-db-01:~$</span>{" "}
+          <span className="text-gray-300">systemctl status mysql</span>
+        </div>
+        <div className="text-gray-600 mt-3 ml-2">● mysql.service - MySQL Community Server</div>
+        <div className="text-[#FF3B30] font-semibold ml-6">
+          Active: failed (Result: exit-code)
+        </div>
+        <div className="mt-5 border-l-2 border-[#1a1a1a] pl-4 text-gray-700 text-xs leading-relaxed">
+          # [SYSTEM_ADVISOR]: Database is unresponsive.<br />
+          # Verify /var/log/mysql/error.log before escalating.
+        </div>
+        <div className="mt-5 text-gray-500">
+          <span className="text-green-600">winlab@prod-db-01:~$</span>{" "}
+          <span className="inline-block w-[7px] h-[14px] bg-[#00ff41] align-middle animate-pulse" />
+        </div>
       </div>
-    </div>
-  );
-}
 
-function TimeBlock({ value, label }) {
-  return (
-    <div className="flex flex-col items-center min-w-[44px]">
-      <span className="text-2xl sm:text-3xl font-black text-white tabular-nums leading-none">
-        <Pad n={value} />
-      </span>
-      <span className="text-[9px] uppercase tracking-widest text-slate-500 mt-0.5">{label}</span>
-    </div>
-  );
-}
-
-// ─── Terminal preview (static hero visual) ────────────────────────────────────
-function TerminalPreview() {
-  return (
-    <div className="rounded-xl border border-green-500/30 bg-[#050505] overflow-hidden shadow-2xl shadow-green-500/10">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-green-500/20 bg-[#050505]">
-        <span className="w-3 h-3 rounded-full bg-red-500/80" />
-        <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
-        <span className="w-3 h-3 rounded-full bg-green-500/80" />
-        <span className="ml-3 text-xs text-green-400/60 font-mono">
-          winlab@prod-server:~ — Incident #001
+      {/* CTA */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+        <div
+          className="font-mono text-xs tracking-[0.2em] text-black bg-white px-8 py-3 cursor-pointer hover:bg-gray-200 transition-colors duration-200 uppercase"
+          onClick={onCTA}
+        >
+          [ JOIN THE FIRST 500 ]
+        </div>
+        <span className="font-mono text-[11px] text-gray-700">
+          {remaining} seats remaining · Launch access: $5
         </span>
       </div>
-      <div className="p-5 font-mono text-sm leading-6 min-h-[320px] text-green-400">
-        <div className="text-white">winlab@prod-server:~$</div>
-        <div className="text-white mt-2">{"> "}systemctl status ldap</div>
-        <div className="text-red-400 mt-2">
-          ● ldap.service - LDAP Authentication
-          <br />
-          &nbsp;&nbsp;&nbsp;Active: ❌ failed (Result: exit-code)
-        </div>
-        <div className="text-blue-300 mt-3">
-          🤖 AI Mentor: Check the logs. What error do you see?
-        </div>
-        <div className="text-white mt-3">
-          winlab@prod-server:~$
-          <motion.span
-            animate={{ opacity: [1, 0] }}
-            transition={{ repeat: Infinity, duration: 0.8 }}
-            className="inline-block w-2 h-4 bg-green-400 ml-1 align-middle"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
 
-// ─── Interactive Terminal Demo Section ────────────────────────────────────────
-function TerminalDemoSection({ onCTA }) {
-  const [demoStep, setDemoStep] = useState(0);
-
-  const handleStepComplete = (event) => {
-    trackEvent(event, { step: demoStep });
-  };
-
-  const handleRun = (step) => {
-    setDemoStep(step);
-    saveDemoProgress(step);
-    trackEvent("terminal_run", { step });
-
-    if (step >= 6) {
-      trackEvent("terminal_demo_completed");
-    }
-  };
-
-  return (
-    <section id="terminal" className="py-24 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-green-600/3 to-transparent pointer-events-none" />
-
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-14">
-          <span className="text-xs text-green-400 uppercase tracking-widest">Try It Now</span>
-          <h2 className="text-4xl font-black text-white mt-3 mb-4">
-            Break a real system. Right now.
-          </h2>
-          <p className="text-slate-400 max-w-xl mx-auto">
-            This isn't a video. Run commands, see real errors, get AI guidance. Experience what
-            WINLAB feels like.
-          </p>
-        </div>
-
-        <div className="max-w-3xl mx-auto">
-          <TerminalDemo onRun={handleRun} onStepComplete={handleStepComplete} />
-
-          {/* Pressure mode */}
-          <div className="mt-8">
-            <PressureMode
-              initialTime={90}
-              onComplete={() => trackEvent("pressure_mode_completed")}
-            />
-          </div>
-
-          {/* CTA after demo */}
-          <div className="mt-10 text-center">
-            <p className="text-slate-300 mb-4">
-              You just experienced a real incident.
-              <br />
-              <span className="text-green-400 font-semibold">Now train for real → $5</span>
-            </p>
-            <button
-              onClick={onCTA}
-              className="px-8 py-4 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl text-lg transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-green-600/20"
-            >
-              Start your first lab → $5
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── How it works ─────────────────────────────────────────────────────────────
-const HOW_IT_WORKS = [
-  {
-    icon: "🖥️",
-    title: "Break a real system",
-    desc: "Production servers, failed services, broken configs — all simulated realistically.",
-  },
-  {
-    icon: "🔍",
-    title: "Debug under pressure",
-    desc: "Timer active, users reporting issues. Feel what real incident response is like.",
-  },
-  {
-    icon: "🤖",
-    title: "Get guided by AI",
-    desc: "AI Mentor reads your lab state and asks targeted questions. Never gives the answer.",
-  },
-  {
-    icon: "💪",
-    title: "Become job-ready",
-    desc: "After 10+ incidents, you'll have real troubleshooting skills. Not just theory.",
-  },
-];
-
-function HowItWorks() {
-  return (
-    <section className="py-24">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-14">
-          <span className="text-xs text-green-400 uppercase tracking-widest">How It Works</span>
-          <h2 className="text-4xl font-black text-white mt-3 mb-4">
-            From zero to job-ready in 72 hours
-          </h2>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {HOW_IT_WORKS.map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="flex flex-col items-center text-center"
-            >
-              <div className="w-16 h-16 rounded-xl bg-green-600/10 border border-green-600/20 flex items-center justify-center text-3xl mb-4">
-                {item.icon}
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">{item.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Labs preview ─────────────────────────────────────────────────────────────
-const PREVIEW_LABS = [
-  { icon: "🔴", title: "Apache down",    desc: "Site not responding — find and fix it",     labId: "linux-terminal" },
-  { icon: "💾", title: "Disk full",      desc: "Server is stuck — out of space",             labId: "linux-terminal" },
-  { icon: "🔒", title: "SELinux denial", desc: "httpd returns 403 — wrong file context",     labId: "linux-terminal" },
-  { icon: "🔥", title: "CPU at 100%",    desc: "Something is hammering the server",          labId: "linux-terminal" },
-  { icon: "🚫", title: "SSH refused",    desc: "Cannot connect — diagnose the firewall",     labId: "linux-terminal" },
-  { icon: "🗄️", title: "DB split-brain", desc: "Cluster diverged — replica out of sync",    labId: "real-server"    },
-];
-
-const FAQ = [
-  { q: "Is this a real VM?", a: "Yes. You get full root access in an isolated environment. Real commands, real errors, real feedback." },
-  { q: "Do I need Linux experience?", a: "Some basics help, but every lab has step-by-step hints and an AI mentor to guide you." },
-  { q: "What happens after the 72h offer?", a: "The price goes to $29/month. Your access and progress are never lost." },
-  { q: "Can I cancel anytime?", a: "Yes. One click in your dashboard. No questions asked." },
-];
-
-function LabsPreview({ onCTA, onStartLab }) {
-  return (
-    <section className="py-24">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-4">
-          <span className="text-xs text-green-400 uppercase tracking-widest">100+ Labs</span>
-          <h2 className="text-4xl font-black text-white mt-3 mb-3">
-            Every real incident you'll face on the job.
-          </h2>
-          <p className="text-slate-400 max-w-2xl mx-auto">
-            From Nginx misconfiguration to database cluster split-brain. Each lab is a real incident — not a tutorial.
-          </p>
-        </div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-10 mb-12">
-          {PREVIEW_LABS.map((lab, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.07 }}
-              onClick={() => onStartLab?.(lab.labId)}
-              className="flex items-start gap-4 p-5 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-green-600/40 hover:bg-slate-900 transition-colors cursor-pointer group"
-            >
-              <span className="text-2xl shrink-0">{lab.icon}</span>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-white text-sm">{lab.title}</p>
-                <p className="text-xs text-slate-400 mt-0.5">{lab.desc}</p>
-              </div>
-              <span className="text-xs text-green-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 self-center">
-                Start →
-              </span>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="text-center">
-          <button
-            onClick={onCTA}
-            className="px-8 py-4 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl transition-all hover:scale-[1.02]"
-          >
-            Start your first lab → $5
-          </button>
-        </div>
-
-        {/* Mini FAQ */}
-        <div className="mt-20">
-          <h3 className="text-2xl font-black text-white text-center mb-8">Quick answers</h3>
-          <div className="max-w-2xl mx-auto grid gap-4">
-            {FAQ.map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="rounded-xl border border-slate-800 bg-slate-900/50 p-5"
-              >
-                <p className="font-bold text-white text-sm mb-1">{item.q}</p>
-                <p className="text-sm text-slate-400">{item.a}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Urgency section ──────────────────────────────────────────────────────────
-function UrgencySection() {
-  return (
-    <section className="py-20 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 via-orange-600/10 to-red-600/10 pointer-events-none" />
-
-      <div className="max-w-4xl mx-auto px-6 relative">
-        <div className="rounded-2xl border border-red-600/30 bg-slate-900/80 backdrop-blur-sm p-8 sm:p-10">
-          <div className="text-center mb-8">
-            <span className="inline-block text-xs font-bold text-red-400 uppercase tracking-widest bg-red-600/10 px-3 py-1 rounded-full border border-red-600/20 mb-3">
-              🚨 Limited Launch Offer
-            </span>
-            <h2 className="text-3xl font-black text-white mb-4">
-              Launch price disappears in 72h
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            {[
-              { icon: "⏱️", text: "Only 72 hours available" },
-              { icon: "👥", text: "Only 500 early users" },
-              { icon: "💰", text: "Next price: $29/month" },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 p-4 bg-red-500/5 border border-red-500/20 rounded-lg"
-              >
-                <span className="text-2xl">{item.icon}</span>
-                <p className="text-sm text-red-300 font-medium">{item.text}</p>
-              </div>
-            ))}
-          </div>
-
-          <div id="cta" className="text-center">
-            <h3 className="text-xl font-bold text-white mb-2">
-              Start your first lab now → $5
-            </h3>
-            <p className="text-slate-400 mb-6">
-              Offer ends Thursday. No second chance.
-            </p>
-            <StripeCTA />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Stripe CTA ───────────────────────────────────────────────────────────────
-function StripeCTA() {
-  const [loading, setLoading] = useState(false);
-
-  const handleCheckout = async () => {
-    setLoading(true);
-    trackEvent("cta_clicked");
-
-    try {
-      const res = await fetch("/api/checkout", { method: "POST" });
-      const data = await res.json();
-
-      if (data.url) {
-        trackEvent("checkout_started");
-        window.location.href = data.url;
-      } else {
-        console.error("No checkout URL returned");
-      }
-    } catch (error) {
-      console.error("Checkout error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div>
-      <button
-        onClick={handleCheckout}
-        disabled={loading}
-        className="w-full sm:w-auto px-10 py-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-700 text-white font-bold rounded-xl text-lg transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-green-600/20"
-      >
-        {loading ? "Redirecting to Stripe..." : "Start your first lab → $5"}
-      </button>
-      <p className="text-xs text-slate-500 mt-3">
-        Secure checkout via Stripe · SSL encrypted · Cancel anytime
+      <p className="font-mono text-[10px] text-gray-800 mt-6 tracking-wider">
+        The launch window closes Thursday, April 24.
       </p>
-    </div>
+    </section>
   );
 }
 
-// ─── Final CTA banner ─────────────────────────────────────────────────────────
-function FinalCTA({ onCTA }) {
+// ─── Labs grid ────────────────────────────────────────────────────────────────
+const LABS = [
+  { id: "ERR_702", title: "Kernel Panic Recovery",    severity: "CRITICAL", log: "kernel: BUG: unable to handle kernel NULL pointer dereference at 0000000000000010" },
+  { id: "ERR_405", title: "Nginx Upstream Timeout",   severity: "HIGH",     log: "upstream timed out (110: Connection timed out) while reading response header from upstream" },
+  { id: "ERR_109", title: "BGP Routing Leak",         severity: "HARDCORE", log: "BGP session with 10.0.0.1 went down — prefixes withdrawn from routing table" },
+  { id: "ERR_501", title: "Apache2 Service Down",     severity: "CRITICAL", log: "AH00016: Configuration Failed — server unable to re-open errorlog, exiting" },
+  { id: "ERR_334", title: "Disk Full — InnoDB Crash", severity: "HIGH",     log: "InnoDB: Operating system error number 28 in a file operation (No space left on device)" },
+  { id: "ERR_218", title: "Memory Leak — OOM Killer", severity: "HIGH",     log: "Out of memory: Kill process 1842 (node) score 847 or sacrifice child" },
+  { id: "ERR_677", title: "SSH Lockout Recovery",     severity: "MEDIUM",   log: "error: maximum authentication attempts exceeded for user root from 203.0.113.5" },
+  { id: "ERR_091", title: "RAID Array Degraded",      severity: "CRITICAL", log: "md/raid1:md0: Disk failure on sdb, disabling device — write error corrected" },
+  { id: "ERR_445", title: "Certificate Expired",      severity: "HIGH",     log: "SSL_ERROR_RX_RECORD_TOO_LONG — certificate expired 2026-04-01T00:00:00Z" },
+];
+
+const SEV = {
+  CRITICAL: "text-[#FF3B30]",
+  HIGH:     "text-orange-700",
+  HARDCORE: "text-purple-700",
+  MEDIUM:   "text-yellow-800",
+};
+
+function LabsGrid({ onStartLab }) {
   return (
-    <section className="py-24">
-      <div className="max-w-3xl mx-auto px-6 text-center">
-        <div className="relative rounded-2xl border border-green-600/20 bg-green-600/5 px-6 py-10 sm:p-14 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-green-600/10 via-transparent to-transparent pointer-events-none" />
-          <h2 className="text-4xl font-black text-white mb-5 relative">
-            Start breaking things.
-            <br />
-            Start learning for real.
-          </h2>
-          <p className="text-slate-300 mb-8 relative">
-            Launch offer: $5 for your first month (then $29).
-            <br />
-            Only available for 72 hours.
-          </p>
-          <button
-            onClick={onCTA}
-            className="relative px-10 py-4 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl text-lg transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-green-600/20"
+    <section className="px-8 md:px-16 py-24 max-w-5xl mx-auto">
+      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-700 uppercase mb-12">
+        // INCIDENT_DATABASE — 100+ SCENARIOS INDEXED
+      </p>
+      <div className="border-[0.5px] border-[#151515]">
+        <div className="grid grid-cols-12 border-b border-[#151515] px-6 py-3 font-mono text-[9px] text-gray-800 tracking-widest uppercase">
+          <span className="col-span-2">ID</span>
+          <span className="col-span-5">Incident</span>
+          <span className="col-span-3">Severity</span>
+          <span className="col-span-2 text-right">Access</span>
+        </div>
+        {LABS.map((lab) => (
+          <div
+            key={lab.id}
+            className="grid grid-cols-12 border-b border-[#0d0d0d] px-6 py-5 font-mono cursor-pointer hover:bg-[#050505] transition-colors duration-200 group"
+            onClick={onStartLab}
           >
-            Start your first lab → $5
-          </button>
-          <p className="text-xs text-slate-400 mt-4 relative">
-            Launch offer ends Thursday · No second chance
-          </p>
+            <span className="col-span-2 text-[10px] text-gray-700 self-center">{lab.id}</span>
+            <div className="col-span-5 self-center">
+              <div className="text-sm text-gray-400 group-hover:text-white transition-colors duration-200 mb-1">
+                {lab.title}
+              </div>
+              <div className="text-[10px] text-gray-800 leading-relaxed truncate pr-4">{lab.log}</div>
+            </div>
+            <span className={`col-span-3 text-[9px] tracking-widest uppercase self-center ${SEV[lab.severity] || "text-gray-700"}`}>
+              {lab.severity}
+            </span>
+            <span className="col-span-2 text-[10px] text-gray-800 group-hover:text-gray-500 tracking-widest uppercase text-right self-center transition-colors duration-200">
+              Enter →
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── Pricing ──────────────────────────────────────────────────────────────────
+const SPECS = [
+  ["Active Labs",   "100+",                     "100+"],
+  ["Environment",   "Linux · Bash · CLI",        "Full Infrastructure Track"],
+  ["AI Support",    "Mentor Standard",           "Mentor Enterprise"],
+  ["Dashboard",     "Individual",                "Team + Analytics"],
+  ["SSO",           "—",                         "Azure AD / Okta"],
+  ["Price",         "$19 / mo",                  "$199 / mo"],
+];
+
+function Pricing({ onCTA }) {
+  return (
+    <section className="px-8 md:px-16 py-24 max-w-5xl mx-auto">
+      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-700 uppercase mb-12">
+        // PRICING — SPECIFICATION_SHEET
+      </p>
+      <div className="border-[0.5px] border-[#151515] font-mono">
+        <div className="grid grid-cols-3 border-b border-[#151515] px-6 py-3 text-[9px] text-gray-800 tracking-widest uppercase">
+          <span>Feature</span>
+          <span>Individual</span>
+          <span>Business</span>
+        </div>
+        {SPECS.map(([feat, ind, biz], i) => (
+          <div
+            key={i}
+            className={`grid grid-cols-3 px-6 py-4 text-xs border-b border-[#0a0a0a] ${feat === "Price" ? "text-white" : "text-gray-600"}`}
+          >
+            <span className="text-gray-800 uppercase tracking-wider text-[9px]">{feat}</span>
+            <span>{ind}</span>
+            <span>{biz}</span>
+          </div>
+        ))}
+        <div className="grid grid-cols-3 px-6 py-6 gap-4">
+          <span />
+          <div
+            className="text-[10px] tracking-widest uppercase text-black bg-white px-5 py-2 cursor-pointer hover:bg-gray-200 transition-colors duration-200 w-fit"
+            onClick={onCTA}
+          >
+            [ ENTER THE LAB ]
+          </div>
+          <div
+            className="text-[10px] tracking-widest uppercase border border-[#222] text-gray-600 px-5 py-2 cursor-pointer hover:border-gray-500 hover:text-white transition-colors duration-200 w-fit"
+            onClick={onCTA}
+          >
+            [ PROVISION TEAM ]
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+// ─── Rule line ────────────────────────────────────────────────────────────────
+function Rule({ text }) {
+  return (
+    <div className="px-8 md:px-16 max-w-5xl mx-auto">
+      <div className="border-t border-[#0f0f0f] pt-3 font-mono text-[9px] text-gray-900 tracking-[0.3em] uppercase">
+        {text}
+      </div>
+    </div>
   );
 }
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer({ onNavigate }) {
   return (
-    <footer className="border-t border-slate-800 py-12">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} WINLAB. All rights reserved.</p>
-          <div className="flex gap-4 sm:gap-6 flex-wrap items-center justify-center">
-            <button onClick={() => onNavigate?.("pricing")} className="hover:text-slate-300 transition-colors px-3 py-2 min-h-[44px]">Pricing</button>
-            <button onClick={() => onNavigate?.("about")}   className="hover:text-slate-300 transition-colors px-3 py-2 min-h-[44px]">About</button>
-            <a href="/privacy" className="hover:text-slate-300 transition-colors px-3 py-2 min-h-[44px]">Privacy</a>
-            <a href="/terms"   className="hover:text-slate-300 transition-colors px-3 py-2 min-h-[44px]">Terms</a>
-            <a href="mailto:support@winlab.cloud" className="hover:text-slate-300 transition-colors px-3 py-2 min-h-[44px]">Support</a>
-          </div>
+    <footer className="px-8 md:px-16 py-16 max-w-5xl mx-auto">
+      <div className="border-t border-[#0f0f0f] pt-12 flex flex-col md:flex-row justify-between items-start gap-6 font-mono text-[9px] text-gray-800 tracking-[0.3em] uppercase">
+        <span>WINLAB © 2026</span>
+        <div className="flex gap-8">
+          <span className="cursor-pointer hover:text-gray-500 transition-colors" onClick={() => onNavigate?.("pricing")}>Pricing</span>
+          <span className="cursor-pointer hover:text-gray-500 transition-colors" onClick={() => onNavigate?.("about")}>About</span>
+          <span className="cursor-pointer hover:text-gray-500 transition-colors" onClick={() => onNavigate?.("legal")}>Legal</span>
         </div>
       </div>
     </footer>
   );
 }
 
-// ─── Root export ──────────────────────────────────────────────────────────────
+// ─── Root ─────────────────────────────────────────────────────────────────────
 export default function LaunchLanding({ onCTA, onLogin, onNavigate, onStartLab }) {
   const [seatsClaimed, setSeatsClaimed] = useState(347);
   const totalSeats = 500;
   const [trialOpen, setTrialOpen] = useState(false);
 
-  // Initialize PostHog
   useEffect(() => {
     initPosthog();
     trackEvent("launch_landing_viewed");
-
-    // Fetch seat count
     fetch("/api/early-access/seats")
       .then((r) => r.json())
       .then((data) => setSeatsClaimed(data.claimedSeats || 347))
@@ -697,33 +240,30 @@ export default function LaunchLanding({ onCTA, onLogin, onNavigate, onStartLab }
   }, []);
 
   const handleCTA = () => {
-    if (onCTA) {
-      onCTA();
-    } else {
-      // Default: redirect to Stripe checkout
-      window.location.href = "/api/checkout";
-    }
+    if (onCTA) onCTA();
+    else window.location.href = "/api/checkout";
   };
 
-  // Launch deadline: April 24, 2026 at 21:00
-  const deadline = "2026-04-24T21:00:00";
-
   return (
-    <div className="bg-[#0a0a0b] text-white min-h-screen overflow-x-hidden">
-      <CountdownBanner deadline={deadline} />
-      <Nav hasBanner onLogin={onLogin} onNavigate={onNavigate} />
+    <div className="bg-black text-white min-h-screen overflow-x-hidden">
+      <Nav onLogin={onLogin} onNavigate={onNavigate} />
+
       <Hero onCTA={handleCTA} seatsClaimed={seatsClaimed} totalSeats={totalSeats} />
-      <TerminalDemoSection onCTA={handleCTA} />
-      <HowItWorks />
-      <LabsPreview onCTA={handleCTA} onStartLab={() => setTrialOpen(true)} />
-      <UrgencySection />
-      <FinalCTA onCTA={handleCTA} />
+
+      <Rule text="// no videos. no theory. no cloud bills. just you and the terminal." />
+
+      <LabsGrid onStartLab={() => setTrialOpen(true)} />
+
+      <Rule text="// pricing" />
+
+      <Pricing onCTA={handleCTA} />
+
       <Footer onNavigate={onNavigate} />
 
       <AnimatePresence>
         {trialOpen && (
           <TrialGate
-            onSignup={() => { setTrialOpen(false); onCTA?.(); }}
+            onSignup={() => { setTrialOpen(false); handleCTA(); }}
             onClose={() => setTrialOpen(false)}
           />
         )}
