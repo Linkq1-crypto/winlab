@@ -8,17 +8,17 @@ import { trackEvent, initPosthog } from "./services/posthog";
 // ─── Nav ──────────────────────────────────────────────────────────────────────
 function Nav({ onLogin, onNavigate }) {
   return (
-    <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-8 py-5">
+    <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-8 py-5 bg-black/80 backdrop-blur-sm">
       <span
-        className="font-mono text-sm tracking-[0.3em] text-gray-500 uppercase cursor-pointer hover:text-white transition-colors duration-300"
+        className="font-mono text-sm tracking-[0.3em] text-gray-300 uppercase cursor-pointer hover:text-white transition-colors duration-200"
         onClick={() => onNavigate?.("landing")}
       >
         WINLAB
       </span>
-      <div className="flex items-center gap-8 font-mono text-xs tracking-widest text-gray-700 uppercase">
-        <span className="cursor-pointer hover:text-gray-300 transition-colors duration-300" onClick={() => onNavigate?.("pricing")}>Pricing</span>
-        <span className="cursor-pointer hover:text-gray-300 transition-colors duration-300" onClick={() => onNavigate?.("about")}>About</span>
-        <span className="cursor-pointer hover:text-white transition-colors duration-300" onClick={onLogin}>Login</span>
+      <div className="flex items-center gap-8 font-mono text-xs tracking-widest text-gray-500 uppercase">
+        <span className="cursor-pointer hover:text-gray-200 transition-colors duration-200" onClick={() => onNavigate?.("pricing")}>Pricing</span>
+        <span className="cursor-pointer hover:text-gray-200 transition-colors duration-200" onClick={() => onNavigate?.("about")}>About</span>
+        <span className="cursor-pointer hover:text-white transition-colors duration-200" onClick={onLogin}>Login</span>
       </div>
     </nav>
   );
@@ -30,7 +30,7 @@ function Hero({ onCTA, seatsClaimed, totalSeats }) {
 
   return (
     <section className="min-h-screen flex flex-col justify-center px-8 md:px-16 pt-28 pb-16 max-w-5xl mx-auto">
-      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-700 uppercase mb-10">
+      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-600 uppercase mb-10">
         // SYSTEM: TRAINING_ENVIRONMENT_v7
       </p>
 
@@ -39,29 +39,29 @@ function Hero({ onCTA, seatsClaimed, totalSeats }) {
         <span className="text-[#FF3B30]">EXPERT.</span>
       </h1>
 
-      <p className="font-mono text-sm md:text-base text-gray-600 mb-16 max-w-lg leading-relaxed">
+      <p className="font-mono text-sm md:text-base text-gray-400 mb-16 max-w-lg leading-relaxed">
         Real servers. No theory. Pure incidents.
       </p>
 
       {/* Terminal — the only lit thing in the dark */}
-      <div className="bg-[#050505] border border-[#1a1a1a] p-6 font-mono text-sm max-w-2xl mb-16">
-        <div className="text-gray-700 mb-5 text-[10px] tracking-widest uppercase">
+      <div className="bg-[#050505] border border-[#222] p-6 font-mono text-sm max-w-2xl mb-16">
+        <div className="text-gray-600 mb-5 text-[10px] tracking-widest uppercase">
           // LIVE INCIDENT — PRIORITY: CRITICAL
         </div>
-        <div className="text-gray-500 mb-1">
-          <span className="text-green-600">winlab@prod-db-01:~$</span>{" "}
-          <span className="text-gray-300">systemctl status mysql</span>
+        <div className="mb-1">
+          <span className="text-green-500">winlab@prod-db-01:~$</span>{" "}
+          <span className="text-gray-200">systemctl status mysql</span>
         </div>
-        <div className="text-gray-600 mt-3 ml-2">● mysql.service - MySQL Community Server</div>
+        <div className="text-gray-500 mt-3 ml-2">● mysql.service - MySQL Community Server</div>
         <div className="text-[#FF3B30] font-semibold ml-6">
           Active: failed (Result: exit-code)
         </div>
-        <div className="mt-5 border-l-2 border-[#1a1a1a] pl-4 text-gray-700 text-xs leading-relaxed">
+        <div className="mt-5 border-l-2 border-[#222] pl-4 text-gray-500 text-xs leading-relaxed">
           # [SYSTEM_ADVISOR]: Database is unresponsive.<br />
           # Verify /var/log/mysql/error.log before escalating.
         </div>
-        <div className="mt-5 text-gray-500">
-          <span className="text-green-600">winlab@prod-db-01:~$</span>{" "}
+        <div className="mt-5">
+          <span className="text-green-500">winlab@prod-db-01:~$</span>{" "}
           <span className="inline-block w-[7px] h-[14px] bg-[#00ff41] align-middle animate-pulse" />
         </div>
       </div>
@@ -74,12 +74,12 @@ function Hero({ onCTA, seatsClaimed, totalSeats }) {
         >
           [ JOIN THE FIRST 500 ]
         </div>
-        <span className="font-mono text-[11px] text-gray-700">
+        <span className="font-mono text-xs text-gray-500">
           {remaining} seats remaining · Launch access: $5
         </span>
       </div>
 
-      <p className="font-mono text-[10px] text-gray-800 mt-6 tracking-wider">
+      <p className="font-mono text-[11px] text-gray-600 mt-6 tracking-wider">
         The launch window closes Thursday, April 24.
       </p>
     </section>
@@ -101,19 +101,19 @@ const LABS = [
 
 const SEV = {
   CRITICAL: "text-[#FF3B30]",
-  HIGH:     "text-orange-700",
-  HARDCORE: "text-purple-700",
-  MEDIUM:   "text-yellow-800",
+  HIGH:     "text-orange-500",
+  HARDCORE: "text-purple-400",
+  MEDIUM:   "text-yellow-500",
 };
 
 function LabsGrid({ onStartLab }) {
   return (
     <section className="px-8 md:px-16 py-24 max-w-5xl mx-auto">
-      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-700 uppercase mb-12">
+      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-500 uppercase mb-12">
         // INCIDENT_DATABASE — 100+ SCENARIOS INDEXED
       </p>
-      <div className="border-[0.5px] border-[#151515]">
-        <div className="grid grid-cols-12 border-b border-[#151515] px-6 py-3 font-mono text-[9px] text-gray-800 tracking-widest uppercase">
+      <div className="border-[0.5px] border-[#222]">
+        <div className="grid grid-cols-12 border-b border-[#222] px-6 py-3 font-mono text-[9px] text-gray-600 tracking-widest uppercase">
           <span className="col-span-2">ID</span>
           <span className="col-span-5">Incident</span>
           <span className="col-span-3">Severity</span>
@@ -122,20 +122,20 @@ function LabsGrid({ onStartLab }) {
         {LABS.map((lab) => (
           <div
             key={lab.id}
-            className="grid grid-cols-12 border-b border-[#0d0d0d] px-6 py-5 font-mono cursor-pointer hover:bg-[#050505] transition-colors duration-200 group"
+            className="grid grid-cols-12 border-b border-[#111] px-6 py-5 font-mono cursor-pointer hover:bg-[#050505] transition-colors duration-200 group"
             onClick={onStartLab}
           >
-            <span className="col-span-2 text-[10px] text-gray-700 self-center">{lab.id}</span>
+            <span className="col-span-2 text-[10px] text-gray-600 self-center">{lab.id}</span>
             <div className="col-span-5 self-center">
-              <div className="text-sm text-gray-400 group-hover:text-white transition-colors duration-200 mb-1">
+              <div className="text-sm text-gray-300 group-hover:text-white transition-colors duration-200 mb-1">
                 {lab.title}
               </div>
-              <div className="text-[10px] text-gray-800 leading-relaxed truncate pr-4">{lab.log}</div>
+              <div className="text-[10px] text-gray-600 leading-relaxed truncate pr-4">{lab.log}</div>
             </div>
-            <span className={`col-span-3 text-[9px] tracking-widest uppercase self-center ${SEV[lab.severity] || "text-gray-700"}`}>
+            <span className={`col-span-3 text-[9px] tracking-widest uppercase self-center ${SEV[lab.severity] || "text-gray-500"}`}>
               {lab.severity}
             </span>
-            <span className="col-span-2 text-[10px] text-gray-800 group-hover:text-gray-500 tracking-widest uppercase text-right self-center transition-colors duration-200">
+            <span className="col-span-2 text-[10px] text-gray-600 group-hover:text-gray-300 tracking-widest uppercase text-right self-center transition-colors duration-200">
               Enter →
             </span>
           </div>
@@ -158,11 +158,11 @@ const SPECS = [
 function Pricing({ onCTA }) {
   return (
     <section className="px-8 md:px-16 py-24 max-w-5xl mx-auto">
-      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-700 uppercase mb-12">
+      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-500 uppercase mb-12">
         // PRICING — SPECIFICATION_SHEET
       </p>
-      <div className="border-[0.5px] border-[#151515] font-mono">
-        <div className="grid grid-cols-3 border-b border-[#151515] px-6 py-3 text-[9px] text-gray-800 tracking-widest uppercase">
+      <div className="border-[0.5px] border-[#222] font-mono">
+        <div className="grid grid-cols-3 border-b border-[#222] px-6 py-3 text-[9px] text-gray-600 tracking-widest uppercase">
           <span>Feature</span>
           <span>Individual</span>
           <span>Business</span>
@@ -170,9 +170,9 @@ function Pricing({ onCTA }) {
         {SPECS.map(([feat, ind, biz], i) => (
           <div
             key={i}
-            className={`grid grid-cols-3 px-6 py-4 text-xs border-b border-[#0a0a0a] ${feat === "Price" ? "text-white" : "text-gray-600"}`}
+            className={`grid grid-cols-3 px-6 py-4 text-xs border-b border-[#111] ${feat === "Price" ? "text-white" : "text-gray-400"}`}
           >
-            <span className="text-gray-800 uppercase tracking-wider text-[9px]">{feat}</span>
+            <span className="text-gray-600 uppercase tracking-wider text-[9px]">{feat}</span>
             <span>{ind}</span>
             <span>{biz}</span>
           </div>
@@ -186,7 +186,7 @@ function Pricing({ onCTA }) {
             [ ENTER THE LAB ]
           </div>
           <div
-            className="text-[10px] tracking-widest uppercase border border-[#222] text-gray-600 px-5 py-2 cursor-pointer hover:border-gray-500 hover:text-white transition-colors duration-200 w-fit"
+            className="text-[10px] tracking-widest uppercase border border-[#333] text-gray-400 px-5 py-2 cursor-pointer hover:border-gray-400 hover:text-white transition-colors duration-200 w-fit"
             onClick={onCTA}
           >
             [ PROVISION TEAM ]
@@ -201,7 +201,7 @@ function Pricing({ onCTA }) {
 function Rule({ text }) {
   return (
     <div className="px-8 md:px-16 max-w-5xl mx-auto">
-      <div className="border-t border-[#0f0f0f] pt-3 font-mono text-[9px] text-gray-900 tracking-[0.3em] uppercase">
+      <div className="border-t border-[#1a1a1a] pt-3 font-mono text-[9px] text-gray-600 tracking-[0.3em] uppercase">
         {text}
       </div>
     </div>
@@ -212,12 +212,12 @@ function Rule({ text }) {
 function Footer({ onNavigate }) {
   return (
     <footer className="px-8 md:px-16 py-16 max-w-5xl mx-auto">
-      <div className="border-t border-[#0f0f0f] pt-12 flex flex-col md:flex-row justify-between items-start gap-6 font-mono text-[9px] text-gray-800 tracking-[0.3em] uppercase">
+      <div className="border-t border-[#1a1a1a] pt-12 flex flex-col md:flex-row justify-between items-start gap-6 font-mono text-[9px] text-gray-600 tracking-[0.3em] uppercase">
         <span>WINLAB © 2026</span>
         <div className="flex gap-8">
-          <span className="cursor-pointer hover:text-gray-500 transition-colors" onClick={() => onNavigate?.("pricing")}>Pricing</span>
-          <span className="cursor-pointer hover:text-gray-500 transition-colors" onClick={() => onNavigate?.("about")}>About</span>
-          <span className="cursor-pointer hover:text-gray-500 transition-colors" onClick={() => onNavigate?.("legal")}>Legal</span>
+          <span className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => onNavigate?.("pricing")}>Pricing</span>
+          <span className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => onNavigate?.("about")}>About</span>
+          <span className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => onNavigate?.("legal")}>Legal</span>
         </div>
       </div>
     </footer>
