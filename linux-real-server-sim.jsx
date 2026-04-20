@@ -3,6 +3,8 @@ import { useLabTelemetry } from "./src/hooks/useLabTelemetry";
 import { getRealismWorker, destroyRealismWorker } from "./src/hooks/realism-worker";
 import { runBashLayer, promptDir, tabComplete, expandVars, VFS } from "./src/hooks/bashEngine";
 import TerminalEditor from "./src/components/TerminalEditor.jsx";
+import TerminalTop    from "./src/components/TerminalTop.jsx";
+import TerminalTail   from "./src/components/TerminalTail.jsx";
 
 // ─── Random instance ID per session ──────────────────────────────────────────
 function genInstanceId() {
@@ -856,6 +858,8 @@ export default function App({ scenario: scenarioProp } = {}) {
   const [idleDelay, setIdleDelay] = useState(false);
   const [cwd, setCwd] = useState('/root');
   const [editor, setEditor] = useState(null);
+  const [topModal, setTopModal] = useState(null);
+  const [tailModal, setTailModal] = useState(null);
   const [shellVars, setShellVars] = useState({});
   const lastActivityRef = useRef(Date.now());
   const bottomRef = useRef();
@@ -929,8 +933,15 @@ export default function App({ scenario: scenarioProp } = {}) {
       oomkiller:  "⚠  ALERT: OOM killer active. Java crashing every 5 minutes. Suspected heap leak.",
       infoblox:   "⚠  ALERT: 40 sites not resolving names. Infoblox DNS unreachable.",
     }[s.id] || "Shell ready.";
+    const now2 = new Date();
+    const lastLogin2 = new Date(now2 - 3600000 * (1 + Math.floor(Math.random()*12)));
+    const _days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const _months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const lastStr2 = `${_days[lastLogin2.getDay()]} ${_months[lastLogin2.getMonth()]} ${String(lastLogin2.getDate()).padStart(2)} ${lastLogin2.toTimeString().slice(0,8)} ${lastLogin2.getFullYear()}`;
     setHistory([
-      { text: `SSH session established → ${instanceId} (Oracle Linux 8.9)`, type: "dim" },
+      { text: `Last login: ${lastStr2} from 10.0.2.10`, type: "dim" },
+      { text: `Oracle Linux Server release 8.9`, type: "dim" },
+      { text: `Kernel 5.15.0-206.153.7.el8uek.x86_64 on an x86_64`, type: "dim" },
       { text: intro, type: "warn" },
       { text: "Type 'help' for available commands, 'hint' for a scenario hint.", type: "dim" },
     ]);
@@ -959,7 +970,14 @@ export default function App({ scenario: scenarioProp } = {}) {
       return;
     }
 
-    const cmd = expandVars(val, shellVars);
+    let cmd = expandVars(val, shellVars);
+
+    // Expand $(subcmd) subshell
+    cmd = cmd.replace(/\$\(([^)]+)\)/g, (_, inner) => {
+      const { out: subOut } = runBashLayer(inner.trim(), cwd, instanceId, (raw) => runCommand(raw, state, setState));
+      return subOut.map(o => o.text).join('\n').trim();
+    });
+
     lastActivityRef.current = Date.now();
     const startTime = Date.now();
     setCmdHist(h => [val, ...h].slice(0, 100));
@@ -987,7 +1005,7 @@ export default function App({ scenario: scenarioProp } = {}) {
     }
 
     // ── bash engine (cd, ls, pipes, &&, date, echo, pwd …) ─────────────────
-    const { out, newCwd, clear: doClear, editorOpen } = runBashLayer(cmd, cwd, instanceId, (raw) => {
+    const { out, newCwd, clear: doClear, editorOpen, topOpen, tailOpen } = runBashLayer(cmd, cwd, instanceId, (raw) => {
       if (raw === "dmesg" || raw.startsWith("dmesg ")) {
         return runCommand(raw, state, setState).map(o => ({
           ...o, text: o.text?.replace(/\bserver01\b/g, instanceId)
@@ -1003,6 +1021,16 @@ export default function App({ scenario: scenarioProp } = {}) {
     if (editorOpen) {
       setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }]);
       setEditor(editorOpen);
+      return;
+    }
+    if (topOpen) {
+      setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }]);
+      setTopModal({ scenario: scenario?.id });
+      return;
+    }
+    if (tailOpen) {
+      setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }]);
+      setTailModal(tailOpen);
       return;
     }
     if (doClear) { setHistory([]); return; }
@@ -1123,6 +1151,15 @@ export default function App({ scenario: scenarioProp } = {}) {
     setEditor(null);
     setTimeout(() => inputRef.current?.focus(), 50);
   }
+  function handleTopExit() {
+    setTopModal(null);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
+  function handleTailExit() {
+    setTailModal(null);
+    setHistory(h => [...h, { text: "^C", type: "warn" }]);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
 
   // ── TERMINAL ──────────────────────────────────────────────────────────────
   const catInfo = CAT[scenario.cat];
@@ -1133,6 +1170,20 @@ export default function App({ scenario: scenarioProp } = {}) {
           editor={editor}
           onSave={handleEditorSave}
           onDiscard={handleEditorDiscard}
+        />
+      )}
+      {topModal && (
+        <TerminalTop
+          scenario={topModal.scenario}
+          instanceId={instanceId}
+          onExit={handleTopExit}
+        />
+      )}
+      {tailModal && (
+        <TerminalTail
+          path={tailModal.path}
+          instanceId={instanceId}
+          onExit={handleTailExit}
         />
       )}
       {/* titlebar */}

@@ -390,6 +390,303 @@ function execSingle(raw, cwd, instanceId) {
     return { handled: false, out: [], newCwd: cwd };
   }
 
+  // ── Interactive / streaming commands — return signals ────────────────────
+  if (cmd === 'top' || cmd === 'htop') {
+    return { handled:true, out:[], newCwd:cwd, topOpen: true };
+  }
+  if (cmd === 'tail' && args.includes('-f')) {
+    const filePath = args.find(a => !a.startsWith('-'));
+    const path = filePath ? resolvePath(cwd, filePath.replace(/^~/, '/root')) : '/var/log/messages';
+    return { handled:true, out:[], newCwd:cwd, tailOpen: { path } };
+  }
+  if (cmd === 'watch') {
+    const watchCmd = args.join(' ');
+    return { handled:true, out:[], newCwd:cwd, watchOpen: { cmd: watchCmd } };
+  }
+
+  // ── Bare-metal hardware commands ──────────────────────────────────────────
+  if (cmd === 'lscpu') return { handled:true, newCwd:cwd, out: lines([
+    'Architecture:            x86_64',
+    'CPU op-mode(s):          32-bit, 64-bit',
+    'Address sizes:           46 bits physical, 48 bits virtual',
+    'Byte Order:              Little Endian',
+    'CPU(s):                  8',
+    'On-line CPU(s) list:     0-7',
+    'Vendor ID:               GenuineIntel',
+    'Model name:              Intel(R) Xeon(R) Gold 6148 CPU @ 2.40GHz',
+    'CPU family:              6',
+    'Model:                   85',
+    'Stepping:                4',
+    'CPU MHz:                 2399.926',
+    'CPU max MHz:             3700.0000',
+    'CPU min MHz:             1000.0000',
+    'BogoMIPS:                4799.85',
+    'Virtualization:          VT-x',
+    'L1d cache:               32K',
+    'L1i cache:               32K',
+    'L2 cache:                1024K',
+    'L3 cache:                28160K',
+    'NUMA node(s):            2',
+    'NUMA node0 CPU(s):       0-3',
+    'NUMA node1 CPU(s):       4-7',
+    'Flags:                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc',
+  ])};
+
+  if (cmd === 'lsblk') return { handled:true, newCwd:cwd, out: lines([
+    'NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT',
+    'sda           8:0    0   500G  0 disk',
+    '├─sda1        8:1    0   500M  0 part /boot',
+    '├─sda2        8:2    0     1G  0 part [SWAP]',
+    '└─sda3        8:3    0 498.5G  0 part',
+    '  ├─ol-root 253:0    0    50G  0 lvm  /',
+    '  ├─ol-home 253:1    0   100G  0 lvm  /home',
+    '  └─ol-data 253:2    0 348.5G  0 lvm  /data',
+    'sdb           8:16   0   500G  0 disk',
+    '└─sdb1        8:17   0   500G  0 part',
+    '  └─ol-data 253:2    0 348.5G  0 lvm  /data',
+  ])};
+
+  if (cmd === 'lspci') return { handled:true, newCwd:cwd, out: lines([
+    '00:00.0 Host bridge: Intel Corporation 440FX - 82441FX PMC [Natoma] (rev 02)',
+    '00:01.0 ISA bridge: Intel Corporation 82371SB PIIX3 ISA [Natoma/Triton II]',
+    '00:01.1 IDE interface: Intel Corporation 82371SB PIIX3 IDE [Natoma/Triton II]',
+    '00:02.0 VGA compatible controller: Cirrus Logic GD 5446',
+    '00:03.0 Ethernet controller: Intel Corporation 82574L Gigabit Network Connection',
+    '00:04.0 Ethernet controller: Intel Corporation 82574L Gigabit Network Connection',
+    '00:05.0 SCSI storage controller: LSI Logic / Symbios Logic MegaRAID SAS-3 3108 [Invader]',
+    '00:06.0 RAM memory: Red Hat, Inc. Virtio memory balloon',
+    '00:07.0 SCSI storage controller: LSI Logic / Symbios Logic SAS3008 PCI-Express Fusion-MPT SAS-3',
+  ])};
+
+  if (cmd === 'dmidecode') {
+    const sub = args.find((a,i) => args[i-1] === '-t' || args[i-1] === '--type');
+    if (sub === 'processor' || sub === '4') return { handled:true, newCwd:cwd, out: lines([
+      'Handle 0x0400, DMI type 4, 48 bytes',
+      'Processor Information',
+      '  Socket Designation: CPU0',
+      '  Type: Central Processor',
+      '  Family: Xeon',
+      '  Manufacturer: Intel(R) Corporation',
+      '  Version: Intel(R) Xeon(R) Gold 6148 CPU @ 2.40GHz',
+      '  Voltage: 1.6 V',
+      '  External Clock: 100 MHz',
+      '  Max Speed: 4000 MHz',
+      '  Current Speed: 2400 MHz',
+      '  Status: Populated, Enabled',
+      '  Core Count: 20',
+      '  Core Enabled: 20',
+      '  Thread Count: 40',
+    ])};
+    if (sub === 'memory' || sub === '17') return { handled:true, newCwd:cwd, out: lines([
+      'Handle 0x1100, DMI type 17, 84 bytes',
+      'Memory Device',
+      '  Array Handle: 0x1000',
+      '  Form Factor: DIMM',
+      '  Locator: DIMM_A1',
+      '  Bank Locator: NODE 0',
+      '  Type: DDR4',
+      '  Speed: 2933 MT/s',
+      '  Manufacturer: Samsung',
+      '  Part Number: M393A4K40CB2-CVF',
+      '  Size: 32 GB',
+      '  Data Width: 64 bits',
+      '  Configured Memory Speed: 2933 MT/s',
+    ])};
+    if (sub === 'bios' || sub === '0') return { handled:true, newCwd:cwd, out: lines([
+      'Handle 0x0000, DMI type 0, 26 bytes',
+      'BIOS Information',
+      '  Vendor: Dell Inc.',
+      '  Version: 2.18.1',
+      '  Release Date: 03/10/2024',
+      '  BIOS Revision: 2.18',
+      '  Firmware Revision: 0.16',
+      '  ROM Size: 64 MB',
+      '  Characteristics: PCI, PNP, ACPI, USB, UEFI',
+    ])};
+    return { handled:true, newCwd:cwd, out: lines([
+      '# dmidecode 3.3',
+      'Getting SMBIOS data from sysfs.',
+      'SMBIOS 3.1.1 present.',
+      '  Vendor: Dell Inc.',
+      '  Product: PowerEdge R740',
+      '  Serial Number: 8XYZQ23',
+      '  UUID: 4c4c4544-0048-5810-8059-b8c04f585a33',
+      '  Wake-up Type: Power Switch',
+      '  SKU Number: SKU=0A94;ModelName=PowerEdge R740',
+      'Run dmidecode -t <type> for details (0=bios, 4=cpu, 17=memory)',
+    ])};
+  }
+
+  if (cmd === 'ethtool') {
+    const iface = args[0] || 'eth0';
+    return { handled:true, newCwd:cwd, out: lines([
+      `Settings for ${iface}:`,
+      '  Supported ports: [ TP ]',
+      '  Supported link modes:   10baseT/Half 10baseT/Full',
+      '                          100baseT/Half 100baseT/Full',
+      '                          1000baseT/Full',
+      '                          10000baseT/Full',
+      '  Speed: 10000Mb/s',
+      '  Duplex: Full',
+      '  Auto-negotiation: on',
+      '  Port: Twisted Pair',
+      '  PHYAD: 0',
+      '  Transceiver: external',
+      '  MDI-X: on (auto)',
+      '  Link detected: yes',
+    ])};
+  }
+
+  if (cmd === 'hdparm') {
+    const dev = args[args.length-1] || '/dev/sda';
+    if (args.includes('-I')) return { handled:true, newCwd:cwd, out: lines([
+      `${dev}:`,
+      '',
+      'ATA device, with non-removable media',
+      '  Model Number:       SAMSUNG MZ7LH960HAJR-00005',
+      '  Serial Number:      S45PNA0M812345',
+      '  Firmware Revision:  HXT7904Q',
+      '  Transport:          Serial, ATA8-AST, SATA 1.0a, SATA II Extensions, SATA Rev 2.5, SATA Rev 2.6, SATA Rev 3.0',
+      'Standards:',
+      '  Likely used: 16',
+      'Configuration:',
+      '  Logical  max current',
+      '  cylinders  16383  16383',
+      '  heads   16  16',
+      '  sectors/track  63  63',
+      '  Nominal Media Rotation Rate: Solid State Device',
+      'Capabilities:',
+      '  LBA, IORDY (can be disabled)',
+      '  Queue depth: 32',
+      '  DMA: mdma0 mdma1 mdma2 udma0 udma1 udma2 udma3 udma4 udma5 *udma6',
+    ])};
+    return { handled:true, newCwd:cwd, out: lines([`${dev}:`, ' HDIO_GET_IDENTITY failed: Invalid argument'])};
+  }
+
+  if (cmd === 'smartctl') {
+    const dev = args[args.length-1] || '/dev/sda';
+    return { handled:true, newCwd:cwd, out: lines([
+      `smartctl 7.3 2022-02-28 r5338 [x86_64-linux-5.15.0-206] (local build)`,
+      'Copyright (C) 2002-22, Bruce Allen, Christian Franke, www.smartmontools.org',
+      '',
+      `=== START OF INFORMATION SECTION ===`,
+      'Device Model:     SAMSUNG MZ7LH960HAJR-00005',
+      'Serial Number:    S45PNA0M812345',
+      'Firmware Version: HXT7904Q',
+      'User Capacity:    960,197,124,096 bytes [960 GB]',
+      'Sector Size:      512 bytes logical/physical',
+      'Rotation Rate:    Solid State Device',
+      'Device is:        Not in smartctl database',
+      `SMART support is: Available - device has SMART capability.`,
+      `SMART support is: Enabled`,
+      '',
+      `=== START OF READ SMART DATA SECTION ===`,
+      'SMART overall-health self-assessment test result: PASSED',
+      '',
+      'SMART Attributes Data Structure revision number: 1',
+      'ID# ATTRIBUTE_NAME          FLAG  VALUE WORST THRESH TYPE      UPDATED  WHEN_FAILED RAW_VALUE',
+      '  5 Reallocated_Sector_Ct   0x0032   100   100   010 Old_age   Always       -       0',
+      '  9 Power_On_Hours          0x0032    98    98   000 Old_age   Always       -       14823',
+      '177 Wear_Leveling_Count     0x0013    98    98   000 Pre-fail  Always       -       55',
+      '179 Used_Rsvd_Blk_Cnt_Tot   0x0013   100   100   010 Pre-fail  Always       -       0',
+      '181 Program_Fail_Cnt_Total  0x0032   100   100   010 Old_age   Always       -       0',
+      '190 Airflow_Temperature_Cel 0x0032    73    57    000 Old_age   Always       -       27',
+    ])};
+  }
+
+  if (cmd === 'sensors') return { handled:true, newCwd:cwd, out: lines([
+    'coretemp-isa-0000',
+    'Adapter: ISA adapter',
+    'Package id 0:  +42.0°C  (high = +86.0°C, crit = +100.0°C)',
+    'Core 0:        +38.0°C  (high = +86.0°C, crit = +100.0°C)',
+    'Core 1:        +40.0°C  (high = +86.0°C, crit = +100.0°C)',
+    'Core 2:        +39.0°C  (high = +86.0°C, crit = +100.0°C)',
+    'Core 3:        +41.0°C  (high = +86.0°C, crit = +100.0°C)',
+    '',
+    'nct6779-isa-0290',
+    'Adapter: ISA adapter',
+    'fan1:        1008 RPM',
+    'fan2:         812 RPM',
+    'fan3:           0 RPM',
+    'SYSTIN:       +34.0°C',
+    'CPUTIN:       +42.0°C',
+    'in0:           0.83 V',
+    'in1:           1.84 V  (min =  +0.00 V, max =  +1.74 V)  ALARM',
+  ])};
+
+  if (cmd === 'ipmitool') {
+    if (args[0] === 'sdr') return { handled:true, newCwd:cwd, out: lines([
+      'Inlet Temp       | 22 degrees C      | ok',
+      'Exhaust Temp     | 38 degrees C      | ok',
+      'Temp             | 42 degrees C      | ok',
+      'CPU Usage        | 12 percent        | ok',
+      'IO Usage         | 3 percent         | ok',
+      'MEM Usage        | 61 percent        | ok',
+      'Fan1             | 3120 RPM          | ok',
+      'Fan2             | 2880 RPM          | ok',
+      'Fan3             | 3000 RPM          | ok',
+      'Voltage 1        | 1.82 Volts        | ok',
+      'Voltage 2        | 1.05 Volts        | ok',
+      'PS1 Status       | Presence Detected | ok',
+      'PS2 Status       | Presence Detected | ok',
+    ])};
+    if (args[0] === 'chassis' && args[1] === 'status') return { handled:true, newCwd:cwd, out: lines([
+      'System Power         : on',
+      'Power Overload       : false',
+      'Main Power Fault     : false',
+      'Power Control Fault  : false',
+      'Power Restore Policy : previous',
+      'Last Power Event     : command',
+      'Chassis Intrusion    : inactive',
+      'Front-Panel Lockout  : inactive',
+      'Drive Fault          : false',
+      'Cooling/Fan Fault    : false',
+    ])};
+    return { handled:true, newCwd:cwd, out: err('ipmitool: command not found or insufficient privileges') };
+  }
+
+  if (cmd === 'lshw') return { handled:true, newCwd:cwd, out: lines([
+    `${instanceId}`,
+    '    description: Server',
+    '    product: PowerEdge R740 (SKU=0A94)',
+    '    vendor: Dell Inc.',
+    '    serial: 8XYZQ23',
+    '    width: 64 bits',
+    '  *-core',
+    '     *-cpu:0',
+    '          product: Intel(R) Xeon(R) Gold 6148 CPU @ 2.40GHz',
+    '          vendor: Intel Corp.',
+    '          width: 64 bits',
+    '          capacity: 4GHz',
+    '     *-memory',
+    '          description: System Memory',
+    '          size: 128GiB',
+    '     *-network:0',
+    '          description: Ethernet interface',
+    '          product: 82574L Gigabit Network Connection',
+    '          logical name: eth0',
+    '          capacity: 10Gbit/s',
+    '          link: yes',
+  ])};
+
+  if (cmd === 'numactl' && args.includes('--hardware')) return { handled:true, newCwd:cwd, out: lines([
+    'available: 2 nodes (0-1)',
+    'node 0 cpus: 0 1 2 3',
+    'node 0 size: 64368 MB',
+    'node 0 free: 14821 MB',
+    'node 1 cpus: 4 5 6 7',
+    'node 1 size: 64432 MB',
+    'node 1 free: 15240 MB',
+    'node distances:',
+    'node   0   1',
+    '  0:  10  21',
+    '  1:  21  10',
+  ])};
+
+  if (cmd === 'tuned-adm') return { handled:true, newCwd:cwd, out: lines([
+    args[0] === 'active' ? 'Current active profile: throughput-performance' : 'Available profiles: throughput-performance latency-performance balanced'
+  ])};
+
   if (cmd === 'vim' || cmd === 'vi' || cmd === 'nano' || cmd === 'pico') {
     const filePath = args[0] ? resolvePath(cwd, args[0].replace(/^~/, '/root')) : null;
     if (!filePath) return { handled:true, out: err(`${cmd}: missing filename`), newCwd: cwd };

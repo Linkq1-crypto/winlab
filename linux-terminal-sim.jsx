@@ -3,6 +3,8 @@ import { useLabTelemetry } from "./src/hooks/useLabTelemetry.js";
 import { getRealismWorker, destroyRealismWorker } from "./src/hooks/realism-worker.js";
 import { runBashLayer, promptDir, tabComplete, expandVars, VFS } from "./src/hooks/bashEngine.js";
 import TerminalEditor from "./src/components/TerminalEditor.jsx";
+import TerminalTop    from "./src/components/TerminalTop.jsx";
+import TerminalTail   from "./src/components/TerminalTail.jsx";
 
 // ─── Random instance ID per session ──────────────────────────────────────────
 function genInstanceId() {
@@ -864,6 +866,8 @@ export default function App({ region = "US", labProgress = { completed: 0, total
   const [idleDelay, setIdleDelay] = useState(false);
   const [cwd, setCwd] = useState('/root');
   const [editor, setEditor] = useState(null);
+  const [topModal, setTopModal] = useState(null);
+  const [tailModal, setTailModal] = useState(null);
   const [shellVars, setShellVars] = useState({});
   const lastActivityRef = useRef(Date.now());
   const bottomRef = useRef();
@@ -994,10 +998,16 @@ export default function App({ region = "US", labProgress = { completed: 0, total
 
     // Simulated latency for realism
     setTimeout(() => {
+      const now = new Date();
+      const lastLogin = new Date(now - 3600000 * (2 + Math.floor(Math.random()*8)));
+      const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const lastStr = `${days[lastLogin.getDay()]} ${months[lastLogin.getMonth()]} ${String(lastLogin.getDate()).padStart(2)} ${lastLogin.toTimeString().slice(0,8)} ${lastLogin.getFullYear()}`;
       setHistory([
-        { text: `SSH session established → ${instanceId} (Oracle Linux 8.9)`, type: "ok" },
+        { text: `Last login: ${lastStr} from 10.0.2.10`, type: "dim" },
+        { text: `Oracle Linux Server release 8.9`, type: "dim" },
+        { text: `Kernel 5.15.0-206.153.7.el8uek.x86_64 on an x86_64`, type: "dim" },
         { text: intro, type: s.id === "free" ? "ok" : "warn" },
-        { text: "Type 'help' for commands, 'hint' for a nudge.", type: "info" },
       ]);
     }, 600 + Math.random() * 400);
 
@@ -1024,8 +1034,14 @@ export default function App({ region = "US", labProgress = { completed: 0, total
       return;
     }
 
-    // Expand $VAR — use latest shellVars via functional update pattern
-    const cmd = expandVars(val, shellVars);
+    // Expand $VAR
+    let cmd = expandVars(val, shellVars);
+
+    // Expand $(subcmd) subshell
+    cmd = cmd.replace(/\$\(([^)]+)\)/g, (_, inner) => {
+      const { out: subOut } = runBashLayer(inner.trim(), cwd, instanceId, (raw) => runCommand(raw, termState, setTermState));
+      return subOut.map(o => o.text).join('\n').trim();
+    });
 
     const startTime = Date.now();
     setCmdHist(h => [val, ...h].slice(0, 50));
@@ -1053,7 +1069,7 @@ export default function App({ region = "US", labProgress = { completed: 0, total
     }
 
     // ── bash engine (cd, ls, pipes, &&, date, echo, pwd …) ───────────────
-    const { out, newCwd, clear: doClear, exit: doExit, editorOpen } = runBashLayer(cmd, cwd, instanceId, (raw) => {
+    const { out, newCwd, clear: doClear, exit: doExit, editorOpen, topOpen, tailOpen } = runBashLayer(cmd, cwd, instanceId, (raw) => {
       if (raw === "dmesg" || raw.startsWith("dmesg ")) {
         const T = n => `[${n.toFixed(6).padStart(12)}]`;
         return [
@@ -1074,6 +1090,16 @@ export default function App({ region = "US", labProgress = { completed: 0, total
     if (editorOpen) {
       setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }]);
       setEditor(editorOpen);
+      return;
+    }
+    if (topOpen) {
+      setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }]);
+      setTopModal({ scenario: scenario?.id });
+      return;
+    }
+    if (tailOpen) {
+      setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }]);
+      setTailModal(tailOpen);
       return;
     }
     if (doClear) { setHistory([]); return; }
@@ -1302,6 +1328,15 @@ export default function App({ region = "US", labProgress = { completed: 0, total
     setEditor(null);
     setTimeout(() => inputRef.current?.focus(), 50);
   }
+  function handleTopExit() {
+    setTopModal(null);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
+  function handleTailExit() {
+    setTailModal(null);
+    setHistory(h => [...h, { text: "^C", type: "warn" }]);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
 
   return (
     <div style={{ height:"100vh", background:"#060a0f", display:"flex", flexDirection:"column", fontFamily:"'Fira Code','JetBrains Mono',monospace", position:"relative" }}>
@@ -1310,6 +1345,20 @@ export default function App({ region = "US", labProgress = { completed: 0, total
           editor={editor}
           onSave={handleEditorSave}
           onDiscard={handleEditorDiscard}
+        />
+      )}
+      {topModal && (
+        <TerminalTop
+          scenario={topModal.scenario}
+          instanceId={instanceId}
+          onExit={handleTopExit}
+        />
+      )}
+      {tailModal && (
+        <TerminalTail
+          path={tailModal.path}
+          instanceId={instanceId}
+          onExit={handleTailExit}
         />
       )}
       <div style={{ background:"#0a0f14", borderBottom:"1px solid #1a2530", padding:"8px 16px", display:"flex", alignItems:"center", gap:10 }}>
