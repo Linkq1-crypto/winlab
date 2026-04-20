@@ -1,7 +1,6 @@
 // realism/snapshots.ts — State snapshots and diff utilities
 
-import fs from "fs";
-import path from "path";
+// fs/path are Node-only — used only in test fixtures, not in browser bundle
 
 /**
  * Create a snapshot of the environment state.
@@ -59,29 +58,17 @@ export function diffSnapshots(before: string, after: string): Record<string, any
 }
 
 /**
- * Load a baseline output from fixtures.
+ * Load a baseline output from fixtures. (Node-only — use in tests via direct fs import)
  */
-export function loadBaseline(name: string): string {
-  const baselinePath = path.join(__dirname, "fixtures", "baselines", name);
-
-  try {
-    return fs.readFileSync(baselinePath, "utf-8");
-  } catch (e) {
-    throw new Error(`Baseline not found: ${baselinePath}`);
-  }
+export function loadBaseline(_name: string): string {
+  throw new Error("loadBaseline is only available in Node.js test environments");
 }
 
 /**
- * Save a baseline output to fixtures.
+ * Save a baseline output to fixtures. (Node-only — use in tests via direct fs import)
  */
-export function saveBaseline(name: string, content: string): void {
-  const baselineDir = path.join(__dirname, "fixtures", "baselines");
-
-  if (!fs.existsSync(baselineDir)) {
-    fs.mkdirSync(baselineDir, { recursive: true });
-  }
-
-  fs.writeFileSync(path.join(baselineDir, name), content, "utf-8");
+export function saveBaseline(_name: string, _content: string): void {
+  throw new Error("saveBaseline is only available in Node.js test environments");
 }
 
 /**
