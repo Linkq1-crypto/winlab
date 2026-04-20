@@ -788,12 +788,25 @@ export default function SaaSOrchestrator() {
     return <FirstMission />;
   }
 
-  // Launch landing page: /launch or /72h or ?launch=1
+  // Launch landing page: /launch or /72h or ?launch=1 — same as default home
   if (isLaunchLanding) {
-    return <LaunchLanding onCTA={() => {
-      // Start checkout
-      window.location.href = "/api/checkout";
-    }} />;
+    return (
+      <LaunchLanding
+        onCTA={() => token ? (openLab("linux-terminal") || navigate("lab")) : navigate("auth")}
+        onLogin={() => navigate("auth")}
+        onNavigate={(section) => {
+          if (section === "pricing")    navigate("pricing");
+          else if (section === "about") navigate("about");
+          else if (section === "india") navigate("india");
+          else if (section === "dashboard") navigate("dashboard");
+          else navigate("landing");
+        }}
+        onStartLab={(labId) => {
+          if (token) { openLab(labId || "linux-terminal"); navigate("lab"); }
+          else navigate("auth");
+        }}
+      />
+    );
   }
 
   // Honeypot: fake admin dashboard at /dash_board
