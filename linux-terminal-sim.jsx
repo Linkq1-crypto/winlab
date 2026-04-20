@@ -84,6 +84,11 @@ const SCENARIOS = [
   { id: "sshbrute",   label: "Brute force SSH",      desc: "Attack in progress — thousands of login attempts", icon: "⚔", cat: "exp"  },
   { id: "kernpanic",  label: "Kernel panic boot",    desc: "Server won't boot after an update",              icon: "💥",  cat: "exp"  },
   { id: "timedesync", label: "Clock desync",         desc: "Time is wrong — certs and logs broken",          icon: "🕐",  cat: "exp"  },
+  // CONTAINERS / CI-CD
+  { id: "docker",     label: "Docker daemon OOM",    desc: "dockerd killed — all containers orphaned",        icon: "🐳",  cat: "adv"  },
+  { id: "k8s",        label: "K8s CrashLoopBackOff", desc: "Pod keeps crashing — roll back the deployment",   icon: "☸",   cat: "adv"  },
+  { id: "redis",      label: "Redis OOM eviction",   desc: "Cache evicting keys aggressively — app slow",     icon: "🔴",  cat: "adv"  },
+  { id: "gitconflict",label: "Git merge conflict",   desc: "git pull failed — merge conflict blocks deploy",  icon: "⚡",  cat: "exp"  },
   // NIGHTMARE
   { id: "ssl",        label: "SSL cert expired",     desc: "HTTPS down — cert expired, urgent renewal",      icon: "🔐",  cat: "nm"   },
   { id: "inode",      label: "Inodes exhausted",     desc: "Disk shows free space but no file can be created", icon: "🔢", cat: "nm"   },
@@ -132,6 +137,15 @@ const makeState = (id) => ({
   fail2banOn:    false,
   sslRenewed:    false,
   sudoersFixed:  false,
+  // container / ci-cd
+  dockerDaemonDown: id === "docker",
+  dockerFixed:      false,
+  podCrashing:      id === "k8s",
+  k8sFixed:         false,
+  redisFull:        id === "redis",
+  redisFixed:       false,
+  conflictPresent:  id === "gitconflict",
+  gitFixed:         false,
   fixes: {},
   solved: false,
 });
@@ -644,6 +658,130 @@ function runCommand(input, state, setState) {
   if (cmd === "clear") return [{ text: "__CLEAR__", type: "clear" }];
   if (cmd === "") return [];
 
+  // ── DOCKER scenario ────────────────────────────────────────────────────────
+  if (cmd === "docker") {
+    const sub = args[0];
+    if (sub === "ps") {
+      if (state.dockerDaemonDown) return err("Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?");
+      if (state.dockerFixed) return lines(["CONTAINER ID   IMAGE          STATUS         NAMES","a1b2c3d4e5f6   myapp:latest   Up 2 minutes   myapp"]);
+      return lines(["CONTAINER ID   IMAGE          STATUS         NAMES","a1b2c3d4e5f6   myapp:latest   Up 2 minutes   myapp"]);
+    }
+    if (sub === "start") {
+      if (state.dockerDaemonDown && !state.fixes?.dockerrestart) return err("Cannot connect to the Docker daemon. Start dockerd first.");
+      setState(s => ({ ...s, dockerFixed: true, fixes: { ...s.fixes, dockerstart: true } }));
+      return ok("myapp — started");
+    }
+    if (sub === "stop") return ok("myapp — stopped");
+    if (sub === "rm") return ok(args[1] || "myapp");
+    if (sub === "run") { setState(s => ({ ...s, dockerFixed: true })); return ok("Container started"); }
+    if (sub === "logs") return state.dockerDaemonDown && !state.fixes?.dockerrestart
+      ? err("Cannot connect to the Docker daemon.")
+      : lines(["[2026-04-20 11:03:14] App started on port 3001","[2026-04-20 11:03:14] DB connected"]);
+    if (sub === "system" && args[1] === "prune") return lines(["Deleted Containers: 3","Total reclaimed space: 2.1GB"]);
+    if (sub === "images") return lines(["myapp:latest   2 days ago   482MB","node:20-alpine   1 week ago   192MB"]);
+    return err(`docker: '${sub}' is not a docker command`);
+  }
+  if (sub => raw.includes("systemctl") && raw.includes("docker")) {
+    if (state.dockerDaemonDown) {
+      if (raw.includes("restart") || raw.includes("start")) {
+        setState(s => ({ ...s, dockerDaemonDown: false, fixes: { ...s.fixes, dockerrestart: true } }));
+        return ok("Started docker.service");
+      }
+      return lines(["● docker.service — Docker Application Container Engine","   Active: failed (Result: oom-kill)","   Process exited with status 137 (OOM killed by kernel)"]);
+    }
+    return lines(["● docker.service   Active: active (running)"]);
+  }
+
+  // ── K8S scenario ────────────────────────────────────────────────────────────
+  if (cmd === "kubectl") {
+    const sub = args[0];
+    if (sub === "get" && args[1] === "pods") return state.podCrashing && !state.k8sFixed
+      ? lines(["NAME                   READY  STATUS             RESTARTS  AGE","myapp-6d4f9b-xk2p9     0/1    CrashLoopBackOff   8         14m","redis-7c9f8b-m3kj2     1/1    Running            0         2d"])
+      : lines(["NAME                   READY  STATUS    RESTARTS  AGE","myapp-7e5a8c-p1qr3     1/1    Running   0         2m","redis-7c9f8b-m3kj2     1/1    Running   0         2d"]);
+    if (sub === "describe") return state.podCrashing && !state.k8sFixed ? lines([
+      "Events:",
+      "  Warning  BackOff    2m   kubelet  Back-off restarting failed container",
+      "  Warning  Failed     14m  kubelet  Error: failed to start container",
+      "  OCI runtime create failed: container_linux.go:380: .env mount not found",
+    ]) : lines(["No events."]);
+    if (sub === "logs" && raw.includes("--previous")) return state.podCrashing && !state.k8sFixed
+      ? lines(["Error: ENOENT: no such file or directory, open '/app/.env'","# ConfigMap not mounted — volumeMount subPath misconfigured"])
+      : lines(["App started OK"]);
+    if (sub === "rollout") {
+      if (args[1] === "undo") {
+        setState(s => ({ ...s, k8sFixed: true, podCrashing: false, fixes: { ...s.fixes, k8s: true } }));
+        return ok("deployment.apps/myapp rolled back");
+      }
+      if (args[1] === "status") return state.k8sFixed
+        ? lines(["deployment 'myapp' successfully rolled out"])
+        : lines(["Waiting for deployment 'myapp' rollout to finish: 0 of 2 replicas available..."]);
+    }
+    if (sub === "get" && args[1] === "nodes") return lines(["NAME         STATUS   ROLES    AGE","k8s-node-01  Ready    worker   42d"]);
+    return lines([`# kubectl ${args.join(" ")}: OK`]);
+  }
+
+  // ── REDIS scenario ──────────────────────────────────────────────────────────
+  if (cmd === "redis-cli") {
+    if (raw === "redis-cli ping") return lines(["PONG"]);
+    if (raw.includes("info memory")) return state.redisFull && !state.redisFixed ? lines([
+      "used_memory_human:1.98G",
+      "maxmemory_human:0B          ← no limit set",
+      "evicted_keys:284710         ← 284k keys evicted in last hour",
+    ]) : lines(["used_memory_human:487M","maxmemory_human:512.00M","# maxmemory_policy: allkeys-lru"]);
+    if (raw.includes("config get maxmemory-policy")) return state.redisFixed
+      ? lines(["1) \"maxmemory-policy\"","2) \"allkeys-lru\""])
+      : lines(["1) \"maxmemory-policy\"","2) \"noeviction\"    ← no eviction with no maxmemory = OOM risk"]);
+    if (raw.includes("config set maxmemory")) return lines(["OK"]);
+    if (raw.includes("config set maxmemory-policy allkeys-lru")) {
+      setState(s => ({ ...s, redisFixed: true, redisFull: false, fixes: { ...s.fixes, redis: true } }));
+      return ok("OK — allkeys-lru active");
+    }
+    if (raw.includes("info stats")) return lines(["keyspace_hits:18234","keyspace_misses:4821","evicted_keys:"+(state.redisFixed?"0":"284710")]);
+    return lines(["OK"]);
+  }
+
+  // ── GIT CONFLICT scenario ───────────────────────────────────────────────────
+  if (cmd === "git") {
+    const sub = args[0];
+    if (sub === "pull" && state.conflictPresent && !state.fixes?.gitpulled) {
+      return lines([
+        "From github.com:org/myapp",
+        " * branch main → FETCH_HEAD",
+        "Auto-merging src/app.js",
+        "CONFLICT (content): Merge conflict in src/app.js",
+        "Automatic merge failed; fix conflicts and then commit the result.",
+      ]);
+    }
+    if (sub === "status" && state.conflictPresent && !state.fixes?.gitresolved) return lines([
+      "On branch main",
+      "You have unmerged paths.",
+      "  (fix conflicts and run 'git commit')",
+      "",
+      "Unmerged paths:",
+      "  both modified:   src/app.js",
+    ]);
+    if (sub === "diff" && raw.includes("HEAD")) return state.conflictPresent && !state.fixes?.gitresolved ? lines([
+      "<<<<<<< HEAD",
+      "-  const PORT = 3001;",
+      "=======",
+      "+  const PORT = process.env.PORT || 3001;",
+      ">>>>>>> origin/main",
+    ]) : lines(["No diff."]);
+    if (sub === "checkout" && raw.includes("--theirs")) {
+      setState(s => ({ ...s, fixes: { ...s.fixes, gitresolved: true } }));
+      return ok("Updated src/app.js");
+    }
+    if (sub === "add") return ok("");
+    if (sub === "commit") {
+      if (!state.fixes?.gitresolved) return err("error: Committing is not possible because you have unmerged files.");
+      setState(s => ({ ...s, conflictPresent: false, gitFixed: true, fixes: { ...s.fixes, gitcommit: true } }));
+      return ok("[main 4a5b6c7] fix: resolve merge conflict in src/app.js");
+    }
+    if (sub === "log") return lines(["4a5b6c7 fix: resolve merge conflict","1a2b3c4 feat: add rate limiting"]);
+    if (sub === "stash") return ok("Saved working directory");
+    return lines([`# git ${args.join(" ")}`]);
+  }
+
   if (cmd === "hint") {
     const H = {
       webdown:    "journalctl -u httpd → OOM → restart httpd.",
@@ -669,6 +807,10 @@ function runCommand(input, state, setState) {
       sudoers:    "cat /etc/sudoers → ls -la /etc/sudoers → visudo to fix syntax.",
       raid:       "cat /proc/mdstat → smartctl -a /dev/sdb → replace disk → mdadm --add.",
       logrotate:  "logrotate -d /etc/logrotate.conf → 'dailys' typo → fix to 'daily' → logrotate -f.",
+      docker:     "systemctl status docker → failed (OOM) → systemctl restart docker → docker start myapp.",
+      k8s:        "kubectl get pods → CrashLoopBackOff → kubectl logs --previous → kubectl rollout undo.",
+      redis:      "redis-cli info memory → no maxmemory set → config set maxmemory 512mb → config set maxmemory-policy allkeys-lru.",
+      gitconflict:"git pull → CONFLICT → git diff HEAD → git checkout --theirs src/app.js → git add → git commit.",
       free:       "Explore: systemctl list-units, df -h, ps aux, free -h.",
     };
     return warn("💡 " + (H[state.scenario]||H.free));
@@ -982,7 +1124,11 @@ export default function App({ region = "US", labProgress = { completed: 0, total
           (st.scenario==="port"       && !st.portConflict && st.services.httpd==="active") ||
           (st.scenario==="sudoers"    && st.sudoersFixed) ||
           (st.scenario==="raid"       && !st.raidDegraded) ||
-          (st.scenario==="logrotate"  && !st.logrotBroken);
+          (st.scenario==="logrotate"  && !st.logrotBroken) ||
+          (st.scenario==="docker"     && st.dockerFixed) ||
+          (st.scenario==="k8s"        && st.k8sFixed) ||
+          (st.scenario==="redis"      && st.redisFixed) ||
+          (st.scenario==="gitconflict"&& st.gitFixed);
         if (solved) {
           setHistory(h => [...h, { text: "✅  SCENARIO SOLVED! System restored successfully.", type: "ok" }]);
           setSolvedAt(Date.now());

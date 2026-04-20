@@ -56,6 +56,8 @@ const SCENARIOS = [
   { id: "fsck",      label: "Corrupted filesystem",    desc: "EXT4 errors — filesystem needs repair with fsck",   icon: "🔧", cat: "storage" },
   { id: "oomkiller", label: "Selective OOM killer",    desc: "Java heap leak — OOM killing the wrong process",    icon: "🩸", cat: "memory"  },
   { id: "infoblox",  label: "Infoblox DNS timeout",    desc: "Sites not resolving — Infoblox DHCP/DNS down",      icon: "🏛", cat: "net"     },
+  { id: "dockerdaemon", label: "Docker daemon OOM",   desc: "dockerd killed by OOM — all containers orphaned",   icon: "🐳", cat: "debug"   },
+  { id: "elasticsearch", label: "Elasticsearch OOM",  desc: "ES heap exhausted — GC overhead, no indexing",      icon: "🔍", cat: "memory"  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -74,8 +76,12 @@ const makeState = (id) => ({
   syslogFixed:     false,
   fsckDone:        false,
   oomFixed:        false,
-  infobloxFixed:   false,
-  solved:          false,
+  infobloxFixed:    false,
+  dockerDaemonDown: id === "dockerdaemon",
+  dockerFixed:      false,
+  esHeapOOM:        id === "elasticsearch",
+  esFixed:          false,
+  solved:           false,
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -643,6 +649,71 @@ function runCommand(raw, state, setState) {
     }
   }
 
+  // ── DOCKER DAEMON scenario ─────────────────────────────────────────────────
+  if (cmd === "docker") {
+    const sub = args[0];
+    if (state.dockerDaemonDown && !state.dockerFixed && sub !== "help") {
+      if (sub === "ps" || sub === "logs" || sub === "inspect")
+        return err("Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?");
+    }
+    if (sub === "ps") return lines(["CONTAINER ID   IMAGE          STATUS         NAMES","a1b2c3d4   myapp:latest   Up 3 minutes   myapp"]);
+    if (sub === "start") { setState(st => ({ ...st, dockerFixed: true })); return ok("myapp — started"); }
+    if (sub === "system" && args[1] === "prune") return lines(["Deleted Containers: 47","Total reclaimed space: 18.4GB"]);
+    return lines([`# docker ${args.join(" ")}`]);
+  }
+  if (cmd === "systemctl" && (raw.includes("docker"))) {
+    if (raw.includes("status")) {
+      if (state.dockerDaemonDown && !state.dockerFixed)
+        return lines(["● docker.service — Docker Engine","   Active: failed (Result: oom-kill)","   Main process exited, code=killed, status=9/KILL","   Hint: OOM killer terminated dockerd — containers are orphaned"]);
+      return lines(["● docker.service   Active: active (running)   Main PID: 1234 (dockerd)"]);
+    }
+    if (raw.includes("restart") || raw.includes("start")) {
+      setState(st => ({ ...st, dockerDaemonDown: false, dockerFixed: true }));
+      return ok("Started docker.service");
+    }
+  }
+  if (cmd === "dmesg" && s === "dockerdaemon") return lines([
+    "[142314.221498] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0",
+    "[142314.221502] Out of memory: Killed process 2891 (dockerd) total-vm:4823948kB, anon-rss:3981200kB",
+    "[142314.221503] oom_reaper: reaped process 2891 (dockerd), now anon-rss:0kB, file-rss:0kB",
+    "# dockerd killed by OOM — cgroup memory limit was not set for the daemon",
+  ]);
+
+  // ── ELASTICSEARCH OOM scenario ─────────────────────────────────────────────
+  if (cmd === "curl" && raw.includes("9200") && raw.includes("_cluster")) {
+    if (state.esHeapOOM && !state.esFixed) return lines([
+      '{"cluster_name":"production","status":"red",',
+      ' "active_shards":142,"relocating_shards":0,"initializing_shards":0,',
+      ' "unassigned_shards":38,',
+      ' "timed_out":false}',
+      "# status RED — 38 unassigned shards, likely due to OOM on data node",
+    ]);
+    return lines(['{"status":"green","active_shards":180}']);
+  }
+  if (cmd === "curl" && raw.includes("9200") && raw.includes("_nodes")) {
+    if (state.esHeapOOM && !state.esFixed) return lines([
+      '"heap_used_percent":98,',
+      '"heap_used_in_bytes":15032385536,',
+      '"heap_max_in_bytes":15268888576,',
+      '"gc.old.collection_count":2847  ← runaway GC, 98% heap used',
+    ]);
+  }
+  if ((cmd === "nano" || cmd === "vi") && raw.includes("jvm.options")) {
+    if (s === "elasticsearch") {
+      setState(st => ({ ...st, esFixed: true }));
+      return ok("jvm.options updated: -Xms8g -Xmx8g (was -Xms15g -Xmx15g)\nReduce heap to ≤50% of RAM — leave space for filesystem cache.\nNow: systemctl restart elasticsearch");
+    }
+  }
+  if (cmd === "systemctl" && raw.includes("elasticsearch")) {
+    if (raw.includes("restart") || raw.includes("start")) {
+      setState(st => ({ ...st, esFixed: true }));
+      return ok("Started elasticsearch.service — heap at 8G, GC overhead eliminated");
+    }
+    if (raw.includes("status")) return state.esHeapOOM && !state.esFixed
+      ? lines(["● elasticsearch.service   Active: active (running)","   Warning: JVM heap at 98%, GC pauses > 10s, indexing stalled"])
+      : lines(["● elasticsearch.service   Active: active (running)","   Heap: 52% (4.2G/8G) — healthy"]);
+  }
+
   // ── generici ─────────────────────────────────────────────────────────────
   if (cmd === "ps" || cmd === "top") {
     if (s === "iowait")   return lines(["USER    PID %CPU %MEM COMMAND","mysql  4821  8.2  4.1 mysqld","# I/O bound — use iostat/iotop"]);
@@ -743,8 +814,10 @@ function checkSolved(st) {
     case "syslogflood":return st.syslogFixed;
     case "fsck":       return st.fsckDone;
     case "oomkiller":  return st.oomFixed;
-    case "infoblox":   return st.infobloxFixed;
-    default:           return false;
+    case "infoblox":      return st.infobloxFixed;
+    case "dockerdaemon":  return st.dockerFixed;
+    case "elasticsearch": return st.esFixed;
+    default:              return false;
   }
 }
 
