@@ -120,8 +120,14 @@ function applyPipeFilter(seg, inputLines) {
       return iv ? !m : m;
     });
   }
-  if (c === 'wc' && parts.includes('-l')) {
-    return [{ text: String(inputLines.length), type: 'out' }];
+  if (c === 'wc') {
+    if (parts.includes('-l')) return [{ text: String(inputLines.length), type: 'out' }];
+    if (parts.includes('-w')) return [{ text: String(inputLines.reduce((n,l)=>n+(l.text||'').trim().split(/\s+/).filter(Boolean).length,0)), type: 'out' }];
+    if (parts.includes('-c')) return [{ text: String(inputLines.reduce((n,l)=>n+(l.text||'').length+1,0)), type: 'out' }];
+    const l = inputLines.length;
+    const w = inputLines.reduce((n,ln)=>n+(ln.text||'').trim().split(/\s+/).filter(Boolean).length,0);
+    const c2 = inputLines.reduce((n,ln)=>n+(ln.text||'').length+1,0);
+    return [{ text: `${String(l).padStart(7)} ${String(w).padStart(7)} ${String(c2).padStart(7)}`, type: 'out' }];
   }
   if (c === 'head') {
     const n = parseInt(parts.find((p,i) => parts[i-1]==='-n') || parts.find(p=>/^\d+$/.test(p)) || '10');
@@ -154,7 +160,37 @@ function applyPipeFilter(seg, inputLines) {
     }
     return inputLines;
   }
-  if (c === 'xargs') return inputLines; // passthrough
+  if (c === 'xargs') return inputLines;
+
+  if (c === 'tee') return inputLines; // passthrough — redirect handled elsewhere
+
+  if (c === 'sed') {
+    const expr = parts.slice(1).join(' ').replace(/^['"]|['"]$/g, '');
+    const m = expr.match(/^s([/|,])(.+?)\1(.*?)\1([gi]*)$/);
+    if (m) {
+      const flags = m[4].includes('i') ? 'gi' : m[4].includes('g') ? 'g' : '';
+      try {
+        const re = new RegExp(m[2], flags || undefined);
+        return inputLines.map(l => ({ ...l, text: (l.text||'').replace(re, m[3]) }));
+      } catch { return inputLines; }
+    }
+    return inputLines;
+  }
+
+  if (c === 'tr') {
+    const from = (parts[1]||'').replace(/^['"]|['"]$/g,'');
+    const to   = (parts[2]||'').replace(/^['"]|['"]$/g,'');
+    if (parts.includes('-d')) {
+      const del = from;
+      return inputLines.map(l => ({ ...l, text: (l.text||'').split('').filter(ch=>!del.includes(ch)).join('') }));
+    }
+    return inputLines.map(l => ({
+      ...l, text: (l.text||'').split('').map(ch => { const i=from.indexOf(ch); return i>=0&&to[i]?to[i]:ch; }).join(''),
+    }));
+  }
+
+  if (c === 'column') return inputLines;
+
   return inputLines;
 }
 
@@ -354,6 +390,24 @@ function execSingle(raw, cwd, instanceId) {
     return { handled: false, out: [], newCwd: cwd };
   }
 
+  if (cmd === 'vim' || cmd === 'vi' || cmd === 'nano' || cmd === 'pico') {
+    const filePath = args[0] ? resolvePath(cwd, args[0].replace(/^~/, '/root')) : null;
+    if (!filePath) return { handled:true, out: err(`${cmd}: missing filename`), newCwd: cwd };
+    const node    = VFS[filePath];
+    if (node?.type === 'd') return { handled:true, out: err(`${cmd}: ${args[0]}: is a directory`), newCwd: cwd };
+    const content = node?.type === 'f' ? node.content : '';
+    const mode    = (cmd === 'nano' || cmd === 'pico') ? 'nano' : 'vim';
+    return { handled:true, out: [], newCwd: cwd, editorOpen: { path: filePath, content, mode } };
+  }
+
+  if (cmd === 'less' || cmd === 'more' || cmd === 'view') {
+    const filePath = args[0] ? resolvePath(cwd, args[0].replace(/^~/, '/root')) : null;
+    if (!filePath) return { handled:true, out: err(`${cmd}: missing filename`), newCwd: cwd };
+    const node = VFS[filePath];
+    if (!node || node.type === 'd') return { handled:true, out: err(`${cmd}: ${args[0]}: No such file or directory`), newCwd: cwd };
+    return { handled:true, out: node.content.split('\n').map(t=>({text:t,type:'out'})), newCwd: cwd };
+  }
+
   if (cmd === 'uname') {
     if (args.includes('-r')) return { handled:true, out: lines(['5.15.0-206.153.7.el8uek.x86_64']), newCwd: cwd };
     if (args.includes('-m')) return { handled:true, out: lines(['x86_64']), newCwd: cwd };
@@ -419,6 +473,15 @@ function execSingle(raw, cwd, instanceId) {
   return { handled: false, out: [], newCwd: cwd };
 }
 
+// ── Shell variable expansion ──────────────────────────────────────────────────
+export function expandVars(cmd, vars = {}) {
+  // $VAR and ${VAR} expansion
+  return cmd
+    .replace(/\$\{([A-Z_][A-Z_0-9]*)\}/gi, (_, n) => vars[n] ?? '')
+    .replace(/\$([A-Z_][A-Z_0-9]*)/gi,     (_, n) => vars[n] ?? '')
+    .replace(/\$\?/g, '0');
+}
+
 // ── Output redirect parser (>, >>) ───────────────────────────────────────────
 // Returns { cmd: string without redirect, file: string|null, append: bool }
 function parseRedirect(raw) {
@@ -436,6 +499,7 @@ export function runBashLayer(raw, cwd, instanceId, runScenarioCmd) {
   let lastOk     = true;
   let doClear    = false;
   let doExit     = false;
+  let editorOpen = null;
 
   for (let ci = 0; ci < cmds.length; ci++) {
     const op = ops[ci - 1];
@@ -457,18 +521,22 @@ export function runBashLayer(raw, cwd, instanceId, runScenarioCmd) {
     if (first.handled) {
       linesBuf   = first.out;
       currentCwd = first.newCwd;
-      if (first.clear) doClear = true;
-      if (first.exit)  doExit  = true;
+      if (first.clear)      doClear    = true;
+      if (first.exit)       doExit     = true;
+      if (first.editorOpen) editorOpen = first.editorOpen;
     } else {
       linesBuf = runScenarioCmd(segments[0], currentCwd);
     }
+
+    // If editor should open, stop chain processing
+    if (editorOpen) break;
 
     // Remaining pipe segments (filters)
     for (let pi = 1; pi < segments.length; pi++) {
       linesBuf = applyPipeFilter(segments[pi], linesBuf);
     }
 
-    // Redirect: suppress output, show a silent write confirmation
+    // Redirect: suppress output (silent write)
     if (redirFile) {
       linesBuf = [];
     }
@@ -477,7 +545,7 @@ export function runBashLayer(raw, cwd, instanceId, runScenarioCmd) {
     allOut = [...allOut, ...linesBuf];
   }
 
-  return { out: allOut, newCwd: currentCwd, clear: doClear, exit: doExit };
+  return { out: allOut, newCwd: currentCwd, clear: doClear, exit: doExit, editorOpen };
 }
 
 // ── Tab completion ────────────────────────────────────────────────────────────

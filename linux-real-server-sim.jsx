@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useLabTelemetry } from "./src/hooks/useLabTelemetry";
 import { getRealismWorker, destroyRealismWorker } from "./src/hooks/realism-worker";
-import { runBashLayer, promptDir, tabComplete } from "./src/hooks/bashEngine";
+import { runBashLayer, promptDir, tabComplete, expandVars, VFS } from "./src/hooks/bashEngine";
+import TerminalEditor from "./src/components/TerminalEditor.jsx";
 
 // ─── Random instance ID per session ──────────────────────────────────────────
 function genInstanceId() {
@@ -781,6 +782,8 @@ export default function App({ scenario: scenarioProp } = {}) {
   const [instanceId] = useState(genInstanceId);
   const [idleDelay, setIdleDelay] = useState(false);
   const [cwd, setCwd] = useState('/root');
+  const [editor, setEditor] = useState(null);
+  const [shellVars, setShellVars] = useState({});
   const lastActivityRef = useRef(Date.now());
   const bottomRef = useRef();
   const inputRef  = useRef();
@@ -868,10 +871,25 @@ export default function App({ scenario: scenarioProp } = {}) {
     setInput("");
   }
 
-  function submit_val(cmd) {
+  function submit_val(rawVal) {
+    // !! expansion
+    let val = rawVal;
+    if (val === "!!" || val === "!-1") { val = cmdHist[0] || ""; if (!val) return; }
+
+    // Shell variable assignment: FOO=bar
+    const assignMatch = val.match(/^([A-Za-z_][A-Za-z_0-9]*)=(.*)$/);
+    if (assignMatch && !val.includes(" ")) {
+      const k = assignMatch[1], v = assignMatch[2].replace(/^['"]|['"]$/g, "");
+      setShellVars(sv => ({ ...sv, [k]: v }));
+      setCmdHist(h => [val, ...h].slice(0, 100));
+      setHistory(h => [...h, { text: `[root@${instanceId} ${promptDir(cwd)}]# ${val}`, type: "prompt" }]);
+      return;
+    }
+
+    const cmd = expandVars(val, shellVars);
     lastActivityRef.current = Date.now();
     const startTime = Date.now();
-    setCmdHist(h => [cmd, ...h].slice(0, 100));
+    setCmdHist(h => [val, ...h].slice(0, 100));
     setHistIdx(-1);
 
     const prompt = `[root@${instanceId} ${promptDir(cwd)}]#`;
@@ -896,8 +914,7 @@ export default function App({ scenario: scenarioProp } = {}) {
     }
 
     // ── bash engine (cd, ls, pipes, &&, date, echo, pwd …) ─────────────────
-    const { out, newCwd, clear: doClear } = runBashLayer(cmd, cwd, instanceId, (raw) => {
-      // dmesg: patch hostname before returning
+    const { out, newCwd, clear: doClear, editorOpen } = runBashLayer(cmd, cwd, instanceId, (raw) => {
       if (raw === "dmesg" || raw.startsWith("dmesg ")) {
         return runCommand(raw, state, setState).map(o => ({
           ...o, text: o.text?.replace(/\bserver01\b/g, instanceId)
@@ -909,6 +926,12 @@ export default function App({ scenario: scenarioProp } = {}) {
     if (newCwd !== cwd) setCwd(newCwd);
 
     const durationMs = Date.now() - startTime;
+
+    if (editorOpen) {
+      setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }]);
+      setEditor(editorOpen);
+      return;
+    }
     if (doClear) { setHistory([]); return; }
     setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }, ...out]);
 
@@ -942,6 +965,18 @@ export default function App({ scenario: scenarioProp } = {}) {
       setHistory(h => [...h, { text: `[root@${instanceId} ${promptDir(cwd)}]# ${input}^C`, type: "prompt" }]);
       setInput(""); return;
     }
+    if (e.ctrlKey && e.key === "z") {
+      e.preventDefault();
+      if (input.trim()) {
+        setHistory(h => [...h,
+          { text: `[root@${instanceId} ${promptDir(cwd)}]# ${input}`, type: "prompt" },
+          { text: `^Z\n[1]+  Stopped                 ${input.trim()}`, type: "warn" },
+        ]);
+        setInput("");
+      }
+      return;
+    }
+    if (e.ctrlKey && e.key === "l") { e.preventDefault(); setHistory([]); return; }
     if (e.key === "Enter") {
       if (!input.trim()) return;
       if (idleDelay) {
@@ -1005,10 +1040,28 @@ export default function App({ scenario: scenarioProp } = {}) {
     );
   }
 
+  function handleEditorSave(content, path) {
+    VFS[path] = { type: 'f', content };
+    setHistory(h => [...h, { text: `"${path}" written, ${content.split('\n').length}L`, type: "ok" }]);
+    setEditor(null);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
+  function handleEditorDiscard() {
+    setEditor(null);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
+
   // ── TERMINAL ──────────────────────────────────────────────────────────────
   const catInfo = CAT[scenario.cat];
   return (
-    <div style={{ height:"100vh", background:"#060809", display:"flex", flexDirection:"column", fontFamily:"'JetBrains Mono','Fira Code',monospace" }}>
+    <div style={{ height:"100vh", background:"#060809", display:"flex", flexDirection:"column", fontFamily:"'JetBrains Mono','Fira Code',monospace", position:"relative" }}>
+      {editor && (
+        <TerminalEditor
+          editor={editor}
+          onSave={handleEditorSave}
+          onDiscard={handleEditorDiscard}
+        />
+      )}
       {/* titlebar */}
       <div style={{ background:"#0d1117", borderBottom:"1px solid #1c2030", padding:"7px 14px", display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
         <div style={{ display:"flex", gap:5 }}>

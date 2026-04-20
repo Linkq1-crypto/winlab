@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useLabTelemetry } from "./src/hooks/useLabTelemetry.js";
 import { getRealismWorker, destroyRealismWorker } from "./src/hooks/realism-worker.js";
-import { runBashLayer, promptDir, tabComplete } from "./src/hooks/bashEngine.js";
+import { runBashLayer, promptDir, tabComplete, expandVars, VFS } from "./src/hooks/bashEngine.js";
+import TerminalEditor from "./src/components/TerminalEditor.jsx";
 
 // ─── Random instance ID per session ──────────────────────────────────────────
 function genInstanceId() {
@@ -720,6 +721,8 @@ export default function App({ region = "US", labProgress = { completed: 0, total
   const [instanceId] = useState(genInstanceId);
   const [idleDelay, setIdleDelay] = useState(false);
   const [cwd, setCwd] = useState('/root');
+  const [editor, setEditor] = useState(null);
+  const [shellVars, setShellVars] = useState({});
   const lastActivityRef = useRef(Date.now());
   const bottomRef = useRef();
   const inputRef  = useRef();
@@ -861,10 +864,29 @@ export default function App({ region = "US", labProgress = { completed: 0, total
   }
 
   function submit() { if (input.trim()) { submit_val(input.trim()); setInput(""); } }
-  function submit_val(val) {
-    const cmd = val;
+  function submit_val(rawVal) {
+    // !! expansion
+    let val = rawVal;
+    if (val === "!!" || val === "!-1") {
+      val = cmdHist[0] || "";
+      if (!val) return;
+    }
+
+    // Shell variable assignment: FOO=bar (no spaces around =)
+    const assignMatch = val.match(/^([A-Za-z_][A-Za-z_0-9]*)=(.*)$/);
+    if (assignMatch && !val.includes(" ")) {
+      const k = assignMatch[1], v = assignMatch[2].replace(/^['"]|['"]$/g, "");
+      setShellVars(sv => ({ ...sv, [k]: v }));
+      setCmdHist(h => [val, ...h].slice(0, 50));
+      setHistory(h => [...h, { text: `[root@${instanceId} ${promptDir(cwd)}]$ ${val}`, type: "prompt" }]);
+      return;
+    }
+
+    // Expand $VAR — use latest shellVars via functional update pattern
+    const cmd = expandVars(val, shellVars);
+
     const startTime = Date.now();
-    setCmdHist(h => [cmd, ...h].slice(0, 50));
+    setCmdHist(h => [val, ...h].slice(0, 50));
     setHistIdx(-1);
 
     const prompt = `[root@${instanceId} ${promptDir(cwd)}]$`;
@@ -889,7 +911,7 @@ export default function App({ region = "US", labProgress = { completed: 0, total
     }
 
     // ── bash engine (cd, ls, pipes, &&, date, echo, pwd …) ───────────────
-    const { out, newCwd, clear: doClear, exit: doExit } = runBashLayer(cmd, cwd, instanceId, (raw) => {
+    const { out, newCwd, clear: doClear, exit: doExit, editorOpen } = runBashLayer(cmd, cwd, instanceId, (raw) => {
       if (raw === "dmesg" || raw.startsWith("dmesg ")) {
         const T = n => `[${n.toFixed(6).padStart(12)}]`;
         return [
@@ -906,6 +928,12 @@ export default function App({ region = "US", labProgress = { completed: 0, total
     if (newCwd !== cwd) setCwd(newCwd);
 
     const durationMs = Date.now() - startTime;
+
+    if (editorOpen) {
+      setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }]);
+      setEditor(editorOpen);
+      return;
+    }
     if (doClear) { setHistory([]); return; }
     setHistory(h => [...h, { text: `${prompt} ${cmd}`, type: "prompt" }, ...out]);
 
@@ -969,13 +997,26 @@ export default function App({ region = "US", labProgress = { completed: 0, total
   function handleKey(e) {
     lastActivityRef.current = Date.now();
 
-    // Ctrl+C — interrupt current input
+    // Ctrl+C — interrupt
     if (e.ctrlKey && e.key === "c") {
       e.preventDefault();
       setHistory(h => [...h, { text: `[root@${instanceId} ${promptDir(cwd)}]$ ${input}^C`, type: "prompt" }]);
-      setInput("");
+      setInput(""); return;
+    }
+    // Ctrl+Z — suspend
+    if (e.ctrlKey && e.key === "z") {
+      e.preventDefault();
+      if (input.trim()) {
+        setHistory(h => [...h,
+          { text: `[root@${instanceId} ${promptDir(cwd)}]$ ${input}`, type: "prompt" },
+          { text: `^Z\n[1]+  Stopped                 ${input.trim()}`, type: "warn" },
+        ]);
+        setInput("");
+      }
       return;
     }
+    // Ctrl+L — clear screen
+    if (e.ctrlKey && e.key === "l") { e.preventDefault(); setHistory([]); return; }
 
     if (e.key === "Enter") {
       if (!input.trim()) return;
@@ -1105,8 +1146,26 @@ export default function App({ region = "US", labProgress = { completed: 0, total
     </div>
   );
 
+  function handleEditorSave(content, path) {
+    VFS[path] = { type: 'f', content };
+    setHistory(h => [...h, { text: `"${path}" written, ${content.split('\n').length}L`, type: "ok" }]);
+    setEditor(null);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
+  function handleEditorDiscard() {
+    setEditor(null);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
+
   return (
-    <div style={{ height:"100vh", background:"#060a0f", display:"flex", flexDirection:"column", fontFamily:"'Fira Code','JetBrains Mono',monospace" }}>
+    <div style={{ height:"100vh", background:"#060a0f", display:"flex", flexDirection:"column", fontFamily:"'Fira Code','JetBrains Mono',monospace", position:"relative" }}>
+      {editor && (
+        <TerminalEditor
+          editor={editor}
+          onSave={handleEditorSave}
+          onDiscard={handleEditorDiscard}
+        />
+      )}
       <div style={{ background:"#0a0f14", borderBottom:"1px solid #1a2530", padding:"8px 16px", display:"flex", alignItems:"center", gap:10 }}>
         <div style={{ display:"flex", gap:6 }}>
           {["#ff5f57","#febc2e","#28c840"].map(c=><div key={c} style={{ width:10,height:10,borderRadius:"50%",background:c }}/>)}
