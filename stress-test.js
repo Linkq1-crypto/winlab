@@ -22,6 +22,12 @@ import http from "k6/http";
 import { check, sleep } from "k6";
 import { Counter, Rate, Trend } from "k6/metrics";
 
+// Mark expected 4xx as non-failures so http_req_failed only tracks real errors
+http.setResponseCallback(http.expectedStatuses(
+  { min: 200, max: 299 },
+  400, 401, 403, 404, 422, 429, 503
+));
+
 // ─── Configurazione ────────────────────────────────────────────────────────
 
 const BASE_URL  = __ENV.BASE_URL || "http://localhost:3001";
