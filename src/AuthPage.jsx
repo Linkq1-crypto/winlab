@@ -112,43 +112,76 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
         <div className="w-full max-w-sm">
           <button
             onClick={() => { setForgotMode(false); setForgotSent(false); setError(""); }}
-            className={`${t.btnGhost} mb-12`}
+            className={`${t.btnGhost} mb-10`}
           >
             ← Back
           </button>
 
-          <p className="font-mono text-[10px] tracking-[0.4em] text-gray-600 uppercase mb-8">
-            // ACCOUNT_RECOVERY
-          </p>
+          {/* Terminal header */}
+          <div className="bg-[#050505] border border-[#222] p-5 font-mono mb-8">
+            <div className="text-[10px] text-gray-700 mb-4 tracking-widest">
+              winlab@auth-server:~$
+            </div>
+            <div className="space-y-1.5 text-[11px]">
+              <div>
+                <span className="text-gray-600">$ </span>
+                <span className="text-gray-300">./recovery --protocol=EMAIL_TOKEN</span>
+              </div>
+              <div className="text-green-500">[ OK ] Secure channel established</div>
+              <div className="text-green-500">[ OK ] Token TTL: 15 minutes</div>
+              <div className={`transition-colors ${forgotSent ? "text-green-500" : "text-gray-600"}`}>
+                {forgotSent
+                  ? "[ OK ] Dispatch complete — check your inbox"
+                  : "[ .. ] Awaiting target identity..."}
+              </div>
+              {loading && (
+                <div className="text-yellow-500 animate-pulse">
+                  [ .. ] Generating token, dispatching link...
+                </div>
+              )}
+            </div>
+          </div>
 
           {forgotSent ? (
-            <div className="font-mono text-sm text-gray-400 leading-relaxed">
-              <span className="text-green-500">// OK</span> — Reset link sent.<br />
-              Check your inbox and follow the instructions.
+            <div className="font-mono space-y-3">
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Reset link sent to <span className="text-white">{forgotEmail}</span>.
+              </p>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Check your inbox and click the link within 15 minutes.<br />
+                The token self-destructs after use.
+              </p>
+              <button
+                onClick={() => { setForgotMode(false); setForgotSent(false); setError(""); }}
+                className={`${t.btnPrimary} mt-4`}
+              >
+                [ Back to Login ]
+              </button>
             </div>
           ) : (
-            <form onSubmit={handleForgot} className="space-y-6">
-              {error && (
-                <p className={t.error}>{error}</p>
-              )}
+            <form onSubmit={handleForgot} className="space-y-5">
+              {error && <p className={`${t.error} mb-2`}>{error}</p>}
+
               <div>
-                <label className={t.label}>Email</label>
+                <label className={t.label}>Target Email</label>
                 <input
                   type="email"
                   value={forgotEmail}
                   onChange={e => setForgotEmail(e.target.value)}
                   placeholder="you@company.com"
                   required
+                  autoFocus
                   className={inputClass}
                 />
               </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className={t.btnPrimary}
-              >
-                {loading ? "// Sending..." : "[ Send Reset Link ]"}
+
+              <button type="submit" disabled={loading} className={t.btnPrimary}>
+                {loading ? "// Dispatching..." : "[ Dispatch Recovery Token ]"}
               </button>
+
+              <p className="font-mono text-[9px] text-gray-700 text-center tracking-widest uppercase">
+                Token expires in 15 min · Single use
+              </p>
             </form>
           )}
         </div>
@@ -249,7 +282,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
                 <button
                   type="button"
                   onClick={() => { setForgotMode(true); setForgotEmail(email); setError(""); }}
-                  className="font-mono text-[10px] tracking-widest text-gray-700 hover:text-gray-400 uppercase transition-colors"
+                  className="font-mono text-[10px] tracking-widest text-gray-500 hover:text-white uppercase transition-colors"
                 >
                   Forgot?
                 </button>
