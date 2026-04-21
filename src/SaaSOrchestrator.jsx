@@ -574,7 +574,11 @@ export default function SaaSOrchestrator() {
   });
 
   // "landing" | "dashboard" | "lab" | "pricing" | "cert" | "success" | "community" | "about" | "legal" | "auth" | "india" | "deception"
-  const [view,          setView]          = useState(isIndia ? "india" : "landing");
+  const [view,          setView]          = useState(() => {
+    if (isIndia) return "india";
+    if (typeof window !== "undefined" && localStorage.getItem("winlab_logged_in") === "1") return "dashboard";
+    return "landing";
+  });
   const [activeLabId,   setActiveLabId]   = useState(null);
   const [sidebarOpen,   setSidebarOpen]   = useState(() => {
     return typeof window !== "undefined" ? window.innerWidth >= 768 : true;

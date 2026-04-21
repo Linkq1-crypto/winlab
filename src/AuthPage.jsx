@@ -157,8 +157,8 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
       }
 
       if (mode === "register") {
-        setSuccess("Account creato! Accesso in corso…");
-        await new Promise(r => setTimeout(r, 1000));
+        setSuccess(`Benvenuto, ${data.user.name || data.user.email}! Accesso in corso…`);
+        await new Promise(r => setTimeout(r, 2000));
       }
 
       login(data.user, data.token);
