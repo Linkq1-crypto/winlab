@@ -40,7 +40,7 @@ export default function AIMentor({ labId, labState = {} }) {
   async function saveAiConsent(consented) {
     setConsentSaving(true);
     try {
-      const res = await fetch("/api/consent/ai", {
+      const res = await fetch("/api/user/ai-consent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

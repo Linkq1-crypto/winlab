@@ -822,6 +822,21 @@ app.get("/api/ai/budget-status", requireAuth, async (req, res) => {
 // CERTIFICATES
 // ====================================================================
 
+// GET /api/cert/verify/:certId — public certificate verification
+app.get("/api/cert/verify/:certId", async (req, res) => {
+  try {
+    const cert = await prisma.certificate.findUnique({
+      where: { certId: req.params.certId },
+      include: { user: { select: { name: true, email: true } } },
+    });
+    if (!cert) return res.status(404).json({ error: "Certificate not found" });
+    res.json({ valid: true, certId: cert.certId, issuedAt: cert.issuedAt, labsCompleted: cert.labsCompleted, user: cert.user });
+  } catch (err) {
+    console.error("GET /api/cert/verify error:", err);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
 // POST /api/cert/generate
 app.post("/api/cert/generate", requireAuth, async (req, res) => {
   try {
@@ -870,6 +885,26 @@ app.post("/api/community/posts", requireAuth, async (req, res) => {
     res.json(post);
   } catch (err) {
     console.error("POST /api/community/posts error:", err);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+// POST /api/community/posts/:postId/vote
+app.post("/api/community/posts/:postId/vote", requireAuth, async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const existing = await prisma.postVote.findUnique({
+      where: { userId_postId: { userId: req.user.id, postId } },
+    });
+    if (existing) {
+      await prisma.postVote.delete({ where: { userId_postId: { userId: req.user.id, postId } } });
+      res.json({ voted: false });
+    } else {
+      await prisma.postVote.create({ data: { userId: req.user.id, postId } });
+      res.json({ voted: true });
+    }
+  } catch (err) {
+    console.error("POST /api/community/posts/:postId/vote error:", err);
     res.status(500).json({ error: "Failed" });
   }
 });
@@ -1125,6 +1160,43 @@ app.post("/api/billing/checkout", authLimiter, async (req, res) => {
   } catch (err) {
     console.error("POST /api/billing/checkout error:", err);
     res.status(500).json({ error: "Failed to create checkout session" });
+  }
+});
+
+// GET /api/stripe/early-access/verify?session_id=xxx — post-payment magic login
+app.get("/api/stripe/early-access/verify", async (req, res) => {
+  try {
+    if (!stripe) return res.status(503).json({ error: "Payments not configured" });
+    const { session_id } = req.query;
+    if (!session_id) return res.status(400).json({ error: "session_id required" });
+
+    const session = await stripe.checkout.sessions.retrieve(session_id, { expand: ["customer"] });
+    if (!session || session.payment_status !== "paid") {
+      return res.status(402).json({ error: "Payment not completed" });
+    }
+
+    const email = session.customer_details?.email || session.customer?.email;
+    if (!email) return res.status(400).json({ error: "No email on session" });
+
+    let user = await prisma.user.findFirst({ where: { email } });
+    if (!user) {
+      user = await prisma.user.create({
+        data: { email, plan: "earlyAccess", emailVerified: true },
+      });
+    } else {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { plan: "earlyAccess" },
+      });
+    }
+
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+    res
+      .cookie("token", token, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 30 * 24 * 3600 * 1000 })
+      .json({ token, user: { id: user.id, email: user.email, name: user.name, plan: user.plan } });
+  } catch (err) {
+    console.error("GET /api/stripe/early-access/verify error:", err);
+    res.status(500).json({ error: "Verification failed" });
   }
 });
 
