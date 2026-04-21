@@ -8,10 +8,11 @@ import TerminalTail   from "./src/components/TerminalTail.jsx";
 
 // ─── Random instance ID per session ──────────────────────────────────────────
 function genInstanceId() {
-  const chars = "abcdefghjkmnpqrstuvwxyz0123456789";
+  const letters = "abcdefghjkmnpqrstuvwxyz";
+  const digits  = "0123456789";
   let s = "srv-";
-  for (let i = 0; i < 2; i++) s += chars[Math.floor(Math.random() * 24)];
-  for (let i = 0; i < 3; i++) s += chars[24 + Math.floor(Math.random() * 10)];
+  for (let i = 0; i < 2; i++) s += letters[Math.floor(Math.random() * letters.length)];
+  for (let i = 0; i < 3; i++) s += digits[Math.floor(Math.random() * digits.length)];
   return s;
 }
 
