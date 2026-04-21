@@ -35,6 +35,8 @@ import { useSocialStorage } from "./hooks/useSocialStorage";
 import FakeTerminal from "./FakeTerminal";
 import ResetPasswordPage from "./ResetPasswordPage";
 import DeceptionDashboard from "./DeceptionDashboard";
+import ABTestOnboarding from "./ABTestOnboarding";
+import NewLandingPage from "./NewLandingPage";
 
 // ── Lazy simulators (one chunk per lab) ───────────────────────────────────────
 // Defined at MODULE level so React always gets the same stable reference.
@@ -883,20 +885,19 @@ export default function SaaSOrchestrator() {
 
   if (view === "landing") {
     return (
-      <LaunchLanding
-        onCTA={() => token ? (openLab("linux-terminal") || navigate("lab")) : navigate("auth")}
-        onLogin={() => navigate("auth")}
-        onNavigate={(section) => {
-          if (section === "pricing")    navigate("pricing");
-          else if (section === "about") navigate("about");
-          else if (section === "india") navigate("india");
-          else if (section === "dashboard") navigate("dashboard");
-          else navigate("landing");
-        }}
-        onStartLab={(labId) => {
-          if (token) { openLab(labId || "linux-terminal"); navigate("lab"); }
-          else navigate("auth");
-        }}
+      <NewLandingPage
+        onStartLab={() => navigate("onboarding")}
+        onLogin={() => { setAuthMode("login"); navigate("auth"); }}
+        onRegister={() => { setAuthMode("register"); navigate("auth"); }}
+      />
+    );
+  }
+
+  if (view === "onboarding") {
+    return (
+      <ABTestOnboarding
+        onLogin={() => { setAuthMode("login"); navigate("auth"); }}
+        onRegister={() => { setAuthMode("register"); navigate("auth"); }}
       />
     );
   }
