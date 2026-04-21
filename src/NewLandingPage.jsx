@@ -309,15 +309,27 @@ export default function NewLandingPage({ onLogin, onRegister }) {
             { title: "RAID degraded",     tag: "pro",  desc: "One disk is dead. Array is running degraded. Replace and rebuild." },
             { title: "LDAP auth failure", tag: "pro",  desc: "Users can't login. SSSD is broken. Fix the identity pipeline." },
           ].map(lab => (
-            <div key={lab.title} className="bg-[#11151A] border border-[#1F2933] rounded-xl p-5 hover:border-[#374151] transition-colors">
-              <span className={`font-mono text-[9px] uppercase tracking-widest px-2 py-0.5 rounded mb-3 inline-block ${
-                lab.tag === "free"
-                  ? "text-[#22C55E] bg-[#22C55E]/10 border border-[#22C55E]/20"
-                  : "text-[#4F8CFF] bg-[#4F8CFF]/10 border border-[#4F8CFF]/20"
-              }`}>{lab.tag}</span>
+            <button
+              key={lab.title}
+              onClick={() => lab.tag === "free"
+                ? onRegister?.()
+                : document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })
+              }
+              className="bg-[#11151A] border border-[#1F2933] rounded-xl p-5 text-left hover:border-[#374151] transition-colors group w-full"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className={`font-mono text-[9px] uppercase tracking-widest px-2 py-0.5 rounded inline-block ${
+                  lab.tag === "free"
+                    ? "text-[#22C55E] bg-[#22C55E]/10 border border-[#22C55E]/20"
+                    : "text-[#4F8CFF] bg-[#4F8CFF]/10 border border-[#4F8CFF]/20"
+                }`}>{lab.tag}</span>
+                <span className="font-mono text-[9px] text-[#1F2933] group-hover:text-[#374151] transition-colors">
+                  {lab.tag === "free" ? "start →" : "unlock →"}
+                </span>
+              </div>
               <h3 className="text-[#E6EDF3] font-medium text-sm mb-1.5">{lab.title}</h3>
               <p className="text-[#4b5563] text-xs leading-relaxed">{lab.desc}</p>
-            </div>
+            </button>
           ))}
         </div>
       </section>
