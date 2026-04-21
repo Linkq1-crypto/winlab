@@ -26,7 +26,7 @@ const INITIAL_STATE = {
   log: [],
 };
 
-const TABS = ["Hosts & VMs", "vMotion", "HA / DRS", "Snapshot", "Networking", "Storage"];
+const TABS = ["Hosts & VMs", "vMotion", "HA / DRS", "Snapshot", "Networking", "Storage", "CLI"];
 
 function Log({ entries }) {
   const ref = useRef();
@@ -67,12 +67,368 @@ function Badge({ label, color }) {
   );
 }
 
+// ── govc / esxcli command evaluator ──────────────────────────────────────────
+function evalCLI(raw, state, setState, addLog) {
+  const line = raw.trim();
+  if (!line) return [];
+  const parts = line.split(/\s+/);
+  const bin   = parts[0];
+  const sub   = parts[1] || "";
+
+  const out  = (t, color = "#b8c8d8") => ({ text: t, color });
+  const ok   = (t) => out(t, "#4caf84");
+  const err  = (t) => out(t, "#e06060");
+  const warn = (t) => out(t, "#ffaa00");
+  const dim  = (t) => out(t, "#445566");
+
+  // ── govc ────────────────────────────────────────────────────────────────────
+  if (bin === "govc") {
+
+    // govc ls / govc ls /
+    if (sub === "ls") {
+      const target = parts[2] || "/";
+      if (target === "/" || target === "") {
+        return [out("/datacenter-lab/"), dim("  └─ host/"), dim("  └─ vm/"), dim("  └─ datastore/"), dim("  └─ network/")];
+      }
+      if (target.includes("vm")) {
+        return Object.values(state.vms).map(v => out(`/datacenter-lab/vm/${v.name}`));
+      }
+      if (target.includes("host")) {
+        return state.hosts.map(h => out(`/datacenter-lab/host/${h.id}/`));
+      }
+      return [err(`govc: object not found: ${target}`)];
+    }
+
+    // govc vm.info <name>
+    if (sub === "vm.info") {
+      const name = parts.slice(2).join(" ");
+      const entry = Object.entries(state.vms).find(([,v]) => v.name === name || v.name.includes(parts[2] || ""));
+      if (!entry) return [err(`govc: VM '${name}' not found`)];
+      const [, vm] = entry;
+      return [
+        out(`Name:               ${vm.name}`),
+        out(`  Path:             /datacenter-lab/vm/${vm.name}`),
+        out(`  UUID:             420d${Math.random().toString(16).slice(2,10)}-xxxx`),
+        out(`  Guest name:       ${vm.os}`),
+        out(`  Memory:           ${vm.ram * 1024} MB`),
+        out(`  CPU:              ${vm.cpu} vCPU(s)`),
+        out(`  Power state:      ${vm.status === "running" ? "poweredOn" : "poweredOff"}`),
+        out(`  Boot time:        ${vm.status === "running" ? new Date(Date.now() - 3600000*24).toISOString() : "-"}`),
+        out(`  IP address:       ${vm.status === "running" ? `192.168.1.${Math.floor(Math.random()*50)+10}` : "-"}`),
+        out(`  Host:             ${vm.host}`),
+      ];
+    }
+
+    // govc host.info
+    if (sub === "host.info") {
+      return state.hosts.flatMap(h => [
+        out(`Name:               ${h.name}`),
+        out(`  Path:             /datacenter-lab/host/${h.id}`),
+        out(`  Manufacturer:     Dell Inc.`),
+        out(`  Logical CPUs:     32 CPUs @ 2400 MHz`),
+        out(`  Memory:           256 GB`),
+        out(`  CPU usage:        ${h.cpu}%  (${Math.round(h.cpu*32*24/100)} MHz used)`),
+        out(`  Memory usage:     ${h.ram}%  (${Math.round(h.ram*256/100)} GB used)`),
+        out(`  Status:           ${h.status}`),
+        dim(""),
+      ]);
+    }
+
+    // govc vm.migrate -vm <name> -host <host>
+    if (sub === "vm.migrate") {
+      const vmFlag   = parts.indexOf("-vm");
+      const hostFlag = parts.indexOf("-host");
+      const vmName   = vmFlag   !== -1 ? parts[vmFlag + 1]   : null;
+      const hostName = hostFlag !== -1 ? parts[hostFlag + 1] : null;
+      if (!vmName || !hostName) return [err("Usage: govc vm.migrate -vm <name> -host <host>")];
+      const vmEntry = Object.entries(state.vms).find(([,v]) => v.name === vmName || v.name.includes(vmName));
+      const host    = state.hosts.find(h => h.id === hostName || h.name.includes(hostName));
+      if (!vmEntry) return [err(`govc: VM '${vmName}' not found`)];
+      if (!host)    return [err(`govc: host '${hostName}' not found`)];
+      const [vmId, vm] = vmEntry;
+      if (vm.host === host.id) return [warn(`${vm.name} is already on ${host.id}`)];
+      if (host.status === "disconnected") return [err(`govc: host ${host.id} is disconnected`)];
+      addLog(`vMotion: migrating ${vm.name} → ${host.id} via CLI...`, "warn");
+      setTimeout(() => {
+        setState(s => {
+          const vms = { ...s.vms, [vmId]: { ...s.vms[vmId], host: host.id } };
+          const hosts = s.hosts.map(h => {
+            if (h.id === vm.host)  return { ...h, vms: h.vms.filter(v => v !== vmId) };
+            if (h.id === host.id)  return { ...h, vms: [...h.vms, vmId] };
+            return h;
+          });
+          return { ...s, vms, hosts };
+        });
+        addLog(`vMotion complete: ${vm.name} → ${host.id} ✓`);
+      }, 1800);
+      return [
+        out(`Migrating ${vm.name} to ${host.id}...`),
+        out(`  Progress: [████████████████████] 100%`, "#6ab0f5"),
+        ok(`${vm.name}: migration completed successfully`),
+      ];
+    }
+
+    // govc snapshot.create -vm <name> <snapname>
+    if (sub === "snapshot.create") {
+      const vmFlag  = parts.indexOf("-vm");
+      const vmName  = vmFlag !== -1 ? parts[vmFlag + 1] : null;
+      const snapName = parts[parts.length - 1] !== `-vm` && parts[parts.length-1] !== vmName ? parts[parts.length-1] : "snap-" + Date.now();
+      const vmEntry = Object.entries(state.vms).find(([,v]) => v.name === vmName || v.name.includes(vmName || ""));
+      if (!vmEntry) return [err(`govc: VM '${vmName}' not found`)];
+      const [vmId, vm] = vmEntry;
+      const ts = new Date().toLocaleString("en-US");
+      setState(s => ({ ...s, vms: { ...s.vms, [vmId]: { ...s.vms[vmId], snapshot: { name: snapName, created: ts } } } }));
+      addLog(`Snapshot '${snapName}' created for ${vm.name}`);
+      return [ok(`[✓] Snapshot '${snapName}' created for ${vm.name} at ${ts}`)];
+    }
+
+    // govc snapshot.revert -vm <name>
+    if (sub === "snapshot.revert") {
+      const vmFlag = parts.indexOf("-vm");
+      const vmName = vmFlag !== -1 ? parts[vmFlag + 1] : null;
+      const vmEntry = Object.entries(state.vms).find(([,v]) => v.name === vmName || v.name.includes(vmName || ""));
+      if (!vmEntry) return [err(`govc: VM '${vmName}' not found`)];
+      const [, vm] = vmEntry;
+      if (!vm.snapshot) return [warn(`${vm.name}: no snapshot to revert to`)];
+      addLog(`Revert snapshot: ${vm.name} restored ✓`);
+      return [ok(`[✓] ${vm.name} reverted to snapshot '${vm.snapshot.name}'`)];
+    }
+
+    // govc snapshot.remove -vm <name> -snapshot <snap>
+    if (sub === "snapshot.remove") {
+      const vmFlag = parts.indexOf("-vm");
+      const vmName = vmFlag !== -1 ? parts[vmFlag + 1] : null;
+      const vmEntry = Object.entries(state.vms).find(([,v]) => v.name === vmName || v.name.includes(vmName || ""));
+      if (!vmEntry) return [err(`govc: VM '${vmName}' not found`)];
+      const [vmId, vm] = vmEntry;
+      if (!vm.snapshot) return [warn(`${vm.name}: no snapshot found`)];
+      setState(s => ({ ...s, vms: { ...s.vms, [vmId]: { ...s.vms[vmId], snapshot: null } } }));
+      addLog(`Snapshot removed for ${vm.name}`);
+      return [ok(`[✓] Snapshot removed from ${vm.name}`)];
+    }
+
+    // govc datastore.info
+    if (sub === "datastore.info") {
+      return state.datastores.flatMap(ds => [
+        out(`Name:        ${ds.name}`),
+        out(`  Type:      ${ds.type}`),
+        out(`  Capacity:  ${ds.size} GB`),
+        out(`  Free:      ${ds.size - ds.used} GB`),
+        out(`  Usage:     ${Math.round((ds.used/ds.size)*100)}%  (${ds.used} GB used)`),
+        out(`  Hosts:     ${ds.host === "shared" ? "esxi-01, esxi-02" : ds.host}`),
+        dim(""),
+      ]);
+    }
+
+    // govc cluster.change -drs-enabled <true/false>
+    if (sub === "cluster.change") {
+      if (line.includes("-drs-enabled=true") || line.includes("-drs-enabled true")) {
+        setState(s => ({ ...s, drs: { ...s.drs, enabled: true } }));
+        addLog("DRS enabled via CLI");
+        return [ok("[✓] DRS enabled — Fully Automated")];
+      }
+      if (line.includes("-ha-enabled=true") || line.includes("-ha-enabled true")) {
+        setState(s => ({ ...s, ha: { ...s.ha, enabled: true } }));
+        addLog("HA enabled via CLI");
+        return [ok("[✓] HA enabled — admission control: 25%")];
+      }
+      return [err("Usage: govc cluster.change -drs-enabled=true|-ha-enabled=true")];
+    }
+
+    // help
+    if (sub === "help" || sub === "--help" || sub === "") {
+      return [
+        out("govc — VMware vSphere CLI", "#6ab0f5"),
+        dim(""),
+        out("  govc ls [path]                              List inventory"),
+        out("  govc vm.info <name>                         VM details"),
+        out("  govc host.info                              Host details"),
+        out("  govc vm.migrate -vm <n> -host <h>           Live migration"),
+        out("  govc snapshot.create -vm <n> <snapname>     Create snapshot"),
+        out("  govc snapshot.revert -vm <n>                Revert snapshot"),
+        out("  govc snapshot.remove -vm <n>                Delete snapshot"),
+        out("  govc datastore.info                         Datastore usage"),
+        out("  govc cluster.change -drs-enabled=true       Enable DRS"),
+        out("  govc cluster.change -ha-enabled=true        Enable HA"),
+        dim(""),
+        out("  esxcli --help                               ESXi host CLI"),
+      ];
+    }
+
+    return [err(`govc: unknown command '${sub}'. Run 'govc help'`)];
+  }
+
+  // ── esxcli ──────────────────────────────────────────────────────────────────
+  if (bin === "esxcli") {
+
+    if (sub === "--help" || sub === "help" || sub === "") {
+      return [
+        out("esxcli — ESXi command-line interface", "#6ab0f5"),
+        dim(""),
+        out("  esxcli system version get"),
+        out("  esxcli system hostname get"),
+        out("  esxcli hardware cpu global get"),
+        out("  esxcli hardware memory get"),
+        out("  esxcli vm process list"),
+        out("  esxcli vm process kill --type=soft --world-id=<id>"),
+        out("  esxcli network vswitch standard list"),
+        out("  esxcli network ip interface list"),
+        out("  esxcli network ip route ipv4 list"),
+        out("  esxcli storage core device list"),
+        out("  esxcli storage vmfs extent list"),
+        out("  esxcli software vib list"),
+        out("  esxcli software vib update -d <depot>"),
+      ];
+    }
+
+    const ns1 = parts[1] || "", ns2 = parts[2] || "", ns3 = parts[3] || "";
+
+    if (ns1 === "system" && ns2 === "version" && ns3 === "get") {
+      return [
+        out("   Product: VMware ESXi"),
+        out("   Version: 8.0.2"),
+        out("   Build:   22380479"),
+        out("   Update:  2"),
+        out("   Patch:   0"),
+      ];
+    }
+
+    if (ns1 === "system" && ns2 === "hostname" && ns3 === "get") {
+      const host = state.hosts[0];
+      return [
+        out(`   Domain Name: lab.local`),
+        out(`   Fully Qualified Domain Name: ${host.name}`),
+        out(`   Host Name: ${host.id}`),
+      ];
+    }
+
+    if (ns1 === "hardware" && ns2 === "cpu") {
+      return [
+        out("   CPU Packages: 2"),
+        out("   CPU Cores: 32"),
+        out("   CPU Threads: 64"),
+        out("   Speed: 2400 MHz"),
+      ];
+    }
+
+    if (ns1 === "hardware" && ns2 === "memory") {
+      return [
+        out("   Physical Memory: 274877906944 Bytes (256 GB)"),
+      ];
+    }
+
+    if (ns1 === "vm" && ns2 === "process" && ns3 === "list") {
+      const host = state.hosts[0];
+      return host.vms.flatMap((vmId, i) => {
+        const vm = state.vms[vmId];
+        if (!vm || vm.status !== "running") return [];
+        return [
+          out(`   ${vm.name}`),
+          out(`      World ID: ${10000 + i * 7}`),
+          out(`      Process ID: 0`),
+          out(`      VMX Cartel ID: ${10001 + i * 7}`),
+          out(`      UUID: 420d-${Math.random().toString(16).slice(2,10)}`),
+          out(`      Display Name: ${vm.name}`),
+          out(`      Config File: /vmfs/volumes/datastore1/${vm.name}/${vm.name}.vmx`),
+          dim(""),
+        ];
+      });
+    }
+
+    if (ns1 === "vm" && ns2 === "process" && ns3 === "kill") {
+      const wid = parts.find(p => p.startsWith("--world-id"))?.split("=")[1] || parts[parts.indexOf("--world-id")+1];
+      if (!wid) return [err("esxcli vm process kill --type=soft --world-id=<id>")];
+      return [ok(`[✓] VM (world-id ${wid}) killed with signal soft`)];
+    }
+
+    if (ns1 === "network" && ns2 === "vswitch") {
+      return state.vswitches.flatMap(vs => [
+        out(`   ${vs.id}`),
+        out(`      Name: ${vs.id}`),
+        out(`      Uplinks: ${vs.uplinks.join(", ")}`),
+        out(`      Portgroups: ${vs.portgroups.join(", ")}`),
+        dim(""),
+      ]);
+    }
+
+    if (ns1 === "network" && ns2 === "ip" && ns3 === "interface") {
+      return [
+        out("   Name: vmk0  IPv4: 192.168.1.10   Netmask: 255.255.255.0   Type: STATIC   Enabled: true"),
+        out("   Name: vmk1  IPv4: 10.10.10.10     Netmask: 255.255.255.0   Type: STATIC   Enabled: true"),
+        out("   Name: vmk2  IPv4: 10.20.20.10     Netmask: 255.255.255.0   Type: STATIC   Enabled: true"),
+      ];
+    }
+
+    if (ns1 === "network" && ns2 === "ip" && ns3 === "route") {
+      return [
+        out("   Network       Netmask          Gateway        Interface   Source"),
+        out("   0.0.0.0       0.0.0.0          192.168.1.1    vmk0        STATIC"),
+        out("   192.168.1.0   255.255.255.0    0.0.0.0        vmk0        STATIC"),
+        out("   10.10.10.0    255.255.255.0    0.0.0.0        vmk1        STATIC"),
+      ];
+    }
+
+    if (ns1 === "storage" && ns2 === "core" && ns3 === "device") {
+      return [
+        out("   Device UID                         Device Type   Size  Display Name"),
+        out("   naa.60003ff44dc75a1001a6be8b12345   Direct-Access 500GB  Local Dell Disk"),
+        out("   naa.600a0980383035452454202b525153   Direct-Access 2TB    NetApp LUN"),
+      ];
+    }
+
+    if (ns1 === "storage" && ns2 === "vmfs") {
+      return state.datastores.map(ds =>
+        out(`   ${ds.name}   VMFS6   ${ds.used}GB/${ds.size}GB   UUID: 6257${Math.random().toString(16).slice(2,12)}`)
+      );
+    }
+
+    if (ns1 === "software" && ns2 === "vib" && ns3 === "list") {
+      return [
+        out("   Name                   Version             Vendor   Install Date"),
+        out("   esx-base               8.0.2-0.0.22380479  VMware   2025-01-15"),
+        out("   net-vmxnet3            1.1.3.0-3vmw.800    VMware   2025-01-15"),
+        out("   scsi-megaraid-sas      07.714.04.00        VMware   2025-01-15"),
+        out("   tools-light            12.3.0.22234872     VMware   2025-02-01"),
+      ];
+    }
+
+    return [err(`esxcli: invalid command '${parts.slice(1).join(" ")}'. Run 'esxcli --help'`)];
+  }
+
+  if (bin === "help") {
+    return [
+      out("Available CLIs:", "#6ab0f5"),
+      out("  govc <command>    VMware vSphere automation CLI"),
+      out("  esxcli <ns> ...   ESXi host management CLI"),
+      out(""),
+      out("  govc help         govc command reference"),
+      out("  esxcli --help     esxcli command reference"),
+    ];
+  }
+
+  if (bin === "clear") return [{ text: "__CLEAR__" }];
+
+  return [err(`-bash: ${bin}: command not found`)];
+}
+
 export default function App() {
   const [state, setState] = useState(INITIAL_STATE);
   const [tab, setTab] = useState("Hosts & VMs");
   const [selectedVM, setSelectedVM] = useState(null);
   const [motionTarget, setMotionTarget] = useState(null);
   const [animating, setAnimating] = useState(false);
+
+  // ── CLI state ──────────────────────────────────────────────────────────────
+  const [cliLines, setCliLines] = useState([
+    { text: "root@vcenter:~# ", color: "#4caf84" },
+    { text: "# govc and esxcli available — type 'help' to start", color: "#445566" },
+    { text: "", color: "" },
+  ]);
+  const [cliInput, setCliInput] = useState("");
+  const [cliHist, setCliHist] = useState([]);
+  const [cliHistIdx, setCliHistIdx] = useState(-1);
+  const cliInputRef = useRef();
+  const cliBottomRef = useRef();
 
   function addLog(msg, type = "ok") {
     const now = new Date().toLocaleTimeString("it-IT");
@@ -142,6 +498,38 @@ export default function App() {
   function resetHosts() {
     setState(INITIAL_STATE);
     addLog("Ambiente ripristinato ✓");
+  }
+
+  // ── CLI submit ─────────────────────────────────────────────────────────────
+  useEffect(() => { cliBottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [cliLines]);
+
+  function cliSubmit() {
+    const cmd = cliInput.trim();
+    if (!cmd) return;
+    setCliHist(h => [cmd, ...h].slice(0, 50));
+    setCliHistIdx(-1);
+    const prompt = { text: `root@vcenter:~# ${cmd}`, color: "#4caf84" };
+    const result = evalCLI(cmd, state, setState, addLog);
+    if (result.length === 1 && result[0].text === "__CLEAR__") {
+      setCliLines([{ text: "root@vcenter:~# ", color: "#4caf84" }]);
+    } else {
+      setCliLines(l => [...l, prompt, ...result, { text: "", color: "" }]);
+    }
+    setCliInput("");
+  }
+
+  function cliKeyDown(e) {
+    if (e.key === "Enter") { cliSubmit(); return; }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const i = Math.min(cliHistIdx + 1, cliHist.length - 1);
+      setCliHistIdx(i); setCliInput(cliHist[i] || "");
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const i = Math.max(cliHistIdx - 1, -1);
+      setCliHistIdx(i); setCliInput(i === -1 ? "" : cliHist[i] || "");
+    }
   }
 
   const vmList = Object.entries(state.vms);
@@ -451,7 +839,53 @@ export default function App() {
             })}
           </div>
         )}
-      </div>
+
+        {/* === CLI === */}
+        {tab === "CLI" && (
+          <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 200px)", background: "#05080d", border: "1px solid #1a2535", borderRadius: 8, overflow: "hidden" }}>
+            {/* header */}
+            <div style={{ background: "#0a0f18", borderBottom: "1px solid #1a2535", padding: "8px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ display: "flex", gap: 5 }}>
+                {["#ff5f57","#febc2e","#28c840"].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />)}
+              </div>
+              <span style={{ fontFamily: "monospace", fontSize: 11, color: "#4caf84", marginLeft: 6 }}>root@vcenter</span>
+              <span style={{ color: "#334", fontSize: 11 }}>~ vSphere CLI</span>
+              <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+                <span style={{ fontFamily: "monospace", fontSize: 10, color: "#334" }}>govc · esxcli</span>
+                <button onClick={() => setCliLines([{ text: "# cleared", color: "#334" }])}
+                  style={{ padding: "2px 10px", background: "#1a2535", border: "1px solid #2a3545", borderRadius: 4, color: "#557", cursor: "pointer", fontSize: 10 }}>
+                  clear
+                </button>
+              </div>
+            </div>
+
+            {/* output */}
+            <div onClick={() => cliInputRef.current?.focus()} style={{ flex: 1, overflowY: "auto", padding: "12px 18px", cursor: "text", fontFamily: "'Fira Code','JetBrains Mono',monospace", fontSize: 12.5, lineHeight: 1.7 }}>
+              {cliLines.map((l, i) => (
+                <div key={i} style={{ color: l.color || "#b8c8d8", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{l.text}</div>
+              ))}
+              <div ref={cliBottomRef} />
+            </div>
+
+            {/* input */}
+            <div style={{ borderTop: "1px solid #1a2535", padding: "10px 18px", display: "flex", alignItems: "center", gap: 8, background: "#070c12" }}>
+              <span style={{ color: "#4caf84", fontFamily: "monospace", fontSize: 12.5, whiteSpace: "nowrap" }}>root@vcenter:~#</span>
+              <input
+                ref={cliInputRef}
+                value={cliInput}
+                onChange={e => setCliInput(e.target.value)}
+                onKeyDown={cliKeyDown}
+                autoFocus
+                spellCheck={false}
+                autoComplete="off"
+                style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#ddeedd", fontFamily: "'Fira Code','JetBrains Mono',monospace", fontSize: 13, caretColor: "#4caf84" }}
+                placeholder="govc ls  |  esxcli --help  |  help"
+              />
+            </div>
+          </div>
+        )}
+
+      </div>{/* end body */}
 
       {/* Log */}
       <div style={{ borderTop: "1px solid #1a2535" }}>
