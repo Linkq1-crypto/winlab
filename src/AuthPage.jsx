@@ -91,6 +91,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
   const [debugInfo, setDebugInfo] = useState("");
+  const [success, setSuccess]   = useState("");
 
   const [forgotMode, setForgotMode]   = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -119,6 +120,13 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
     e.preventDefault();
     setError("");
     setDebugInfo("");
+    setSuccess("");
+
+    if (mode === "register") {
+      const { score } = evaluatePassword(password);
+      if (score < 3) { setError("Password troppo debole. Usa maiuscole, numeri e simboli."); return; }
+    }
+
     setLoading(true);
     try {
       const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
@@ -146,6 +154,11 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
         setError("Server returned success but no user data.");
         setDebugInfo(JSON.stringify(data));
         return;
+      }
+
+      if (mode === "register") {
+        setSuccess("Account creato! Accesso in corso…");
+        await new Promise(r => setTimeout(r, 1000));
       }
 
       login(data.user, data.token);
@@ -252,6 +265,13 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
             </button>
           ))}
         </div>
+
+        {/* Success */}
+        {success && (
+          <div className="bg-green-900/40 border border-green-600 text-green-300 text-sm px-4 py-3 rounded mb-5">
+            {success}
+          </div>
+        )}
 
         {/* Error */}
         {error && (
