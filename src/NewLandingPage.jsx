@@ -8,31 +8,76 @@ function track(event, props = {}) {
   try { if (window.posthog) window.posthog.capture(event, props); } catch {}
 }
 
-const VALID_CMDS = [
-  "sudo systemctl restart nginx",
-  "systemctl restart nginx",
-  "sudo service nginx restart",
-  "service nginx restart",
-];
-function evalCmd(cmd) {
-  const c = cmd.trim().toLowerCase();
-  if (VALID_CMDS.includes(c)) return "success";
-  if (c.includes("status") && c.includes("nginx")) return "status";
-  if (c.includes("journalctl") || c.includes("log")) return "log";
-  return "fail";
-}
+// ── Scenarios for each free lab ───────────────────────────────────────────────
+const SCENARIOS = {
+  nginx: {
+    alert: "nginx is down.\nusers are failing.\n\nyou have access.\n\nfix it.",
+    init: [
+      "[prod-eu-west-1] — connected", "",
+      "$ systemctl status nginx",
+      "✖ nginx.service — failed (Result: exit-code)",
+      "  Main PID: 1823 (code=exited, status=1/FAILURE)", "",
+      "$ curl -I http://localhost",
+      "curl: (7) Failed to connect to localhost port 80", "",
+    ],
+    hint: "try: sudo systemctl restart nginx",
+    eval(cmd) {
+      const c = cmd.trim().toLowerCase();
+      if (["sudo systemctl restart nginx","systemctl restart nginx","sudo service nginx restart","service nginx restart"].includes(c)) return "success";
+      if (c.includes("status") && c.includes("nginx")) return { out: ["✖ nginx.service — failed (see journalctl -xe)"] };
+      if (c.includes("journalctl") || c.includes("log")) return { out: ["Apr 21 nginx[1823]: bind() to 0.0.0.0:80 failed (98: Address in use)"] };
+      return "fail";
+    },
+    success: ["✔ nginx running (pid: 2847)", "", "$ curl -I http://localhost", "HTTP/1.1 200 OK", "Server: nginx/1.24.0", "", "Service restored."],
+  },
+  disk: {
+    alert: "disk at 100%.\nwrites failing.\n\nyou have access.\n\nclear space.",
+    init: [
+      "[prod-eu-west-1] — connected", "",
+      "$ df -h /",
+      "Filesystem  Size  Used Avail Use% Mounted",
+      "/dev/sda1    20G   20G     0 100% /", "",
+      "$ tail /var/log/nginx/access.log",
+      "tail: cannot open: No space left on device", "",
+    ],
+    hint: "try: truncate -s 0 /var/log/nginx/access.log",
+    eval(cmd) {
+      const c = cmd.trim().toLowerCase();
+      if (c.includes("truncate") || c.includes("rm /var/log") || c.includes("find /var/log") || c.includes("> /var/log")) return "success";
+      if (c.includes("df")) return { out: ["/dev/sda1    20G   20G     0 100% /"] };
+      if (c.includes("du")) return { out: [" 18G\t/var/log/nginx/access.log", "  1G\t/var/log/syslog"] };
+      if (c.includes("ls") && c.includes("log")) return { out: ["-rw-r--r-- 1 root root 18G Apr 21 access.log"] };
+      return "fail";
+    },
+    success: ["✔ truncated /var/log/nginx/access.log", "", "$ df -h /", "/dev/sda1  20G  2.1G  18G  11% /", "", "Space restored."],
+  },
+  ssh: {
+    alert: "ssh is refusing connections.\nteam is locked out.\n\nyou have console access.\n\nfix it.",
+    init: [
+      "[prod-eu-west-1] — console access", "",
+      "$ systemctl status ssh",
+      "✖ ssh.service — failed",
+      "  Process: sshd -D (code=exited, status=255)", "",
+      "$ journalctl -u ssh -n 5",
+      "Apr 21 sshd[921]: /etc/ssh/sshd_config line 14: Bad configuration option",
+      "Apr 21 sshd[921]: bad configuration options; terminating", "",
+    ],
+    hint: "try: sed -i '14d' /etc/ssh/sshd_config && systemctl restart ssh",
+    eval(cmd) {
+      const c = cmd.trim().toLowerCase();
+      if ((c.includes("sed") || c.includes("vi") || c.includes("nano")) && c.includes("sshd_config") && c.includes("restart")) return "success";
+      if (c.includes("systemctl restart ssh") && !c.includes("sshd_config")) return { out: ["Job for ssh.service failed. Check journalctl -xe for details."] };
+      if (c.includes("sshd_config")) return { out: ["line 14: PermitRootLogin bad_value  ← syntax error"] };
+      return "fail";
+    },
+    success: ["✔ sshd config fixed", "✔ ssh.service running (pid: 1042)", "", "$ ssh admin@prod-server", "Welcome to Ubuntu 22.04", "", "Access restored."],
+  },
+};
 
-// ── Terminal ──────────────────────────────────────────────────────────────────
-function Terminal({ variant, onSuccess }) {
-  const INIT = [
-    "[prod-eu-west-1] — connected", "",
-    "$ systemctl status nginx",
-    "✖ nginx.service — failed (Result: exit-code)",
-    "  Main PID: 1823 (code=exited, status=1/FAILURE)", "",
-    "$ curl -I http://localhost",
-    "curl: (7) Failed to connect to localhost port 80", "",
-  ];
-  const [lines, setLines]       = useState(INIT);
+// ── Generic Terminal (accepts any scenario) ───────────────────────────────────
+function Terminal({ variant, scenarioKey = "nginx", onSuccess }) {
+  const sc = SCENARIOS[scenarioKey];
+  const [lines, setLines]       = useState(sc.init);
   const [input, setInput]       = useState("");
   const [done, setDone]         = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -51,28 +96,25 @@ function Terminal({ variant, onSuccess }) {
   function submit(e) {
     e.preventDefault();
     if (!input.trim() || done) return;
-    if (!firstKey) { setFirstKey(true); track("first_keypress", { variant }); }
-    const result = evalCmd(input);
+    if (!firstKey) { setFirstKey(true); track("first_keypress", { variant, lab: scenarioKey }); }
+    const result = sc.eval(input);
     if (result === "success") {
-      setLines(l => [...l, `$ ${input}`, "✔ nginx running (pid: 2847)", "",
-        "$ curl -I http://localhost", "HTTP/1.1 200 OK", "Server: nginx/1.24.0", "", "Service restored."]);
+      setLines(l => [...l, `$ ${input}`, ...sc.success]);
       setDone(true);
-      track("command_success", { variant });
-      setTimeout(() => onSuccess?.(), 3000); // 3s delay before signup
-    } else if (result === "status") {
-      setLines(l => [...l, `$ ${input}`, "✖ nginx.service — failed (see journalctl -xe)"]);
-    } else if (result === "log") {
-      setLines(l => [...l, `$ ${input}`, "Apr 21 nginx[1823]: bind() to 0.0.0.0:80 failed (98: Address in use)"]);
-    } else {
-      track("command_fail", { variant, cmd: input.split(" ")[0] });
+      track("command_success", { variant, lab: scenarioKey });
+      setTimeout(() => onSuccess?.(), 3000);
+    } else if (result === "fail") {
+      track("command_fail", { variant, lab: scenarioKey, cmd: input.split(" ")[0] });
       setLines(l => [...l, `$ ${input}`, `bash: ${input.split(" ")[0]}: command not found`]);
+    } else {
+      setLines(l => [...l, `$ ${input}`, ...result.out]);
     }
     setInput("");
   }
 
   function lc(l) {
-    if (l.startsWith("✖") || l.includes("failed") || l.includes("Failed")) return "text-[#EF4444]";
-    if (l.startsWith("✔") || l.startsWith("HTTP/1.1 200") || l === "Service restored.") return "text-[#22C55E]";
+    if (l.startsWith("✖") || l.includes("failed") || l.includes("Failed") || l.includes("error") || l.includes("100%")) return "text-[#EF4444]";
+    if (l.startsWith("✔") || l.startsWith("HTTP/1.1 200") || l.endsWith("restored.") || l.includes("11%")) return "text-[#22C55E]";
     if (l.startsWith("$")) return "text-[#E6EDF3]";
     if (l.startsWith("//")) return "text-[#4F8CFF] opacity-60";
     if (l.startsWith("[prod")) return "text-[#4F8CFF] opacity-80";
@@ -80,7 +122,7 @@ function Terminal({ variant, onSuccess }) {
   }
 
   return (
-    <div className="bg-black border border-[#1F2933] rounded-xl overflow-hidden font-mono text-sm w-full max-w-2xl cursor-text"
+    <div className="bg-black border border-[#1F2933] rounded-xl overflow-hidden font-mono text-sm w-full cursor-text"
       onClick={() => inputRef.current?.focus()}>
       <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-[#1F2933] bg-[#080808]">
         <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
@@ -88,7 +130,7 @@ function Terminal({ variant, onSuccess }) {
         <div className="w-3 h-3 rounded-full bg-[#28C840]" />
         <span className="ml-3 text-[#9AA4AF] text-xs">ubuntu@prod-server — bash</span>
       </div>
-      <div className="p-4 space-y-0.5 max-h-72 overflow-y-auto">
+      <div className="p-4 space-y-0.5 max-h-80 overflow-y-auto">
         {lines.map((l, i) => <div key={i} className={`leading-5 ${lc(l)}`}>{l || "\u00A0"}</div>)}
         <div ref={bottomRef} />
       </div>
@@ -105,11 +147,27 @@ function Terminal({ variant, onSuccess }) {
       {showHint && !done && (
         <div className="px-4 pb-3">
           {!hintOpen
-            ? <button onClick={() => { setHintOpen(true); track("hint_open", { variant }); }}
+            ? <button onClick={() => { setHintOpen(true); track("hint_open", { variant, lab: scenarioKey }); }}
                 className="text-[#22C55E] text-xs opacity-50 hover:opacity-100 transition-opacity">hint available →</button>
-            : <div className="text-[#22C55E] text-xs opacity-70">try: sudo systemctl restart nginx</div>}
+            : <div className="text-[#22C55E] text-xs opacity-70">{sc.hint}</div>}
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Lab modal (free labs from grid) ──────────────────────────────────────────
+function LabModal({ scenarioKey, title, onSuccess, onClose }) {
+  const sc = SCENARIOS[scenarioKey];
+  return (
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+      <div className="w-full max-w-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <div className="font-mono text-[#9AA4AF] text-sm whitespace-pre-line leading-7">{sc.alert}</div>
+          <button onClick={onClose} className="text-[#374151] hover:text-[#9AA4AF] font-mono text-xs ml-6 shrink-0">esc ×</button>
+        </div>
+        <Terminal variant="lab" scenarioKey={scenarioKey} onSuccess={onSuccess} />
+      </div>
     </div>
   );
 }
@@ -179,9 +237,10 @@ function FAQItem({ q, a }) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function NewLandingPage({ onLogin, onRegister }) {
   const [variant]     = useState(() => getVariant());
-  const [heroStarted, setHeroStarted] = useState(variant === "B"); // B: immediate, C: after 1.5s
+  const [heroStarted, setHeroStarted] = useState(variant === "B");
   const [showSignup,  setShowSignup]  = useState(false);
   const [mobileMenu,  setMobileMenu]  = useState(false);
+  const [activeLab,   setActiveLab]   = useState(null); // { key, title }
 
   useEffect(() => {
     initPosthog();
@@ -192,7 +251,7 @@ export default function NewLandingPage({ onLogin, onRegister }) {
     }
   }, []);
 
-  function handleSuccess() { setShowSignup(true); }
+  function handleSuccess() { setActiveLab(null); setShowSignup(true); }
   function handleSkip()    { setShowSignup(false); }
 
   return (
@@ -245,7 +304,7 @@ export default function NewLandingPage({ onLogin, onRegister }) {
                 ? `Production alert:\n\nnginx is down.\nusers are failing.\n\nyou have access.\n\nfix it.`
                 : `nginx is down. fix it.`}
             </div>
-            <Terminal variant={variant} onSuccess={handleSuccess} />
+            <Terminal variant={variant} scenarioKey="nginx" onSuccess={handleSuccess} />
           </>
         )}
 
@@ -300,21 +359,25 @@ export default function NewLandingPage({ onLogin, onRegister }) {
         <p className="text-[#9AA4AF] text-center mb-12 max-w-lg mx-auto">Every lab is based on an incident that has taken down production systems at real companies.</p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { title: "Nginx down",        tag: "free", desc: "Service fails on boot. Port conflict. Fix it before users notice." },
-            { title: "Disk full",         tag: "free", desc: "Server hits 100%. Everything stops. Find what's eating space and clear it." },
-            { title: "Docker crash",      tag: "pro",  desc: "Container exits with code 1. No logs. Trace the failure." },
-            { title: "TLS broken",        tag: "pro",  desc: "Certificate expired. HTTPS down. Renew and restore in under 10 minutes." },
-            { title: "SSH refused",       tag: "free", desc: "Locked out of your own server. Get back in without a reboot." },
-            { title: "Apache 502",        tag: "pro",  desc: "Reverse proxy fails. Upstream unreachable. Find and fix the chain." },
-            { title: "RAID degraded",     tag: "pro",  desc: "One disk is dead. Array is running degraded. Replace and rebuild." },
-            { title: "LDAP auth failure", tag: "pro",  desc: "Users can't login. SSSD is broken. Fix the identity pipeline." },
+            { title: "Nginx down",        tag: "free", key: "nginx", desc: "Service fails on boot. Port conflict. Fix it before users notice." },
+            { title: "Disk full",         tag: "free", key: "disk",  desc: "Server hits 100%. Everything stops. Find what's eating space and clear it." },
+            { title: "Docker crash",      tag: "pro",  key: null,    desc: "Container exits with code 1. No logs. Trace the failure." },
+            { title: "TLS broken",        tag: "pro",  key: null,    desc: "Certificate expired. HTTPS down. Renew and restore in under 10 minutes." },
+            { title: "SSH refused",       tag: "free", key: "ssh",   desc: "Locked out of your own server. Get back in without a reboot." },
+            { title: "Apache 502",        tag: "pro",  key: null,    desc: "Reverse proxy fails. Upstream unreachable. Find and fix the chain." },
+            { title: "RAID degraded",     tag: "pro",  key: null,    desc: "One disk is dead. Array is running degraded. Replace and rebuild." },
+            { title: "LDAP auth failure", tag: "pro",  key: null,    desc: "Users can't login. SSSD is broken. Fix the identity pipeline." },
           ].map(lab => (
             <button
               key={lab.title}
-              onClick={() => lab.tag === "free"
-                ? onRegister?.()
-                : document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })
-              }
+              onClick={() => {
+                if (lab.tag === "free" && lab.key) {
+                  track("lab_open", { lab: lab.key });
+                  setActiveLab({ key: lab.key, title: lab.title });
+                } else {
+                  document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
               className="bg-[#11151A] border border-[#1F2933] rounded-xl p-5 text-left hover:border-[#374151] transition-colors group w-full"
             >
               <div className="flex items-center justify-between mb-3">
@@ -395,6 +458,16 @@ export default function NewLandingPage({ onLogin, onRegister }) {
           <span className="font-mono text-[#1F2933] text-[10px]">© 2025 WinLab</span>
         </div>
       </footer>
+
+      {/* ── LAB MODAL (free labs from grid) ── */}
+      {activeLab && !showSignup && (
+        <LabModal
+          scenarioKey={activeLab.key}
+          title={activeLab.title}
+          onSuccess={handleSuccess}
+          onClose={() => setActiveLab(null)}
+        />
+      )}
 
       {/* ── SIGNUP MODAL (overlay dopo fix) ── */}
       {showSignup && (
