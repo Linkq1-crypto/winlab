@@ -191,15 +191,12 @@ export default function Dashboard({ labs = [], progress = {}, plan, onOpenLab, o
   const quickLabs = labs.filter(l => !progress[l.id]?.completed).slice(0, 4);
 
   return (
-    <div id="wl-dash" style={{ fontFamily: T.mono, background: T.bg, minHeight: "100vh", color: T.white }}>
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: "40px 32px", display: "flex", flexDirection: "column", gap: 20 }}>
+    <div id="wl-dash" style={{ fontFamily: T.mono, color: T.white }}>
+      <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 28px", display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <div>
-            <div style={{ fontSize: 9, letterSpacing: ".25em", textTransform: "uppercase", color: T.orange, marginBottom: 6 }}>// SYSTEM_DASHBOARD</div>
-            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, letterSpacing: ".03em", color: "#fff", lineHeight: 1 }}>WIN<span style={{ color: T.orange }}>LAB</span></div>
-          </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+          <div style={{ fontSize: 9, letterSpacing: ".25em", textTransform: "uppercase", color: T.orange }}>// SYSTEM_DASHBOARD</div>
           <div style={{ display: "flex", gap: 10 }}>
             {hasPro && (
               <button className="wl-btn-ghost" onClick={onManageBilling}>Manage plan</button>

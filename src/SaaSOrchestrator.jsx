@@ -1119,10 +1119,11 @@ export default function SaaSOrchestrator() {
           {/* Footer links */}
           <div className="px-4 py-3 border-t border-[#1a1a1a] flex flex-wrap gap-x-4 gap-y-1">
             {[
-              { label: "About", action: () => { setAboutTab("about"); navigate("about"); } },
-              { label: "Blog", action: () => { setAboutTab("blog"); navigate("about"); } },
-              { label: "FAQ", action: () => { setAboutTab("faq"); navigate("about"); } },
-              { label: "Legal", action: () => navigate("legal") },
+              { label: "About",     action: () => { setAboutTab("about");     navigate("about"); } },
+              { label: "Blog",      action: () => { setAboutTab("blog");      navigate("about"); } },
+              { label: "Changelog", action: () => { setAboutTab("changelog"); navigate("about"); } },
+              { label: "FAQ",       action: () => { setAboutTab("faq");       navigate("about"); } },
+              { label: "Legal",     action: () => navigate("legal") },
             ].map(link => (
               <button
                 key={link.label}
