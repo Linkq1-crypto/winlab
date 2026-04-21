@@ -215,7 +215,7 @@ function LabItem({ lab, active, completed, locked, onClick }) {
 // ── Dashboard home ────────────────────────────────────────────────────────────
 const PLAN_RANK = { starter: 0, earlyAccess: 1, pro: 1, business: 2 };
 
-function Dashboard({ labs, progress, plan, onOpenLab, onUpgrade, onReferral, onManageBilling, achievements = [] }) {
+function _OldDashboard_unused({ labs, progress, plan, onOpenLab, onUpgrade, onReferral, onManageBilling, achievements = [] }) {
   const completedCount = Object.values(progress).filter(l => l.completed).length;
   const planRank = PLAN_RANK[plan] ?? 0;
   const hasBilling = plan === "pro" || plan === "business" || plan === "earlyAccess";
