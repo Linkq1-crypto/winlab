@@ -131,7 +131,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Something went wrong."); return; }
-      login(data.user);
+      login(data.user, data.token);
       onLoginSuccess?.(data.user);
     } catch {
       setError("Network error. Is the server running?");

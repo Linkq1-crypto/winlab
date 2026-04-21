@@ -193,7 +193,7 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
         email: email.toLowerCase(),
         passwordHash,
         name: name || null,
-        plan: JSON.stringify({ tier: "free" }),
+        plan: "starter",
       },
     });
 

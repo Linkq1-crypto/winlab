@@ -126,7 +126,18 @@ export function LabProvider({ children }) {
       .then(data => {
         if (data) {
           setUser({ id: data.id, email: data.email, name: data.name, role: data.role });
-          setPlan(data.plan || "starter");
+          // Normalize plan string
+          let planValue = data.plan || "starter";
+          try {
+            if (typeof planValue === "string" && planValue.startsWith("{")) {
+              planValue = JSON.parse(planValue).tier || JSON.parse(planValue).plan || "starter";
+            }
+          } catch { planValue = "starter"; }
+          if (!["starter", "pro", "business", "earlyAccess"].includes(planValue)) planValue = "starter";
+          setPlan(planValue);
+          // Restore token from localStorage if present (set on login)
+          const stored = localStorage.getItem("winlab_token");
+          if (stored) setToken(stored);
           setAiConsent(data.aiConsent || false);
           localStorage.setItem("winlab_logged_in", "1");
           if (data.unlockedBadges) {
@@ -311,16 +322,30 @@ export function LabProvider({ children }) {
     }
   }, [user]);
 
-  const login = useCallback((userData) => {
+  const login = useCallback((userData, tokenValue) => {
     setUser(userData);
-    setPlan(userData.plan || "starter");
+    // Normalize plan — DB may store raw JSON string e.g. '{"tier":"free"}'
+    let planValue = userData?.plan || "starter";
+    try {
+      if (typeof planValue === "string" && planValue.startsWith("{")) {
+        planValue = JSON.parse(planValue).tier || JSON.parse(planValue).plan || "starter";
+      }
+    } catch { planValue = "starter"; }
+    // Map legacy/unknown values to known tiers
+    if (!["starter", "pro", "business", "earlyAccess"].includes(planValue)) planValue = "starter";
+    setPlan(planValue);
+    if (tokenValue) {
+      setToken(tokenValue);
+      localStorage.setItem("winlab_token", tokenValue);
+    }
     localStorage.setItem("winlab_logged_in", "1");
   }, []);
 
   const logout = useCallback(() => {
-    setUser(null); setPlan("starter");
+    setUser(null); setPlan("starter"); setToken(null);
     setAiConsent(false); setLastActiveLab(null); setLastLabState(null); setActiveLabState({});
     localStorage.removeItem("winlab_logged_in");
+    localStorage.removeItem("winlab_token");
     localStorage.removeItem("winlab_progress");
     localStorage.removeItem("winlab_plan");
     setProgress({});
