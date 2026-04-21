@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { getVariant } from "./ABTestOnboarding";
 import CookieBanner from "./CookieBanner";
+import { initPosthog } from "./services/posthog";
 
 function track(event, props = {}) {
   try { if (window.posthog) window.posthog.capture(event, props); } catch {}
@@ -183,6 +184,7 @@ export default function NewLandingPage({ onLogin, onRegister }) {
   const [mobileMenu,  setMobileMenu]  = useState(false);
 
   useEffect(() => {
+    initPosthog();
     track("view_landing", { variant });
     if (variant === "C") {
       const t = setTimeout(() => setHeroStarted(true), 1500);
