@@ -1092,6 +1092,7 @@ app.post("/api/billing/checkout", authLimiter, async (req, res) => {
 
     const sessionParams = {
       mode: "subscription",
+      payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${process.env.APP_URL || "https://winlab.cloud"}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:  `${process.env.APP_URL || "https://winlab.cloud"}/?checkout=cancel`,
