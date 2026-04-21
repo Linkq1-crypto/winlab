@@ -197,32 +197,7 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
       },
     });
 
-    // 🎟 SEAT
-    let seatAssigned = null;
-
-    if (prisma.earlyAccessSeat) {
-      try {
-        await prisma.$transaction(async (tx) => {
-          const seat = await tx.earlyAccessSeat.findFirst({
-            where: { claimed: false }
-          });
-
-          if (!seat) return;
-
-          await tx.earlyAccessSeat.update({
-            where: { id: seat.id },
-            data: {
-              claimed: true,
-              email: user.email
-            }
-          });
-
-          seatAssigned = seat.id;
-        });
-      } catch (_seatErr) {
-        // EarlyAccessSeat table not yet migrated — skip silently
-      }
-    }
+    const seatAssigned = null;
 
     // 🔐 TOKEN (senza ...)
     const token = jwt.sign(
