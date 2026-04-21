@@ -34,6 +34,7 @@ import SocialSidebar from "./SocialSidebar";
 import { useSocialStorage } from "./hooks/useSocialStorage";
 import FakeTerminal from "./FakeTerminal";
 import ResetPasswordPage from "./ResetPasswordPage";
+import DeceptionDashboard from "./DeceptionDashboard";
 
 // ── Lazy simulators (one chunk per lab) ───────────────────────────────────────
 // Defined at MODULE level so React always gets the same stable reference.
