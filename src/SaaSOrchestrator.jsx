@@ -33,6 +33,7 @@ import MspDashboard from "./components/MspDashboard";
 import SocialSidebar from "./SocialSidebar";
 import { useSocialStorage } from "./hooks/useSocialStorage";
 import FakeTerminal from "./FakeTerminal";
+import ResetPasswordPage from "./ResetPasswordPage";
 
 // ── Lazy simulators (one chunk per lab) ───────────────────────────────────────
 // Defined at MODULE level so React always gets the same stable reference.
@@ -756,6 +757,19 @@ export default function SaaSOrchestrator() {
   }
 
   // ── Full-page views (no app shell) ────────────────────────────────────────
+
+  // Password reset: /reset-password?token=xxx
+  if (typeof window !== "undefined" && window.location.pathname === "/reset-password") {
+    return (
+      <ResetPasswordPage
+        onDone={() => {
+          window.history.replaceState({}, "", "/");
+          setAuthMode("login");
+          setView("auth");
+        }}
+      />
+    );
+  }
 
   // Public certificate page: /cert/:certId
   if (publicCertId) {

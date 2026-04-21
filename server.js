@@ -298,13 +298,11 @@ app.post("/api/auth/forgot-password", authLimiter, async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: "Email required" });
     const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    // Always return 200 — don't reveal whether email exists
     if (user) {
-      const token = crypto.randomBytes(32).toString("hex");
-      const hash  = crypto.createHash("sha256").update(token).digest("hex");
-      await prisma.passwordReset.create({
-        data: { userId: user.id, token: hash, expiresAt: new Date(Date.now() + 15 * 60_000) },
+      await sendPasswordResetEmail(user).catch(err => {
+        console.error("sendPasswordResetEmail error:", err);
       });
-      await sendPasswordResetEmail(user.email, token).catch(() => {});
     }
     res.json({ ok: true, message: "If that email exists, a reset link has been sent." });
   } catch (err) {

@@ -1,6 +1,7 @@
 // AuthPage.jsx — Jobs-Dark redesign · matches LaunchLanding aesthetic
 import { useState, useEffect } from "react";
 import { useLab } from "./LabContext";
+import { t } from "./theme";
 
 function evaluatePassword(pw) {
   const score = [
@@ -102,7 +103,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
     }
   }
 
-  const inputClass = "w-full bg-black border border-[#222] px-4 py-3 font-mono text-sm text-gray-200 placeholder-gray-700 focus:outline-none focus:border-[#444] transition-colors duration-200";
+  const inputClass = t.input;
 
   // ── Forgot password view ─────────────────────────────────────────────────────
   if (forgotMode) {
@@ -111,7 +112,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
         <div className="w-full max-w-sm">
           <button
             onClick={() => { setForgotMode(false); setForgotSent(false); setError(""); }}
-            className="font-mono text-[10px] tracking-widest text-gray-600 hover:text-gray-300 uppercase mb-12 transition-colors"
+            className={`${t.btnGhost} mb-12`}
           >
             ← Back
           </button>
@@ -128,10 +129,10 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
           ) : (
             <form onSubmit={handleForgot} className="space-y-6">
               {error && (
-                <p className="font-mono text-xs text-[#FF3B30] border-l-2 border-[#FF3B30] pl-4">{error}</p>
+                <p className={t.error}>{error}</p>
               )}
               <div>
-                <label className="font-mono text-[10px] tracking-widest text-gray-600 uppercase block mb-2">Email</label>
+                <label className={t.label}>Email</label>
                 <input
                   type="email"
                   value={forgotEmail}
@@ -144,7 +145,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full font-mono text-xs tracking-widest uppercase text-black bg-white py-3 hover:bg-gray-200 transition-colors duration-200 disabled:opacity-40"
+                className={t.btnPrimary}
               >
                 {loading ? "// Sending..." : "[ Send Reset Link ]"}
               </button>
@@ -162,7 +163,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
         {onBack && (
           <button
             onClick={onBack}
-            className="font-mono text-[10px] tracking-widest text-gray-600 hover:text-gray-300 uppercase mb-12 transition-colors"
+            className={`${t.btnGhost} mb-12`}
           >
             ← Back
           </button>
@@ -188,7 +189,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
         </div>
 
         {error && (
-          <p className="font-mono text-xs text-[#FF3B30] border-l-2 border-[#FF3B30] pl-4 mb-6">{error}</p>
+          <p className={`${t.error} mb-6`}>{error}</p>
         )}
 
         {/* Microsoft SSO */}
@@ -215,7 +216,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === "register" && (
             <div>
-              <label className="font-mono text-[10px] tracking-widest text-gray-600 uppercase block mb-2">Name</label>
+              <label className={t.label}>Name</label>
               <input
                 type="text"
                 value={name}
@@ -229,7 +230,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
           )}
 
           <div>
-            <label className="font-mono text-[10px] tracking-widest text-gray-600 uppercase block mb-2">Email</label>
+            <label className={t.label}>Email</label>
             <input
               type="email"
               value={email}
@@ -271,7 +272,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
             <button
               type="submit"
               disabled={loading}
-              className="w-full font-mono text-xs tracking-widest uppercase text-black bg-white py-3 hover:bg-gray-200 transition-colors duration-200 disabled:opacity-40"
+              className={t.btnPrimary}
             >
               {loading
                 ? "// Please wait..."
