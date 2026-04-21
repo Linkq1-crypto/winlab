@@ -1,4 +1,4 @@
-// AuthPage.jsx — Jobs-Dark · leggibile · funzionale
+// AuthPage.jsx — alto contrasto · Jobs-Dark · funzionale
 import { useState, useEffect } from "react";
 import { useLab } from "./LabContext";
 import { t } from "./theme";
@@ -13,8 +13,8 @@ function evaluatePassword(pw) {
     /[^A-Za-z0-9]/.test(pw),
   ].filter(Boolean).length;
   const labels = ["", "Very Weak", "Weak", "Fair", "Good", "Strong"];
-  const colors = ["", "bg-[#FF3B30]", "bg-orange-500", "bg-yellow-500", "bg-blue-400", "bg-green-500"];
-  return { score, label: labels[score] || "Very Weak", color: colors[score] || "bg-[#FF3B30]" };
+  const colors = ["", "bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-blue-400", "bg-green-500"];
+  return { score, label: labels[score] || "Very Weak", color: colors[score] || "bg-red-500" };
 }
 
 function StrengthMeter({ password }) {
@@ -24,34 +24,33 @@ function StrengthMeter({ password }) {
     <div className="mt-2 space-y-1">
       <div className="flex gap-1">
         {[1,2,3,4,5].map(i => (
-          <div key={i} className={`h-px flex-1 transition-colors ${i <= score ? color : "bg-[#333]"}`} />
+          <div key={i} className={`h-1 flex-1 rounded-sm transition-colors ${i <= score ? color : "bg-[#333]"}`} />
         ))}
       </div>
-      <p className="font-mono text-[10px] text-gray-500 tracking-widest uppercase">{label}</p>
+      <p className="text-[11px] text-gray-400 tracking-wider uppercase">{label}</p>
     </div>
   );
 }
 
-// ── Eye icon ──────────────────────────────────────────────────────────────────
+// ── Eye toggle ────────────────────────────────────────────────────────────────
 function EyeIcon({ open }) {
   return open ? (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
       <circle cx="12" cy="12" r="3"/>
     </svg>
   ) : (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
       <line x1="1" y1="1" x2="23" y2="23"/>
     </svg>
   );
 }
 
-// ── Shared input + password field ─────────────────────────────────────────────
-const field = "w-full bg-[#0a0a0a] border border-[#333] px-4 py-3 font-mono text-sm text-white placeholder-gray-500 focus:outline-none focus:border-gray-400 transition-colors duration-200";
+// ── Input styles — chiaramente visibili su sfondo nero ────────────────────────
+const INPUT = "w-full bg-[#1a1a1a] border border-[#444] rounded px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-gray-300 transition-colors";
 
-function PasswordField({ value, onChange, placeholder = "••••••••", required = true, minLength = 8 }) {
+function PasswordField({ value, onChange, placeholder = "min 8 caratteri", minLength = 8 }) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
@@ -60,17 +59,17 @@ function PasswordField({ value, onChange, placeholder = "•••••••�
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        required={required}
+        required
         minLength={minLength}
         maxLength={128}
-        className={`${field} pr-12`}
+        className={`${INPUT} pr-12`}
       />
       <button
         type="button"
-        onClick={() => setShow(s => !s)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-200 transition-colors p-1"
         tabIndex={-1}
-        aria-label={show ? "Hide password" : "Show password"}
+        onClick={() => setShow(s => !s)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-200 transition-colors"
+        aria-label={show ? "Nascondi password" : "Mostra password"}
       >
         <EyeIcon open={show} />
       </button>
@@ -78,12 +77,11 @@ function PasswordField({ value, onChange, placeholder = "•••••••�
   );
 }
 
-// ── Label ─────────────────────────────────────────────────────────────────────
 function Label({ children }) {
-  return <label className="font-mono text-[11px] tracking-widest text-gray-400 uppercase block mb-2">{children}</label>;
+  return <label className="block text-sm text-gray-300 mb-1.5">{children}</label>;
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Componente principale ─────────────────────────────────────────────────────
 export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login" }) {
   const { login } = useLab();
   const [mode, setMode]         = useState(initialMode);
@@ -92,6 +90,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
   const [password, setPassword] = useState("");
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
+  const [debugInfo, setDebugInfo] = useState("");
 
   const [forgotMode, setForgotMode]   = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -119,22 +118,40 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setDebugInfo("");
     setLoading(true);
     try {
       const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
       const body     = mode === "login" ? { email, password } : { email, name, password };
-      const res      = await fetch(endpoint, {
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error || "Something went wrong."); return; }
+
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); }
+      catch { setError(`Server error (non-JSON): ${text.slice(0, 120)}`); return; }
+
+      if (!res.ok) {
+        setError(data.error || data.detail || `Error ${res.status}`);
+        setDebugInfo(JSON.stringify(data));
+        return;
+      }
+
+      if (!data.user) {
+        setError("Server returned success but no user data.");
+        setDebugInfo(JSON.stringify(data));
+        return;
+      }
+
       login(data.user, data.token);
       onLoginSuccess?.(data.user);
-    } catch {
-      setError("Network error. Is the server running?");
+    } catch (err) {
+      setError(`Network error: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -153,82 +170,52 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
       });
       if (res.ok) setForgotSent(true);
       else { const d = await res.json(); setError(d.error || "Failed to send reset email."); }
-    } catch {
-      setError("Network error.");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("Network error."); }
+    finally { setLoading(false); }
   }
 
   // ── Forgot password screen ─────────────────────────────────────────────────
   if (forgotMode) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
-        <div className="w-full max-w-sm">
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6">
+        <div className="w-full max-w-sm bg-[#111] border border-[#333] rounded-xl p-8">
           <button
             onClick={() => { setForgotMode(false); setForgotSent(false); setError(""); }}
-            className="font-mono text-[11px] tracking-widest text-gray-500 hover:text-white uppercase transition-colors mb-10"
+            className="text-sm text-gray-400 hover:text-white transition-colors mb-8"
           >
             ← Back
           </button>
 
-          {/* Terminal block */}
-          <div className="bg-[#050505] border border-[#2a2a2a] p-5 font-mono mb-8">
-            <div className="text-[10px] text-gray-600 mb-4 tracking-widest">winlab@auth-server:~$</div>
-            <div className="space-y-1.5 text-xs">
-              <div>
-                <span className="text-gray-600">$ </span>
-                <span className="text-gray-200">./recovery --protocol=EMAIL_TOKEN</span>
-              </div>
-              <div className="text-green-500">[ OK ] Secure channel established</div>
-              <div className="text-green-500">[ OK ] Token TTL: 15 minutes · Single use</div>
-              <div className={`transition-colors ${forgotSent ? "text-green-500" : loading ? "text-yellow-400 animate-pulse" : "text-gray-500"}`}>
-                {forgotSent
-                  ? "[ OK ] Dispatch complete — check your inbox"
-                  : loading
-                    ? "[ .. ] Generating token, dispatching link..."
-                    : "[ .. ] Awaiting target identity..."}
+          <div className="bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg p-4 font-mono mb-6">
+            <div className="text-[10px] text-gray-600 mb-3">winlab@auth:~$</div>
+            <div className="space-y-1 text-xs">
+              <div><span className="text-gray-500">$ </span><span className="text-gray-200">./recovery --email-token</span></div>
+              <div className="text-green-400">[ OK ] Channel established · TTL: 15min</div>
+              <div className={forgotSent ? "text-green-400" : loading ? "text-yellow-400 animate-pulse" : "text-gray-500"}>
+                {forgotSent ? "[ OK ] Link dispatched → check inbox" : loading ? "[ .. ] Dispatching..." : "[ .. ] Awaiting email..."}
               </div>
             </div>
           </div>
 
           {forgotSent ? (
-            <div className="font-mono space-y-4">
-              <p className="text-sm text-gray-200 leading-relaxed">
-                Reset link sent to <span className="text-white font-semibold">{forgotEmail}</span>.
-              </p>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                Check your inbox (and spam). Click the link within 15 minutes —
-                the token self-destructs after use.
-              </p>
-              <button
-                onClick={() => { setForgotMode(false); setForgotSent(false); setError(""); }}
-                className={`${t.btnPrimary} mt-2`}
-              >
-                [ Back to Login ]
+            <div className="space-y-4">
+              <p className="text-sm text-gray-200">Link inviato a <span className="text-white font-semibold">{forgotEmail}</span>.</p>
+              <p className="text-xs text-gray-500">Controlla inbox (e spam). Link valido 15 minuti, usa singola.</p>
+              <button onClick={() => { setForgotMode(false); setForgotSent(false); }} className="w-full bg-white text-black text-sm font-semibold py-2.5 rounded hover:bg-gray-100 transition-colors mt-2">
+                Torna al Login
               </button>
             </div>
           ) : (
-            <form onSubmit={handleForgot} className="space-y-5">
-              {error && <p className={t.error}>{error}</p>}
+            <form onSubmit={handleForgot} className="space-y-4">
+              {error && <div className="bg-red-900/30 border border-red-700 text-red-300 text-sm px-3 py-2 rounded">{error}</div>}
               <div>
-                <Label>Target Email</Label>
-                <input
-                  type="email"
-                  value={forgotEmail}
-                  onChange={e => setForgotEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  required
-                  autoFocus
-                  className={field}
-                />
+                <Label>Email</Label>
+                <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="you@company.com" required autoFocus className={INPUT} />
               </div>
-              <button type="submit" disabled={loading} className={t.btnPrimary}>
-                {loading ? "// Dispatching..." : "[ Dispatch Recovery Token ]"}
+              <button type="submit" disabled={loading} className="w-full bg-white text-black text-sm font-semibold py-2.5 rounded hover:bg-gray-100 disabled:opacity-50 transition-colors">
+                {loading ? "Invio in corso..." : "Invia Link di Reset"}
               </button>
-              <p className="font-mono text-[10px] text-gray-600 text-center tracking-widest uppercase">
-                Token expires in 15 min · Single use
-              </p>
+              <p className="text-xs text-gray-600 text-center">Token scade in 15 min · Uso singolo</p>
             </form>
           )}
         </div>
@@ -238,32 +225,27 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
 
   // ── Main auth screen ───────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
 
         {onBack && (
-          <button
-            onClick={onBack}
-            className="font-mono text-[11px] tracking-widest text-gray-500 hover:text-white uppercase transition-colors mb-12"
-          >
+          <button onClick={onBack} className="text-sm text-gray-400 hover:text-white transition-colors mb-8 block">
             ← Back
           </button>
         )}
 
-        <p className="font-mono text-[10px] tracking-[0.4em] text-gray-500 uppercase mb-8">
-          // WINLAB — ACCESS_CONTROL
+        <p className="text-[11px] tracking-[0.3em] text-gray-500 uppercase mb-6">
+          WINLAB — ACCESS CONTROL
         </p>
 
-        {/* Mode toggle */}
-        <div className="flex font-mono text-xs tracking-widest uppercase mb-10 border-b border-[#222]">
+        {/* Tab switcher */}
+        <div className="flex border-b border-[#333] mb-8">
           {["login", "register"].map(m => (
             <button
               key={m}
-              onClick={() => { setMode(m); setError(""); }}
-              className={`pb-3 mr-8 transition-colors duration-200 ${
-                mode === m
-                  ? "text-white border-b-2 border-white -mb-px"
-                  : "text-gray-500 hover:text-gray-300"
+              onClick={() => { setMode(m); setError(""); setDebugInfo(""); }}
+              className={`pb-3 mr-8 text-sm font-medium transition-colors ${
+                mode === m ? "text-white border-b-2 border-white -mb-px" : "text-gray-500 hover:text-gray-300"
               }`}
             >
               {m === "login" ? "Sign In" : "Register"}
@@ -271,12 +253,18 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
           ))}
         </div>
 
-        {error && <p className={`${t.error} mb-6`}>{error}</p>}
+        {/* Error */}
+        {error && (
+          <div className="bg-red-900/40 border border-red-600 text-red-300 text-sm px-4 py-3 rounded mb-5">
+            {error}
+            {debugInfo && <pre className="text-[10px] text-red-400 mt-1 overflow-auto">{debugInfo}</pre>}
+          </div>
+        )}
 
         {/* Microsoft SSO */}
         <a
           href="/api/auth/microsoft"
-          className="flex items-center justify-center gap-3 w-full py-3 border border-[#333] font-mono text-xs tracking-widest uppercase text-gray-400 hover:border-gray-400 hover:text-white transition-colors duration-200 mb-6"
+          className="flex items-center justify-center gap-3 w-full py-2.5 border border-[#444] rounded text-sm text-gray-300 hover:border-gray-300 hover:text-white transition-colors mb-5"
         >
           <svg width="14" height="14" viewBox="0 0 21 21" fill="none">
             <rect x="1"  y="1"  width="9" height="9" fill="#F25022"/>
@@ -287,14 +275,15 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
           Continue with Microsoft
         </a>
 
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex-1 h-px bg-[#222]" />
-          <span className="font-mono text-[10px] text-gray-600 tracking-widest uppercase">or</span>
-          <div className="flex-1 h-px bg-[#222]" />
+        <div className="flex items-center gap-3 mb-5">
+          <div className="flex-1 h-px bg-[#333]" />
+          <span className="text-xs text-gray-600">or</span>
+          <div className="flex-1 h-px bg-[#333]" />
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+
           {mode === "register" && (
             <div>
               <Label>Name</Label>
@@ -302,10 +291,10 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Your name"
+                placeholder="Il tuo nome"
                 required
                 maxLength={80}
-                className={field}
+                className={INPUT}
               />
             </div>
           )}
@@ -319,67 +308,57 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
               placeholder="you@company.com"
               required
               maxLength={200}
-              className={field}
+              autoComplete="email"
+              className={INPUT}
             />
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-mono text-[11px] tracking-widest text-gray-400 uppercase">Password</span>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm text-gray-300">Password</span>
               {mode === "login" && (
                 <button
                   type="button"
                   onClick={() => { setForgotMode(true); setForgotEmail(email); setError(""); }}
-                  className="font-mono text-[11px] tracking-widest text-gray-400 hover:text-white uppercase transition-colors underline underline-offset-2"
+                  className="text-sm text-gray-400 hover:text-white underline underline-offset-2 transition-colors"
                 >
                   Forgot password?
                 </button>
               )}
             </div>
-            <PasswordField
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
+            <PasswordField value={password} onChange={e => setPassword(e.target.value)} />
             {mode === "register" && <StrengthMeter password={password} />}
           </div>
 
-          <div className="pt-2">
-            <button type="submit" disabled={loading} className={t.btnPrimary}>
-              {loading
-                ? "// Please wait..."
-                : mode === "login"
-                  ? "[ Sign In → ]"
-                  : "[ Create Account → ]"}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-white text-black text-sm font-semibold py-3 rounded hover:bg-gray-100 disabled:opacity-50 transition-colors mt-2"
+          >
+            {loading
+              ? "Please wait..."
+              : mode === "login" ? "Sign In →" : "Create Account →"}
+          </button>
         </form>
 
-        {/* Toggle mode */}
-        <p className="font-mono text-[11px] tracking-widest text-gray-500 text-center mt-8 uppercase">
+        {/* Toggle */}
+        <p className="text-sm text-gray-500 text-center mt-6">
           {mode === "login" ? (
-            <>
-              No account?{" "}
-              <button
-                onClick={() => { setMode("register"); setError(""); }}
-                className="text-gray-300 hover:text-white underline underline-offset-2 transition-colors"
-              >
+            <>No account?{" "}
+              <button onClick={() => { setMode("register"); setError(""); }} className="text-gray-300 hover:text-white underline underline-offset-2 transition-colors">
                 Register free
               </button>
             </>
           ) : (
-            <>
-              Have an account?{" "}
-              <button
-                onClick={() => { setMode("login"); setError(""); }}
-                className="text-gray-300 hover:text-white underline underline-offset-2 transition-colors"
-              >
+            <>Have an account?{" "}
+              <button onClick={() => { setMode("login"); setError(""); }} className="text-gray-300 hover:text-white underline underline-offset-2 transition-colors">
                 Sign in
               </button>
             </>
           )}
         </p>
 
-        <p className="font-mono text-[10px] text-gray-600 text-center mt-3 tracking-widest uppercase">
+        <p className="text-xs text-gray-600 text-center mt-3">
           Free plan · No credit card · Cancel anytime
         </p>
 
