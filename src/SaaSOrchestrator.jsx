@@ -886,16 +886,6 @@ export default function SaaSOrchestrator() {
   if (view === "landing") {
     return (
       <NewLandingPage
-        onStartLab={() => navigate("onboarding")}
-        onLogin={() => { setAuthMode("login"); navigate("auth"); }}
-        onRegister={() => { setAuthMode("register"); navigate("auth"); }}
-      />
-    );
-  }
-
-  if (view === "onboarding") {
-    return (
-      <ABTestOnboarding
         onLogin={() => { setAuthMode("login"); navigate("auth"); }}
         onRegister={() => { setAuthMode("register"); navigate("auth"); }}
       />
