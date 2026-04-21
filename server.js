@@ -1077,6 +1077,52 @@ app.post("/api/stripe/subscribe", requireAuth, paymentLimiter, async (req, res) 
   }
 });
 
+// POST /api/billing/checkout — called by PricingTable with { plan: "early"|"pro"|"business" }
+app.post("/api/billing/checkout", authLimiter, async (req, res) => {
+  try {
+    if (!stripe) return res.status(503).json({ error: "Payments not configured" });
+    const { plan } = req.body;
+    const priceMap = {
+      early:    process.env.STRIPE_PRICE_EARLY    || process.env.STRIPE_EARLY_PRICE_ID,
+      pro:      process.env.STRIPE_PRICE_PRO      || process.env.STRIPE_PRO_PRICE_ID,
+      business: process.env.STRIPE_PRICE_BUSINESS || process.env.STRIPE_BUSINESS_PRICE_ID,
+    };
+    const priceId = priceMap[plan];
+    if (!priceId) return res.status(400).json({ error: `No Stripe price configured for plan: ${plan}` });
+
+    const sessionParams = {
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${process.env.APP_URL || "https://winlab.cloud"}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url:  `${process.env.APP_URL || "https://winlab.cloud"}/?checkout=cancel`,
+    };
+
+    // Attach customer if user is logged in
+    const token = req.cookies?.winlab_token || req.headers.authorization?.replace("Bearer ", "");
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+        if (user) {
+          let customerId = user.stripeCustomerId;
+          if (!customerId) {
+            const customer = await stripe.customers.create({ email: user.email, metadata: { userId: user.id } });
+            customerId = customer.id;
+            await prisma.user.update({ where: { id: user.id }, data: { stripeCustomerId: customerId } });
+          }
+          sessionParams.customer = customerId;
+        }
+      } catch {}
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error("POST /api/billing/checkout error:", err);
+    res.status(500).json({ error: "Failed to create checkout session" });
+  }
+});
+
 // POST /api/checkout (alias for early access)
 app.post("/api/checkout", authLimiter, async (req, res) => {
   try {
