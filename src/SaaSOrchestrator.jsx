@@ -946,18 +946,12 @@ export default function SaaSOrchestrator() {
       <AuthPage
         onBack={() => navigate("landing")}
         initialMode={authMode}
-        onLoginSuccess={(tkn, userData) => {
+        onLoginSuccess={() => {
           if (pendingAction) {
             pendingAction();
             setPendingAction(null);
           }
-          // Show onboarding for new users (no completed labs)
-          if (completedCount === 0) {
-            setShowOnboarding(true);
-            navigate("dashboard");
-          } else {
-            navigate("dashboard");
-          }
+          navigate("dashboard");
         }}
       />
     );

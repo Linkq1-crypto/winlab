@@ -156,10 +156,11 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
         return;
       }
 
-      if (mode === "register") {
-        setSuccess(`Benvenuto, ${data.user.name || data.user.email}! Accesso in corso…`);
-        await new Promise(r => setTimeout(r, 2000));
-      }
+      const welcomeMsg = mode === "register"
+        ? `Benvenuto, ${data.user.name || data.user.email}! Account creato con successo.`
+        : `Accesso effettuato. Caricamento dashboard…`;
+      setSuccess(welcomeMsg);
+      await new Promise(r => setTimeout(r, mode === "register" ? 1500 : 800));
 
       login(data.user, data.token);
       onLoginSuccess?.(data.user);
