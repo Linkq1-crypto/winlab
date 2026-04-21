@@ -149,15 +149,15 @@ function LockedLab({ lab, onUpgrade }) {
 function ProgressBar({ count }) {
   const pct = Math.round((count / 10) * 100);
   return (
-    <div className="flex items-center gap-3 px-6 py-2 border-b border-slate-800/60 shrink-0">
-      <span className="text-[11px] text-slate-600 w-16 shrink-0">Progress</span>
-      <div className="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
+    <div className="flex items-center gap-4 px-4 py-2 border-b border-[#1a1a1a] shrink-0">
+      <span className="font-mono text-[9px] text-gray-700 uppercase tracking-widest shrink-0">Progress</span>
+      <div className="flex-1 h-px bg-[#1a1a1a] relative overflow-hidden">
         <div
-          className="h-full bg-emerald-500 rounded-full transition-all duration-700 animate-progress-fill"
+          className="absolute inset-y-0 left-0 bg-gray-500 transition-all duration-700"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-[11px] text-slate-500 w-10 text-right shrink-0">{pct}%</span>
+      <span className="font-mono text-[9px] text-gray-700 shrink-0">{pct}%</span>
     </div>
   );
 }
@@ -169,10 +169,10 @@ function NavItem({ icon, label, active, onClick }) {
       onClick={onClick}
       aria-label={`Navigate to ${label}`}
       aria-current={active ? "page" : undefined}
-      className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-all text-left min-h-[44px]
-        ${active ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800/60"}`}
+      className={`w-full flex items-center gap-2 px-3 py-2.5 text-left min-h-[40px] font-mono text-[10px] tracking-widest uppercase transition-colors duration-150
+        ${active ? "text-white bg-[#111]" : "text-gray-600 hover:text-gray-300 hover:bg-[#0d0d0d]"}`}
     >
-      <span className="text-base leading-none shrink-0" aria-hidden="true">{icon}</span>
+      <span className="shrink-0 text-[8px] text-gray-700">{active ? "▸" : " "}</span>
       <span>{label}</span>
     </button>
   );
@@ -185,24 +185,24 @@ function LabItem({ lab, active, completed, locked, onClick }) {
       onClick={onClick}
       aria-label={`${lab.name} lab - ${lab.tier}${locked ? " (locked)" : ""}${completed ? " (completed)" : ""}`}
       aria-current={active ? "page" : undefined}
-      className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all min-h-[48px]
-        ${active   ? "bg-blue-600/20 border border-blue-600/30 text-white"
-                   : "text-slate-400 hover:text-white hover:bg-slate-800/60"}
-        ${locked   ? "opacity-50" : ""}`}
+      className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors duration-150 min-h-[44px]
+        ${active   ? "bg-[#111] border-l border-white text-white"
+                   : "text-gray-600 hover:text-gray-300 hover:bg-[#0d0d0d] border-l border-transparent"}
+        ${locked   ? "opacity-40" : ""}`}
     >
-      <span className="text-lg leading-none shrink-0" aria-hidden="true">{lab.icon}</span>
+      <span className="text-sm leading-none shrink-0" aria-hidden="true">{lab.icon}</span>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium truncate">{lab.name}</p>
-        <p className={`text-[10px] mt-0.5 ${
-          lab.tier === "starter" ? "text-slate-600"
-          : lab.tier === "pro"   ? "text-blue-500/70"
-                                  : "text-purple-500/70"
+        <p className="font-mono text-[10px] tracking-wide truncate">{lab.name}</p>
+        <p className={`font-mono text-[8px] mt-0.5 tracking-widest uppercase ${
+          lab.tier === "starter" ? "text-gray-700"
+          : lab.tier === "pro"   ? "text-gray-600"
+                                  : "text-gray-600"
         }`}>
           {lab.tier === "starter" ? "Free" : lab.tier === "pro" ? "Pro" : "Business"}
+          {locked ? " · locked" : ""}
         </p>
       </div>
-      {completed && <span className="text-green-500 text-xs shrink-0" aria-label="Completed">✓</span>}
-      {locked    && <span className="text-slate-700 text-xs shrink-0" aria-label="Locked">🔒</span>}
+      {completed && <span className="font-mono text-[10px] text-gray-500 shrink-0" aria-label="Completed">✓</span>}
     </button>
   );
 }
@@ -217,43 +217,51 @@ function Dashboard({ labs, progress, plan, onOpenLab, onUpgrade, onReferral, onM
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <div className="flex items-center gap-2">
+      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-700 uppercase mb-6">
+        // SYSTEM_DASHBOARD
+      </p>
+
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <h1 className="font-mono text-xl text-white tracking-tight">Dashboard</h1>
+          <p className="font-mono text-xs text-gray-600 mt-1">Il tuo percorso sysadmin.</p>
+        </div>
+        <div className="flex items-center gap-3">
           {hasBilling && (
             <button
               onClick={onManageBilling}
-              className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all"
+              className="font-mono text-[10px] tracking-widest uppercase text-gray-600 hover:text-gray-300 border border-[#222] hover:border-[#444] px-3 py-2 transition-colors"
             >
-              Gestisci abbonamento
+              [ Manage Plan ]
             </button>
           )}
           {achievements.length > 0 && (
-            <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400">
-              🏅 {achievements.length} badge{achievements.length !== 1 ? "s" : ""}
+            <span className="font-mono text-[9px] tracking-widest uppercase text-gray-600 border border-[#222] px-2 py-1">
+              {achievements.length} badge{achievements.length !== 1 ? "s" : ""}
             </span>
           )}
         </div>
       </div>
-      <p className="text-slate-500 text-sm mb-8">Il tuo percorso sysadmin.</p>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-        {[
-          { label: "Labs completati", value: `${completedCount}/${labs.length}`, accent: "text-blue-400" },
-          { label: "Piano attuale",   value: plan === "earlyAccess" ? "Early Access" : plan, accent: plan === "pro" || plan === "earlyAccess" ? "text-blue-400" : plan === "business" ? "text-purple-400" : "text-slate-300" },
-          { label: "Stato",           value: completedCount >= 10 ? "Certificato 🏆" : "In corso", accent: completedCount >= 10 ? "text-green-400" : "text-slate-400" },
-        ].map(s => (
-          <div key={s.label} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-            <p className="text-xs text-slate-600 mb-1">{s.label}</p>
-            <p className={`text-xl font-bold capitalize ${s.accent}`}>{s.value}</p>
-          </div>
-        ))}
+      <div className="border border-[#222] font-mono mb-10">
+        <div className="grid grid-cols-3 border-b border-[#1a1a1a] px-5 py-2 text-[9px] text-gray-700 uppercase tracking-widest">
+          <span>Labs</span>
+          <span>Plan</span>
+          <span>Status</span>
+        </div>
+        <div className="grid grid-cols-3 px-5 py-4">
+          <span className="text-white text-sm">{completedCount}<span className="text-gray-600">/{labs.length}</span></span>
+          <span className="text-white text-sm capitalize">{plan === "earlyAccess" ? "Early Access" : plan}</span>
+          <span className={`text-sm ${completedCount >= 10 ? "text-green-500" : "text-gray-500"}`}>
+            {completedCount >= 10 ? "Certified" : "In progress"}
+          </span>
+        </div>
       </div>
 
       {/* Career Paths */}
-      <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Percorsi di carriera</h2>
-      <div className="space-y-3 mb-10">
+      <p className="font-mono text-[9px] text-gray-700 uppercase tracking-[0.4em] mb-4">// Career Paths</p>
+      <div className="space-y-2 mb-10">
         {CAREER_PATHS.map(path => {
           const pathRank = PLAN_RANK[path.requiredPlan] ?? 0;
           const canAccess = planRank >= pathRank;
@@ -267,78 +275,62 @@ function Dashboard({ labs, progress, plan, onOpenLab, onUpgrade, onReferral, onM
           return (
             <div
               key={path.id}
-              className={`rounded-xl border p-5 transition-all ${
-                canAccess
-                  ? `${path.color.border} ${path.color.bg}`
-                  : "border-slate-800 bg-slate-900/40 opacity-60"
-              }`}
+              className={`border border-[#222] p-5 transition-colors ${!canAccess ? "opacity-50" : "hover:border-[#333]"}`}
             >
               <div className="flex items-start justify-between gap-4">
-                {/* Left: info */}
-                <div className="flex items-start gap-4 flex-1 min-w-0">
-                  <span className="text-3xl shrink-0">{path.icon}</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <p className="text-sm font-bold text-white">{path.title}</p>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${path.color.badge}`}>
-                        {path.subtitle}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 flex-wrap mb-2">
+                    <p className="font-mono text-sm text-white">{path.title}</p>
+                    <span className="font-mono text-[9px] tracking-widest uppercase text-gray-600 border border-[#333] px-2 py-0.5">
+                      {path.subtitle}
+                    </span>
+                    {!canAccess && (
+                      <span className="font-mono text-[9px] tracking-widest uppercase text-gray-700 border border-[#222] px-2 py-0.5 capitalize">
+                        {path.requiredPlan} required
                       </span>
-                      {!canAccess && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-700 text-slate-400 capitalize">
-                          🔒 {path.requiredPlan}
+                    )}
+                  </div>
+                  <p className="font-mono text-xs text-gray-600 mb-3">{path.description}</p>
+
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="flex-1 h-px bg-[#1a1a1a] relative overflow-hidden">
+                      <div className="absolute inset-y-0 left-0 bg-gray-500 transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="font-mono text-[9px] text-gray-700 shrink-0">{completedInPath}/{total}</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {path.labs.map(labId => {
+                      const lab = labs.find(l => l.id === labId);
+                      const isDone = progress[labId]?.completed;
+                      return (
+                        <span
+                          key={labId}
+                          className={`font-mono text-[9px] px-2 py-0.5 border tracking-wide ${
+                            isDone ? "border-[#333] text-gray-400" : "border-[#1a1a1a] text-gray-700"
+                          }`}
+                        >
+                          {isDone ? "✓ " : ""}{lab?.name || labId}
                         </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-500 mb-3">{path.description}</p>
-
-                    {/* Progress bar */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${path.color.bar}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] text-slate-500 shrink-0">{completedInPath}/{total}</span>
-                    </div>
-
-                    {/* Lab list */}
-                    <div className="flex flex-wrap gap-2">
-                      {path.labs.map(labId => {
-                        const lab = labs.find(l => l.id === labId);
-                        const isDone = progress[labId]?.completed;
-                        return (
-                          <span
-                            key={labId}
-                            className={`text-[10px] px-2 py-0.5 rounded border ${
-                              isDone
-                                ? "border-green-600/30 text-green-400 bg-green-600/10"
-                                : "border-slate-700 text-slate-500"
-                            }`}
-                          >
-                            {isDone ? "✓ " : ""}{lab?.name || labId}
-                          </span>
-                        );
-                      })}
-                    </div>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Right: CTA */}
                 <div className="shrink-0">
                   {done ? (
-                    <span className="text-green-400 text-xs font-semibold">Completato ✓</span>
+                    <span className="font-mono text-[10px] text-gray-500 tracking-widest">DONE</span>
                   ) : canAccess && nextLab ? (
                     <button
                       onClick={() => onOpenLab(nextLab.id)}
-                      className="px-3 py-2 min-h-[36px] text-xs bg-white/5 hover:bg-white/10 border border-slate-700 text-white rounded-lg transition-all whitespace-nowrap"
+                      className="font-mono text-[10px] tracking-widest uppercase text-white border border-[#333] hover:border-[#555] px-3 py-2 transition-colors whitespace-nowrap"
                     >
-                      Continua →
+                      Continue →
                     </button>
                   ) : !canAccess ? (
                     <button
                       onClick={onUpgrade}
-                      className="px-3 py-2 min-h-[36px] text-xs bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/30 text-blue-400 rounded-lg transition-all whitespace-nowrap"
+                      className="font-mono text-[10px] tracking-widest uppercase text-white bg-white/10 hover:bg-white/15 border border-[#333] px-3 py-2 transition-colors whitespace-nowrap"
                     >
                       Upgrade ↑
                     </button>
@@ -346,9 +338,8 @@ function Dashboard({ labs, progress, plan, onOpenLab, onUpgrade, onReferral, onM
                 </div>
               </div>
 
-              {/* Outcome */}
               {done && (
-                <p className="text-xs text-slate-400 mt-3 pt-3 border-t border-slate-800 italic">
+                <p className="font-mono text-[10px] text-gray-600 mt-4 pt-4 border-t border-[#1a1a1a] italic">
                   "{path.outcome}"
                 </p>
               )}
@@ -357,29 +348,35 @@ function Dashboard({ labs, progress, plan, onOpenLab, onUpgrade, onReferral, onM
         })}
       </div>
 
-      {/* Referral Terminal Box */}
-      <div className="mb-10 bg-slate-900 border border-green-600/20 rounded-xl p-5 font-mono">
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <div className="text-xs text-green-400 mb-1">$ systemctl status community-growth</div>
-            <div className="text-sm text-slate-300">● status: <span className="text-yellow-400">waiting_for_peers</span></div>
+      {/* Referral */}
+      <div className="mb-10 border border-[#222] p-5 font-mono">
+        <div className="text-[9px] text-gray-700 uppercase tracking-[0.4em] mb-4">// REFERRAL_SYSTEM</div>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="text-xs text-gray-400">
+              <span className="text-green-500">▸ </span>Invite a peer — get <span className="text-white">-20%</span> on renewal
+            </div>
+            <div className="text-xs text-gray-400">
+              <span className="text-green-500">▸ </span>Corporate referral — get <span className="text-white">-30%</span> Root Privilege
+            </div>
           </div>
           <button
             onClick={onReferral}
-            className="px-4 py-2 min-h-[44px] text-xs bg-green-600/20 hover:bg-green-600/30 border border-green-600/40 text-green-400 rounded-lg transition-all"
+            className="text-[10px] tracking-widest uppercase text-black bg-white hover:bg-gray-200 px-4 py-2 transition-colors whitespace-nowrap"
           >
-            🔑 Generate Token
+            [ Generate Token ]
           </button>
-        </div>
-        <div className="text-xs text-slate-500 space-y-0.5">
-          <div><span className="text-green-400">[!]</span> Invita un amico e ottieni <span className="text-yellow-400">-20%</span> di sconto</div>
-          <div><span className="text-green-400">[!]</span> Corporate referral: <span className="text-purple-400">-30%</span> Root Privilege</div>
         </div>
       </div>
 
-      {/* Lab grid (tutti i lab) */}
-      <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Tutti i lab</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+      {/* Lab grid */}
+      <p className="font-mono text-[9px] text-gray-700 uppercase tracking-[0.4em] mb-4">// ALL_LABS</p>
+      <div className="border border-[#1a1a1a]">
+        <div className="grid grid-cols-12 border-b border-[#1a1a1a] px-4 py-2 font-mono text-[9px] text-gray-700 uppercase tracking-widest">
+          <span className="col-span-6">Lab</span>
+          <span className="col-span-3">Tier</span>
+          <span className="col-span-3 text-right">Status</span>
+        </div>
         {labs.map(lab => {
           const canAccess = planRank >= (PLAN_RANK[lab.tier] ?? 0);
           const done = progress[lab.id]?.completed;
@@ -387,20 +384,19 @@ function Dashboard({ labs, progress, plan, onOpenLab, onUpgrade, onReferral, onM
             <button
               key={lab.id}
               onClick={() => canAccess ? onOpenLab(lab.id) : onUpgrade()}
-              className={`flex flex-col gap-2 p-4 rounded-xl border text-left transition-all
-                ${done       ? "border-green-600/20 bg-green-600/5"
-                : canAccess  ? "border-slate-800 bg-slate-900 hover:border-blue-600/40 hover:bg-slate-800"
-                             : "border-slate-800 bg-slate-900/40 opacity-60"}`}
+              className={`w-full grid grid-cols-12 px-4 py-3 border-b border-[#111] font-mono text-left transition-colors hover:bg-[#050505] group
+                ${!canAccess ? "opacity-40" : ""}`}
             >
-              <div className="flex items-start justify-between">
-                <span className="text-2xl">{lab.icon}</span>
-                {done && <span className="text-green-400 text-xs">✓</span>}
-                {!canAccess && <span className="text-slate-600 text-xs">🔒</span>}
+              <div className="col-span-6 flex items-center gap-2.5 min-w-0">
+                <span className="text-sm shrink-0">{lab.icon}</span>
+                <span className="text-xs text-gray-300 group-hover:text-white transition-colors truncate">{lab.name}</span>
               </div>
-              <p className="text-xs font-semibold text-white leading-snug">{lab.name}</p>
-              <p className={`text-[10px] ${lab.tier === "starter" ? "text-slate-600" : lab.tier === "pro" ? "text-blue-500/70" : "text-purple-500/70"}`}>
+              <span className="col-span-3 font-mono text-[9px] text-gray-600 uppercase tracking-wider self-center">
                 {lab.tier === "starter" ? "Free" : lab.tier === "pro" ? "Pro" : "Business"}
-              </p>
+              </span>
+              <span className={`col-span-3 font-mono text-[10px] text-right self-center ${done ? "text-gray-400" : "text-gray-700"}`}>
+                {done ? "✓ done" : canAccess ? "Enter →" : "locked"}
+              </span>
             </button>
           );
         })}
@@ -409,15 +405,15 @@ function Dashboard({ labs, progress, plan, onOpenLab, onUpgrade, onReferral, onM
       {/* Achievements */}
       {achievements.length > 0 && (
         <div className="mt-10">
-          <h2 className="text-sm font-semibold text-yellow-400 uppercase tracking-wider mb-4">
-            🏅 Achievements
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {achievements.map(a => (
-              <div key={a.id} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-yellow-500/20 bg-yellow-500/5 text-center">
-                <span className="text-3xl">{a.icon}</span>
-                <p className="text-xs font-bold text-white">{a.label}</p>
-                <p className="text-[10px] text-slate-500">{a.desc}</p>
+          <p className="font-mono text-[9px] text-gray-700 uppercase tracking-[0.4em] mb-4">// ACHIEVEMENTS</p>
+          <div className="border border-[#1a1a1a]">
+            {achievements.map((a, i) => (
+              <div key={a.id} className={`flex items-center gap-4 px-5 py-3 font-mono ${i < achievements.length - 1 ? "border-b border-[#111]" : ""}`}>
+                <span className="text-xl shrink-0">{a.icon}</span>
+                <div>
+                  <p className="text-xs text-white">{a.label}</p>
+                  <p className="text-[10px] text-gray-600 mt-0.5">{a.desc}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -434,14 +430,14 @@ function PaywallModal({ completedCount, onClose }) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="relative bg-[#0d0d0f] border border-slate-800 rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-black border border-[#222] p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-11 h-11 flex items-center justify-center rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center font-mono text-gray-600 hover:text-white transition-colors border border-[#222] hover:border-[#444]"
         >
           ✕
         </button>
-        <p className="text-center text-slate-400 text-sm mb-6">
+        <p className="font-mono text-center text-gray-500 text-xs mb-6 tracking-widest uppercase">
           {completedCount > 0
             ? `You've completed ${completedCount} lab${completedCount !== 1 ? "s" : ""}. Unlock everything to continue.`
             : "Unlock all 10 labs and unlimited AI hints."}
@@ -991,7 +987,7 @@ export default function SaaSOrchestrator() {
   const activeLab = labs.find(l => l.id === activeLabId);
 
   return (
-    <div style={{ display: "flex", height: "100dvh", overflow: "hidden", background: "#0a0a0b", color: "#fff" }}>
+    <div style={{ display: "flex", height: "100dvh", overflow: "hidden", background: "#000", color: "#fff" }}>
 
       {/* Social Sidebar — floating right side bar */}
       <SocialSidebar links={socialLinks} />
@@ -1024,8 +1020,8 @@ export default function SaaSOrchestrator() {
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
       {sidebarOpen && (
         <aside
-          style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column",
-                   borderRight: "1px solid #1e293b", overflow: "hidden" }}
+          style={{ width: 240, flexShrink: 0, display: "flex", flexDirection: "column",
+                   borderRight: "1px solid #1a1a1a", overflow: "hidden", background: "#000" }}
           className={`
             ${isMobile ? "fixed inset-y-0 left-0 z-50 shadow-2xl" : "relative"}
           `}
@@ -1034,16 +1030,13 @@ export default function SaaSOrchestrator() {
         >
 
           {/* Logo */}
-          <div className="px-4 py-4 border-b border-slate-800">
-            <div className="flex items-center gap-1">
-              <span className="text-blue-500 font-black text-lg tracking-tight">WIN</span>
-              <span className="text-white font-black text-lg tracking-tight">LAB</span>
-            </div>
-            <p className="text-[11px] text-slate-600 mt-0.5">Sysadmin Training Platform</p>
+          <div className="px-4 py-5 border-b border-[#1a1a1a]">
+            <p className="font-mono text-sm tracking-[0.3em] text-white uppercase">WINLAB</p>
+            <p className="font-mono text-[9px] text-gray-700 mt-1 tracking-widest uppercase">// Sysadmin Training</p>
           </div>
 
           {/* Top nav */}
-          <nav className="p-2 border-b border-slate-800 space-y-0.5" aria-label="Primary navigation">
+          <nav className="p-2 border-b border-[#1a1a1a] space-y-0" aria-label="Primary navigation">
             {[
               { id: "landing",   icon: "🏠", label: "Home"        },
               ...(isIndia ? [{ id: "india", icon: "🇮🇳", label: "India Home" }] : []),
@@ -1076,17 +1069,17 @@ export default function SaaSOrchestrator() {
                   navigate("community");
                 }
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all text-left
-                ${view === "community" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800/60"}`}
+              className={`w-full flex items-center gap-2 px-3 py-2.5 text-left font-mono text-[10px] tracking-widest uppercase transition-colors duration-150
+                ${view === "community" ? "text-white bg-[#111]" : "text-gray-600 hover:text-gray-300 hover:bg-[#0d0d0d]"}`}
             >
-              <span className="text-base leading-none">💬</span>
+              <span className="shrink-0 text-[8px] text-gray-700">{view === "community" ? "▸" : " "}</span>
               <span>Community</span>
             </button>
           </div>
 
           {/* Lab list */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
-            <p className="text-[10px] text-slate-700 px-3 pt-2 pb-1 uppercase tracking-widest">Labs</p>
+          <div className="flex-1 overflow-y-auto p-2 space-y-0">
+            <p className="font-mono text-[9px] text-gray-700 px-3 pt-3 pb-2 uppercase tracking-[0.3em]">// Labs</p>
             {labs.map(lab => (
               <LabItem
                 key={lab.id}
@@ -1100,17 +1093,17 @@ export default function SaaSOrchestrator() {
           </div>
 
           {/* Footer links */}
-          <div className="px-3 pb-2 flex flex-wrap items-center gap-1">
+          <div className="px-4 py-3 border-t border-[#1a1a1a] flex flex-wrap gap-x-4 gap-y-1">
             {[
               { label: "About", action: () => { setAboutTab("about"); navigate("about"); } },
               { label: "Blog", action: () => { setAboutTab("blog"); navigate("about"); } },
               { label: "FAQ", action: () => { setAboutTab("faq"); navigate("about"); } },
-              { label: "Privacy & Terms", action: () => navigate("legal") },
+              { label: "Legal", action: () => navigate("legal") },
             ].map(link => (
               <button
                 key={link.label}
                 onClick={link.action}
-                className="text-xs text-slate-600 hover:text-slate-400 transition-colors px-3 py-2 min-h-[44px]"
+                className="font-mono text-[9px] text-gray-700 hover:text-gray-400 tracking-widest uppercase transition-colors py-1"
               >
                 {link.label}
               </button>
@@ -1118,59 +1111,48 @@ export default function SaaSOrchestrator() {
           </div>
 
           {/* Auth links */}
-          <div className="p-3 border-t border-slate-800">
+          <div className="p-3 border-t border-[#1a1a1a]">
             {!token ? (
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <button
                   onClick={() => { setAuthMode("login"); setView("auth"); }}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2.5 font-mono text-[10px] tracking-widest uppercase text-gray-500 hover:text-white hover:bg-[#0d0d0d] transition-colors"
                 >
-                  <span className="text-slate-500">Account</span>
-                  <span className="text-slate-300 font-semibold">Sign In →</span>
+                  <span>Sign In</span>
+                  <span>→</span>
                 </button>
                 <button
                   onClick={() => { setAuthMode("register"); setView("auth"); }}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs bg-green-600/10 hover:bg-green-600/20 border border-green-600/20 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2.5 font-mono text-[10px] tracking-widest uppercase text-gray-600 hover:text-white hover:bg-[#0d0d0d] transition-colors"
                 >
-                  <span className="text-slate-500">New?</span>
-                  <span className="text-green-400 font-semibold">Register →</span>
+                  <span>Register</span>
+                  <span>→</span>
                 </button>
               </div>
             ) : (
-              <div className="space-y-1.5">
-                {/* User Info & Profile Link */}
+              <div className="space-y-1">
                 <button
                   onClick={() => navigate("profile")}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2.5 font-mono text-[10px] text-gray-500 hover:text-white hover:bg-[#0d0d0d] transition-colors"
                 >
-                  <span className="text-slate-300 truncate text-left">{user?.name || user?.email || "Profile"}</span>
-                  <span className="text-slate-500 ml-2">⚙️</span>
+                  <span className="truncate text-left tracking-wide">{user?.name || user?.email || "Profile"}</span>
+                  <span className="text-gray-700 ml-2 text-[9px] tracking-widest uppercase">Settings</span>
                 </button>
 
-                {/* Plan badge */}
                 <button
                   onClick={() => navigate("pricing")}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors
-                    ${plan === "business" ? "bg-purple-600/10 border border-purple-600/20 hover:bg-purple-600/20"
-                    : plan === "pro"      ? "bg-blue-600/10 border border-blue-600/20 hover:bg-blue-600/20"
-                                          : "bg-slate-800 hover:bg-slate-700"}`}
+                  className="w-full flex items-center justify-between px-3 py-2.5 font-mono text-[10px] tracking-widest uppercase text-gray-600 hover:text-white hover:bg-[#0d0d0d] transition-colors"
                 >
-                  <span className="text-slate-500">Plan</span>
-                  <span className={`font-semibold capitalize
-                    ${plan === "business" ? "text-purple-400"
-                    : plan === "pro"      ? "text-blue-400"
-                                          : "text-slate-300"}`}>
-                    {plan}{plan === "starter" ? " · Upgrade ↑" : " ✓"}
-                  </span>
+                  <span>Plan</span>
+                  <span className="text-gray-400 capitalize">{plan}{plan === "starter" ? " · Upgrade" : " ✓"}</span>
                 </button>
 
-                {/* Logout */}
                 <button
                   onClick={() => { logout(); navigate("landing"); }}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs bg-slate-800 hover:bg-red-600/10 border border-transparent hover:border-red-600/20 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2.5 font-mono text-[10px] tracking-widest uppercase text-gray-700 hover:text-[#FF3B30] hover:bg-[#0d0d0d] transition-colors"
                 >
-                  <span className="text-slate-500">Logout</span>
-                  <span className="text-red-400 ml-2">🚪</span>
+                  <span>Logout</span>
+                  <span>×</span>
                 </button>
               </div>
             )}
@@ -1182,10 +1164,10 @@ export default function SaaSOrchestrator() {
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
 
         {/* Header */}
-        <header className="flex items-center gap-3 px-3 h-12 sm:h-11 border-b border-slate-800 shrink-0" role="banner" aria-label="Application header">
+        <header className="flex items-center gap-3 px-3 h-11 border-b border-[#1a1a1a] shrink-0" role="banner" aria-label="Application header">
           <button
             onClick={() => setSidebarOpen(o => !o)}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-600 hover:text-white text-lg transition-colors"
+            className="w-11 h-11 flex items-center justify-center font-mono text-gray-600 hover:text-white transition-colors"
             aria-label="Toggle sidebar"
             aria-expanded={sidebarOpen}
           >
@@ -1193,26 +1175,26 @@ export default function SaaSOrchestrator() {
           </button>
 
           {view === "lab" && activeLab && (
-            <div className="flex items-center gap-2 text-sm text-slate-400 min-w-0">
-              <span className="shrink-0">{activeLab.icon}</span>
+            <div className="flex items-center gap-2 font-mono text-[10px] text-gray-600 uppercase tracking-widest min-w-0">
+              <span className="shrink-0 text-sm">{activeLab.icon}</span>
               <span className="truncate">{activeLab.name}</span>
             </div>
           )}
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-3">
             {allCompleted && (
               <button
                 onClick={() => navigate("cert")}
-                className="text-xs px-3 py-2 min-h-[44px] bg-green-600/20 border border-green-600/30 text-green-400 rounded-lg hover:bg-green-600/30 transition-colors"
+                className="font-mono text-[10px] tracking-widest uppercase text-gray-500 hover:text-white border border-[#222] hover:border-[#444] px-3 py-2 transition-colors"
                 aria-label="View your certificate"
               >
-                🏆 <span className="hidden sm:inline">Certificate</span>
+                [ Certificate ]
               </button>
             )}
             {plan === "starter" && (
               <button
                 onClick={() => setPaywallOpen(true)}
-                className="text-xs px-3 py-2 min-h-[44px] bg-blue-600/20 border border-blue-600/30 text-blue-400 rounded-lg hover:bg-blue-600/30 transition-colors"
+                className="font-mono text-[10px] tracking-widest uppercase text-white bg-white/10 hover:bg-white/15 border border-[#333] px-3 py-2 transition-colors"
                 aria-label="Upgrade your plan"
               >
                 Upgrade ↑

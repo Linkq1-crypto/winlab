@@ -1,28 +1,32 @@
-// AboutPage.jsx – About · Sales/B2B · Blog · GitHub/OSS
+// AboutPage.jsx – Jobs-Dark redesign
 import { useState } from "react";
 
 const TABS = [
-  { id: "about",  label: "About Us",   icon: "⚡" },
-  { id: "sales",  label: "Enterprise", icon: "🏢" },
-  { id: "blog",   label: "Blog",       icon: "📝" },
-  { id: "github", label: "Open Source",icon: "🐙" },
-  { id: "faq",    label: "FAQ",        icon: "❓" },
+  { id: "about",  label: "About"      },
+  { id: "sales",  label: "Enterprise" },
+  { id: "blog",   label: "Blog"       },
+  { id: "github", label: "Open Source"},
+  { id: "faq",    label: "FAQ"        },
 ];
+
+const inputClass = "w-full bg-black border border-[#222] px-4 py-3 font-mono text-sm text-gray-200 placeholder-gray-700 focus:outline-none focus:border-[#444] transition-colors duration-200";
 
 // ── About ─────────────────────────────────────────────────────────────────────
 function About() {
   return (
     <div className="max-w-2xl">
-      <span className="text-xs text-blue-400 uppercase tracking-widest">Our Story</span>
-      <h1 className="text-4xl font-black text-white mt-3 mb-8 leading-tight">
-        Beyond the Kernel.
+      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-600 uppercase mb-8">
+        // WINLAB — OUR_STORY
+      </p>
+      <h1 className="font-mono text-4xl font-black text-white mb-8 leading-none tracking-tight">
+        Beyond the<br /><span className="text-[#FF3B30]">Kernel.</span>
       </h1>
 
-      <div className="space-y-5 text-slate-400 leading-relaxed">
+      <div className="space-y-5 font-mono text-sm text-gray-500 leading-relaxed">
         <p>
           Learning SysAdmin skills shouldn't feel like reading a 1990s manual.
           At WINLAB, we believe the only way to truly master infrastructure is to
-          <span className="text-white font-medium"> break it</span>.
+          <span className="text-gray-200"> break it</span>.
         </p>
         <p>
           We built the world's first high-fidelity simulation suite for VMware,
@@ -30,7 +34,7 @@ function About() {
           Just pure, interactive problem-solving guided by a Senior AI Mentor
           powered by Claude.
         </p>
-        <p className="text-white/90 border-l-2 border-blue-600 pl-4 italic">
+        <p className="text-gray-300 border-l-2 border-[#333] pl-4">
           "Our Mission: To bridge the gap between <em>'I've read the docs'</em> and
           <em> 'I can fix the production cluster at 3 AM.'</em>"
         </p>
@@ -40,17 +44,15 @@ function About() {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mt-12">
-        {[
-          { value: "10",   label: "Labs"             },
-          { value: "60+",  label: "Scenarios"        },
-          { value: "∞",    label: "Times you can fail"},
-        ].map(s => (
-          <div key={s.label} className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-center">
-            <p className="text-3xl font-black text-blue-500 mb-1">{s.value}</p>
-            <p className="text-xs text-slate-600">{s.label}</p>
-          </div>
-        ))}
+      <div className="border border-[#222] mt-12 font-mono">
+        <div className="grid grid-cols-3 border-b border-[#1a1a1a] px-5 py-2 text-[9px] text-gray-700 uppercase tracking-widest">
+          <span>Labs</span><span>Scenarios</span><span>Failures allowed</span>
+        </div>
+        <div className="grid grid-cols-3 px-5 py-5">
+          <span className="text-2xl font-black text-white">10</span>
+          <span className="text-2xl font-black text-white">60+</span>
+          <span className="text-2xl font-black text-white">∞</span>
+        </div>
       </div>
     </div>
   );
@@ -64,78 +66,58 @@ function Sales() {
 
   function handleSubmit(e) {
     e.preventDefault();
-    // In production: POST /api/sales/inquiry
     setSent(true);
   }
 
   return (
     <div className="max-w-2xl">
-      <span className="text-xs text-purple-400 uppercase tracking-widest">B2B Solutions</span>
-      <h1 className="text-4xl font-black text-white mt-3 mb-4 leading-tight">
+      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-600 uppercase mb-8">
+        // ENTERPRISE — B2B_SOLUTIONS
+      </p>
+      <h1 className="font-mono text-4xl font-black text-white mb-4 leading-none tracking-tight">
         Enterprise Training.<br />Zero Infrastructure Costs.
       </h1>
-      <p className="text-slate-400 leading-relaxed mb-10">
+      <p className="font-mono text-sm text-gray-500 leading-relaxed mb-10">
         Stop paying for idle AWS/Azure labs. WINLAB provides a turnkey solution
         for IT Departments and Managed Service Providers (MSPs).
       </p>
 
-      <div className="space-y-4 mb-10">
+      <div className="border border-[#222] mb-10">
         {[
-          { icon: "⚡", title: "Zero Setup",
+          { id: "01", title: "Zero Setup",
             body: "Interactive sandboxes that run instantly in any browser. No VM provisioning, no VPN, no waiting." },
-          { icon: "📊", title: "Skill Auditing",
-            body: "Track team progress with the Manager Dashboard. Know exactly who is ready for the next project before you assign it." },
-          { icon: "💰", title: "Cost Predictability",
+          { id: "02", title: "Skill Auditing",
+            body: "Track team progress with the Manager Dashboard. Know exactly who is ready for the next project." },
+          { id: "03", title: "Cost Predictability",
             body: "One flat fee. No surprise billing from cloud providers for forgotten instances running overnight." },
-          { icon: "🔧", title: "Custom Scenarios",
-            body: "Enterprise tier includes custom challenge creation for your specific stack. SSSD with your LDAP schema. RAID with your controller model." },
+          { id: "04", title: "Custom Scenarios",
+            body: "Enterprise tier includes custom challenge creation for your specific stack and LDAP schema." },
         ].map((item, i) => (
-          <div key={i} className="flex gap-4 p-5 rounded-xl border border-slate-800 bg-slate-900/50">
-            <span className="text-2xl shrink-0">{item.icon}</span>
+          <div key={i} className={`flex gap-4 px-5 py-5 ${i < 3 ? "border-b border-[#1a1a1a]" : ""}`}>
+            <span className="font-mono text-[10px] text-gray-700 shrink-0 pt-0.5">{item.id}</span>
             <div>
-              <p className="font-semibold text-white text-sm mb-1">{item.title}</p>
-              <p className="text-slate-500 text-sm leading-relaxed">{item.body}</p>
+              <p className="font-mono text-sm text-white mb-1">{item.title}</p>
+              <p className="font-mono text-xs text-gray-500 leading-relaxed">{item.body}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Contact form */}
       {sent ? (
-        <div className="p-6 rounded-xl border border-green-600/30 bg-green-600/10 text-center">
-          <p className="text-green-400 font-semibold">✓ Request received</p>
-          <p className="text-slate-400 text-sm mt-1">
-            We'll send your 7-day full-team trial access within 24 hours.
-          </p>
+        <div className="border border-[#222] p-6 font-mono text-center">
+          <span className="text-green-500">// OK</span>
+          <span className="text-gray-400"> — Request received. Trial access within 24h.</span>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="p-6 rounded-xl border border-purple-600/20 bg-purple-600/5 space-y-4">
-          <h3 className="font-semibold text-white">Request a 7-day full-team trial</h3>
-          <input
-            value={company}
-            onChange={e => setCompany(e.target.value)}
-            placeholder="Company name"
-            required
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-600"
-          />
-          <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="Work email"
-            required
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-600"
-          />
-          <button
-            type="submit"
-            className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg text-sm transition-colors"
-          >
-            Request Trial →
+        <form onSubmit={handleSubmit} className="border border-[#222] p-6 space-y-4">
+          <p className="font-mono text-[10px] text-gray-600 uppercase tracking-widest mb-4">// Request 7-day full-team trial</p>
+          <input value={company} onChange={e => setCompany(e.target.value)} placeholder="Company name" required className={inputClass} />
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Work email" required className={inputClass} />
+          <button type="submit" className="w-full font-mono text-xs tracking-widest uppercase text-black bg-white py-3 hover:bg-gray-200 transition-colors duration-200">
+            [ Request Trial ]
           </button>
-          <p className="text-xs text-slate-600 text-center">
-            Or email us directly at <a href="mailto:sales@winlab.cloud" className="text-slate-400 hover:text-white underline underline-offset-2">sales@winlab.cloud</a>
-            <br />
-            <span className="text-slate-500">For billing inquiries: <a href="mailto:billing@winlab.cloud" className="text-slate-400 hover:text-white underline underline-offset-2">billing@winlab.cloud</a></span>
+          <p className="font-mono text-[9px] text-gray-700 text-center tracking-widest">
+            Or: <a href="mailto:sales@winlab.cloud" className="text-gray-500 hover:text-white underline underline-offset-2 transition-colors">sales@winlab.cloud</a>
           </p>
         </form>
       )}
@@ -156,50 +138,55 @@ function Blog({ onNeedLogin }) {
 
   const token = typeof window !== "undefined" ? localStorage.getItem("winlab_token") : null;
 
-  // Read articles from admin storage (shared via localStorage)
-  const [articles, setArticles] = useState(() => {
+  const [articles] = useState(() => {
     try {
       const saved = localStorage.getItem("winlab_articles");
       if (saved) return JSON.parse(saved);
     } catch { /* fall through */ }
-    // Fallback defaults
     return [
       {
         id: "01", tag: "Storage",
-        tagColor: "text-orange-400 border-orange-500/30 bg-orange-500/10",
         title: "The Art of the Rebuild",
         subtitle: "Why most RAID 5 recoveries fail — and how to fix them.",
         body: "Most engineers only discover RAID's quirks when a disk fails at 2 AM. The parity math is sound, but the recovery process is full of operator traps: wrong rebuild order, silent read errors on a second disk, filesystem inconsistencies post-sync. In this deep dive we walk through every failure mode and how the WINLAB RAID Simulator prepares you to handle each one.",
-        readTime: "8 min read", published: true,
+        readTime: "8 min", published: true,
       },
       {
         id: "02", tag: "Terraform",
-        tagColor: "text-purple-400 border-purple-500/30 bg-purple-500/10",
         title: "Terraform State Hell",
         subtitle: "5 scenarios that will test your patience (and how WINLAB solves them).",
         body: "State file drift. Remote state locking deadlocks. Partial applies that leave infra in an unknown condition. Import loops. Destroy cascades. If you haven't lived through at least three of these in production, you haven't done enough Terraform. We built five lab scenarios that simulate each one in a safe environment.",
-        readTime: "12 min read", published: true,
+        readTime: "12 min", published: true,
       },
       {
         id: "03", tag: "vSphere",
-        tagColor: "text-blue-400 border-blue-500/30 bg-blue-500/10",
         title: "vSphere Orchestration in 2026",
         subtitle: "Moving from GUI-clicking to Infrastructure as Code.",
         body: "The vSphere Web Client is comfortable. It's also how you build undocumented, unreproducible, untestable infrastructure. In 2026, the winning pattern is vsphere provider in Terraform + GitOps. This article covers the migration path and uses the WINLAB vSphere simulator to demonstrate live drift detection and remediation.",
-        readTime: "10 min read", published: true,
+        readTime: "10 min", published: true,
       },
     ];
   });
 
-  // Only show published
   const published = articles.filter(a => a.published !== false);
 
-  function handleLike(i) {
-    setLikes(prev => ({ ...prev, [i]: (prev[i] || 0) + 1 }));
+  function getPostUrl(post) { return `${window.location.origin}/blog/${post.id}`; }
+
+  function handleCopyLink(post) {
+    navigator.clipboard?.writeText(getPostUrl(post)).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
-  function handleDislike(i) {
-    setDislikes(prev => ({ ...prev, [i]: (prev[i] || 0) + 1 }));
+
+  function handleShareTwitter(post) {
+    const text = encodeURIComponent(`"${post.title}" — ${post.subtitle}\n\n${getPostUrl(post)}\n\nvia @WinLabCloud`);
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank", "noopener");
   }
+
+  function handleShareLinkedIn(post) {
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(getPostUrl(post))}`, "_blank", "noopener");
+  }
+
   function handleComment(i) {
     if (!commentInput.trim()) return;
     setComments(prev => ({
@@ -208,208 +195,105 @@ function Blog({ onNeedLogin }) {
     }));
     setCommentInput("");
   }
-  function getPostUrl(post) {
-    return `${window.location.origin}/blog/${post.id}`;
-  }
-
-  function handleCopyLink(post) {
-    const url = getPostUrl(post);
-    navigator.clipboard?.writeText(url).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  function handleShareTwitter(post) {
-    const url = getPostUrl(post);
-    const text = encodeURIComponent(`"${post.title}" — ${post.subtitle}\n\n${url}\n\nvia @WinLabCloud`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank', 'noopener');
-  }
-
-  function handleShareLinkedIn(post) {
-    const url = encodeURIComponent(getPostUrl(post));
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank', 'noopener');
-  }
-
-  function handleShareWhatsApp(post) {
-    const url = getPostUrl(post);
-    const text = encodeURIComponent(`Check this out: "${post.title}" — ${url}`);
-    window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener');
-  }
-
-  function handleShareEmail(post) {
-    const url = getPostUrl(post);
-    const subject = encodeURIComponent(`WinLab Field Notes: ${post.title}`);
-    const body = encodeURIComponent(`Hi,\n\nI thought you'd find this interesting:\n\n"${post.title}"\n${post.subtitle}\n\nRead it here: ${url}\n\nCheers`);
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
-  }
 
   return (
     <div className="max-w-2xl">
-      <span className="text-xs text-blue-400 uppercase tracking-widest">Technical Blog</span>
-      <h1 className="text-4xl font-black text-white mt-3 mb-10 leading-tight">Field Notes</h1>
+      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-600 uppercase mb-8">
+        // FIELD_NOTES — TECHNICAL_BLOG
+      </p>
+      <h1 className="font-mono text-4xl font-black text-white mb-10 leading-none tracking-tight">Field Notes</h1>
 
-      <div className="space-y-5">
+      <div className="border border-[#222]">
         {published.map((post, i) => (
-          <div
-            key={i}
-            className="border border-slate-800 bg-slate-900/50 rounded-xl overflow-hidden"
-          >
+          <div key={i} className={i < published.length - 1 ? "border-b border-[#1a1a1a]" : ""}>
             <button
               onClick={() => setExpanded(expanded === i ? null : i)}
-              className="w-full flex items-start gap-5 p-6 text-left hover:bg-slate-800/40 transition-colors"
+              className="w-full flex items-start gap-5 px-5 py-5 text-left hover:bg-[#050505] transition-colors group"
             >
-              <span className="text-3xl font-black text-slate-800 shrink-0 tabular-nums">{post.id}</span>
+              <span className="font-mono text-[10px] text-gray-700 shrink-0 pt-1 tracking-widest">{post.id}</span>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${post.tagColor}`}>
-                    {post.tag}
-                  </span>
-                  <span className="text-[10px] text-slate-600">{post.readTime}</span>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="font-mono text-[9px] text-gray-600 border border-[#333] px-2 py-0.5 uppercase tracking-widest">{post.tag}</span>
+                  <span className="font-mono text-[9px] text-gray-700">{post.readTime}</span>
                 </div>
-                <p className="font-bold text-white text-sm">{post.title}</p>
-                <p className="text-slate-500 text-xs mt-0.5">{post.subtitle}</p>
+                <p className="font-mono text-sm text-gray-200 group-hover:text-white transition-colors">{post.title}</p>
+                <p className="font-mono text-xs text-gray-600 mt-0.5">{post.subtitle}</p>
               </div>
-              <span className={`text-slate-600 shrink-0 transition-transform ${expanded === i ? "rotate-180" : ""}`}>▾</span>
+              <span className={`font-mono text-gray-700 shrink-0 transition-transform ${expanded === i ? "rotate-180" : ""}`}>▾</span>
             </button>
 
             {expanded === i && (
-              <div className="px-6 pb-6 border-t border-slate-800">
-                {/* Article body */}
-                <div className="pt-4">
-                  <p className="text-slate-300 text-sm leading-relaxed mb-4">{post.body}</p>
-                </div>
+              <div className="px-5 pb-5 border-t border-[#1a1a1a]">
+                <p className="font-mono text-xs text-gray-400 leading-relaxed pt-4 mb-4">{post.body}</p>
 
-                {/* Action bar */}
-                <div className="flex items-center gap-4 py-3 border-t border-slate-800/60 relative">
-                  <button
-                    onClick={() => handleLike(i)}
-                    className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-blue-400 transition-colors"
-                  >
-                    <span>👍</span>
-                    <span>{likes[i] || 0}</span>
+                <div className="flex items-center gap-5 py-3 border-t border-[#1a1a1a] relative">
+                  <button onClick={() => setLikes(p => ({...p, [i]: (p[i]||0)+1}))} className="font-mono text-[10px] text-gray-600 hover:text-gray-300 transition-colors">
+                    +1 ({likes[i] || 0})
                   </button>
-                  <button
-                    onClick={() => handleDislike(i)}
-                    className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-400 transition-colors"
-                  >
-                    <span>👎</span>
-                    <span>{dislikes[i] || 0}</span>
+                  <button onClick={() => setDislikes(p => ({...p, [i]: (p[i]||0)+1}))} className="font-mono text-[10px] text-gray-600 hover:text-gray-300 transition-colors">
+                    -1 ({dislikes[i] || 0})
                   </button>
-                  <button
-                    onClick={() => setCommentOpen(commentOpen === i ? null : i)}
-                    className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-green-400 transition-colors"
-                  >
-                    <span>💬</span>
-                    <span>{(comments[i] || []).length} {(comments[i] || []).length === 1 ? "Comment" : "Comments"}</span>
+                  <button onClick={() => setCommentOpen(commentOpen === i ? null : i)} className="font-mono text-[10px] text-gray-600 hover:text-gray-300 transition-colors">
+                    Comments ({(comments[i] || []).length})
                   </button>
 
-                  {/* Share button + dropdown */}
                   <div className="ml-auto relative">
-                    <button
-                      onClick={() => setShareOpen(shareOpen === i ? null : i)}
-                      className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-purple-400 transition-colors"
-                    >
-                      <span>↗</span>
-                      <span>Share</span>
+                    <button onClick={() => setShareOpen(shareOpen === i ? null : i)} className="font-mono text-[10px] text-gray-600 hover:text-gray-300 transition-colors">
+                      Share ↗
                     </button>
-
                     {shareOpen === i && (
-                      <div className="absolute right-0 bottom-8 w-52 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden">
-                        <div className="px-3 py-2 border-b border-slate-800 text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Share this article</div>
-                        <button
-                          onClick={() => { handleShareTwitter(published[i]); setShareOpen(null); }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
-                        >
-                          <span className="text-base">𝕏</span> Post on X / Twitter
-                        </button>
-                        <button
-                          onClick={() => { handleShareLinkedIn(published[i]); setShareOpen(null); }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
-                        >
-                          <span className="text-base">💼</span> Share on LinkedIn
-                        </button>
-                        <button
-                          onClick={() => { handleShareWhatsApp(published[i]); setShareOpen(null); }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
-                        >
-                          <span className="text-base">💬</span> Send via WhatsApp
-                        </button>
-                        <button
-                          onClick={() => { handleShareEmail(published[i]); setShareOpen(null); }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
-                        >
-                          <span className="text-base">✉️</span> Send by email
-                        </button>
-                        <div className="border-t border-slate-800">
-                          <button
-                            onClick={() => { handleCopyLink(published[i]); }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left"
-                          >
-                            <span className="text-base">🔗</span>
-                            {copied ? <span className="text-green-400">Link copied!</span> : "Copy link"}
+                      <div className="absolute right-0 bottom-8 w-52 bg-black border border-[#222] z-50">
+                        <div className="px-4 py-2 border-b border-[#1a1a1a] font-mono text-[9px] text-gray-700 uppercase tracking-widest">Share</div>
+                        {[
+                          { label: "Post on X", action: () => { handleShareTwitter(published[i]); setShareOpen(null); } },
+                          { label: "Share on LinkedIn", action: () => { handleShareLinkedIn(published[i]); setShareOpen(null); } },
+                          { label: copied ? "Copied!" : "Copy link", action: () => handleCopyLink(published[i]) },
+                        ].map((item, si) => (
+                          <button key={si} onClick={item.action} className="w-full px-4 py-2.5 font-mono text-[10px] text-gray-500 hover:text-white hover:bg-[#0d0d0d] transition-colors text-left">
+                            {item.label}
                           </button>
-                        </div>
+                        ))}
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Comment section */}
                 {commentOpen === i && (
-                  <div className="mt-3 pt-3 border-t border-slate-800/60">
-                    {/* Existing comments */}
-                    {(comments[i] || []).length > 0 && (
-                      <div className="space-y-2 mb-3">
-                        {comments[i].map((c, ci) => (
-                          <div key={ci} className="text-xs">
-                            <span className="text-slate-600">{c.at}</span>
-                            <span className="text-slate-500 mx-1">—</span>
-                            <span className="text-slate-300">{c.text}</span>
-                          </div>
-                        ))}
+                  <div className="pt-3 border-t border-[#1a1a1a]">
+                    {(comments[i] || []).map((c, ci) => (
+                      <div key={ci} className="font-mono text-[10px] text-gray-600 mb-1">
+                        <span className="text-gray-700">{c.at}</span> — <span className="text-gray-400">{c.text}</span>
                       </div>
-                    )}
-
-                    {/* Comment input or login prompt */}
+                    ))}
                     {token ? (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 mt-2">
                         <input
                           value={commentInput}
                           onChange={e => setCommentInput(e.target.value)}
                           onKeyDown={e => { if (e.key === "Enter") handleComment(i); }}
                           placeholder="Write a comment…"
-                          className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-600"
+                          className="flex-1 bg-black border border-[#222] px-3 py-2 font-mono text-xs text-gray-300 placeholder-gray-700 focus:outline-none focus:border-[#444]"
                         />
-                        <button
-                          onClick={() => handleComment(i)}
-                          disabled={!commentInput.trim()}
-                          className="px-3 py-2 bg-blue-600/20 border border-blue-600/30 text-blue-400 rounded-lg text-xs font-medium disabled:opacity-40 hover:bg-blue-600/30 transition-colors"
-                        >
+                        <button onClick={() => handleComment(i)} disabled={!commentInput.trim()} className="font-mono text-[10px] uppercase tracking-widest text-black bg-white px-3 py-2 disabled:opacity-40 hover:bg-gray-200 transition-colors">
                           Post
                         </button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-3 p-3 rounded-lg border border-slate-700/40 bg-slate-800/30">
-                        <span className="text-xs text-slate-500">Sign in to leave a comment</span>
-                        <button
-                          onClick={onNeedLogin}
-                          className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
-                        >
+                      <div className="flex items-center gap-3 p-3 border border-[#1a1a1a]">
+                        <span className="font-mono text-xs text-gray-600">Sign in to comment</span>
+                        <button onClick={onNeedLogin} className="font-mono text-[10px] uppercase tracking-widest text-black bg-white px-3 py-1.5 hover:bg-gray-200 transition-colors">
                           Sign in →
                         </button>
                       </div>
                     )}
                   </div>
                 )}
-
-                {/* Read time */}
-                <p className="text-[10px] text-slate-700 mt-2">{post.readTime}</p>
               </div>
             )}
           </div>
         ))}
         {published.length === 0 && (
-          <p className="text-slate-500 text-sm text-center py-12">No articles published yet.</p>
+          <p className="font-mono text-xs text-gray-700 text-center py-12">No articles published yet.</p>
         )}
       </div>
     </div>
@@ -418,38 +302,38 @@ function Blog({ onNeedLogin }) {
 
 // ── GitHub / OSS ──────────────────────────────────────────────────────────────
 const OSS_ITEMS = [
-  { icon: "🔧", name: "terraform-vsphere-templates",  desc: "Production-grade Terraform modules for vSphere VM provisioning, HA/DRS setup, and vSwitch configuration."       },
-  { icon: "🔒", name: "linux-hardening-scripts",       desc: "CIS Benchmark-aligned hardening scripts for RHEL/Oracle Linux 8/9. Covers SSH, auditd, firewalld, SELinux."   },
-  { icon: "🔐", name: "sssd-ldap-debugger",            desc: "Step-by-step diagnostic toolkit for SSSD/LDAP authentication failures. Covers permission issues, cache corruption, and nsswitch." },
-  { icon: "💾", name: "raid-recovery-playbooks",       desc: "Ansible playbooks for mdadm software RAID recovery procedures. Tested against scenarios in the WINLAB RAID lab." },
+  { name: "terraform-vsphere-templates",  desc: "Production-grade Terraform modules for vSphere VM provisioning, HA/DRS setup, and vSwitch configuration."       },
+  { name: "linux-hardening-scripts",       desc: "CIS Benchmark-aligned hardening scripts for RHEL/Oracle Linux 8/9. Covers SSH, auditd, firewalld, SELinux."   },
+  { name: "sssd-ldap-debugger",            desc: "Step-by-step diagnostic toolkit for SSSD/LDAP authentication failures. Covers permission issues and cache corruption." },
+  { name: "raid-recovery-playbooks",       desc: "Ansible playbooks for mdadm software RAID recovery procedures. Tested against WINLAB RAID lab scenarios." },
 ];
 
 function GitHub() {
   return (
     <div className="max-w-2xl">
-      <span className="text-xs text-green-400 uppercase tracking-widest">Open Source</span>
-      <h1 className="text-4xl font-black text-white mt-3 mb-4 leading-tight">
-        Empowering the Community.
+      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-600 uppercase mb-8">
+        // OPEN_SOURCE — COMMUNITY
+      </p>
+      <h1 className="font-mono text-4xl font-black text-white mb-4 leading-none tracking-tight">
+        Empowering the<br />Community.
       </h1>
-      <p className="text-slate-400 leading-relaxed mb-10">
-        While our core simulation engine is proprietary, WINLAB is committed to the
-        Open Source ecosystem. We share production-grade infrastructure tools used
-        in our labs. We believe sharing knowledge makes the entire internet more stable.
+      <p className="font-mono text-sm text-gray-500 leading-relaxed mb-10">
+        While our core simulation engine is proprietary, WINLAB shares production-grade
+        infrastructure tools used in our labs.
       </p>
 
-      <div className="space-y-3 mb-10">
+      <div className="border border-[#222] mb-10">
         {OSS_ITEMS.map((item, i) => (
-          <div key={i} className="flex items-start gap-4 p-4 rounded-xl border border-slate-800 bg-slate-900/40 hover:border-slate-700 transition-colors">
-            <span className="text-xl shrink-0">{item.icon}</span>
-            <div>
-              <p className="font-mono text-sm text-green-400 mb-1">winlab-io / {item.name}</p>
-              <p className="text-slate-500 text-xs leading-relaxed">{item.desc}</p>
+          <div key={i} className={`flex items-start gap-4 px-5 py-5 ${i < OSS_ITEMS.length - 1 ? "border-b border-[#1a1a1a]" : ""} hover:bg-[#050505] transition-colors group`}>
+            <div className="flex-1 min-w-0">
+              <p className="font-mono text-sm text-green-500 mb-1">winlab-io / {item.name}</p>
+              <p className="font-mono text-xs text-gray-600 leading-relaxed">{item.desc}</p>
             </div>
             <a
               href={`https://github.com/winlab-io/${item.name}`}
               target="_blank"
               rel="noreferrer"
-              className="shrink-0 text-xs px-3 py-1.5 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 rounded-lg transition-all"
+              className="shrink-0 font-mono text-[10px] uppercase tracking-widest text-gray-600 hover:text-white border border-[#222] hover:border-[#444] px-3 py-1.5 transition-colors whitespace-nowrap"
             >
               View →
             </a>
@@ -457,17 +341,16 @@ function GitHub() {
         ))}
       </div>
 
-      <div className="p-6 rounded-xl border border-green-600/20 bg-green-600/5 text-center">
-        <p className="text-2xl mb-3">⭐</p>
-        <p className="text-white font-semibold mb-2">Star the repo to stay updated</p>
-        <p className="text-slate-500 text-sm mb-4">New lab releases come with matching OSS tooling drops.</p>
+      <div className="border border-[#222] p-6 font-mono text-center">
+        <p className="text-sm text-gray-300 mb-1">Star the repo to stay updated</p>
+        <p className="text-xs text-gray-600 mb-4">New lab releases come with matching OSS tooling drops.</p>
         <a
           href="https://github.com/winlab-io"
           target="_blank"
           rel="noreferrer"
-          className="inline-block px-6 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-sm font-medium rounded-lg transition-colors"
+          className="inline-block font-mono text-[10px] uppercase tracking-widest text-black bg-white px-6 py-2.5 hover:bg-gray-200 transition-colors"
         >
-          🐙 github.com/winlab-io
+          [ github.com/winlab-io ]
         </a>
       </div>
     </div>
@@ -476,118 +359,76 @@ function GitHub() {
 
 // ── FAQ ───────────────────────────────────────────────────────────────────────
 const FAQ_ITEMS = [
-  {
-    q: "What's included in the free plan?",
-    a: "The free Starter plan includes 1 lab (Linux Terminal) and 3 AI Mentor hints. It's designed to let you experience the platform before committing to a subscription.",
-  },
-  {
-    q: "What's the difference between Pro and Business?",
-    a: "Pro ($19/mo) unlocks 8 labs and unlimited AI Mentor hints. Business ($99/mo) adds all 10 labs (including Network Lab and Security Audit), the Manager Dashboard for tracking team progress, priority support with SLA, and custom scenario creation.",
-  },
-  {
-    q: "Can I cancel my subscription at any time?",
-    a: "Yes. Cancel anytime from your Stripe billing portal. You keep full access until the end of your current billing period. Your progress and certificate are always yours to keep.",
-  },
-  {
-    q: "How does the AI Mentor work?",
-    a: "The AI Mentor is powered by Claude (Anthropic). It uses Socratic questioning — it never gives you the direct answer, but guides you with targeted questions toward the solution. Starter users get 3 hints per session; Pro and Business users have unlimited hints.",
-  },
-  {
-    q: "How do I earn the WINLAB Certificate of Excellence?",
-    a: "Complete all 10 labs. The certificate is generated automatically with a unique, publicly verifiable ID (format: WINLAB-timestamp-userId). You can share the verification link directly with employers or on LinkedIn.",
-  },
-  {
-    q: "Is my lab progress saved if I close the browser?",
-    a: "Yes. Progress is stored locally (localStorage) and synced to our servers when you're logged in. It's restored automatically on your next visit from any device.",
-  },
-  {
-    q: "Does WINLAB work on mobile?",
-    a: "The platform is optimised for desktop browsers. Labs involve terminal input and multi-panel interfaces that require a screen of at least 1024 px wide. A responsive mobile view is on the roadmap.",
-  },
-  {
-    q: "How does the Business team dashboard work?",
-    a: "Business plan managers can track every team member's lab progress, completion scores, and certification status from a single dashboard. Members are grouped by Team ID, which is assigned when your organisation is onboarded.",
-  },
-  {
-    q: "What technologies do the labs cover?",
-    a: "Linux Terminal, RAID configuration (mdadm), OS installation & partitioning, VMware vSphere, SSSD/LDAP authentication, real-world server incident recovery, advanced multi-step scenarios, AI-generated challenges, Network Lab, and Security Audit.",
-  },
-  {
-    q: "Do you offer educational or non-profit discounts?",
-    a: "Yes. Contact us at hello@winlab.cloud or sales@winlab.cloud with your institution details. We offer significant discounts for universities, coding bootcamps, and non-profit training programmes.",
-  },
+  { q: "What's included in the free plan?",
+    a: "The free Starter plan includes 1 lab (Linux Terminal) and 3 AI Mentor hints. It lets you experience the platform before committing to a subscription." },
+  { q: "What's the difference between Pro and Business?",
+    a: "Pro ($19/mo) unlocks 8 labs and unlimited AI Mentor hints. Business ($99/mo) adds all 10 labs, the Manager Dashboard, priority support with SLA, and custom scenario creation." },
+  { q: "Can I cancel my subscription at any time?",
+    a: "Yes. Cancel anytime from your Stripe billing portal. You keep full access until the end of your current billing period." },
+  { q: "How does the AI Mentor work?",
+    a: "The AI Mentor is powered by Claude (Anthropic). It uses Socratic questioning — it never gives you the direct answer, but guides you with targeted questions toward the solution." },
+  { q: "How do I earn the WINLAB Certificate?",
+    a: "Complete all 10 labs. The certificate is generated automatically with a unique, publicly verifiable ID. Share the link directly with employers or on LinkedIn." },
+  { q: "Is my lab progress saved if I close the browser?",
+    a: "Yes. Progress is stored locally and synced to our servers when you're logged in. It's restored automatically on your next visit from any device." },
+  { q: "Does WINLAB work on mobile?",
+    a: "The platform is optimised for desktop browsers. Labs involve terminal input and multi-panel interfaces that require a screen of at least 1024 px wide." },
+  { q: "What technologies do the labs cover?",
+    a: "Linux Terminal, RAID (mdadm), OS installation, VMware vSphere, SSSD/LDAP, real-world server incident recovery, advanced multi-step scenarios, AI-generated challenges, Network Lab, and Security Audit." },
+  { q: "Do you offer educational discounts?",
+    a: "Yes. Contact us at hello@winlab.cloud with your institution details. We offer significant discounts for universities, bootcamps, and non-profit training programmes." },
 ];
 
 function FAQ() {
   const [open, setOpen] = useState(null);
   return (
     <div className="max-w-2xl">
-      <span className="text-xs text-yellow-400 uppercase tracking-widest">FAQ</span>
-      <h1 className="text-4xl font-black text-white mt-3 mb-10 leading-tight">
-        Frequently Asked<br />Questions
+      <p className="font-mono text-[10px] tracking-[0.4em] text-gray-600 uppercase mb-8">
+        // FREQUENTLY_ASKED_QUESTIONS
+      </p>
+      <h1 className="font-mono text-4xl font-black text-white mb-10 leading-none tracking-tight">
+        FAQ
       </h1>
 
-      <div className="space-y-2">
+      <div className="border border-[#222]">
         {FAQ_ITEMS.map((item, i) => (
-          <div key={i} className="border border-slate-800 rounded-xl overflow-hidden">
+          <div key={i} className={i < FAQ_ITEMS.length - 1 ? "border-b border-[#1a1a1a]" : ""}>
             <button
               onClick={() => setOpen(open === i ? null : i)}
-              className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-slate-800/40 transition-colors"
+              className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-[#050505] transition-colors"
             >
-              <span className="text-sm font-semibold text-white">{item.q}</span>
-              <span className={`text-slate-500 shrink-0 transition-transform duration-200 ${open === i ? "rotate-180" : ""}`}>▾</span>
+              <span className="font-mono text-sm text-gray-300">{item.q}</span>
+              <span className={`font-mono text-gray-700 shrink-0 transition-transform duration-200 ${open === i ? "rotate-180" : ""}`}>▾</span>
             </button>
             {open === i && (
-              <div className="px-5 pb-5 border-t border-slate-800 pt-3">
-                <p className="text-slate-400 text-sm leading-relaxed">{item.a}</p>
+              <div className="px-5 pb-5 border-t border-[#1a1a1a] pt-3">
+                <p className="font-mono text-xs text-gray-500 leading-relaxed">{item.a}</p>
               </div>
             )}
           </div>
         ))}
       </div>
 
-      <div className="mt-10 p-5 rounded-xl border border-yellow-500/20 bg-yellow-500/5 text-center">
-        <p className="text-white text-sm font-semibold mb-1">Still have questions?</p>
-        <p className="text-slate-500 text-xs mb-3">Our team usually replies within a few hours.</p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <a
-            href="mailto:support@winlab.cloud"
-            className="inline-block px-5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-medium rounded-lg transition-colors"
-          >
-            ✉ support@winlab.cloud
-          </a>
-          <a
-            href="mailto:hello@winlab.cloud"
-            className="inline-block px-5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-medium rounded-lg transition-colors"
-          >
-            ✉ hello@winlab.cloud
-          </a>
-        </div>
-      </div>
-
-      {/* Contact Directory */}
-      <div className="mt-8 p-6 rounded-xl border border-slate-800 bg-slate-900/50">
-        <h3 className="text-sm font-semibold text-white mb-4">📬 Contact Directory</h3>
-        <div className="grid sm:grid-cols-2 gap-4 text-xs">
+      <div className="border border-[#222] p-6 mt-8 font-mono">
+        <p className="text-[9px] text-gray-700 uppercase tracking-[0.4em] mb-4">// CONTACT_DIRECTORY</p>
+        <div className="grid sm:grid-cols-2 gap-3 text-xs mb-6">
           {[
-            { email: "support@winlab.cloud",    label: "Technical support & AI Mentor" },
-            { email: "billing@winlab.cloud",     label: "Payments, invoices & refunds"  },
-            { email: "hello@winlab.cloud",       label: "General inquiries"             },
-            { email: "sales@winlab.cloud",       label: "B2B & enterprise team plans"   },
-            { email: "partnership@winlab.cloud", label: "Collaborations & partnerships" },
-            { email: "certification@winlab.cloud", label: "Certificate issues & verification" },
-            { email: "security@winlab.cloud",    label: "Vulnerability reports"         },
-            { email: "abuse@winlab.cloud",       label: "Report misuse"                 },
-            { email: "privacy@winlab.cloud",     label: "GDPR & data privacy"           },
+            { email: "support@winlab.cloud",       label: "Technical support" },
+            { email: "billing@winlab.cloud",        label: "Payments & invoices" },
+            { email: "hello@winlab.cloud",          label: "General inquiries" },
+            { email: "sales@winlab.cloud",          label: "B2B & enterprise" },
+            { email: "certification@winlab.cloud",  label: "Certificate verification" },
+            { email: "security@winlab.cloud",       label: "Vulnerability reports" },
           ].map(item => (
-            <div key={item.email} className="flex items-start gap-3">
-              <a href={`mailto:${item.email}`} className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-mono shrink-0">
+            <div key={item.email}>
+              <a href={`mailto:${item.email}`} className="text-gray-400 hover:text-white underline underline-offset-2 transition-colors">
                 {item.email}
               </a>
-              <span className="text-slate-500">{item.label}</span>
+              <span className="text-gray-700 ml-2">{item.label}</span>
             </div>
           ))}
         </div>
+        <p className="text-[9px] text-gray-700 text-center tracking-widest uppercase">Usually replies within a few hours.</p>
       </div>
     </div>
   );
@@ -606,20 +447,25 @@ export default function AboutPage({ onBack, initialTab = "about", onNeedLogin })
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-white">
+    <div className="min-h-screen bg-black text-white">
       {/* Top bar */}
-      <div className="border-b border-slate-800 sticky top-0 bg-[#0a0a0b]/95 backdrop-blur-sm z-10">
-        <div className="max-w-5xl mx-auto px-6 flex items-center gap-6 h-14">
-          <button onClick={onBack} className="text-slate-600 hover:text-white text-sm transition-colors shrink-0">← Back</button>
-          <div className="flex gap-1 overflow-x-auto scrollbar-none min-w-0">
+      <div className="border-b border-[#1a1a1a] sticky top-0 bg-black/95 backdrop-blur-sm z-10">
+        <div className="max-w-5xl mx-auto px-6 flex items-center gap-6 h-12">
+          <button
+            onClick={onBack}
+            className="font-mono text-[10px] tracking-widest uppercase text-gray-600 hover:text-white transition-colors shrink-0"
+          >
+            ← Back
+          </button>
+          <div className="flex gap-0 overflow-x-auto border-l border-[#1a1a1a] pl-4">
             {TABS.map(t => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
-                  ${tab === t.id ? "bg-slate-800 text-white" : "text-slate-500 hover:text-slate-300"}`}
+                className={`px-4 py-3 font-mono text-[10px] tracking-widest uppercase transition-colors whitespace-nowrap
+                  ${tab === t.id ? "text-white border-b border-white" : "text-gray-600 hover:text-gray-300"}`}
               >
-                <span>{t.icon}</span>{t.label}
+                {t.label}
               </button>
             ))}
           </div>
