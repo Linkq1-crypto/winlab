@@ -1275,18 +1275,6 @@ export default function SaaSOrchestrator() {
             </div>
           )}
 
-          {/* Fallback: nothing selected */}
-          {view !== "dashboard" && view !== "pricing" && view !== "cert" && view !== "lab" && view !== "referral" && view !== "community" && view !== "about" && view !== "legal" && view !== "success" && (
-            <Dashboard
-              labs={labs}
-              progress={progress}
-              plan={plan}
-              onOpenLab={openLab}
-              onUpgrade={() => setPaywallOpen(true)}
-              onReferral={() => navigate("referral")}
-              onManageBilling={handleManageBilling}
-            />
-          )}
         </main>
       </div>
 
