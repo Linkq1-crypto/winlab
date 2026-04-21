@@ -50,7 +50,7 @@ function EyeIcon({ open }) {
 // ── Input styles — chiaramente visibili su sfondo nero ────────────────────────
 const INPUT = "w-full bg-[#1a1a1a] border border-[#444] rounded px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-gray-300 transition-colors";
 
-function PasswordField({ value, onChange, placeholder = "min 8 caratteri", minLength = 8 }) {
+function PasswordField({ value, onChange, placeholder = "min 8 characters", minLength = 8 }) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
@@ -69,7 +69,7 @@ function PasswordField({ value, onChange, placeholder = "min 8 caratteri", minLe
         tabIndex={-1}
         onClick={() => setShow(s => !s)}
         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-200 transition-colors"
-        aria-label={show ? "Nascondi password" : "Mostra password"}
+        aria-label={show ? "Hide password" : "Show password"}
       >
         <EyeIcon open={show} />
       </button>
@@ -124,7 +124,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
 
     if (mode === "register") {
       const { score } = evaluatePassword(password);
-      if (score < 3) { setError("Password troppo debole. Usa maiuscole, numeri e simboli."); return; }
+      if (score < 3) { setError("Password too weak. Use uppercase letters, numbers and symbols."); return; }
     }
 
     setLoading(true);
@@ -157,8 +157,8 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
       }
 
       const welcomeMsg = mode === "register"
-        ? `Benvenuto, ${data.user.name || data.user.email}! Account creato con successo.`
-        : `Accesso effettuato. Caricamento dashboard…`;
+        ? `Welcome, ${data.user.name || data.user.email}! Account created successfully.`
+        : `Signed in. Loading dashboard…`;
       setSuccess(welcomeMsg);
       await new Promise(r => setTimeout(r, mode === "register" ? 1500 : 800));
 
@@ -213,10 +213,10 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
 
           {forgotSent ? (
             <div className="space-y-4">
-              <p className="text-sm text-gray-200">Link inviato a <span className="text-white font-semibold">{forgotEmail}</span>.</p>
-              <p className="text-xs text-gray-500">Controlla inbox (e spam). Link valido 15 minuti, usa singola.</p>
+              <p className="text-sm text-gray-200">Link sent to <span className="text-white font-semibold">{forgotEmail}</span>.</p>
+              <p className="text-xs text-gray-500">Check your inbox (and spam). Link valid 15 minutes, single use.</p>
               <button onClick={() => { setForgotMode(false); setForgotSent(false); }} className="w-full bg-white text-black text-sm font-semibold py-2.5 rounded hover:bg-gray-100 transition-colors mt-2">
-                Torna al Login
+                Back to Login
               </button>
             </div>
           ) : (
@@ -227,9 +227,9 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
                 <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="you@company.com" required autoFocus className={INPUT} />
               </div>
               <button type="submit" disabled={loading} className="w-full bg-white text-black text-sm font-semibold py-2.5 rounded hover:bg-gray-100 disabled:opacity-50 transition-colors">
-                {loading ? "Invio in corso..." : "Invia Link di Reset"}
+                {loading ? "Sending..." : "Send Reset Link"}
               </button>
-              <p className="text-xs text-gray-600 text-center">Token scade in 15 min · Uso singolo</p>
+              <p className="text-xs text-gray-600 text-center">Token expires in 15 min · Single use</p>
             </form>
           )}
         </div>
@@ -312,7 +312,7 @@ export default function AuthPage({ onBack, onLoginSuccess, initialMode = "login"
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Il tuo nome"
+                placeholder="Your name"
                 required
                 maxLength={80}
                 className={INPUT}
