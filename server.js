@@ -26,6 +26,7 @@ import {
   verifyEmailToken,
   sendNewDeviceLoginEmail,
   sendAccountDeletedEmail,
+  sendWelcomeEmail,
 } from "./src/services/userLifecycleEmailFlow.js";
 // import { bootstrapAlertFlow } from "./src/core/alertDispatcher.js";
 import helpdeskRouter from "./src/api/routes/helpdesk.js";
@@ -198,6 +199,9 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
     });
 
     const seatAssigned = null;
+
+    // 📧 WELCOME EMAIL
+    sendWelcomeEmail(user).catch(err => console.error("sendWelcomeEmail error:", err));
 
     // 🔐 TOKEN (senza ...)
     const token = jwt.sign(

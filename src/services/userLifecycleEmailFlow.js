@@ -158,6 +158,48 @@ export async function verifyEmailToken(rawToken) {
 }
 
 /**
+ * Send welcome email after registration
+ * @param {object} user - Prisma user object
+ */
+export async function sendWelcomeEmail(user) {
+  const name = user.name || user.email.split("@")[0];
+  const dashboardUrl = `${env.appBaseUrl || "https://winlab.cloud"}`;
+
+  await sendTemplatedEmail(
+    user.email,
+    "[ ACCESS GRANTED ] Welcome to WinLab",
+    `
+      <div style="font-family:'Courier New',Courier,monospace;background:#000;border:1px solid #1a1a1a;border-radius:4px;padding:24px;margin-bottom:24px;">
+        <div style="color:#666;font-size:11px;margin-bottom:16px;letter-spacing:2px;">WINLAB — SECURE SHELL</div>
+        <div style="color:#555;font-size:12px;margin-bottom:4px;">$ whoami</div>
+        <div style="color:#e5e7eb;font-size:13px;margin-bottom:16px;">${name}</div>
+        <div style="color:#555;font-size:12px;margin-bottom:4px;">$ ./access --grant --plan=starter</div>
+        <div style="color:#22c55e;font-size:13px;margin-bottom:4px;">[ OK ] Identity verified</div>
+        <div style="color:#22c55e;font-size:13px;margin-bottom:4px;">[ OK ] Lab environment provisioned</div>
+        <div style="color:#22c55e;font-size:13px;margin-bottom:16px;">[ OK ] Access granted → 6 free labs unlocked</div>
+        <div style="color:#555;font-size:12px;margin-bottom:4px;">$ ls ~/labs/free/</div>
+        <div style="color:#93c5fd;font-size:12px;line-height:1.8;">
+          linux-terminal/<br>
+          raid-simulator/<br>
+          os-install/<br>
+          vsphere/<br>
+          sssd-ldap/<br>
+          real-server/
+        </div>
+      </div>
+      <p style="color:#9ca3af;font-size:13px;margin:0 0 20px;">Your sysadmin training environment is ready. Start with Lab 01 and work your way up to enterprise scenarios.</p>
+      <a href="${dashboardUrl}" style="display:inline-block;background:#fff;color:#000;font-family:'Courier New',monospace;font-weight:900;font-size:13px;padding:12px 28px;text-decoration:none;letter-spacing:1px;">[ ENTER WINLAB ]</a>
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid #1a1a1a;">
+        <div style="color:#374151;font-size:11px;font-family:'Courier New',monospace;line-height:1.8;">
+          free plan · 6 labs · no credit card required<br>
+          upgrade anytime → unlock all 24 labs + AI Mentor
+        </div>
+      </div>
+    `
+  );
+}
+
+/**
  * Verify a reset token and return associated user
  * @param {string} rawToken
  * @returns {object|null} User if valid, null otherwise
