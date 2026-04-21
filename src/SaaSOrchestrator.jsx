@@ -468,6 +468,21 @@ const DEMO_SCENARIO_LABELS = {
 };
 
 // ── Demo shell — public preview, no auth ──────────────────────────────────────
+async function startCheckout() {
+  try {
+    const res = await fetch("/api/billing/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: "early" }),
+    });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else window.location.href = "/?pricing=1";
+  } catch {
+    window.location.href = "/?pricing=1";
+  }
+}
+
 export function DemoShell() {
   const [showCTA, setShowCTA] = useState(false);
 
@@ -493,12 +508,12 @@ export function DemoShell() {
         <span style={{ color:"#6b7280", fontSize:12 }}>
           {labLabel}
         </span>
-        <a
-          href="/#cta"
-          style={{ background:"#22c55e", color:"#000", padding:"6px 14px", borderRadius:6, fontSize:12, fontWeight:800, textDecoration:"none", whiteSpace:"nowrap" }}
+        <button
+          onClick={startCheckout}
+          style={{ background:"#22c55e", color:"#000", padding:"6px 14px", borderRadius:6, fontSize:12, fontWeight:800, border:"none", cursor:"pointer", whiteSpace:"nowrap" }}
         >
           Lock your seat $5/mo →
-        </a>
+        </button>
       </div>
 
       {/* Lab */}
@@ -519,12 +534,12 @@ export function DemoShell() {
           }}>
             <p style={{ color:"#f3f4f6", fontWeight:800, fontSize:18, margin:0 }}>Enjoying the lab?</p>
             <p style={{ color:"#6b7280", fontSize:14, margin:0 }}>All 24 labs · AI Mentor · Certificates · $5/mo locked forever.</p>
-            <a
-              href="/#cta"
-              style={{ background:"#22c55e", color:"#000", padding:"13px 36px", borderRadius:8, fontWeight:800, fontSize:15, textDecoration:"none", marginTop:4 }}
+            <button
+              onClick={startCheckout}
+              style={{ background:"#22c55e", color:"#000", padding:"13px 36px", borderRadius:8, fontWeight:800, fontSize:15, border:"none", cursor:"pointer", marginTop:4 }}
             >
               Start for $5/mo →
-            </a>
+            </button>
             <button
               onClick={() => setShowCTA(false)}
               style={{ background:"none", border:"none", color:"#374151", fontSize:12, cursor:"pointer", marginTop:2 }}
@@ -1062,7 +1077,7 @@ export default function SaaSOrchestrator() {
               ...(isIndia ? [{ id: "india", icon: "🇮🇳", label: "India Home" }] : []),
               { id: "dashboard", icon: "⊞",  label: "Dashboard"   },
               { id: "pricing",   icon: "💳", label: "Pricing"     },
-              { id: "deception", icon: "🛡️", label: "SOC Shield"  },
+              { id: "deception", icon: "🛡️", label: "SOC Shield", requiresAuth: true },
               { id: "cert",      icon: "🏆", label: "Certificate" },
               { id: "referral",  icon: "🔗", label: "Invite Peer" },
               { id: "privacy",   icon: "🛡️", label: "Privacy" },
@@ -1073,7 +1088,10 @@ export default function SaaSOrchestrator() {
                 icon={item.icon}
                 label={item.label}
                 active={view === item.id}
-                onClick={() => navigate(item.id)}
+                onClick={() => {
+                  if (item.requiresAuth && !token) { setAuthMode("login"); setView("auth"); return; }
+                  navigate(item.id);
+                }}
               />
             ))}
           </nav>
