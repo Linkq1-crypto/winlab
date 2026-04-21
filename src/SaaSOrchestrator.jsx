@@ -934,6 +934,7 @@ export default function SaaSOrchestrator() {
           // Show onboarding for new users (no completed labs)
           if (completedCount === 0) {
             setShowOnboarding(true);
+            navigate("dashboard");
           } else {
             navigate("dashboard");
           }
