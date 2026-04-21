@@ -18,6 +18,7 @@ import OnboardingFlow from "./OnboardingFlow";
 import ReferralSystem from "./ReferralSystem";
 import IndiaHinglishLanding from "./IndiaHinglishLanding";
 import WinLabHome from "./WinLabHome";
+import Dashboard from "./Dashboard";
 import PrivacyPolicy from "./PrivacyPolicy";
 import OnboardingPage from "./OnboardingPage";
 import FirstMission from "./FirstMission";
@@ -1243,6 +1244,7 @@ export default function SaaSOrchestrator() {
               achievements={achievements}
             />
           )}
+
 
           {view === "pricing" && (
             <div className="p-8">
