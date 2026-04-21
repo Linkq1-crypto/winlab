@@ -1,6 +1,7 @@
 // NewLandingPage.jsx — terminal in cima (A/B), signup +3s dal fix, sezioni sotto
 import { useState, useEffect, useRef } from "react";
 import { getVariant } from "./ABTestOnboarding";
+import CookieBanner from "./CookieBanner";
 
 function track(event, props = {}) {
   try { if (window.posthog) window.posthog.capture(event, props); } catch {}
@@ -385,6 +386,8 @@ export default function NewLandingPage({ onLogin, onRegister }) {
       {showSignup && (
         <SignupModal variant={variant} onLogin={onLogin} onRegister={onRegister} onSkip={handleSkip} />
       )}
+
+      <CookieBanner />
     </div>
   );
 }
