@@ -1308,9 +1308,18 @@ export default function App({ region = "US", labProgress = { completed: 0, total
 
         {/* Upgrade CTA */}
         <div style={{ textAlign:"center", marginTop:32, paddingTop:24, borderTop:"1px solid #111820" }}>
-          <a href="/#cta" style={{ background:"#22c55e", color:"#000", fontWeight:800, fontSize:13, padding:"11px 28px", borderRadius:7, textDecoration:"none", display:"inline-block" }}>
+          <button
+            onClick={async () => {
+              try {
+                const r = await fetch("/api/billing/checkout", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ plan:"early" }) });
+                const d = await r.json();
+                if (d.url) window.location.href = d.url;
+              } catch { window.location.href = "/?pricing=1"; }
+            }}
+            style={{ background:"#22c55e", color:"#000", fontWeight:800, fontSize:13, padding:"11px 28px", borderRadius:7, border:"none", cursor:"pointer", display:"inline-block" }}
+          >
             Unlock all 24 labs — $5/mo forever →
-          </a>
+          </button>
           <div style={{ color:"#334", fontSize:10, marginTop:8 }}>First 6 labs always free · No credit card required</div>
         </div>
 
