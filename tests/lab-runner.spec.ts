@@ -5,9 +5,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { applyPatch, _test as patcherTest } from "../src/services/patcher.js";
 import {
   createWorkspace,
+  runLab,
   runLabWithAI,
   _test as labRunnerTest,
 } from "../src/services/labRunner.js";
+import { buildLabPrompt } from "../src/services/promptBuilder.js";
+import { runPatchWithRetry, shouldRetryPatch } from "../src/services/patchRetry.js";
+import { scorePatchQuality } from "../src/services/patchScoring.js";
 
 const tmpDirs: string[] = [];
 
@@ -150,6 +154,127 @@ describe("lab runner", () => {
       id: "memory-leak",
       scope: ["labs/memory-leak"],
       repoRoot: workspace,
+    });
+  });
+});
+
+describe("lab prompt, retry, and scoring", () => {
+  it("builds catalog-aware prompts with issue guidance and retry context", () => {
+    const reviewPrompt = buildLabPrompt({ labId: "memory-leak", mode: "review" });
+    const retryPrompt = buildLabPrompt({
+      labId: "memory-leak",
+      mode: "patch",
+      failureContext: {
+        verifyOk: false,
+        timeout: false,
+        outputSnippet: "heap still grows",
+      },
+    });
+
+    expect(reviewPrompt).toContain("Focus on retained references");
+    expect(reviewPrompt).toContain("Stop unbounded memory growth");
+    expect(retryPrompt).toContain("Previous attempt failed verification");
+    expect(retryPrompt).toContain("heap still grows");
+    expect(retryPrompt).toContain("Return ONLY a unified diff");
+  });
+
+  it("retries once after a failed verification and stops on success", async () => {
+    const calls: string[] = [];
+    const result = await runPatchWithRetry({
+      labId: "memory-leak",
+      workspace: "/tmp/workspace",
+      lab: {
+        id: "memory-leak",
+        scope: ["labs/memory-leak"],
+        entryPoints: ["labs/memory-leak/index.js"],
+        issueType: "performance-memory",
+      },
+      aiRunner: async (prompt) => {
+        calls.push(prompt);
+        return calls.length === 1 ? "diff-one" : "diff-two";
+      },
+      applyPatch: async (_workspace, diff) => ({
+        ok: true,
+        applied: true,
+        filesTouched: [`${diff}.js`],
+      }),
+      runVerify: async () => (
+        calls.length === 1
+          ? { ok: false, output: "verify failed" }
+          : { ok: true, output: "verify passed" }
+      ),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.finalAttempt).toBe(2);
+    expect(result.attempts).toHaveLength(2);
+    expect(result.attempts[1].prompt).toContain("Previous attempt failed verification");
+  });
+
+  it("does not retry unsafe or non-actionable patch failures", () => {
+    expect(shouldRetryPatch({
+      patchApplied: true,
+      verifyResult: { ok: false, output: "bad" },
+      patchMeta: {},
+    })).toBe(true);
+    expect(shouldRetryPatch({
+      patchApplied: false,
+      verifyResult: { ok: false, output: "bad" },
+      patchMeta: {},
+    })).toBe(false);
+    expect(shouldRetryPatch({
+      patchApplied: true,
+      verifyResult: { ok: false, skipped: true, output: "missing verify" },
+      patchMeta: {},
+    })).toBe(false);
+    expect(shouldRetryPatch({
+      patchApplied: true,
+      verifyResult: { ok: false, output: "bad" },
+      patchMeta: { pathViolation: true },
+    })).toBe(false);
+  });
+
+  it("scores patch quality with retry and file-count penalties", () => {
+    expect(scorePatchQuality({
+      verifyOk: true,
+      attempts: 1,
+      filesTouched: ["labs/memory-leak/index.js"],
+      patchBytes: 100,
+    })).toMatchObject({
+      score: 100,
+      grade: "A",
+      reasons: ["single_file_bonus", "first_try_bonus"],
+    });
+
+    const weak = scorePatchQuality({
+      verifyOk: false,
+      attempts: 2,
+      filesTouched: ["a.js", "b.js"],
+      patchBytes: 10 * 1024,
+      timeout: true,
+      warningLikeOutput: true,
+    });
+    expect(weak.grade).toBe("F");
+    expect(weak.reasons).toContain("verification_failed");
+    expect(weak.reasons).toContain("needed_retry");
+  });
+
+  it("supports the generic runLab patch wrapper", async () => {
+    const result = await runLab({
+      labId: "memory-leak",
+      mode: "patch",
+      workspace: "/tmp/workspace",
+      aiRunner: async () => ({ diff: "diff --git a/x b/x" }),
+      applyPatch: async () => ({ applied: true, filesTouched: ["winlab/labs/memory-leak/index.js"] }),
+      runVerify: async () => ({ ok: true, output: "verify passed" }),
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      mode: "patch",
+      labId: "memory-leak",
+      finalAttempt: 1,
+      quality: { grade: "A" },
     });
   });
 });
