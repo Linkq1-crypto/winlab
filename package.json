@@ -33,6 +33,9 @@
     "backup:all": "node scripts/backup.js && node scripts/backup-helpdesk.js",
     "backup:restore": "node scripts/backup-helpdesk.js restore",
     "recover": "node scripts/state-recovery.js"
+    ,
+    "codex:docker:build-runner": "docker build -t winlab-codex-runner -f docker/codex-runner/Dockerfile .",
+    "codex:docker:verify-network": "docker run --rm --network=none -v %cd%:/workspace -w /workspace winlab-codex-runner node scripts/verify-network-block.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.36.3",

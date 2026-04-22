@@ -241,10 +241,19 @@ function FakeEditor({ path, content, onClose }) {
 }
 
 // ── Terminal Component ───────────────────────────────────────────────────────
-export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "starter", onUpgrade = () => {} }) {
+export default function EnhancedTerminalLab({
+  labId = "lab-1-webdown",
+  plan = "starter",
+  onUpgrade = () => {},
+  codexIncident = null,
+  defaultMentorOpen = false,
+}) {
   const analytics = getAnalytics();
   const [region, setRegion] = useState("GLOBAL");
-  const [currentLabIndex, setCurrentLabIndex] = useState(0);
+  const [currentLabIndex, setCurrentLabIndex] = useState(() => {
+    const idx = LABS.findIndex((l) => l.id === labId);
+    return idx >= 0 ? idx : 0;
+  });
   const [lines, setLines] = useState([]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState([]);
@@ -262,6 +271,7 @@ export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "s
   const [aiMessages, setAiMessages] = useState([]);
   const [aiInput, setAiInput] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [codexMode, setCodexMode] = useState("review");
   const [showAiNudge, setShowAiNudge] = useState(false);
   const [commandCount, setCommandCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
@@ -277,6 +287,17 @@ export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "s
   const hintTimerRef = useRef(null);
 
   const currentLab = LABS[currentLabIndex] || LABS[0];
+
+  // Sync active scenario to external labId prop.
+  useEffect(() => {
+    const idx = LABS.findIndex((l) => l.id === labId);
+    if (idx >= 0) setCurrentLabIndex(idx);
+  }, [labId]);
+
+  // Open mentor by default for Codex incident labs.
+  useEffect(() => {
+    if (defaultMentorOpen) setAiMentorOpen(true);
+  }, [defaultMentorOpen]);
   const diffSettings = DIFFICULTY_LEVELS[difficulty];
 
   // ── Init: region detection + boot sequence + analytics + invisible guide ───
@@ -937,15 +958,72 @@ export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "s
   }, [currentLabIndex]);
 
   // ── AI Mentor panel ────────────────────────────────────────────────────────
-  const handleAiSend = useCallback(() => {
+  const buildIncidentContext = useCallback(() => ({
+    id: currentLab.id,
+    title: currentLab.title,
+    error: currentLabIndex === 0
+      ? "Apache/httpd is down; port 80 bind failure and service unavailable"
+      : currentLabIndex === 1
+        ? "Disk full; hidden debug dump consuming capacity"
+        : "Security control disabled; firewalld not active",
+    latencyMs: latency,
+    cwd,
+    commandCount,
+    errorCount,
+    lastTerminalLines: lines.slice(-18).map((line) => line.text),
+    ...(codexIncident ? { ...codexIncident } : {}),
+  }), [codexIncident, commandCount, currentLab.id, currentLab.title, currentLabIndex, cwd, errorCount, latency, lines]);
+
+  const askCodex = useCallback(async (mode, question) => {
+    const endpoint = mode === "patch" ? "/api/ai/codex/patch" : "/api/ai/codex/review";
+    const fallback = processAiQuestion(question || "Analyze the current incident");
+
+    setAiLoading(true);
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          prompt: question,
+          incident: buildIncidentContext(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Codex unavailable");
+
+      if (data.configured === false) {
+        return `${data.result}\n\nLocal mentor fallback:\n${fallback}`;
+      }
+
+      if (mode === "patch") {
+        return [
+          data.result || "Codex generated a sandbox patch.",
+          data.diff ? `\nSandbox diff:\n${data.diff}` : "\nSandbox diff: no file changes returned.",
+        ].join("\n");
+      }
+
+      return data.result || fallback;
+    } catch (err) {
+      return `Codex could not run for this session (${err.message}).\n\nLocal mentor fallback:\n${fallback}`;
+    } finally {
+      setAiLoading(false);
+    }
+  }, [buildIncidentContext, processAiQuestion]);
+
+  const handleAiSend = useCallback(async () => {
     if (!aiInput.trim()) return;
 
-    const response = processAiQuestion(aiInput);
+    const question = aiInput;
     setAiMessages(prev => [...prev, { role: "user", text: aiInput }]);
-    setAiMessages(prev => [...prev, { role: "ai", text: response }]);
     setAiInput("");
+    const wantsCodex = /\b(repo|code|codex|root cause|patch|fix)\b/i.test(question);
+    const response = wantsCodex
+      ? await askCodex(codexMode, question)
+      : processAiQuestion(question);
+    setAiMessages(prev => [...prev, { role: "ai", text: response, mode: wantsCodex ? codexMode : "mentor" }]);
     analytics.track("ai_mentor_use", { labId: currentLab.id });
-  }, [aiInput, currentLab.id, processAiQuestion]);
+  }, [aiInput, askCodex, codexMode, currentLab.id, processAiQuestion]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -1131,19 +1209,24 @@ export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "s
 
       {/* ── AI Mentor Panel (floating) ───────────────────────────────────── */}
       {aiMentorOpen && (
-        <div className="absolute bottom-0 left-0 right-0 h-64 bg-slate-900 border-t border-slate-700 flex flex-col z-20">
+        <div className="absolute bottom-0 left-0 right-0 h-72 bg-slate-900 border-t border-slate-700 flex flex-col z-20">
           <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700">
-            <span className="text-sm font-semibold text-white">🤖 AI Mentor</span>
+            <div>
+              <span className="text-sm font-semibold text-white">AI Incident Mentor</span>
+              <p className="text-[10px] text-slate-500">Repo-aware when Codex is enabled</p>
+            </div>
             <button
               onClick={() => setAiMentorOpen(false)}
               className="text-slate-400 hover:text-white"
             >
-              ✕
+              Close
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
             {aiMessages.length === 0 && (
-              <p className="text-xs text-slate-500 text-center">Ask me anything about this lab!</p>
+              <p className="text-xs text-slate-500 text-center">
+                Ask for a hint, root cause, or sandbox patch for this incident.
+              </p>
             )}
             {aiMessages.map((msg, i) => (
               <div
@@ -1151,44 +1234,65 @@ export default function EnhancedTerminalLab({ labId = "lab-1-webdown", plan = "s
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg px-3 py-2 text-xs ${
+                  className={`max-w-[80%] rounded-lg px-3 py-2 text-xs whitespace-pre-wrap ${
                     msg.role === "user"
                       ? "bg-blue-600 text-white"
                       : "bg-slate-800 text-slate-300"
-                  }`}
+                  } ${msg.mode === "patch" ? "font-mono max-w-[94%]" : ""}`}
                 >
                   {msg.text}
                 </div>
               </div>
             ))}
+            {aiLoading && (
+              <div className="text-xs text-slate-500 animate-pulse">Codex is analyzing the sandbox...</div>
+            )}
           </div>
-          <div className="border-t border-slate-700 px-3 py-2 flex gap-2">
-            <input
-              ref={aiInputRef}
-              type="text"
-              value={aiInput}
-              onChange={e => setAiInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleAiSend();
-                }
-              }}
-              className="flex-1 bg-slate-800 text-white text-xs px-3 py-1.5 rounded outline-none"
-              placeholder="Ask AI Mentor..."
-              aria-label="AI Mentor input"
-            />
-            <button
-              onClick={handleAiSend}
-              className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-500"
-              disabled={aiLoading}
-            >
-              Send
-            </button>
+          <div className="border-t border-slate-700 px-3 py-2">
+            <div className="mb-2 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setCodexMode("review")}
+                className={`rounded px-2 py-1.5 text-xs ${codexMode === "review" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-400"}`}
+              >
+                Review repo
+              </button>
+              <button
+                type="button"
+                onClick={() => setCodexMode("patch")}
+                className={`rounded px-2 py-1.5 text-xs ${codexMode === "patch" ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-400"}`}
+              >
+                Patch sandbox
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <input
+                ref={aiInputRef}
+                type="text"
+                value={aiInput}
+                onChange={e => setAiInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAiSend();
+                  }
+                }}
+                className="flex-1 bg-slate-800 text-white text-xs px-3 py-1.5 rounded outline-none"
+                placeholder={codexMode === "patch" ? "Ask Codex to fix this in a sandbox..." : "Ask AI Mentor..."}
+                aria-label="AI Mentor input"
+                disabled={aiLoading}
+              />
+              <button
+                onClick={handleAiSend}
+                className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-500 disabled:opacity-50"
+                disabled={aiLoading}
+              >
+                {aiLoading ? "..." : "Send"}
+              </button>
+            </div>
           </div>
         </div>
       )}
-
       {/* ── AI Mentor Toggle Button ──────────────────────────────────────── */}
       <button
         onClick={() => {

@@ -21,6 +21,9 @@ export const LABS = [
   { id: "automation",        name: "Automation",            icon: "⚙️",  tier: "business",    file: "components/AutomationLab"   },
   { id: "cloud-infrastructure",name:"Cloud Infrastructure", icon: "🌩️",  tier: "business",    file: "components/CloudInfra"      },
   { id: "msp-multi-tenant",  name: "Multi-Tenant MSP",      icon: "🌍",  tier: "business",    file: "components/MspDashboard"    },
+  { id: "codex-api-timeout", name: "Codex Incident: API Timeout", icon: "[AI]", tier: "pro", file: "CodexIncidentLab" },
+  { id: "codex-auth-bypass", name: "Codex Incident: Auth Bypass", icon: "[AI]", tier: "pro", file: "CodexIncidentLab" },
+  { id: "codex-stripe-webhook", name: "Codex Incident: Stripe Webhook", icon: "[AI]", tier: "pro", file: "CodexIncidentLab" },
 ];
 
 export const PLAN_LIMITS = {

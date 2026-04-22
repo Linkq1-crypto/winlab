@@ -57,13 +57,14 @@ const JamfPro          = lazy(() => import("./components/JamfPro"));
 const CompNetworkLab   = lazy(() => import("./components/NetworkLab"));
 const CompSecurityAudit= lazy(() => import("./components/SecurityAudit"));
 const EnterpriseArch   = lazy(() => import("./components/EnterpriseArch"));
-const AutomationLab    = lazy(() => import("./components/AutomationLab"));
-const CloudInfra       = lazy(() => import("./components/CloudInfra"));
-const EnhancedTerminal = lazy(() => import("./EnhancedTerminalLab"));
+  const AutomationLab    = lazy(() => import("./components/AutomationLab"));
+  const CloudInfra       = lazy(() => import("./components/CloudInfra"));
+  const EnhancedTerminal = lazy(() => import("./EnhancedTerminalLab"));
+  const CodexIncidentLab = lazy(() => import("./CodexIncidentLab"));
 
-const SIMULATORS = {
-  "linux-terminal":     LinuxTerminal,
-  "enhanced-terminal":  EnhancedTerminal,
+  const SIMULATORS = {
+    "linux-terminal":     LinuxTerminal,
+    "enhanced-terminal":  EnhancedTerminal,
   "raid-simulator":     RaidSimulator,
   "os-install":         OsInstall,
   "vsphere":            VsphereSimulator,
@@ -78,16 +79,19 @@ const SIMULATORS = {
   "jamf-pro":           JamfPro,
   "enterprise-arch":    EnterpriseArch,
   "automation":         AutomationLab,
-  "cloud-infrastructure": CloudInfra,
-  "msp-multi-tenant":   MspDashboard,
-};
+    "cloud-infrastructure": CloudInfra,
+    "msp-multi-tenant":   MspDashboard,
+    "codex-api-timeout":  CodexIncidentLab,
+    "codex-auth-bypass":  CodexIncidentLab,
+    "codex-stripe-webhook": CodexIncidentLab,
+  };
 
 // Stable wrapper: component type never changes, only labId prop changes.
 // This prevents React from unmounting/remounting on every lab switch.
 function LabRenderer({ labId }) {
   const Sim = SIMULATORS[labId];
   if (!Sim) return <p className="text-slate-500 p-8">Lab "{labId}" not found.</p>;
-  return <Sim />;
+  return <Sim labId={labId} />;
 }
 
 // ── Error boundary (catches simulator crashes) ────────────────────────────────
