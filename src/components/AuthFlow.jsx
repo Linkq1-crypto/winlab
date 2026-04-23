@@ -69,6 +69,10 @@ export default function AuthFlow({
       context={modalState?.context || "progress"}
       score={modalState?.score ?? null}
       grade={modalState?.grade ?? null}
+      title={modalState?.title}
+      description={modalState?.description}
+      primaryLabel={modalState?.primaryLabel}
+      secondaryLabel={modalState?.secondaryLabel}
       onClose={onClose}
       onPrimary={() => {
         if (modalState?.mode === "upgrade") {

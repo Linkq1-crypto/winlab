@@ -8,8 +8,14 @@ const MOCK_USER = Object.freeze({
 export function getMockSession(req) {
   const authHeader = req.get("authorization");
   const mockHeader = req.get("x-mock-auth");
+  const cookieHeader = req.get("cookie") || "";
+  const hasMockCookie = cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .some((part) => part === "mock_auth=1");
 
   const authenticated =
+    hasMockCookie ||
     mockHeader === "true" ||
     mockHeader === "1" ||
     authHeader === "Bearer mock-demo-user";
