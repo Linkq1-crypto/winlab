@@ -33,11 +33,11 @@ router.post("/start", requireMockAuth, (req, res) => {
     userId: req.session.user.id,
   });
 
-  res.status(201).json({
+  res.status(200).json({
     incidentId: incident.incidentId,
     labSlug: incident.labSlug,
     status: incident.status,
-    terminalUrl: incident.terminalUrl,
+    terminalUrl: `/labs/${incident.labSlug}/incidents/${incident.incidentId}`,
   });
 });
 

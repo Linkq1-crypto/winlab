@@ -1,5 +1,14 @@
 export const LABS = Object.freeze([
   Object.freeze({
+    slug: "nginx-down",
+    title: "Nginx Down",
+    description: "Restore a failed edge service before user traffic fully drops.",
+    durationMin: 12,
+    difficulty: "junior",
+    tier: "free",
+    rating: 4.8,
+  }),
+  Object.freeze({
     slug: "api-timeout",
     title: "API Timeout",
     description: "Trace the timeout chain, isolate the bottleneck, and restore traffic.",
@@ -52,6 +61,11 @@ export const MOCK_PROGRESS = Object.freeze({
   certificates: 2,
   currentStreakDays: 5,
   recentLabs: Object.freeze([
+    Object.freeze({
+      slug: "nginx-down",
+      title: "Nginx Down",
+      completedAt: "2026-04-23T08:30:00.000Z",
+    }),
     Object.freeze({
       slug: "api-timeout",
       title: "API Timeout",

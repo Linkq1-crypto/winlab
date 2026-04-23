@@ -18,6 +18,52 @@ import { generateIncident, hasIncidentTemplate } from "../services/incidentGener
 import { pickVariant } from "../services/abTest";
 import { explainDiff } from "../services/explainDiff";
 
+const FALLBACK_HOME_DATA = Object.freeze({
+  stats: Object.freeze({
+    engineers: 12000,
+    countries: 120,
+    labs: 24,
+    avgRating: 4.8,
+  }),
+  featuredLabs: Object.freeze([
+    Object.freeze({
+      slug: "api-timeout",
+      title: "API Timeout",
+      description: "Trace the timeout chain and restore traffic before impact spreads.",
+      durationMin: 18,
+      difficulty: "junior",
+      tier: "free",
+      rating: 4.8,
+    }),
+    Object.freeze({
+      slug: "nginx-port-conflict",
+      title: "Nginx Port Conflict",
+      description: "Recover an edge service that cannot bind cleanly under load.",
+      durationMin: 14,
+      difficulty: "mid",
+      tier: "free",
+      rating: 4.7,
+    }),
+    Object.freeze({
+      slug: "permission-denied",
+      title: "Permission Denied",
+      description: "Fix a write path that fails with real production permissions.",
+      durationMin: 16,
+      difficulty: "mid",
+      tier: "pro",
+      rating: 4.9,
+    }),
+  ]),
+  pricing: Object.freeze({
+    freeLabs: 5,
+    proMonthlyUsd: 19,
+    currency: "USD",
+  }),
+  socialProof: Object.freeze({
+    headline: "Joined by engineers from 120+ countries",
+  }),
+});
+
 const INCIDENTS = [
   {
     id: "api-timeout",
@@ -99,6 +145,9 @@ export default function WinLabInteractiveHome({
   const [showSignup, setShowSignup] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [engagementScore, setEngagementScore] = useState(0);
+  const [homeData, setHomeData] = useState(FALLBACK_HOME_DATA);
+  const [startIncidentLoading, setStartIncidentLoading] = useState(false);
+  const [startIncidentError, setStartIncidentError] = useState("");
   const [levelId, setLevelId] = useState("JUNIOR");
   const [incidentSeed, setIncidentSeed] = useState(() => createSessionSeed("incident"));
   const [incidentVariant, setIncidentVariant] = useState(null);
@@ -150,6 +199,38 @@ export default function WinLabInteractiveHome({
   useEffect(() => {
     track("hero_variant_seen", { heroVariant, ctaVariant, secondaryCtaVariant });
   }, [heroVariant, ctaVariant, secondaryCtaVariant]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadHomeData() {
+      try {
+        const response = await fetch("/api/public/home", {
+          method: "GET",
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Home API failed with status ${response.status}`);
+        }
+
+        const payload = await response.json();
+        setHomeData({
+          stats: payload?.stats || FALLBACK_HOME_DATA.stats,
+          featuredLabs: payload?.featuredLabs || FALLBACK_HOME_DATA.featuredLabs,
+          pricing: payload?.pricing || FALLBACK_HOME_DATA.pricing,
+          socialProof: payload?.socialProof || FALLBACK_HOME_DATA.socialProof,
+        });
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setHomeData(FALLBACK_HOME_DATA);
+        }
+      }
+    }
+
+    loadHomeData();
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const nextVariant = hasIncidentTemplate(activeVariantLabId)
@@ -233,9 +314,58 @@ export default function WinLabInteractiveHome({
     terminalRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  function handleHeroPrimary() {
+  async function handleHeroPrimary(event) {
+    event.preventDefault();
+    if (startIncidentLoading) return;
+
     track("hero_cta_clicked", { heroVariant, ctaVariant, secondaryCtaVariant });
-    focusTerminal();
+    setStartIncidentLoading(true);
+    setStartIncidentError("");
+
+    try {
+      const response = await fetch("/api/incidents/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ labSlug: "nginx-down" }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (response.ok && payload?.terminalUrl) {
+        window.location.href = payload.terminalUrl;
+        return;
+      }
+
+      const errorCode = payload?.error?.code || payload?.code || "";
+      if (response.status === 401 || errorCode === "AUTH_REQUIRED") {
+        if (typeof openAuthModal === "function") {
+          openAuthModal({
+            mode: "signup",
+            context: "progress",
+            title: "Create your account to start the incident.",
+            description: "Sign in or create an account to enter the live terminal.",
+            primaryLabel: "Continue",
+          });
+        } else {
+          window.location.href = "/login";
+        }
+        return;
+      }
+
+      if (response.status === 403 || errorCode === "PLAN_UPGRADE_REQUIRED") {
+        window.location.href = "/pricing";
+        return;
+      }
+
+      throw new Error(payload?.error?.message || "We could not start the incident right now.");
+    } catch (error) {
+      setStartIncidentError(error.message || "We could not start the incident right now.");
+    } finally {
+      setStartIncidentLoading(false);
+    }
   }
 
   function handleHeroSecondary() {
@@ -447,17 +577,14 @@ export default function WinLabInteractiveHome({
       <main className="mx-auto max-w-7xl px-4 py-6 md:px-6">
         <section>
           <HeroSection
-            onStart={() => {
-              appendTerminalLine("[system] first incident armed");
-              appendTerminalLine("[incident] start debugging");
-              setShowAIPanel(false);
-              setIntroComplete(true);
-              setEngagementScore((value) => value + 1);
-              const element = document.getElementById("interactive-lab-area");
-              if (element) {
-                element.scrollIntoView({ behavior: "smooth", block: "start" });
-              }
-            }}
+            stats={homeData.stats}
+            socialProof={homeData.socialProof}
+            featuredLabs={homeData.featuredLabs}
+            pricing={homeData.pricing}
+            startHref="/labs/nginx-down"
+            startLoading={startIncidentLoading}
+            startError={startIncidentError}
+            onStart={handleHeroPrimary}
             onWatch={() => {
               appendTerminalLine("[preview] incident escalation loaded");
               setIntroComplete(true);

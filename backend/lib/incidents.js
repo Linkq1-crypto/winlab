@@ -8,7 +8,7 @@ export function createIncident({ labSlug, userId }) {
     labSlug,
     userId,
     status: "live",
-    terminalUrl: `/terminal/${incidentId}`,
+    terminalUrl: `/labs/${labSlug}/incidents/${incidentId}`,
     createdAt: new Date().toISOString(),
   };
 
