@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import AIPatchPanel from "../components/AIPatchPanel";
 import AuthFlow from "../components/AuthFlow";
+import HeroSection from "../components/HeroSection";
 import TerminalIntroSequence from "../components/TerminalIntroSequence";
 import { listIncidentChains } from "../config/incidentChains";
 import { LEVEL_OPTIONS, getLevelConfig } from "../config/levels";
@@ -444,8 +445,36 @@ export default function WinLabInteractiveHome({
       <TopBar />
 
       <main className="mx-auto max-w-7xl px-4 py-6 md:px-6">
-        <section className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
-          <div className="min-h-[640px] overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 shadow-2xl">
+        <section>
+          <HeroSection
+            onStart={() => {
+              appendTerminalLine("[system] first incident armed");
+              appendTerminalLine("[incident] start debugging");
+              setShowAIPanel(false);
+              setIntroComplete(true);
+              setEngagementScore((value) => value + 1);
+              const element = document.getElementById("interactive-lab-area");
+              if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }}
+            onWatch={() => {
+              appendTerminalLine("[preview] incident escalation loaded");
+              setIntroComplete(true);
+              setEngagementScore((value) => value + 1);
+              const element = document.getElementById("interactive-lab-area");
+              if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }}
+          />
+        </section>
+
+        <section
+          id="interactive-lab-area"
+          className="mt-6 grid gap-6 lg:grid-cols-[1.25fr_0.75fr]"
+        >
+          <div className="min-h-[640px] overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-2xl">
             <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
               <div>
                 <div className="text-sm text-zinc-400">prod-eu-west-1 - bash</div>
@@ -453,11 +482,7 @@ export default function WinLabInteractiveHome({
               </div>
 
               <div className="flex items-center gap-3 text-xs">
-                <span className="text-zinc-500">{level.label}</span>
-                {incidentVariant && (
-                  <span className="text-zinc-500">seed: {incidentVariant.seed}</span>
-                )}
-                <span className={statusBadgeClass(liveStatus)}>{liveStatus}</span>
+                <span className={statusBadgeClass(liveStatus)}>● {liveStatus}</span>
                 <span className="text-zinc-500">timer: {elapsed}s</span>
               </div>
             </div>
@@ -466,28 +491,32 @@ export default function WinLabInteractiveHome({
               ref={terminalRef}
               className="h-[470px] overflow-auto bg-black p-4 font-mono text-sm leading-7"
             >
-              <TerminalIntroSequence
-                key={`${incident.id}:${currentChainStep?.index ?? "single"}:${incidentSeed}`}
-                lines={[...introLines, 'Type "help" or start debugging.', "winlab@prod-server:~$"]}
-                onComplete={() => setIntroComplete(true)}
-              />
-
-              {terminalLines.map((line, index) => (
-                <div key={`${index}-${line}`} className={lineClassName(line)}>
+              {terminalLines.map((line, idx) => (
+                <div key={`${idx}-${line}`} className={lineClassName(line)}>
                   {line}
                 </div>
               ))}
 
               {reviewResult?.text && (
-                <TerminalPanel title="AI Review">
-                  {reviewResult.text}
-                </TerminalPanel>
+                <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                  <div className="mb-2 text-[11px] uppercase tracking-wide text-zinc-500">
+                    AI Review
+                  </div>
+                  <pre className="whitespace-pre-wrap text-xs text-zinc-200">
+                    {reviewResult.text}
+                  </pre>
+                </div>
               )}
 
               {explanation && (
-                <TerminalPanel title="Patch Explanation">
-                  {explanation}
-                </TerminalPanel>
+                <div className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                  <div className="mb-2 text-[11px] uppercase tracking-wide text-zinc-500">
+                    Patch Explanation
+                  </div>
+                  <pre className="whitespace-pre-wrap text-xs text-zinc-200">
+                    {explanation}
+                  </pre>
+                </div>
               )}
             </div>
 
@@ -506,7 +535,7 @@ export default function WinLabInteractiveHome({
               <button
                 type="submit"
                 disabled={loading}
-                className="rounded bg-white px-3 py-2 text-sm text-black hover:bg-zinc-200 disabled:opacity-50"
+                className="rounded-xl bg-white px-3 py-2 text-sm text-black hover:bg-zinc-200 disabled:opacity-50"
               >
                 Run
               </button>
@@ -514,31 +543,32 @@ export default function WinLabInteractiveHome({
           </div>
 
           <div className="flex flex-col gap-4">
-            <HeroSideCard
-              incident={incident}
-              liveStatus={liveStatus}
-              elapsed={elapsed}
-              heroVariant={heroVariant}
-              ctaVariant={ctaVariant}
-              secondaryCtaVariant={secondaryCtaVariant}
-              onPrimary={handleHeroPrimary}
-              onSecondary={handleHeroSecondary}
-              loading={loading}
-              level={level}
-            />
-
-            <LevelSelector levelId={level.id} onChange={setLevelId} />
-
-            <ChainSelector
-              activeChainId={chainSession?.chainId || ""}
-              onStartChain={startChain}
-            />
-
             <IncidentSelector
               incidents={INCIDENTS}
               selectedIncidentId={selectedIncidentId}
               onOpenIncident={handleOpenIncident}
             />
+
+            <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-5">
+              <div className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
+                Operator Level
+              </div>
+              <div className="grid gap-3">
+                <MiniMetric label="Level" value="Junior" />
+                <MiniMetric label="AI" value="review + patch" />
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-5">
+              <div className="mb-4 text-xs uppercase tracking-wide text-zinc-500">
+                Incident Chains
+              </div>
+              <div className="grid gap-3">
+                <MiniMetric label="Web Stack Recovery" value="3 steps • mid" />
+                <MiniMetric label="Auth Recovery Chain" value="2 steps • senior" />
+                <MiniMetric label="Infra Degradation Chain" value="3 steps • sre" />
+              </div>
+            </div>
           </div>
         </section>
 

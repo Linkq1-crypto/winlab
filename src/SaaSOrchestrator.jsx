@@ -37,7 +37,6 @@ import FakeTerminal from "./FakeTerminal";
 import ResetPasswordPage from "./ResetPasswordPage";
 import DeceptionDashboard from "./DeceptionDashboard";
 import ABTestOnboarding from "./ABTestOnboarding";
-import NewLandingPage from "./NewLandingPage";
 import HeroTerminalExperience from "./components/HeroTerminalExperience";
 import MyIncidents from "./pages/MyIncidents";
 import WinLabInteractiveHome from "./pages/WinLabInteractiveHome";
