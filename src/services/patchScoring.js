@@ -6,6 +6,9 @@ export function scorePatchQuality({
   timeout = false,
   touchedOutsideEntrypointZone = false,
   warningLikeOutput = false,
+  level = null,
+  durationMs = 0,
+  usedAI = true,
 }) {
   let score = 100;
   const reasons = [];
@@ -57,6 +60,19 @@ export function scorePatchQuality({
     reasons.push("first_try_bonus");
   }
 
+  if (level?.scoring) {
+    const levelScore = computeScore({
+      level,
+      attempts: attempts || 1,
+      durationMs,
+      usedAI,
+      success: !!verifyOk,
+    });
+    score = Math.min(score, levelScore.score);
+    reasons.push(`level_${String(level.id || "unknown").toLowerCase()}`);
+    if (!usedAI) reasons.push("no_ai_bonus");
+  }
+
   score = Math.max(0, Math.min(100, score));
 
   let grade = "C";
@@ -69,4 +85,37 @@ export function scorePatchQuality({
   return { score, grade, reasons };
 }
 
-export default { scorePatchQuality };
+export function computeScore({
+  level,
+  attempts = 1,
+  durationMs = 0,
+  usedAI = true,
+  success,
+}) {
+  if (!success) return { score: 0, grade: "F" };
+
+  let score = level.scoring.base;
+  score -= Math.max(0, attempts || 1) * level.scoring.penaltyPerAttempt;
+  score -= Math.floor((durationMs / 1000) * level.scoring.timeWeight);
+
+  if ((attempts || 1) === 1) {
+    score += level.scoring.bonusFirstTry;
+  }
+
+  if (!usedAI) {
+    score += level.scoring.bonusNoAI;
+  }
+
+  score = Math.max(0, Math.min(100, score));
+  return { score, grade: gradeFromScore(score) };
+}
+
+export function gradeFromScore(score) {
+  if (score >= 90) return "A";
+  if (score >= 75) return "B";
+  if (score >= 60) return "C";
+  if (score >= 40) return "D";
+  return "F";
+}
+
+export default { computeScore, gradeFromScore, scorePatchQuality };

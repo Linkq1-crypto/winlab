@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import SafeDiffViewer from "./SafeDiffViewer";
 
-export default function AIPatchPanel({ result, onRunVerify, onExplain }) {
+export default function AIPatchPanel({ result, onRunVerify, onExplain, level = null }) {
   const quality = result?.quality || {};
   const grade = quality.grade || "?";
   const diff = result?.final?.diff || "";
@@ -27,6 +27,9 @@ export default function AIPatchPanel({ result, onRunVerify, onExplain }) {
       <div className="flex items-center justify-between gap-3 border-b border-zinc-800 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <span className="text-sm text-zinc-400">AI Patch</span>
+          {level?.label && (
+            <span className="text-xs text-zinc-500">{level.label}</span>
+          )}
           <span className={`min-w-7 rounded px-2 py-1 text-center text-xs font-semibold ${badgeColor}`}>
             {grade}
           </span>
@@ -42,6 +45,7 @@ export default function AIPatchPanel({ result, onRunVerify, onExplain }) {
           <button
             type="button"
             onClick={onRunVerify}
+            disabled={level?.ai && !level.ai.allowPatch}
             className="rounded bg-zinc-800 px-3 py-1.5 text-xs text-zinc-100 hover:bg-zinc-700 disabled:opacity-50"
           >
             Run Verify

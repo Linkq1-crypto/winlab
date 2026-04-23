@@ -1,4 +1,5 @@
 import { getLabConfig } from "../config/labCatalog.js";
+import { getLevelConfig } from "../config/levels.js";
 
 function getIssueGuidance(issueType) {
   switch (issueType) {
@@ -34,7 +35,28 @@ function getIssueGuidance(issueType) {
   }
 }
 
-export function buildPrompt({ lab, mode = "review" }) {
+function levelInstruction(level) {
+  if (level.ai.verbosity === "high") return "Explain step by step and name the key evidence.";
+  if (level.ai.verbosity === "medium") return "Explain only the key reasoning and the safest next action.";
+  if (level.ai.verbosity === "low") return "Be concise. State only the root cause and minimal action.";
+  return "Do not provide AI assistance for this level.";
+}
+
+function buildLevelSection(level) {
+  return `
+Level:
+- id: ${level.id}
+- label: ${level.label}
+- verbosity: ${level.ai.verbosity}
+- explanation: ${level.ai.explainDepth}
+
+Level instructions:
+${levelInstruction(level)}
+`.trim();
+}
+
+export function buildPrompt({ lab, mode = "review", level: levelInput = "JUNIOR" }) {
+  const level = getLevelConfig(levelInput?.id || levelInput);
   const scopeLines = (lab.scope || []).map((s) => `- ${s}`).join("\n");
   const entryLines = (lab.entryPoints || []).map((e) => `- ${e}`).join("\n");
 
@@ -48,6 +70,8 @@ ${scopeLines}
 
 Start from:
 ${entryLines}
+
+${buildLevelSection(level)}
 
 Task:
 Explain what this lab does and identify the root cause of the issue.
@@ -63,6 +87,10 @@ Return:
 `.trim();
   }
 
+  if (!level.ai.allowPatch) {
+    throw new Error("Patch not allowed in this level");
+  }
+
   return `
 Work only on:
 
@@ -70,6 +98,8 @@ ${scopeLines}
 
 Entry point:
 ${entryLines}
+
+${buildLevelSection(level)}
 
 Task:
 Fix the issue with a minimal patch.
@@ -88,7 +118,9 @@ export function buildLabPrompt({
   mode = "review",
   failureContext = null,
   lab: labOverride = null,
+  level: levelInput = "JUNIOR",
 }) {
+  const level = getLevelConfig(levelInput?.id || levelInput);
   const catalogLab = getLabConfig(labId);
   const lab = {
     ...catalogLab,
@@ -101,6 +133,10 @@ export function buildLabPrompt({
 
   if (!["review", "patch"].includes(mode)) {
     throw new Error(`Unsupported mode: ${mode}`);
+  }
+
+  if (mode === "patch" && !level.ai.allowPatch) {
+    throw new Error("Patch not allowed in this level");
   }
 
   const scopeText = (lab.scope || []).map((item) => `- ${item}`).join("\n");
@@ -129,6 +165,8 @@ ${scopeText}
 Start from:
 ${entryText}
 
+${buildLevelSection(level)}
+
 Task:
 Explain what this lab does and identify the most likely root cause.
 
@@ -156,6 +194,8 @@ ${scopeText}
 
 Start from:
 ${entryText}
+
+${buildLevelSection(level)}
 
 Task:
 Fix the issue with a minimal patch.

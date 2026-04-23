@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import AIPatchPanel from "../components/AIPatchPanel";
+import { LEVEL_OPTIONS, getLevelConfig } from "../config/levels";
 import { explainDiff } from "../services/explainDiff";
 
 const INCIDENTS = [
@@ -82,6 +83,7 @@ export default function WinLabInteractiveHome({
   const [showSignup, setShowSignup] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [engagementScore, setEngagementScore] = useState(0);
+  const [levelId, setLevelId] = useState("JUNIOR");
 
   const terminalRef = useRef(null);
 
@@ -89,6 +91,7 @@ export default function WinLabInteractiveHome({
     () => INCIDENTS.find((item) => item.id === selectedIncidentId) || INCIDENTS[0],
     [selectedIncidentId]
   );
+  const level = useMemo(() => getLevelConfig(levelId), [levelId]);
 
   useEffect(() => {
     setElapsed(0);
@@ -125,11 +128,21 @@ export default function WinLabInteractiveHome({
 
   useEffect(() => {
     const stream = setInterval(() => {
-      appendTerminalLine(pickRandom(incident.logs));
-    }, 4500);
+      appendTerminalLine(applyLevelNoise(pickRandom(incident.logs), level));
+    }, Math.max(2500, 5200 - level.difficulty * 450));
 
     return () => clearInterval(stream);
-  }, [incident]);
+  }, [incident, level]);
+
+  useEffect(() => {
+    if (!level.hintsEnabled || !level.hintFrequency) return undefined;
+
+    const hint = setInterval(() => {
+      appendTerminalLine("[hint] check logs for the first repeated failure signal");
+    }, level.hintFrequency * 1000);
+
+    return () => clearInterval(hint);
+  }, [level]);
 
   useEffect(() => {
     if (terminalRef.current) {
@@ -157,6 +170,11 @@ export default function WinLabInteractiveHome({
     }
 
     if (normalized === "review") {
+      if (!level.ai.allowReview) {
+        appendTerminalLine(`[ai] review disabled at ${level.label} level`);
+        setCommand("");
+        return;
+      }
       setShowAIPanel(true);
       setEngagementScore((value) => value + 1);
       runReview();
@@ -165,6 +183,11 @@ export default function WinLabInteractiveHome({
     }
 
     if (normalized === "patch") {
+      if (!level.ai.allowPatch) {
+        appendTerminalLine(`[ai] patch disabled at ${level.label} level`);
+        setCommand("");
+        return;
+      }
       setShowAIPanel(true);
       setEngagementScore((value) => value + 1);
       runPatch();
@@ -196,6 +219,7 @@ export default function WinLabInteractiveHome({
         userId,
         labId: incident.labId,
         mode: "review",
+        level: level.id,
       });
 
       setReviewResult(result);
@@ -225,6 +249,7 @@ export default function WinLabInteractiveHome({
         userId,
         labId: incident.labId,
         mode: "patch",
+        level: level.id,
       });
 
       setPatchResult(result);
@@ -274,6 +299,7 @@ export default function WinLabInteractiveHome({
               </div>
 
               <div className="flex items-center gap-3 text-xs">
+                <span className="text-zinc-500">{level.label}</span>
                 <span className={statusBadgeClass(liveStatus)}>{liveStatus}</span>
                 <span className="text-zinc-500">timer: {elapsed}s</span>
               </div>
@@ -329,17 +355,28 @@ export default function WinLabInteractiveHome({
               liveStatus={liveStatus}
               elapsed={elapsed}
               onReview={() => {
+                if (!level.ai.allowReview) {
+                  appendTerminalLine(`[ai] review disabled at ${level.label} level`);
+                  return;
+                }
                 setShowAIPanel(true);
                 setEngagementScore((value) => value + 1);
                 runReview();
               }}
               onPatch={() => {
+                if (!level.ai.allowPatch) {
+                  appendTerminalLine(`[ai] patch disabled at ${level.label} level`);
+                  return;
+                }
                 setShowAIPanel(true);
                 setEngagementScore((value) => value + 1);
                 runPatch();
               }}
               loading={loading}
+              level={level}
             />
+
+            <LevelSelector levelId={level.id} onChange={setLevelId} />
 
             <IncidentSelector
               incidents={INCIDENTS}
@@ -388,6 +425,7 @@ export default function WinLabInteractiveHome({
             <div className="grid gap-3">
               <MiniMetric label="Live status" value={liveStatus} />
               <MiniMetric label="Difficulty" value={incident.difficulty} />
+              <MiniMetric label="Level" value={level.label} />
               <MiniMetric label="AI quality" value={patchResult?.quality?.grade || "-"} />
               <MiniMetric label="Verify" value={patchResult?.ok ? "passed" : "pending"} />
             </div>
@@ -435,7 +473,7 @@ function TopBar() {
   );
 }
 
-function HeroSideCard({ incident, liveStatus, elapsed, onReview, onPatch, loading }) {
+function HeroSideCard({ incident, liveStatus, elapsed, onReview, onPatch, loading, level }) {
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-5">
       <div className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
@@ -457,23 +495,57 @@ function HeroSideCard({ incident, liveStatus, elapsed, onReview, onPatch, loadin
         <InfoPill label="Difficulty" value={incident.difficulty} />
         <InfoPill label="Status" value={liveStatus} />
         <InfoPill label="Timer" value={`${elapsed}s`} />
+        <InfoPill label="AI" value={level.ai.allowPatch ? "review + patch" : level.ai.allowReview ? "review only" : "off"} />
       </div>
 
       <div className="mt-6 flex gap-3">
         <button
           onClick={onReview}
-          disabled={loading}
+          disabled={loading || !level.ai.allowReview}
           className="rounded bg-zinc-800 px-4 py-3 text-sm hover:bg-zinc-700 disabled:opacity-50"
         >
           Ask AI review
         </button>
         <button
           onClick={onPatch}
-          disabled={loading}
+          disabled={loading || !level.ai.allowPatch}
           className="rounded bg-white px-4 py-3 text-sm text-black hover:bg-zinc-200 disabled:opacity-50"
         >
           Generate patch
         </button>
+      </div>
+    </div>
+  );
+}
+
+function LevelSelector({ levelId, onChange }) {
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-5">
+      <div className="mb-4 text-xs uppercase tracking-wide text-zinc-500">
+        Operator Level
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {LEVEL_OPTIONS.map((item) => {
+          const active = item === levelId;
+          const config = getLevelConfig(item);
+          return (
+            <button
+              key={item}
+              type="button"
+              onClick={() => onChange(item)}
+              className={`rounded border px-3 py-2 text-left text-sm transition ${
+                active
+                  ? "border-white bg-black text-white"
+                  : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:bg-black"
+              }`}
+            >
+              <div className="font-medium">{config.label}</div>
+              <div className="mt-1 text-xs text-zinc-500">
+                {config.ai.allowPatch ? "AI patch" : config.ai.allowReview ? "review only" : "no AI"}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -575,6 +647,23 @@ function MiniMetric({ label, value }) {
 
 function pickRandom(items) {
   return items[Math.floor(Math.random() * items.length)];
+}
+
+function applyLevelNoise(line, level) {
+  if (Math.random() < level.noiseLevel) {
+    return pickRandom([
+      "[noise] unrelated cron job completed",
+      "[noise] background metric scrape delayed",
+      "[noise] rotated access log",
+      "[noise] stale health probe ignored",
+    ]);
+  }
+
+  if (level.logClarity < 0.5 && Math.random() > level.logClarity) {
+    return line.replace(/\b(timeout|failed|denied|conflict)\b/gi, "signal");
+  }
+
+  return line;
 }
 
 function statusBadgeClass(status) {

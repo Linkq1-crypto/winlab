@@ -1,4 +1,5 @@
 import { getLabConfig } from "../config/labCatalog.js";
+import { getLevelConfig } from "../config/levels.js";
 import { createLabExecutionBridge } from "./labExecutionBridge.js";
 import { runLab } from "./labRunner.js";
 
@@ -9,8 +10,10 @@ export async function runLabWithCodex({
   mode = "review",
   repoSourcePath,
   verifyCommand = null,
+  level: levelInput = "JUNIOR",
 }) {
   const startedAt = Date.now();
+  const level = getLevelConfig(levelInput?.id || levelInput);
 
   if (process.env.CODEX_ENABLED !== "true") {
     return {
@@ -29,6 +32,32 @@ export async function runLabWithCodex({
   if (!getLabConfig(labId)) throw new Error(`Unknown labId: ${labId}`);
   if (!["review", "patch"].includes(mode)) throw new Error(`Unsupported mode: ${mode}`);
 
+  if (mode === "review" && !level.ai.allowReview) {
+    return {
+      ok: false,
+      mode,
+      labId,
+      tenantId,
+      userId,
+      level: level.id,
+      durationMs: Date.now() - startedAt,
+      error: { message: "Review not allowed in this level" },
+    };
+  }
+
+  if (mode === "patch" && !level.ai.allowPatch) {
+    return {
+      ok: false,
+      mode,
+      labId,
+      tenantId,
+      userId,
+      level: level.id,
+      durationMs: Date.now() - startedAt,
+      error: { message: "Patch not allowed in this level" },
+    };
+  }
+
   const bridge = await createLabExecutionBridge({
     tenantId,
     userId,
@@ -45,6 +74,7 @@ export async function runLabWithCodex({
       aiRunner: bridge.aiRunner,
       applyPatch: bridge.applyPatch,
       runVerify: bridge.runVerify,
+      level,
     });
 
     return {
@@ -53,6 +83,7 @@ export async function runLabWithCodex({
       labId,
       tenantId,
       userId,
+      level: level.id,
       durationMs: Date.now() - startedAt,
       result,
     };
@@ -63,6 +94,7 @@ export async function runLabWithCodex({
       labId,
       tenantId,
       userId,
+      level: level.id,
       durationMs: Date.now() - startedAt,
       error: {
         message: error?.message || "Lab execution failed",

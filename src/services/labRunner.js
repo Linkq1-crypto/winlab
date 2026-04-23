@@ -5,6 +5,7 @@ import fsp from "fs/promises";
 import os from "os";
 import path from "path";
 import { getLabConfig } from "../config/labCatalog.js";
+import { getLevelConfig } from "../config/levels.js";
 import { applyPatch as applyUnifiedPatch } from "./patcher.js";
 import { runPatchWithRetry } from "./patchRetry.js";
 import { scorePatchQuality } from "./patchScoring.js";
@@ -221,6 +222,22 @@ function bytesOf(value) {
   return Buffer.byteLength(String(value || ""), "utf8");
 }
 
+function adaptVerifyResult(result, level) {
+  if (!level?.verify?.strict) return result;
+  if (!result?.ok) return result;
+
+  if (!String(result.output || "").includes("ALL_CHECKS_PASS")) {
+    return {
+      ...result,
+      ok: false,
+      strictFailed: true,
+      output: `${result.output || ""}\nStrict mode failed: missing ALL_CHECKS_PASS marker`.trim(),
+    };
+  }
+
+  return result;
+}
+
 function normalizeAiText(result) {
   if (typeof result === "string") return result.trim();
   if (!result) return "";
@@ -285,11 +302,13 @@ export async function runLabWithAI({
   tenantId,
   userId,
   context = {},
+  level: levelInput = "JUNIOR",
 }) {
   if (!aiRouter || typeof aiRouter.run !== "function") {
     throw new Error("aiRouter.run is required");
   }
 
+  const level = getLevelConfig(levelInput?.id || levelInput);
   const lab = buildRuntimeLab({ labId, workspace });
 
   const review = await aiRouter.run({
@@ -301,7 +320,7 @@ export async function runLabWithAI({
       ...context,
       fileHint: context.fileHint || lab.entryPoints[0],
     },
-    customPrompt: buildLabPrompt({ labId, lab, mode: "review" }),
+    customPrompt: buildLabPrompt({ labId, lab, mode: "review", level }),
   });
 
   const patchFlow = await runPatchWithRetry({
@@ -320,7 +339,11 @@ export async function runLabWithAI({
       customPrompt: prompt,
     }),
     applyPatch: async (currentWorkspace, unifiedDiff) => applyPatchForLab(currentWorkspace, unifiedDiff, lab),
-    runVerify: async () => runVerifyWithContainer({ labId, workspace }),
+    runVerify: async () => adaptVerifyResult(
+      await runVerifyWithContainer({ labId, workspace }),
+      level
+    ),
+    level,
   });
 
   const finalAttempt = patchFlow.attempts[patchFlow.attempts.length - 1] || null;
@@ -335,6 +358,9 @@ export async function runLabWithAI({
     timeout: !!(finalVerify?.timeout || finalVerify?.timedOut),
     touchedOutsideEntrypointZone: false,
     warningLikeOutput: /warn|deprecated|partial/i.test(finalVerify?.output || ""),
+    level,
+    durationMs: 0,
+    usedAI: true,
   });
 
   return {
@@ -366,14 +392,15 @@ function buildScopeOptions(lab) {
   };
 }
 
-export async function reviewLab({ labId, workspace, aiRunner }) {
+export async function reviewLab({ labId, workspace, aiRunner, level: levelInput = "JUNIOR" }) {
   const lab = getLabConfig(labId);
+  const level = getLevelConfig(levelInput?.id || levelInput);
   if (!lab) throw new Error(`Unknown labId: ${labId}`);
   if (typeof aiRunner !== "function") {
     throw new Error("reviewLab requires aiRunner(prompt, options)");
   }
 
-  const prompt = buildLabPrompt({ labId, mode: "review" });
+  const prompt = buildLabPrompt({ labId, mode: "review", level });
   const startedAt = Date.now();
   const result = await aiRunner(prompt, {
     workspace,
@@ -388,11 +415,13 @@ export async function reviewLab({ labId, workspace, aiRunner }) {
     prompt,
     text: normalizeAiText(result),
     durationMs: Date.now() - startedAt,
+    level: level.id,
   };
 }
 
-export async function patchLab({ labId, workspace, aiRunner, applyPatch, runVerify }) {
+export async function patchLab({ labId, workspace, aiRunner, applyPatch, runVerify, level: levelInput = "JUNIOR" }) {
   const lab = getLabConfig(labId);
+  const level = getLevelConfig(levelInput?.id || levelInput);
   if (!lab) throw new Error(`Unknown labId: ${labId}`);
   if (typeof aiRunner !== "function") throw new Error("patchLab requires aiRunner(prompt, options)");
   if (typeof applyPatch !== "function") throw new Error("patchLab requires applyPatch(workspace, diff, options)");
@@ -402,22 +431,29 @@ export async function patchLab({ labId, workspace, aiRunner, applyPatch, runVeri
   const retryResult = await runPatchWithRetry({
     labId,
     workspace,
+    level,
     aiRunner: async (prompt) => aiRunner(prompt, {
       workspace,
       mode: "patch",
+      level,
       ...buildScopeOptions(lab),
     }),
     applyPatch: async (currentWorkspace, unifiedDiff) => applyPatch(currentWorkspace, unifiedDiff, {
       labId,
       ...buildScopeOptions(lab),
     }),
-    runVerify: async () => runVerify({
-      labId,
-      workspace,
-      ...buildScopeOptions(lab),
-    }),
+    runVerify: async () => adaptVerifyResult(
+      await runVerify({
+        labId,
+        workspace,
+        level,
+        ...buildScopeOptions(lab),
+      }),
+      level
+    ),
   });
 
+  const durationMs = Date.now() - startedAt;
   const finalAttemptData = retryResult.attempts[retryResult.attempts.length - 1] || null;
   const finalPatch = extractPatchDiff(finalAttemptData?.patch);
   const filesTouched = finalAttemptData?.apply?.filesTouched || [];
@@ -430,13 +466,17 @@ export async function patchLab({ labId, workspace, aiRunner, applyPatch, runVeri
     timeout: !!(finalAttemptData?.verify?.timeout || finalAttemptData?.verify?.timedOut),
     touchedOutsideEntrypointZone: false,
     warningLikeOutput: /warn|deprecated|partial/i.test(verifyOutput),
+    level,
+    durationMs,
+    usedAI: true,
   });
 
   return {
     ok: retryResult.ok,
     mode: "patch",
     labId,
-    durationMs: Date.now() - startedAt,
+    durationMs,
+    level: level.id,
     finalAttempt: retryResult.finalAttempt,
     attempts: retryResult.attempts.map((item) => ({
       attempt: item.attempt,
@@ -457,13 +497,13 @@ export async function patchLab({ labId, workspace, aiRunner, applyPatch, runVeri
   };
 }
 
-export async function runLab({ labId, mode = "review", workspace, aiRunner, applyPatch, runVerify }) {
+export async function runLab({ labId, mode = "review", workspace, aiRunner, applyPatch, runVerify, level = "JUNIOR" }) {
   if (mode === "review") {
-    return reviewLab({ labId, workspace, aiRunner });
+    return reviewLab({ labId, workspace, aiRunner, level });
   }
 
   if (mode === "patch") {
-    return patchLab({ labId, workspace, aiRunner, applyPatch, runVerify });
+    return patchLab({ labId, workspace, aiRunner, applyPatch, runVerify, level });
   }
 
   throw new Error(`Unsupported mode: ${mode}`);
@@ -473,6 +513,7 @@ export const _test = {
   dockerArgs,
   applyPatchForLab,
   buildRuntimeLab,
+  adaptVerifyResult,
   extractPatchDiff,
   isSafeLabId,
   resolveLabPath,

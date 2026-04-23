@@ -4,6 +4,7 @@ import { getAdaptiveLoader } from "./network/adaptiveLoader";
 import { getInvisibleGuide } from "./network/invisibleGuide";
 import { getAnalytics, getOptimizedPaywall } from "./network/analyticsEngine";
 import AIPatchPanel from "./components/AIPatchPanel";
+import { LEVEL_OPTIONS, getLevelConfig } from "./config/levels";
 import { explainDiff } from "./services/explainDiff";
 
 // ── Region detection (IP-based, fallback to browser) ──────────────────────────
@@ -299,6 +300,7 @@ export default function EnhancedTerminalLab({
   const [skillUnlocked, setSkillUnlocked] = useState(null);
   const [latency, setLatency] = useState(800);
   const [difficulty, setDifficulty] = useState("easy");
+  const [levelId, setLevelId] = useState("JUNIOR");
   const [hintLevel, setHintLevel] = useState(0);
   const [aiMentorOpen, setAiMentorOpen] = useState(false);
   const [aiMessages, setAiMessages] = useState([]);
@@ -338,6 +340,7 @@ export default function EnhancedTerminalLab({
   useEffect(() => {
     if (defaultMentorOpen) setAiMentorOpen(true);
   }, [defaultMentorOpen]);
+  const level = getLevelConfig(levelId);
   const diffSettings = DIFFICULTY_LEVELS[difficulty];
 
   useEffect(() => {
@@ -475,6 +478,16 @@ export default function EnhancedTerminalLab({
     }
   }, [currentLab.id, diffSettings, addLine]);
 
+  useEffect(() => {
+    if (!level.hintsEnabled || !level.hintFrequency) return undefined;
+
+    const id = setInterval(() => {
+      addLine("[hint] isolate the first failing subsystem before changing anything", "hint");
+    }, level.hintFrequency * 1000);
+
+    return () => clearInterval(id);
+  }, [addLine, levelId]);
+
   const resetInactivityTimer = useCallback(() => {
     clearTimeout(inactivityTimerRef.current);
     inactivityTimerRef.current = setTimeout(() => {
@@ -525,6 +538,11 @@ export default function EnhancedTerminalLab({
   }, [currentLab.id, hintLevel]);
 
   const runAIReview = useCallback(async () => {
+    if (!level.ai.allowReview) {
+      addLine(`[ai] review disabled at ${level.label} level`, "warn");
+      return;
+    }
+
     setLoadingAI(true);
     setShowAIPanel(true);
     setAiEngagementScore(prev => prev + 1);
@@ -536,6 +554,7 @@ export default function EnhancedTerminalLab({
         userId: "guest",
         labId: resolveBackendAILabId(codexIncident?.labId || labId || currentLab.id),
         mode: "review",
+        level: level.id,
       });
 
       setReviewResult(result);
@@ -549,9 +568,14 @@ export default function EnhancedTerminalLab({
     } finally {
       setLoadingAI(false);
     }
-  }, [addLine, analytics, codexIncident, currentLab.id, labId]);
+  }, [addLine, analytics, codexIncident, currentLab.id, labId, level]);
 
   const runAIPatch = useCallback(async () => {
+    if (!level.ai.allowPatch) {
+      addLine(`[ai] patch disabled at ${level.label} level`, "warn");
+      return;
+    }
+
     setLoadingAI(true);
     setShowAIPanel(true);
     setAiEngagementScore(prev => prev + 2);
@@ -564,6 +588,7 @@ export default function EnhancedTerminalLab({
         userId: "guest",
         labId: resolveBackendAILabId(codexIncident?.labId || labId || currentLab.id),
         mode: "patch",
+        level: level.id,
       });
 
       setPatchResult(result);
@@ -580,7 +605,7 @@ export default function EnhancedTerminalLab({
     } finally {
       setLoadingAI(false);
     }
-  }, [addLine, analytics, codexIncident, currentLab.id, labId]);
+  }, [addLine, analytics, codexIncident, currentLab.id, labId, level]);
 
   const handleExplainPatch = useCallback((diff) => {
     const text = explainDiff(diff);
@@ -618,6 +643,10 @@ export default function EnhancedTerminalLab({
     }
 
     if (command === "mentor" && args.length === 0) {
+      if (!level.ai.allowReview) {
+        addLine(`[ai] mentor disabled at ${level.label} level`, "warn");
+        return;
+      }
       setShowAIPanel(true);
       setAiEngagementScore(prev => prev + 1);
       addLine("AI Incident Mentor ready: type review or patch.", "info");
@@ -626,6 +655,10 @@ export default function EnhancedTerminalLab({
 
     // ── AI Mentor command ────────────────────────────────────────────────
     if (command === "ai" || command === "mentor" || command === "hint") {
+      if (!level.ai.allowReview) {
+        addLine(`[ai] mentor disabled at ${level.label} level`, "warn");
+        return;
+      }
       const rest = trimmed.split(" ").slice(1).join(" ");
       if (!rest) {
         const hints = AI_HINTS[currentLab.id];
@@ -1041,7 +1074,7 @@ export default function EnhancedTerminalLab({
       // Record command result in invisible guide
       guide.recordCommand(trimmed, responseLines.some(r => r.type === "success" || r.type === "out"), null);
     }, latency + Math.random() * 400);
-  }, [currentLabIndex, latency, difficulty, hintLevel, commandCount, errorCount, labStartTime, diffSettings, resetInactivityTimer, addLine, processAiQuestion, cwd, runAIReview, runAIPatch]);
+  }, [currentLabIndex, latency, difficulty, hintLevel, commandCount, errorCount, labStartTime, diffSettings, resetInactivityTimer, addLine, processAiQuestion, cwd, runAIReview, runAIPatch, level]);
 
   // ── Handle Enter key ───────────────────────────────────────────────────────
   const handleKeyDown = useCallback((e) => {
@@ -1103,6 +1136,13 @@ export default function EnhancedTerminalLab({
   }), [codexIncident, commandCount, currentLab.id, currentLab.title, currentLabIndex, cwd, errorCount, latency, lines]);
 
   const askCodex = useCallback(async (mode, question) => {
+    if (mode === "review" && !level.ai.allowReview) {
+      return `AI review is disabled at ${level.label} level.`;
+    }
+    if (mode === "patch" && !level.ai.allowPatch) {
+      return `AI patch is disabled at ${level.label} level.`;
+    }
+
     const endpoint = mode === "patch" ? "/api/ai/codex/patch" : "/api/ai/codex/review";
     const fallback = processAiQuestion(question || "Analyze the current incident");
 
@@ -1137,7 +1177,7 @@ export default function EnhancedTerminalLab({
     } finally {
       setAiLoading(false);
     }
-  }, [buildIncidentContext, processAiQuestion]);
+  }, [buildIncidentContext, level, processAiQuestion]);
 
   const handleAiSend = useCallback(async () => {
     if (!aiInput.trim()) return;
@@ -1162,6 +1202,18 @@ export default function EnhancedTerminalLab({
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold text-slate-300">{currentLab.title}</span>
           <div className="flex items-center gap-3">
+            <select
+              value={level.id}
+              onChange={(event) => setLevelId(event.target.value)}
+              className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-300 outline-none"
+              aria-label="Operator level"
+            >
+              {LEVEL_OPTIONS.map((item) => (
+                <option key={item} value={item}>
+                  {getLevelConfig(item).label}
+                </option>
+              ))}
+            </select>
             <span className="text-[10px] px-2 py-1 rounded bg-blue-600/20 text-blue-400">
               {difficulty.toUpperCase()}
             </span>
@@ -1382,6 +1434,7 @@ export default function EnhancedTerminalLab({
               <button
                 type="button"
                 onClick={() => setCodexMode("review")}
+                disabled={!level.ai.allowReview}
                 className={`rounded px-2 py-1.5 text-xs ${codexMode === "review" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-400"}`}
               >
                 Review repo
@@ -1389,6 +1442,7 @@ export default function EnhancedTerminalLab({
               <button
                 type="button"
                 onClick={() => setCodexMode("patch")}
+                disabled={!level.ai.allowPatch}
                 className={`rounded px-2 py-1.5 text-xs ${codexMode === "patch" ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-400"}`}
               >
                 Patch sandbox
@@ -1473,6 +1527,7 @@ export default function EnhancedTerminalLab({
               result={patchResult}
               onRunVerify={runAIPatch}
               onExplain={handleExplainPatch}
+              level={level}
             />
           </div>
           {aiPatchExplanation && (
@@ -1502,8 +1557,18 @@ export default function EnhancedTerminalLab({
         </>
       ) : (
         <div className="flex h-full items-center justify-center p-4 text-sm text-zinc-500">
-          Type <span className="mx-1 font-mono text-zinc-300">review</span> or
-          <span className="mx-1 font-mono text-zinc-300">patch</span>
+          {level.ai.allowReview ? (
+            <>
+              Type <span className="mx-1 font-mono text-zinc-300">review</span>
+              {level.ai.allowPatch && (
+                <>
+                  or <span className="mx-1 font-mono text-zinc-300">patch</span>
+                </>
+              )}
+            </>
+          ) : (
+            <span>{level.label} mode: AI disabled</span>
+          )}
         </div>
       )}
     </aside>

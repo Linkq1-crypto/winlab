@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import { getLabConfig } from "../../src/config/labCatalog.js";
+import { getLevelConfig, isKnownLevel } from "../../src/config/levels.js";
 import { runQueuedJob } from "../../src/services/jobQueue.js";
 import { recordLabAttempt } from "../../src/services/labProgressService.js";
 import runLabWithCodex from "../../src/services/runLabWithCodex.js";
@@ -55,9 +56,9 @@ router.post(
       if (shouldPersistProgress(data.userId)) {
         await recordLabAttempt({
           userId: data.userId,
-          labId: data.labId,
-          mode: data.mode,
-          result,
+        labId: data.labId,
+        mode: data.mode,
+        result,
         });
       }
 
@@ -83,6 +84,7 @@ export function validateRunLabBody(body) {
   const userId = normalizeId(input.userId, "anonymous");
   const labId = typeof input.labId === "string" ? input.labId.trim() : "";
   const mode = typeof input.mode === "string" ? input.mode.trim() : "review";
+  const level = typeof input.level === "string" ? input.level.trim().toUpperCase() : "JUNIOR";
 
   if (!labId) {
     errors.push("labId is required");
@@ -92,6 +94,18 @@ export function validateRunLabBody(body) {
 
   if (!["review", "patch"].includes(mode)) {
     errors.push("mode must be 'review' or 'patch'");
+  }
+
+  if (!isKnownLevel(level)) {
+    errors.push("level must be NOVICE, JUNIOR, MID, SENIOR, or SRE");
+  } else {
+    const levelConfig = getLevelConfig(level);
+    if (mode === "review" && !levelConfig.ai.allowReview) {
+      errors.push("review is not allowed for this level");
+    }
+    if (mode === "patch" && !levelConfig.ai.allowPatch) {
+      errors.push("patch is not allowed for this level");
+    }
   }
 
   let repoSourcePath = "";
@@ -121,6 +135,7 @@ export function validateRunLabBody(body) {
       userId,
       labId,
       mode,
+      level,
       repoSourcePath,
       verifyCommand,
     },

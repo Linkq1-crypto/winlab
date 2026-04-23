@@ -43,10 +43,11 @@ export async function runPatchWithRetry({
   applyPatch,
   runVerify,
   workspace,
+  level = "JUNIOR",
 }) {
   const attempts = [];
 
-  const prompt1 = buildLabPrompt({ labId, mode: "patch", lab });
+  const prompt1 = buildLabPrompt({ labId, mode: "patch", lab, level });
   const first = await aiRunner(prompt1);
   const firstPatch = first?.diff || first?.result?.diff || first;
   const firstApply = normalizeApplyResult(await applyPatch(workspace, firstPatch));
@@ -90,6 +91,7 @@ export async function runPatchWithRetry({
     mode: "patch",
     failureContext: retryContext,
     lab,
+    level,
   });
 
   const second = await aiRunner(prompt2);
