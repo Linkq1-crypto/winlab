@@ -37,7 +37,10 @@ import FakeTerminal from "./FakeTerminal";
 import ResetPasswordPage from "./ResetPasswordPage";
 import DeceptionDashboard from "./DeceptionDashboard";
 import ABTestOnboarding from "./ABTestOnboarding";
-import NewLandingPage from "./NewLandingPage";
+import HeroTerminalExperience from "./components/HeroTerminalExperience";
+import MyIncidents from "./pages/MyIncidents";
+import WinLabInteractiveHome from "./pages/WinLabInteractiveHome";
+import { track } from "./analytics";
 
 // ── Lazy simulators (one chunk per lab) ───────────────────────────────────────
 // Defined at MODULE level so React always gets the same stable reference.
@@ -57,13 +60,14 @@ const JamfPro          = lazy(() => import("./components/JamfPro"));
 const CompNetworkLab   = lazy(() => import("./components/NetworkLab"));
 const CompSecurityAudit= lazy(() => import("./components/SecurityAudit"));
 const EnterpriseArch   = lazy(() => import("./components/EnterpriseArch"));
-const AutomationLab    = lazy(() => import("./components/AutomationLab"));
-const CloudInfra       = lazy(() => import("./components/CloudInfra"));
-const EnhancedTerminal = lazy(() => import("./EnhancedTerminalLab"));
+  const AutomationLab    = lazy(() => import("./components/AutomationLab"));
+  const CloudInfra       = lazy(() => import("./components/CloudInfra"));
+  const EnhancedTerminal = lazy(() => import("./EnhancedTerminalLab"));
+  const CodexIncidentLab = lazy(() => import("./CodexIncidentLab"));
 
-const SIMULATORS = {
-  "linux-terminal":     LinuxTerminal,
-  "enhanced-terminal":  EnhancedTerminal,
+  const SIMULATORS = {
+    "linux-terminal":     LinuxTerminal,
+    "enhanced-terminal":  EnhancedTerminal,
   "raid-simulator":     RaidSimulator,
   "os-install":         OsInstall,
   "vsphere":            VsphereSimulator,
@@ -78,16 +82,19 @@ const SIMULATORS = {
   "jamf-pro":           JamfPro,
   "enterprise-arch":    EnterpriseArch,
   "automation":         AutomationLab,
-  "cloud-infrastructure": CloudInfra,
-  "msp-multi-tenant":   MspDashboard,
-};
+    "cloud-infrastructure": CloudInfra,
+    "msp-multi-tenant":   MspDashboard,
+    "codex-api-timeout":  CodexIncidentLab,
+    "codex-auth-bypass":  CodexIncidentLab,
+    "codex-stripe-webhook": CodexIncidentLab,
+  };
 
 // Stable wrapper: component type never changes, only labId prop changes.
 // This prevents React from unmounting/remounting on every lab switch.
 function LabRenderer({ labId }) {
   const Sim = SIMULATORS[labId];
   if (!Sim) return <p className="text-slate-500 p-8">Lab "{labId}" not found.</p>;
-  return <Sim />;
+  return <Sim labId={labId} />;
 }
 
 // ── Error boundary (catches simulator crashes) ────────────────────────────────
@@ -648,6 +655,14 @@ export default function SaaSOrchestrator() {
        window.location.pathname === "/72h" ||
        window.location.search.includes("launch=1"));
   });
+  const [isInteractiveHome, setIsInteractiveHome] = useState(() => {
+    return typeof window !== "undefined" &&
+      (window.location.pathname === "/interactive" ||
+       window.location.pathname === "/winlab-interactive");
+  });
+  const [isMyIncidentsRoute, setIsMyIncidentsRoute] = useState(() => {
+    return typeof window !== "undefined" && window.location.pathname === "/my-incidents";
+  });
 
   // Launch tier: true during first 72h, false after → controls which landing to show
   const [launchTierActive, setLaunchTierActive] = useState(true); // optimistic: show launch page until API responds
@@ -699,6 +714,11 @@ export default function SaaSOrchestrator() {
       setIsMyRootRoute(window.location.pathname.startsWith("/myrooting"));
       setMyRootPath(getMyRootPath());
       setIsHoneypot(window.location.pathname === "/dash_board");
+      setIsInteractiveHome(
+        window.location.pathname === "/interactive" ||
+        window.location.pathname === "/winlab-interactive"
+      );
+      setIsMyIncidentsRoute(window.location.pathname === "/my-incidents");
       const onProfile = window.location.pathname === "/profile";
       setIsProfileRoute(onProfile);
       if (onProfile) setView("profile");
@@ -842,6 +862,14 @@ export default function SaaSOrchestrator() {
     );
   }
 
+  if (isInteractiveHome) {
+    return <WinLabInteractiveHome />;
+  }
+
+  if (isMyIncidentsRoute) {
+    return <MyIncidents user={user} />;
+  }
+
   // Honeypot: fake admin dashboard at /dash_board
   if (isHoneypot) {
     return <FakeTerminal />;
@@ -885,12 +913,7 @@ export default function SaaSOrchestrator() {
   }
 
   if (view === "landing") {
-    return (
-      <NewLandingPage
-        onLogin={() => { setAuthMode("login"); navigate("auth"); }}
-        onRegister={() => { setAuthMode("register"); navigate("auth"); }}
-      />
-    );
+    return <WinLabInteractiveHome />;
   }
 
   if (view === "india") {

@@ -1,13 +1,10 @@
-// realism-worker.js — Background worker for chaos + audit loop
+// realism-worker.js - Background worker for chaos + audit loop
 // Runs in a Web Worker or as a setInterval-based background task
 
-import {
-  ChaosEngine,
-  createRealityAuditor,
-  validateInvariants,
-  ALL_INCIDENTS,
-  IncidentOrchestrator,
-} from "../../realism";
+import { ChaosEngine } from "../../realism/chaos-engine";
+import { validateInvariants } from "../../realism/invariants";
+import { IncidentOrchestrator } from "../../realism/incident-orchestrator";
+import { createRealityAuditor } from "../../realism/reality-audit";
 
 export class RealismWorker {
   constructor(options = {}) {
@@ -20,7 +17,6 @@ export class RealismWorker {
 
     this.auditor = createRealityAuditor();
     this.orchestrator = new IncidentOrchestrator();
-
     this.running = false;
     this.intervalId = null;
     this.onAudit = options.onAudit || (() => {});
@@ -28,7 +24,6 @@ export class RealismWorker {
     this.onChaosEvent = options.onChaosEvent || (() => {});
   }
 
-  // Start background loop
   start(env) {
     if (this.running) return;
     this.running = true;
@@ -36,33 +31,29 @@ export class RealismWorker {
     this.intervalId = setInterval(() => {
       if (!env || !this.running) return;
 
-      // 1. Run chaos
       const chaosEvents = this.chaosEngine.runChaos(env);
       if (chaosEvents.length > 0 && this.onChaosEvent) {
-        chaosEvents.forEach((e) => this.onChaosEvent(e));
+        chaosEvents.forEach((event) => this.onChaosEvent(event));
       }
 
-      // 2. Check invariants
       const violations = validateInvariants(env);
-
-      // 3. Run audit
       const auditResult = this.auditor.audit(env);
       this.onAudit(auditResult);
 
-      // 4. Check for anomalies
       if (auditResult.drift.realityGap > 0.25) {
         this.onAnomaly({
           type: "reality_drift",
           gap: auditResult.drift.realityGap,
+          violations,
           timestamp: Date.now(),
         });
       }
 
-      // 5. Check for red flags
       if (auditResult.drift.predictability > 0.9) {
         this.onAnomaly({
           type: "too_deterministic",
           predictability: auditResult.drift.predictability,
+          violations,
           timestamp: Date.now(),
         });
       }
@@ -71,13 +62,13 @@ export class RealismWorker {
         this.onAnomaly({
           type: "no_failures",
           failureRate: auditResult.drift.failureRate,
+          violations,
           timestamp: Date.now(),
         });
       }
     }, this.chaosEngine.getConfig().intervalMs || 10000);
   }
 
-  // Stop background loop
   stop() {
     this.running = false;
     if (this.intervalId) {
@@ -86,29 +77,23 @@ export class RealismWorker {
     }
   }
 
-  // Run a single audit cycle
   auditOnce(env) {
     const violations = validateInvariants(env);
     const auditResult = this.auditor.audit(env);
     return { violations, ...auditResult };
   }
 
-  // Run senior simulation
   async runSeniorSimulation(env) {
-    const { SeniorSimulator, createSeniorSimulator } = await import(
-      "../../realism/senior-simulator"
-    );
+    const { createSeniorSimulator } = await import("../../realism/senior-simulator");
     const simulator = createSeniorSimulator();
     return simulator.simulate(env);
   }
 
-  // Cleanup
   destroy() {
     this.stop();
   }
 }
 
-// Singleton instance for the app
 let workerInstance = null;
 
 export function getRealismWorker(options) {

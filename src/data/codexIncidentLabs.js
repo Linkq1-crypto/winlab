@@ -1,0 +1,71 @@
+export const CODEX_INCIDENT_LABS = [
+  {
+    id: "api-timeout-n-plus-one",
+    title: "API Timeout: N+1 Query",
+    scope: ["backend/services/orders", "backend/services/orders/orderService.js"],
+    entryPoints: ["backend/services/orders/orderService.js"],
+    goal: "Reduce /orders latency by fixing inefficient database access patterns.",
+    incident: {
+      endpoint: "/orders",
+      error: "API timeout",
+      latencyMs: 3200,
+      suspectedCause: "N+1 query in order item loading",
+    },
+    aiModes: ["review", "patch"],
+    reviewPrompt: "Identify the root cause of high latency and propose a fix. Focus on database access patterns.",
+    patchPrompt: "Fix the high-latency /orders path with minimal code changes. Prefer batching or joins over per-item queries.",
+    successChecks: ["latency_simulated_under_500ms", "unit_tests_pass"],
+    scoring: {
+      manualSolve: 100,
+      aiPatchCorrect: 60,
+      hintUsed: -20,
+      regression: -50,
+    },
+  },
+  {
+    id: "auth-bypass-jwt-trust",
+    title: "Auth Bypass: JWT Trust Bug",
+    scope: ["backend/middleware/auth.js", "backend/routes/admin.js"],
+    entryPoints: ["backend/middleware/auth.js", "backend/routes/admin.js"],
+    goal: "Prevent privilege escalation caused by trusting mutable JWT authorization claims.",
+    incident: {
+      route: "/admin",
+      error: "Non-admin user can access admin route with manipulated token",
+      suspectedCause: "isAdmin trusted from JWT without server-side role lookup",
+    },
+    aiModes: ["review", "patch"],
+    reviewPrompt: "Find the privilege escalation path. Focus on where authorization claims are trusted.",
+    patchPrompt: "Fix authorization to prevent privilege escalation. Do not trust JWT claims alone.",
+    successChecks: ["non_admin_gets_403", "admin_gets_200", "auth_tests_pass"],
+    scoring: {
+      manualSolve: 100,
+      aiPatchCorrect: 60,
+      hintUsed: -20,
+      regression: -50,
+    },
+  },
+  {
+    id: "stripe-webhook-forgery",
+    title: "Stripe Webhook Forgery",
+    scope: ["backend/webhooks/stripe.js", "backend/server.js"],
+    entryPoints: ["backend/webhooks/stripe.js"],
+    goal: "Reject forged Stripe webhooks by preserving and verifying the raw request body.",
+    incident: {
+      endpoint: "/webhooks/stripe",
+      error: "Unsigned webhook payload accepted",
+      suspectedCause: "JSON middleware alters body before stripe.webhooks.constructEvent",
+    },
+    aiModes: ["review", "patch"],
+    reviewPrompt: "Identify why webhook signature verification can be bypassed or broken.",
+    patchPrompt: "Ensure Stripe webhook signature verification is correctly implemented.",
+    successChecks: ["valid_signature_ok", "fake_signature_rejected", "webhook_tests_pass"],
+    scoring: {
+      manualSolve: 100,
+      aiPatchCorrect: 60,
+      hintUsed: -20,
+      regression: -50,
+    },
+  },
+];
+
+export default CODEX_INCIDENT_LABS;

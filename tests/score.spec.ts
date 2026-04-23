@@ -2,7 +2,8 @@
 
 import { describe, it, expect } from "vitest";
 import { exec, createDefaultEnv, normalize } from "../realism/engine";
-import { loadBaseline, compareOutputs } from "../realism/snapshots";
+import { compareOutputs } from "../realism/snapshots";
+import { loadBaseline } from "../realism/snapshots.node";
 
 /**
  * Calculate realism score based on multiple factors:

@@ -55,6 +55,11 @@ model User {
   dailyCompletions DailyCompletion[]
   skills       UserSkill[]
   subscriptions Subscription[]
+  labAttempts LabAttempt[]
+  labProgress LabProgress[]
+  chainAttempts ChainAttempt[]
+  chainProgress ChainProgress[]
+  leaderboardEntries LeaderboardEntry[]
   payments     Payment[]
 }
 
@@ -68,6 +73,123 @@ model UserProgress {
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, labId])
+}
+
+model LabAttempt {
+  id                String   @id @default(cuid())
+  userId            String
+  labId             String
+  mode              String
+  success           Boolean  @default(false)
+  score             Int?
+  grade             String?
+  finalAttempt      Int?
+  durationMs        Int?
+  aiUsed            Boolean  @default(false)
+  reviewUsed        Boolean  @default(false)
+  patchUsed         Boolean  @default(false)
+  verifyPassed      Boolean  @default(false)
+  filesTouchedCount Int?
+  diffPreview       String?
+  notes             String?
+  createdAt         DateTime @default(now())
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, labId])
+  @@index([userId, createdAt])
+  @@index([labId, createdAt])
+  @@index([userId, success])
+}
+
+model LabProgress {
+  id                String   @id @default(cuid())
+  userId            String
+  labId             String
+  startedAt         DateTime @default(now())
+  lastPlayedAt      DateTime @default(now())
+  completedAt       DateTime?
+  bestScore         Int?
+  bestGrade         String?
+  attemptsCount     Int      @default(0)
+  successCount      Int      @default(0)
+  aiUsageCount      Int      @default(0)
+  reviewUsageCount  Int      @default(0)
+  patchUsageCount   Int      @default(0)
+  lastStatus        String   @default("STARTED")
+  lastDurationMs    Int?
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, labId])
+  @@index([userId, lastPlayedAt])
+  @@index([userId, completedAt])
+  @@index([labId, bestScore])
+}
+
+model LeaderboardEntry {
+  id                String   @id @default(cuid())
+  userId            String
+  labId             String
+  score             Int
+  grade             String?
+  durationMs        Int?
+  attemptsCount     Int      @default(1)
+  verifyPassed      Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, labId])
+  @@index([labId, score])
+  @@index([labId, durationMs])
+  @@index([userId, createdAt])
+}
+
+model ChainAttempt {
+  id                String   @id @default(cuid())
+  userId            String
+  chainId           String
+  success           Boolean  @default(false)
+  score             Int?
+  grade             String?
+  totalSteps        Int
+  completedSteps    Int
+  durationMs        Int?
+  aiUsed            Boolean  @default(false)
+  retries           Int      @default(0)
+  seed              String?
+  summary           String?
+  createdAt         DateTime @default(now())
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, chainId])
+  @@index([userId, createdAt])
+  @@index([chainId, score])
+}
+
+model ChainProgress {
+  id                String   @id @default(cuid())
+  userId            String
+  chainId           String
+  startedAt         DateTime @default(now())
+  lastPlayedAt      DateTime @default(now())
+  completedAt       DateTime?
+  bestScore         Int?
+  bestGrade         String?
+  attemptsCount     Int      @default(0)
+  successCount      Int      @default(0)
+  lastStatus        String   @default("STARTED")
+  lastDurationMs    Int?
+  lastSeed          String?
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chainId])
+  @@index([userId, lastPlayedAt])
+  @@index([chainId, bestScore])
 }
 
 model Certificate {

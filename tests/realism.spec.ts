@@ -6,7 +6,7 @@ import { Env } from "../realism/state";
 import { DependencyGraph, createDefaultDependencyGraph } from "../realism/deps";
 import { Noise } from "../realism/noise";
 import { emitLog, queryLogs } from "../realism/logs";
-import { loadBaseline } from "../realism/snapshots";
+import { loadBaseline } from "../realism/snapshots.node";
 
 function mkEnv(): Env {
   const env = createDefaultEnv();

@@ -13,11 +13,13 @@ import Anthropic from "@anthropic-ai/sdk";
 import crypto from "crypto";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import Redis from "ioredis";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { WebSocketServer } from "ws";
+import { spawnSync } from "child_process";
 
 import {
   sendPasswordResetEmail,
@@ -36,8 +38,15 @@ import i18nRouter from "./src/api/routes/i18n.js";
 import { tenantMiddleware } from "./src/services/tenantManager.js";
 import { qosMiddleware } from "./src/services/qosLayer.js";
 import { startMeteringFlush } from "./src/services/billingMetering.js";
+import { runCodexIncident } from "./src/services/codexBridge.js";
+import { runQueuedJob } from "./src/services/jobQueue.js";
 import { recordDeploy as recordDeployEvent, getDeployHistory as getDeployHistoryFn } from "./src/services/helpdeskEngines/bugDetection.js";
 import { syncLogger, dlqLogger } from "./src/services/logger.js";
+import { createAIRouter } from "./src/services/aiRouter.js";
+import { createAIService } from "./src/services/aiService.js";
+import { cleanupWorkspace, createWorkspace, runLabWithAI } from "./src/services/labRunner.js";
+import labAiRoutes from "./server/routes/labAi.js";
+import labProgressRouter from "./server/routes/labProgress.js";
 
 // try { bootstrapAlertFlow(); } catch (e) { console.warn("[AlertDispatcher] bootstrap skipped:", e.message); }
 try { startHelpdeskWorker(); } catch (e) { console.warn("[Helpdesk] worker skipped:", e.message); }
@@ -47,14 +56,91 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 const BASE_PORT  = parseInt(process.env.PORT || "3001", 10);
 const IS_PROD    = process.env.NODE_ENV === "production";
-const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
+const JWT_SECRET = process.env.JWT_SECRET || (IS_PROD ? "" : "dev_secret_change_me");
 const ENC_KEY    = (process.env.ENCRYPTION_KEY || "00000000000000000000000000000000").slice(0, 32);
 const EARLY_ACCESS_FILE = path.join(__dirname, "data", "early-access-seats.json");
+const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
+const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
+
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET is required in production");
+}
 
 // ── Clients ──────────────────────────────────────────────────────────
 const prisma    = new PrismaClient();
 const stripe    = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
+const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 1 }) : null;
+const refreshTokenStore = new Map();
+const revokedAccessTokens = new Map();
+async function getRepoCommit(lab) {
+  const repoRoot = String(lab?.repoRoot || __dirname);
+  try {
+    const out = spawnSync("git", ["rev-parse", "HEAD"], {
+      cwd: repoRoot,
+      encoding: "utf8",
+      windowsHide: true,
+    });
+    if (out.status !== 0) return "unknown";
+    return String(out.stdout || "").trim() || "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+const aiRouter = createAIRouter({
+  logger: syncLogger.child({ module: "ai-router" }),
+  getRepoCommit,
+  runCodexReview: async ({ tenantId, userId, labId, scope, prompt, repoRoot }) =>
+    runCodexIncident({
+      prompt,
+      incident: { labId, scope },
+      mode: "review",
+      repoRoot,
+      defaultRepoRoot: __dirname,
+      tenantId,
+      userId,
+      labId,
+    }),
+  runCodexPatch: async ({ tenantId, userId, labId, scope, prompt, repoRoot }) =>
+    runCodexIncident({
+      prompt,
+      incident: { labId, scope },
+      mode: "patch",
+      repoRoot,
+      defaultRepoRoot: __dirname,
+      tenantId,
+      userId,
+      labId,
+    }),
+});
+const labAiRouter = createAIRouter({
+  logger: syncLogger.child({ module: "lab-ai-router" }),
+  getRepoCommit,
+  runCodexReview: async ({ tenantId, userId, labId, scope, prompt, repoRoot }) =>
+    runCodexIncident({
+      prompt,
+      incident: { labId, scope },
+      mode: "review",
+      repoRoot,
+      defaultRepoRoot: repoRoot || __dirname,
+      tenantId,
+      userId,
+      labId,
+    }),
+  runCodexPatch: async ({ tenantId, userId, labId, scope, prompt, repoRoot }) =>
+    runCodexIncident({
+      prompt,
+      incident: { labId, scope },
+      mode: "patch",
+      repoRoot,
+      defaultRepoRoot: repoRoot || __dirname,
+      tenantId,
+      userId,
+      labId,
+    }),
+});
+const aiService = createAIService({ repoRoot: __dirname, aiRouter });
 
 // ── Encryption helpers ───────────────────────────────────────────────
 function encryptField(text) {
@@ -85,7 +171,14 @@ const app = express();
 app.set("trust proxy", 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cookieParser());
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({
+  limit: "2mb",
+  verify: (req, _res, buf) => {
+    if (req.originalUrl === "/api/stripe/webhook") {
+      req.rawBody = Buffer.from(buf);
+    }
+  },
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // ── Request ID (must be before all routes) ───────────────────────────
@@ -120,35 +213,202 @@ app.use(express.static(path.join(__dirname, "dist")));
 // ── Rate limiters ────────────────────────────────────────────────────
 const authLimiter    = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false });
 const aiLimiter      = rateLimit({ windowMs: 60_000, max: 30 });
+const codexLimiter   = rateLimit({
+  windowMs: 60_000,
+  max: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${req.user?.id || "anonymous"}:${req.headers["x-tenant-id"] || "default"}`,
+});
 const paymentLimiter = rateLimit({ windowMs: 60_000, max: 5 });
 const generalLimiter = rateLimit({ windowMs: 60_000, max: 2_000 });
 app.use("/api/", generalLimiter);
 
 // ── Auth middleware ──────────────────────────────────────────────────
-function requireAuth(req, res, next) {
+function tokenHash(token) {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+function authCookieOptions(maxAge) {
+  return { httpOnly: true, secure: IS_PROD, sameSite: "strict", maxAge };
+}
+
+async function getRedis() {
+  if (!redis) return null;
+  if (redis.status === "wait") await redis.connect();
+  return redis;
+}
+
+function pruneMemoryTokenStores() {
+  const now = Date.now();
+  for (const [id, record] of refreshTokenStore.entries()) {
+    if (record.expiresAt <= now) refreshTokenStore.delete(id);
+  }
+  for (const [jti, expiresAt] of revokedAccessTokens.entries()) {
+    if (expiresAt <= now) revokedAccessTokens.delete(jti);
+  }
+}
+
+async function storeRefreshToken(tokenId, record) {
+  const client = await getRedis().catch(() => null);
+  if (client) {
+    await client.set(`refresh:${tokenId}`, JSON.stringify(record), "EX", REFRESH_TOKEN_TTL_SECONDS);
+    return;
+  }
+  pruneMemoryTokenStores();
+  refreshTokenStore.set(tokenId, record);
+}
+
+async function getRefreshTokenRecord(tokenId) {
+  const client = await getRedis().catch(() => null);
+  if (client) {
+    const raw = await client.get(`refresh:${tokenId}`);
+    return raw ? JSON.parse(raw) : null;
+  }
+  pruneMemoryTokenStores();
+  return refreshTokenStore.get(tokenId) || null;
+}
+
+async function revokeRefreshToken(tokenId) {
+  if (!tokenId) return;
+  const client = await getRedis().catch(() => null);
+  if (client) {
+    await client.del(`refresh:${tokenId}`);
+    return;
+  }
+  refreshTokenStore.delete(tokenId);
+}
+
+async function revokeAccessToken(jti, exp) {
+  if (!jti || !exp) return;
+  const ttlSeconds = Math.max(1, exp - Math.floor(Date.now() / 1000));
+  const client = await getRedis().catch(() => null);
+  if (client) {
+    await client.set(`revoked-access:${jti}`, "1", "EX", ttlSeconds);
+    return;
+  }
+  pruneMemoryTokenStores();
+  revokedAccessTokens.set(jti, Date.now() + ttlSeconds * 1000);
+}
+
+async function isAccessTokenRevoked(jti) {
+  if (!jti) return false;
+  const client = await getRedis().catch(() => null);
+  if (client) return Boolean(await client.get(`revoked-access:${jti}`));
+  pruneMemoryTokenStores();
+  return revokedAccessTokens.has(jti);
+}
+
+function generateAccessToken(user) {
+  return jwt.sign(
+    { id: user.id, email: user.email, isAdmin: user.isAdmin, plan: user.plan, typ: "access" },
+    JWT_SECRET,
+    { expiresIn: ACCESS_TOKEN_TTL_SECONDS, jwtid: crypto.randomUUID() }
+  );
+}
+
+function generateRefreshToken(user) {
+  return jwt.sign(
+    { id: user.id, typ: "refresh" },
+    JWT_SECRET,
+    { expiresIn: REFRESH_TOKEN_TTL_SECONDS, jwtid: crypto.randomUUID() }
+  );
+}
+
+async function issueAuthSession(res, user) {
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+  const decodedRefresh = jwt.decode(refreshToken);
+  await storeRefreshToken(decodedRefresh.jti, {
+    userId: user.id,
+    hash: tokenHash(refreshToken),
+    expiresAt: decodedRefresh.exp * 1000,
+  });
+  res.cookie("winlab_token", accessToken, authCookieOptions(ACCESS_TOKEN_TTL_SECONDS * 1000));
+  res.cookie("winlab_refresh", refreshToken, authCookieOptions(REFRESH_TOKEN_TTL_SECONDS * 1000));
+  return { accessToken, refreshToken };
+}
+
+async function revokeRequestTokens(req) {
+  const accessToken = req.cookies?.winlab_token || req.headers.authorization?.replace("Bearer ", "");
+  if (accessToken) {
+    try {
+      const decoded = jwt.verify(accessToken, JWT_SECRET);
+      await revokeAccessToken(decoded.jti, decoded.exp);
+    } catch {}
+  }
+  const refreshToken = req.cookies?.winlab_refresh;
+  if (refreshToken) {
+    try {
+      const decoded = jwt.verify(refreshToken, JWT_SECRET);
+      await revokeRefreshToken(decoded.jti);
+    } catch {}
+  }
+}
+
+async function requireAuth(req, res, next) {
   try {
     const header = req.headers.authorization || "";
     const cookie = req.cookies?.winlab_token;
     const token  = header.startsWith("Bearer ") ? header.slice(7) : cookie;
     if (!token) return res.status(401).json({ error: "Unauthorized" });
     req.user = jwt.verify(token, JWT_SECRET);
+    if (req.user.typ !== "access") return res.status(401).json({ error: "Invalid token type" });
+    if (await isAccessTokenRevoked(req.user.jti)) return res.status(401).json({ error: "Token revoked" });
     next();
   } catch {
     res.status(401).json({ error: "Invalid or expired token" });
   }
 }
 function requireAdmin(req, res, next) {
-  requireAuth(req, res, () => {
-    if (!req.user?.isAdmin) return res.status(403).json({ error: "Forbidden" });
+  requireAuth(req, res, async () => {
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) return res.status(403).json({ error: "Forbidden" });
+    try {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { isAdmin: true, accountStatus: true } });
+      if (!user?.isAdmin || user.accountStatus === "deleted") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      req.admin = user;
+    } catch (err) {
+      console.error("requireAdmin error:", err);
+      return res.status(500).json({ error: "Authorization failed" });
+    }
     next();
   });
 }
-function generateToken(user) {
-  return jwt.sign(
-    { id: user.id, email: user.email, isAdmin: user.isAdmin, plan: user.plan },
-    JWT_SECRET,
-    { expiresIn: "24h" }
-  );
+const generateToken = generateAccessToken;
+
+function getAppBaseUrl() {
+  return (process.env.APP_URL || "https://winlab.cloud").replace(/\/$/, "");
+}
+
+function getAllowedRedirectOrigins() {
+  const configured = String(process.env.STRIPE_ALLOWED_REDIRECT_ORIGINS || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  return new Set([new URL(getAppBaseUrl()).origin, ...configured]);
+}
+
+function checkoutRedirect(pathAndQuery) {
+  return `${getAppBaseUrl()}${pathAndQuery}`;
+}
+
+function normalizeCheckoutRedirect(input, fallbackPathAndQuery) {
+  const fallback = checkoutRedirect(fallbackPathAndQuery);
+  if (!input) return fallback;
+  try {
+    const appUrl = new URL(getAppBaseUrl());
+    const url = new URL(input, appUrl);
+    if (!getAllowedRedirectOrigins().has(url.origin)) {
+      console.warn("[Stripe] blocked checkout redirect origin:", url.origin);
+      return fallback;
+    }
+    return url.toString();
+  } catch {
+    return fallback;
+  }
 }
 
 // ── Helpdesk router ──────────────────────────────────────────────────
@@ -204,16 +464,7 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
     sendWelcomeEmail(user).catch(err => console.error("sendWelcomeEmail error:", err));
 
     // 🔐 TOKEN (senza ...)
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        isAdmin: user.isAdmin,
-        plan: user.plan
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    const { accessToken: token } = await issueAuthSession(res, user);
 
     // 🎁 REFERRAL (opzionale ma corretto)
     if (referralCode) {
@@ -258,8 +509,7 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
     if (!user || user.accountStatus === "deleted") return res.status(401).json({ error: "Invalid credentials" });
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ error: "Invalid credentials" });
-    const token = generateToken(user);
-    res.cookie("winlab_token", token, { httpOnly: true, secure: IS_PROD, sameSite: "strict", maxAge: 86400000 });
+    const { accessToken: token } = await issueAuthSession(res, user);
     res.json({ token, user: { id: user.id, email: user.email, name: decryptField(user.name), plan: user.plan, isAdmin: user.isAdmin } });
   } catch (err) {
     console.error("POST /api/auth/login error:", err);
@@ -268,9 +518,39 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
 });
 
 // POST /api/auth/logout
-app.post("/api/auth/logout", (req, res) => {
+app.post("/api/auth/logout", async (req, res) => {
+  await revokeRequestTokens(req);
   res.clearCookie("winlab_token");
+  res.clearCookie("winlab_refresh");
   res.json({ ok: true });
+});
+
+// POST /api/auth/refresh
+app.post("/api/auth/refresh", authLimiter, async (req, res) => {
+  try {
+    const refreshToken = req.cookies?.winlab_refresh;
+    if (!refreshToken) return res.status(401).json({ error: "Refresh token required" });
+
+    const decoded = jwt.verify(refreshToken, JWT_SECRET);
+    if (decoded.typ !== "refresh") return res.status(401).json({ error: "Invalid token type" });
+
+    const record = await getRefreshTokenRecord(decoded.jti);
+    if (!record || record.userId !== decoded.id || record.hash !== tokenHash(refreshToken)) {
+      return res.status(401).json({ error: "Refresh token revoked" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+    if (!user || user.accountStatus === "deleted") {
+      await revokeRefreshToken(decoded.jti);
+      return res.status(401).json({ error: "User unavailable" });
+    }
+
+    await revokeRefreshToken(decoded.jti);
+    const { accessToken } = await issueAuthSession(res, user);
+    res.json({ token: accessToken, expiresIn: ACCESS_TOKEN_TTL_SECONDS });
+  } catch {
+    res.status(401).json({ error: "Invalid or expired refresh token" });
+  }
 });
 
 // POST /api/auth/forgot-password
@@ -386,8 +666,7 @@ app.get("/api/auth/microsoft/callback", async (req, res) => {
       });
     }
 
-    const token = generateToken(user);
-    res.cookie("winlab_token", token, { httpOnly: true, secure: IS_PROD, sameSite: "lax", maxAge: 86400000 });
+    await issueAuthSession(res, user);
     res.redirect("/?ms_login=ok");
   } catch (err) {
     console.error("MS callback error:", err);
@@ -583,7 +862,9 @@ app.delete("/api/user/account", requireAuth, async (req, res) => {
       where: { id: req.user.id },
       data: { accountStatus: "deleted", email: `deleted_${req.user.id}@winlab.invalid`, name: null, nickname: null },
     });
+    await revokeRequestTokens(req);
     res.clearCookie("winlab_token");
+    res.clearCookie("winlab_refresh");
     res.json({ ok: true });
   } catch (err) {
     console.error("DELETE /api/user/account error:", err);
@@ -815,6 +1096,210 @@ app.get("/api/ai/budget-status", requireAuth, async (req, res) => {
   } catch (err) {
     console.error("GET /api/ai/budget-status error:", err);
     res.status(500).json({ error: "Failed" });
+  }
+});
+
+// GET /api/ai/labs
+// Returns auto-discovered incident labs from the repository labs directory.
+app.get("/api/ai/labs", requireAuth, (req, res) => {
+  res.json({ labs: aiService.labs });
+});
+
+app.use("/api/lab-progress", requireAuth, labProgressRouter);
+
+// POST /api/ai/run
+// Runs a bounded AI review/patch against an auto-discovered lab.
+app.post("/api/ai/run", requireAuth, aiLimiter, codexLimiter, async (req, res) => {
+  try {
+    const { labId, mode = "review", context = {} } = req.body || {};
+    const tenantId = req.headers["x-tenant-id"] || req.user?.tenantId || "default";
+
+    const out = await runQueuedJob(tenantId, () =>
+      aiService.run({
+        tenantId,
+        userId: req.user.id,
+        labId,
+        mode,
+        context,
+      })
+    );
+
+    res.json(out);
+  } catch (err) {
+    console.error("POST /api/ai/run error:", err);
+    const status = /lab not found|labid|mode/i.test(err.message) ? 400 : 500;
+    res.status(status).json({ error: err.message || "AI run failed" });
+  }
+});
+
+app.use("/api/ai/lab", requireAuth, aiLimiter, codexLimiter, labAiRoutes);
+
+// POST /api/lab/run
+// Creates an isolated workspace, asks Codex for a bounded patch, applies it,
+// then executes index.js and verify.js in Docker with network disabled.
+app.post("/api/lab/run", requireAuth, aiLimiter, codexLimiter, async (req, res) => {
+  let workspaceSession = null;
+  try {
+    const { labId, context = {} } = req.body || {};
+    const tenantId = req.headers["x-tenant-id"] || req.user?.tenantId || "default";
+    if (!labId) return res.status(400).json({ error: "labId is required" });
+
+    workspaceSession = await createWorkspace({
+      sourceRepoRoot: __dirname,
+      tenantId,
+      labId,
+    });
+
+    const result = await runQueuedJob(tenantId, () =>
+      runLabWithAI({
+        labId,
+        workspace: workspaceSession.workspace,
+        aiRouter: labAiRouter,
+        tenantId,
+        userId: req.user.id,
+        context,
+      })
+    );
+
+    res.json({
+      ...result,
+      sessionId: workspaceSession.sessionId,
+    });
+  } catch (err) {
+    console.error("POST /api/lab/run error:", err);
+    const status = /lab not found|invalid labid|labid is required/i.test(err.message) ? 400 : 500;
+    res.status(status).json({ error: err.message || "Lab run failed" });
+  } finally {
+    if (workspaceSession?.sessionRoot) {
+      await cleanupWorkspace(workspaceSession.sessionRoot).catch((err) => {
+        console.warn("Lab workspace cleanup failed:", err.message);
+      });
+    }
+  }
+});
+
+// POST /api/ai/codex/review
+// Runs Codex against a per-request sandbox copy of an allowlisted repository.
+app.post("/api/ai/codex/review", requireAuth, aiLimiter, codexLimiter, async (req, res) => {
+  try {
+    const { prompt, incident, repoRoot } = req.body || {};
+    const tenantId = req.headers["x-tenant-id"] || req.user?.tenantId || "default";
+    const labId = incident?.labId || incident?.id || "unknown";
+    const scope = Array.isArray(incident?.scope) ? incident.scope : [];
+
+    // If we don't have a bounded scope, fall back to the raw bridge behavior.
+    if (!scope.length) {
+      const result = await runQueuedJob(tenantId, () =>
+        runCodexIncident({
+          prompt,
+          incident,
+          repoRoot,
+          mode: "review",
+          defaultRepoRoot: __dirname,
+          tenantId,
+          userId: req.user.id,
+          labId,
+        })
+      );
+      res.json(result);
+      return;
+    }
+
+    const context = {
+      error: incident?.error,
+      endpoint: incident?.endpoint || incident?.route,
+      latency: incident?.latencyMs,
+      statusCode: incident?.statusCode,
+      fileHint: [incident?.suspectedCause, prompt].filter(Boolean).join(" | ").slice(0, 800),
+    };
+
+    const ai = await runQueuedJob(tenantId, () =>
+      aiRouter.run({
+        tenantId,
+        userId: req.user.id,
+        mode: "review",
+        lab: {
+          id: labId,
+          title: incident?.title,
+          scope,
+          repoRoot,
+        },
+        context,
+      })
+    );
+
+    res.json({
+      ...(ai.result || {}),
+      cached: ai.cached,
+      durationMs: ai.durationMs,
+      repoCommit: ai.repoCommit,
+      scope: ai.scope,
+    });
+  } catch (err) {
+    console.error("POST /api/ai/codex/review error:", err);
+    res.status(500).json({ error: "Codex review failed" });
+  }
+});
+
+// POST /api/ai/codex/patch
+// Generates a patch in the sandbox and returns its diff. It never writes to the real repo.
+app.post("/api/ai/codex/patch", requireAuth, aiLimiter, codexLimiter, async (req, res) => {
+  try {
+    const { prompt, incident, repoRoot } = req.body || {};
+    const tenantId = req.headers["x-tenant-id"] || req.user?.tenantId || "default";
+    const labId = incident?.labId || incident?.id || "unknown";
+    const scope = Array.isArray(incident?.scope) ? incident.scope : [];
+
+    if (!scope.length) {
+      const result = await runQueuedJob(tenantId, () =>
+        runCodexIncident({
+          prompt,
+          incident,
+          repoRoot,
+          mode: "patch",
+          defaultRepoRoot: __dirname,
+          tenantId,
+          userId: req.user.id,
+          labId,
+        })
+      );
+      res.json(result);
+      return;
+    }
+
+    const context = {
+      error: incident?.error,
+      endpoint: incident?.endpoint || incident?.route,
+      latency: incident?.latencyMs,
+      statusCode: incident?.statusCode,
+      fileHint: [incident?.suspectedCause, prompt].filter(Boolean).join(" | ").slice(0, 800),
+    };
+
+    const ai = await runQueuedJob(tenantId, () =>
+      aiRouter.run({
+        tenantId,
+        userId: req.user.id,
+        mode: "patch",
+        lab: {
+          id: labId,
+          title: incident?.title,
+          scope,
+          repoRoot,
+        },
+        context,
+      })
+    );
+
+    res.json({
+      ...(ai.result || {}),
+      cached: ai.cached,
+      durationMs: ai.durationMs,
+      repoCommit: ai.repoCommit,
+      scope: ai.scope,
+    });
+  } catch (err) {
+    console.error("POST /api/ai/codex/patch error:", err);
+    res.status(500).json({ error: "Codex patch failed" });
   }
 });
 
@@ -1106,8 +1591,8 @@ app.post("/api/stripe/subscribe", requireAuth, paymentLimiter, async (req, res) 
       customer: customerId,
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: successUrl || `${process.env.APP_URL || "https://winlab.cloud"}/?checkout=success`,
-      cancel_url:  cancelUrl  || `${process.env.APP_URL || "https://winlab.cloud"}/?checkout=cancel`,
+      success_url: normalizeCheckoutRedirect(successUrl, "/?checkout=success"),
+      cancel_url:  normalizeCheckoutRedirect(cancelUrl, "/?checkout=cancel"),
     });
     res.json({ url: session.url, sessionId: session.id });
   } catch (err) {
@@ -1133,8 +1618,8 @@ app.post("/api/billing/checkout", authLimiter, async (req, res) => {
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.APP_URL || "https://winlab.cloud"}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${process.env.APP_URL || "https://winlab.cloud"}/?checkout=cancel`,
+      success_url: checkoutRedirect("/?checkout=success&session_id={CHECKOUT_SESSION_ID}"),
+      cancel_url:  checkoutRedirect("/?checkout=cancel"),
     };
 
     // Attach customer if user is logged in
@@ -1190,9 +1675,8 @@ app.get("/api/stripe/early-access/verify", async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+    const { accessToken: token } = await issueAuthSession(res, user);
     res
-      .cookie("token", token, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 30 * 24 * 3600 * 1000 })
       .json({ token, user: { id: user.id, email: user.email, name: user.name, plan: user.plan } });
   } catch (err) {
     console.error("GET /api/stripe/early-access/verify error:", err);
@@ -1210,8 +1694,8 @@ app.post("/api/checkout", authLimiter, async (req, res) => {
       customer_email: email,
       mode: "subscription",
       line_items: [{ price: priceId || process.env.STRIPE_EARLY_PRICE_ID, quantity: 1 }],
-      success_url: `${process.env.APP_URL || "https://winlab.cloud"}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${process.env.APP_URL || "https://winlab.cloud"}/?checkout=cancel`,
+      success_url: checkoutRedirect("/?checkout=success&session_id={CHECKOUT_SESSION_ID}"),
+      cancel_url:  checkoutRedirect("/?checkout=cancel"),
     });
     res.json({ url: session.url });
   } catch (err) {
@@ -1245,7 +1729,7 @@ app.post("/api/stripe/portal", requireAuth, paymentLimiter, async (req, res) => 
     if (!user.stripeCustomerId) return res.status(400).json({ error: "No billing account found" });
     const session = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
-      return_url: process.env.APP_URL || "https://winlab.cloud",
+      return_url: getAppBaseUrl(),
     });
     res.json({ url: session.url });
   } catch (err) {
@@ -1334,8 +1818,8 @@ app.post("/api/stripe/pay-per-incident", requireAuth, paymentLimiter, async (req
       customer: customerId,
       mode: "payment",
       line_items: [{ price_data: { currency: "usd", product_data: { name: `WinLab Incident: ${scenarioId || "Enterprise"}` }, unit_amount: 499 }, quantity: 1 }],
-      success_url: `${process.env.APP_URL || "https://winlab.cloud"}/?incident=success`,
-      cancel_url:  `${process.env.APP_URL || "https://winlab.cloud"}/?incident=cancel`,
+      success_url: checkoutRedirect("/?incident=success"),
+      cancel_url:  checkoutRedirect("/?incident=cancel"),
     });
     res.json({ url: session.url });
   } catch (err) {
@@ -1352,7 +1836,7 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
     const secret = process.env.STRIPE_WEBHOOK_SECRET;
     let event;
     try {
-      event = stripe.webhooks.constructEvent(req.body, sig, secret);
+      event = stripe.webhooks.constructEvent(req.rawBody || req.body, sig, secret);
     } catch (err) {
       console.error("Webhook signature failed:", err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -1813,7 +2297,7 @@ async function sendDripEmails() {
 // ── Demo page ─────────────────────────────────────────────────────────
 app.get("/demo", (req, res) => {
   const demoPage = path.join(__dirname, "coming-soon", "demo.html");
-  if (existsSync(demoPage)) {
+  if (fs.existsSync(demoPage)) {
     res.sendFile(demoPage);
   } else {
     res.redirect("/");
@@ -1823,7 +2307,7 @@ app.get("/demo", (req, res) => {
 // ── Funnel landing page ───────────────────────────────────────────────
 app.get("/funnel", (req, res) => {
   const funnelPage = path.join(__dirname, "coming-soon", "funnel.html");
-  if (existsSync(funnelPage)) {
+  if (fs.existsSync(funnelPage)) {
     res.sendFile(funnelPage);
   } else {
     res.redirect("/");
@@ -1833,7 +2317,7 @@ app.get("/funnel", (req, res) => {
 // ── Enterprise landing page ───────────────────────────────────────────
 app.get("/enterprise", (req, res) => {
   const enterprisePage = path.join(__dirname, "coming-soon", "enterprise-landing.html");
-  if (existsSync(enterprisePage)) {
+  if (fs.existsSync(enterprisePage)) {
     res.sendFile(enterprisePage);
   } else {
     res.redirect("/");
@@ -1843,7 +2327,7 @@ app.get("/enterprise", (req, res) => {
 // ── Test homepage (new conversion page) ──────────────────────────────
 app.get("/test", (req, res) => {
   const testPage = path.join(__dirname, "coming-soon", "test.html");
-  if (existsSync(testPage)) {
+  if (fs.existsSync(testPage)) {
     res.sendFile(testPage);
   } else {
     res.redirect("/");
