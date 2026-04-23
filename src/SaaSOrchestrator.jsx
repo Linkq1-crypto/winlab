@@ -38,8 +38,10 @@ import ResetPasswordPage from "./ResetPasswordPage";
 import DeceptionDashboard from "./DeceptionDashboard";
 import ABTestOnboarding from "./ABTestOnboarding";
 import NewLandingPage from "./NewLandingPage";
+import HeroTerminalExperience from "./components/HeroTerminalExperience";
 import MyIncidents from "./pages/MyIncidents";
 import WinLabInteractiveHome from "./pages/WinLabInteractiveHome";
+import { track } from "./analytics";
 
 // ── Lazy simulators (one chunk per lab) ───────────────────────────────────────
 // Defined at MODULE level so React always gets the same stable reference.
@@ -912,12 +914,7 @@ export default function SaaSOrchestrator() {
   }
 
   if (view === "landing") {
-    return (
-      <NewLandingPage
-        onLogin={() => { setAuthMode("login"); navigate("auth"); }}
-        onRegister={() => { setAuthMode("register"); navigate("auth"); }}
-      />
-    );
+    return <WinLabInteractiveHome />;
   }
 
   if (view === "india") {

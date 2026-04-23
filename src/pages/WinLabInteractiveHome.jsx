@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import AIPatchPanel from "../components/AIPatchPanel";
+import AuthFlow from "../components/AuthFlow";
+import TerminalIntroSequence from "../components/TerminalIntroSequence";
 import { listIncidentChains } from "../config/incidentChains";
 import { LEVEL_OPTIONS, getLevelConfig } from "../config/levels";
+import { track } from "../analytics";
+import { useAuthModal } from "../hooks/useAuthModal";
 import {
   completeCurrentStep,
   createIncidentChainSession,
@@ -10,6 +14,7 @@ import {
   startCurrentStep,
 } from "../services/incidentChainEngine";
 import { generateIncident, hasIncidentTemplate } from "../services/incidentGenerator";
+import { pickVariant } from "../services/abTest";
 import { explainDiff } from "../services/explainDiff";
 
 const INCIDENTS = [
@@ -81,6 +86,7 @@ export default function WinLabInteractiveHome({
   tenantId = "demo-tenant",
   userId = "guest-user",
 }) {
+  const { authModal, openAuthModal, closeAuthModal } = useAuthModal();
   const [selectedIncidentId, setSelectedIncidentId] = useState(INCIDENTS[0].id);
   const [elapsed, setElapsed] = useState(0);
   const [terminalLines, setTerminalLines] = useState([]);
@@ -96,8 +102,15 @@ export default function WinLabInteractiveHome({
   const [incidentSeed, setIncidentSeed] = useState(() => createSessionSeed("incident"));
   const [incidentVariant, setIncidentVariant] = useState(null);
   const [chainSession, setChainSession] = useState(null);
+  const [introComplete, setIntroComplete] = useState(false);
+  const [heroVariant] = useState(() => pickVariant("hero_headline", ["A1", "A2", "A3"]));
+  const [ctaVariant] = useState(() => pickVariant("hero_cta", ["B1", "B2", "B3"]));
+  const [secondaryCtaVariant] = useState(() => pickVariant("hero_secondary_cta", ["C1", "C2", "C3"]));
 
   const terminalRef = useRef(null);
+  const terminalInputRef = useRef(null);
+  const firstCommandTracked = useRef(false);
+  const signupOpenedRef = useRef(false);
 
   const incident = useMemo(
     () => INCIDENTS.find((item) => item.id === selectedIncidentId) || INCIDENTS[0],
@@ -106,9 +119,16 @@ export default function WinLabInteractiveHome({
   const level = useMemo(() => getLevelConfig(levelId), [levelId]);
   const currentChainStep = useMemo(() => getCurrentChainStep(chainSession), [chainSession]);
   const activeLabId = currentChainStep?.labId || incident.labId;
-  const activeVariantLabId = currentChainStep?.variantLabId || (incident.id === "api-timeout" ? "api-timeout" : incident.labId);
+  const activeVariantLabId =
+    currentChainStep?.variantLabId || (incident.id === "api-timeout" ? "api-timeout" : incident.labId);
+
+  const introLines = useMemo(
+    () => incidentVariant?.logs?.slice(0, 3) || incident.logs.slice(0, 3),
+    [incident, incidentVariant]
+  );
 
   useEffect(() => {
+    setIntroComplete(false);
     setElapsed(0);
     setReviewResult(null);
     setPatchResult(null);
@@ -125,6 +145,10 @@ export default function WinLabInteractiveHome({
         : 'Type "help" or start debugging.',
     ]);
   }, [incident, chainSession, currentChainStep]);
+
+  useEffect(() => {
+    track("hero_variant_seen", { heroVariant, ctaVariant, secondaryCtaVariant });
+  }, [heroVariant, ctaVariant, secondaryCtaVariant]);
 
   useEffect(() => {
     const nextVariant = hasIncidentTemplate(activeVariantLabId)
@@ -156,15 +180,18 @@ export default function WinLabInteractiveHome({
   }, [patchResult, engagementScore, elapsed]);
 
   useEffect(() => {
+    if (!introComplete) return undefined;
+
     const stream = setInterval(() => {
       const sourceLogs = incidentVariant?.logs?.length ? incidentVariant.logs : incident.logs;
       appendTerminalLine(applyLevelNoise(pickRandom(sourceLogs), level));
     }, Math.max(2500, 5200 - level.difficulty * 450));
 
     return () => clearInterval(stream);
-  }, [incident, incidentVariant, level]);
+  }, [incident, incidentVariant, introComplete, level]);
 
   useEffect(() => {
+    if (!introComplete) return undefined;
     if (!level.hintsEnabled || !level.hintFrequency) return undefined;
 
     const hint = setInterval(() => {
@@ -172,7 +199,7 @@ export default function WinLabInteractiveHome({
     }, level.hintFrequency * 1000);
 
     return () => clearInterval(hint);
-  }, [level]);
+  }, [introComplete, level]);
 
   useEffect(() => {
     if (terminalRef.current) {
@@ -180,8 +207,39 @@ export default function WinLabInteractiveHome({
     }
   }, [terminalLines]);
 
+  useEffect(() => {
+    if (showSignup && !signupOpenedRef.current && !authModal.open) {
+      signupOpenedRef.current = true;
+      openAuthModal({
+        mode: "signup",
+        context: chainSession ? "continue_chain" : patchResult?.ok ? "success" : "progress",
+        score: patchResult?.quality?.score ?? null,
+        grade: patchResult?.quality?.grade ?? null,
+      });
+    }
+
+    if (!showSignup) {
+      signupOpenedRef.current = false;
+    }
+  }, [showSignup, authModal.open, chainSession, openAuthModal, patchResult]);
+
   function appendTerminalLine(line) {
     setTerminalLines((prev) => [...prev, line]);
+  }
+
+  function focusTerminal() {
+    terminalInputRef.current?.focus();
+    terminalRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function handleHeroPrimary() {
+    track("hero_cta_clicked", { heroVariant, ctaVariant, secondaryCtaVariant });
+    focusTerminal();
+  }
+
+  function handleHeroSecondary() {
+    if (secondaryCtaVariant === "C3") return;
+    terminalRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function handleCommandSubmit(event) {
@@ -189,6 +247,16 @@ export default function WinLabInteractiveHome({
 
     const raw = command.trim();
     if (!raw) return;
+
+    if (!firstCommandTracked.current) {
+      firstCommandTracked.current = true;
+      track("terminal_first_command", {
+        heroVariant,
+        ctaVariant,
+        secondaryCtaVariant,
+        command: raw.split(" ")[0],
+      });
+    }
 
     appendTerminalLine(`winlab@prod-server:~$ ${raw}`);
     const normalized = raw.toLowerCase();
@@ -398,6 +466,12 @@ export default function WinLabInteractiveHome({
               ref={terminalRef}
               className="h-[470px] overflow-auto bg-black p-4 font-mono text-sm leading-7"
             >
+              <TerminalIntroSequence
+                key={`${incident.id}:${currentChainStep?.index ?? "single"}:${incidentSeed}`}
+                lines={[...introLines, 'Type "help" or start debugging.', "winlab@prod-server:~$"]}
+                onComplete={() => setIntroComplete(true)}
+              />
+
               {terminalLines.map((line, index) => (
                 <div key={`${index}-${line}`} className={lineClassName(line)}>
                   {line}
@@ -423,6 +497,7 @@ export default function WinLabInteractiveHome({
             >
               <span className="font-mono text-sm text-zinc-500">winlab@prod-server:~$</span>
               <input
+                ref={terminalInputRef}
                 value={command}
                 onChange={(event) => setCommand(event.target.value)}
                 className="flex-1 bg-transparent font-mono text-sm text-white outline-none placeholder:text-zinc-600"
@@ -443,24 +518,11 @@ export default function WinLabInteractiveHome({
               incident={incident}
               liveStatus={liveStatus}
               elapsed={elapsed}
-              onReview={() => {
-                if (!level.ai.allowReview) {
-                  appendTerminalLine(`[ai] review disabled at ${level.label} level`);
-                  return;
-                }
-                setShowAIPanel(true);
-                setEngagementScore((value) => value + 1);
-                runReview();
-              }}
-              onPatch={() => {
-                if (!level.ai.allowPatch) {
-                  appendTerminalLine(`[ai] patch disabled at ${level.label} level`);
-                  return;
-                }
-                setShowAIPanel(true);
-                setEngagementScore((value) => value + 1);
-                runPatch();
-              }}
+              heroVariant={heroVariant}
+              ctaVariant={ctaVariant}
+              secondaryCtaVariant={secondaryCtaVariant}
+              onPrimary={handleHeroPrimary}
+              onSecondary={handleHeroSecondary}
               loading={loading}
               level={level}
             />
@@ -528,12 +590,35 @@ export default function WinLabInteractiveHome({
           </div>
         </section>
 
-        {showSignup && (
+        {showSignup && !authModal.open && (
           <section className="mt-6">
-            <SignupCTA patchResult={patchResult} />
+            <SignupCTA
+              patchResult={patchResult}
+              onOpen={() =>
+                openAuthModal({
+                  mode: "signup",
+                  context: chainSession ? "continue_chain" : patchResult?.ok ? "success" : "progress",
+                  score: patchResult?.quality?.score ?? null,
+                  grade: patchResult?.quality?.grade ?? null,
+                })
+              }
+            />
           </section>
         )}
       </main>
+
+      {authModal.open && (
+        <AuthFlow
+          initialView="modal"
+          modalState={authModal}
+          onClose={closeAuthModal}
+          onSignup={async () => closeAuthModal()}
+          onGoogleSignup={() => closeAuthModal()}
+          onBuyFounding={() => closeAuthModal()}
+          onBuyPro={() => closeAuthModal()}
+          onBuyLifetime={() => closeAuthModal()}
+        />
+      )}
     </div>
   );
 }
@@ -569,7 +654,22 @@ function TopBar() {
   );
 }
 
-function HeroSideCard({ incident, liveStatus, elapsed, onReview, onPatch, loading, level }) {
+function HeroSideCard({
+  incident,
+  liveStatus,
+  elapsed,
+  heroVariant,
+  ctaVariant,
+  secondaryCtaVariant,
+  onPrimary,
+  onSecondary,
+  loading,
+  level,
+}) {
+  const heroCopy = getHeroCopy(heroVariant);
+  const primaryLabel = getPrimaryCtaLabel(ctaVariant);
+  const secondaryLabel = getSecondaryCtaLabel(secondaryCtaVariant);
+
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-5">
       <div className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
@@ -577,9 +677,9 @@ function HeroSideCard({ incident, liveStatus, elapsed, onReview, onPatch, loadin
       </div>
 
       <h1 className="text-4xl font-semibold leading-none tracking-tight md:text-5xl">
-        Your server is down.
-        <br />
-        Fix it.
+        {heroCopy.map((line) => (
+          <div key={line}>{line}</div>
+        ))}
       </h1>
 
       <p className="mt-4 text-sm text-zinc-400">
@@ -594,21 +694,29 @@ function HeroSideCard({ incident, liveStatus, elapsed, onReview, onPatch, loadin
         <InfoPill label="AI" value={level.ai.allowPatch ? "review + patch" : level.ai.allowReview ? "review only" : "off"} />
       </div>
 
-      <div className="mt-6 flex gap-3">
+      <div className="mt-6 flex flex-wrap gap-3">
         <button
-          onClick={onReview}
-          disabled={loading || !level.ai.allowReview}
-          className="rounded bg-zinc-800 px-4 py-3 text-sm hover:bg-zinc-700 disabled:opacity-50"
+          type="button"
+          onClick={onPrimary}
+          className="rounded bg-white px-4 py-3 text-sm text-black hover:bg-zinc-200"
         >
-          Ask AI review
+          {primaryLabel}
         </button>
-        <button
-          onClick={onPatch}
-          disabled={loading || !level.ai.allowPatch}
-          className="rounded bg-white px-4 py-3 text-sm text-black hover:bg-zinc-200 disabled:opacity-50"
-        >
-          Generate patch
-        </button>
+
+        {secondaryLabel && (
+          <button
+            type="button"
+            onClick={onSecondary}
+            disabled={loading}
+            className="rounded border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm hover:bg-black disabled:opacity-50"
+          >
+            {secondaryLabel}
+          </button>
+        )}
+      </div>
+
+      <div className="mt-4 text-xs text-zinc-600">
+        {level.ai.allowPatch ? "Patch available after you get context." : "Start in the terminal first."}
       </div>
     </div>
   );
@@ -709,7 +817,7 @@ function IncidentSelector({ incidents, selectedIncidentId, onOpenIncident }) {
   );
 }
 
-function SignupCTA({ patchResult }) {
+function SignupCTA({ patchResult, onOpen }) {
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-6 md:p-8">
       <div className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
@@ -728,7 +836,11 @@ function SignupCTA({ patchResult }) {
       </p>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <button className="rounded bg-white px-5 py-3 text-black hover:bg-zinc-200">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="rounded bg-white px-5 py-3 text-black hover:bg-zinc-200"
+        >
           Create free account
         </button>
         <button className="rounded border border-zinc-800 bg-zinc-950 px-5 py-3 hover:bg-black">
@@ -815,4 +927,22 @@ function lineClassName(line) {
   if (/^\[incident\]/i.test(line)) return "text-cyan-300";
   if (/^winlab@prod-server:~\$/i.test(line)) return "text-zinc-200";
   return "text-zinc-400";
+}
+
+function getHeroCopy(variant) {
+  if (variant === "A1") return ["Production is already broken.", "Fix it."];
+  if (variant === "A3") return ["No videos. No theory.", "Just failures."];
+  return ["Your server is down.", "Do something."];
+}
+
+function getPrimaryCtaLabel(variant) {
+  if (variant === "B2") return "Enter terminal";
+  if (variant === "B3") return "Break a real system";
+  return "Start first incident";
+}
+
+function getSecondaryCtaLabel(variant) {
+  if (variant === "C2") return "Watch it fail";
+  if (variant === "C1") return "How it works ->";
+  return null;
 }

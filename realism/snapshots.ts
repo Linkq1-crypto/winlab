@@ -1,7 +1,4 @@
-// realism/snapshots.ts — State snapshots and diff utilities
-
-import fs from "fs";
-import path from "path";
+// realism/snapshots.ts - Browser-safe state snapshots and diff utilities
 
 /**
  * Create a snapshot of the environment state.
@@ -27,7 +24,6 @@ export function diffSnapshots(before: string, after: string): Record<string, any
 
   const diff: Record<string, any> = {};
 
-  // Compare services
   diff.services = {};
   for (const [name, beforeSvc] of Object.entries(beforeObj.services || {})) {
     const afterSvc = afterObj.services?.[name];
@@ -39,7 +35,6 @@ export function diffSnapshots(before: string, after: string): Record<string, any
     }
   }
 
-  // Compare storage
   if (JSON.stringify(beforeObj.storage) !== JSON.stringify(afterObj.storage)) {
     diff.storage = {
       before: beforeObj.storage,
@@ -47,7 +42,6 @@ export function diffSnapshots(before: string, after: string): Record<string, any
     };
   }
 
-  // Compare network
   if (JSON.stringify(beforeObj.network) !== JSON.stringify(afterObj.network)) {
     diff.network = {
       before: beforeObj.network,
@@ -56,32 +50,6 @@ export function diffSnapshots(before: string, after: string): Record<string, any
   }
 
   return diff;
-}
-
-/**
- * Load a baseline output from fixtures.
- */
-export function loadBaseline(name: string): string {
-  const baselinePath = path.join(__dirname, "fixtures", "baselines", name);
-
-  try {
-    return fs.readFileSync(baselinePath, "utf-8");
-  } catch (e) {
-    throw new Error(`Baseline not found: ${baselinePath}`);
-  }
-}
-
-/**
- * Save a baseline output to fixtures.
- */
-export function saveBaseline(name: string, content: string): void {
-  const baselineDir = path.join(__dirname, "fixtures", "baselines");
-
-  if (!fs.existsSync(baselineDir)) {
-    fs.mkdirSync(baselineDir, { recursive: true });
-  }
-
-  fs.writeFileSync(path.join(baselineDir, name), content, "utf-8");
 }
 
 /**
@@ -113,11 +81,9 @@ export function diffReport(simulated: string, real: string): string {
   const realLines = real.split("\n");
 
   const report: string[] = [];
-
-  // Compare line by line
   const maxLines = Math.max(simLines.length, realLines.length);
 
-  for (let i = 0; i < maxLines; i++) {
+  for (let i = 0; i < maxLines; i += 1) {
     const simLine = simLines[i] || "";
     const realLine = realLines[i] || "";
 
