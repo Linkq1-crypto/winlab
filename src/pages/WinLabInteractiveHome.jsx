@@ -5,13 +5,14 @@ import LandingFeaturedLabs from "../components/LandingFeaturedLabs";
 import LandingPricingSection from "../components/LandingPricingSection";
 import LandingTerminalDemo from "../components/LandingTerminalDemo";
 import { track } from "../analytics";
+import { CATALOG_TOTALS, getOnboardingTrack } from "../data/onboardingLabTracks";
 import { useAuthModal } from "../hooks/useAuthModal";
 
 const FALLBACK_HOME_DATA = Object.freeze({
   stats: Object.freeze({
     engineers: 12000,
     countries: 120,
-    labs: 24,
+    labs: CATALOG_TOTALS.totalCatalogItems,
     avgRating: 4.8,
   }),
   featuredLabs: Object.freeze([
@@ -44,9 +45,9 @@ const FALLBACK_HOME_DATA = Object.freeze({
     }),
   ]),
   pricing: Object.freeze({
-    freeLabs: 5,
+    freeLabs: CATALOG_TOTALS.starterLabs,
     proMonthlyUsd: 19,
-    currency: "USD",
+    currency: "EUR",
   }),
   socialProof: Object.freeze({
     headline: "Joined by engineers from 120+ countries",
@@ -56,10 +57,12 @@ const FALLBACK_HOME_DATA = Object.freeze({
 export default function WinLabInteractiveHome() {
   const { authModal, openAuthModal, closeAuthModal } = useAuthModal();
   const [homeData, setHomeData] = useState(FALLBACK_HOME_DATA);
+  const [selectedLevel, setSelectedLevel] = useState("");
   const [demoCompleted, setDemoCompleted] = useState(false);
   const [startingIncident, setStartingIncident] = useState(false);
   const [startError, setStartError] = useState("");
   const demoRef = useRef(null);
+  const selectedTrack = selectedLevel ? getOnboardingTrack(selectedLevel) : null;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -77,9 +80,16 @@ export default function WinLabInteractiveHome() {
 
         const payload = await response.json();
         setHomeData({
-          stats: payload?.stats || FALLBACK_HOME_DATA.stats,
+          stats: {
+            ...(payload?.stats || FALLBACK_HOME_DATA.stats),
+            labs: CATALOG_TOTALS.totalCatalogItems,
+          },
           featuredLabs: payload?.featuredLabs || FALLBACK_HOME_DATA.featuredLabs,
-          pricing: payload?.pricing || FALLBACK_HOME_DATA.pricing,
+          pricing: {
+            ...(payload?.pricing || FALLBACK_HOME_DATA.pricing),
+            freeLabs: CATALOG_TOTALS.starterLabs,
+            currency: "EUR",
+          },
           socialProof: payload?.socialProof || FALLBACK_HOME_DATA.socialProof,
         });
       } catch (error) {
@@ -110,7 +120,7 @@ export default function WinLabInteractiveHome() {
     track("signup_modal_opened", { context: "demo_small_win", mode: "signup_gate_armed" });
   }
 
-  async function startFullIncident() {
+  async function startFullIncident(labSlug = "nginx-port-conflict") {
     setStartingIncident(true);
     setStartError("");
 
@@ -121,7 +131,7 @@ export default function WinLabInteractiveHome() {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ labSlug: "nginx-down" }),
+        body: JSON.stringify({ labSlug }),
       });
 
       const payload = await response.json().catch(() => ({}));
@@ -132,7 +142,15 @@ export default function WinLabInteractiveHome() {
 
       const errorCode = payload?.error?.code || payload?.code || "";
       if (response.status === 401 || errorCode === "AUTH_REQUIRED") {
-        throw new Error("Authentication required");
+        openAuthModal({
+          mode: "login",
+          context: "progress",
+          title: "Login required",
+          description: "Sign in to launch your real incident terminal.",
+          primaryLabel: "Log in",
+          secondaryLabel: "Not now",
+        });
+        return;
       }
 
       if (response.status === 403 || errorCode === "PLAN_UPGRADE_REQUIRED") {
@@ -156,14 +174,14 @@ export default function WinLabInteractiveHome() {
       context: "progress",
       title: "Nice. Want to try the full incident?",
       description: "Sign in to continue.",
-      primaryLabel: "Sign in to continue",
+      primaryLabel: "Create free account",
       secondaryLabel: "Not now",
     });
   }
 
   async function handleAuthSuccess() {
     document.cookie = "mock_auth=1; Path=/; SameSite=Lax";
-    await startFullIncident();
+    await startFullIncident(selectedTrack?.primaryLab?.slug || "nginx-port-conflict");
   }
 
   return (
@@ -173,14 +191,24 @@ export default function WinLabInteractiveHome() {
         socialProof={homeData.socialProof}
         onStart={scrollToDemo}
         onSeeHowItWorks={scrollToHowItWorks}
+        onLevelSelected={(level) => {
+          setSelectedLevel(level);
+          setDemoCompleted(false);
+          setStartError("");
+          scrollToDemo();
+        }}
       />
 
       <div ref={demoRef}>
         <LandingTerminalDemo
-          onSmallWin={handleDemoWin}
+          selectedLevel={selectedLevel}
+          onSmallWin={() => handleDemoWin()}
           gateLoading={startingIncident}
           gateError={startError}
-          onContinue={handleAuthContinue}
+          onCreateAccount={handleAuthContinue}
+          onContinueGuest={() => {
+            setStartError("");
+          }}
         />
       </div>
 

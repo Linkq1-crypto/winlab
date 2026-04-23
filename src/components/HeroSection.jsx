@@ -1,9 +1,90 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+
+const LEVEL_OPTIONS = [
+  "1. Novice - I know basic Linux commands",
+  "2. Junior - I can read logs and restart services",
+  "3. Mid - I debug production issues sometimes",
+  "4. Senior - I have been on-call before",
+  "5. SRE - No hints. No AI. Full pressure.",
+];
+
+const LEVELS = ["Novice", "Junior", "Mid", "Senior", "SRE"];
+
+const BASE_TERMINAL_LINES = [
+  { tone: "muted", text: "WINLAB INCIDENT ROUTER v1.0" },
+  { tone: "muted", text: "region: prod-eu-west-1" },
+  { tone: "warning", text: "status: degraded" },
+  { tone: "empty", text: "" },
+  { tone: "muted", text: "[12:04:11] requests failing ↑" },
+  { tone: "danger", text: "[12:04:13] nginx healthcheck failed" },
+  { tone: "danger", text: "[12:04:17] customer traffic impacted" },
+  { tone: "empty", text: "" },
+  { tone: "muted", text: "Before assigning your first incident, choose your operator level:" },
+  ...LEVEL_OPTIONS.map((text) => ({ tone: "neutral", text })),
+  { tone: "empty", text: "" },
+  { tone: "muted", text: "Type your level:" },
+];
+
 export default function HeroSection({
   onStart,
   onSeeHowItWorks,
+  onLevelSelected,
   stats,
   socialProof,
 }) {
+  const [levelInput, setLevelInput] = useState("");
+  const [selectedLevel, setSelectedLevel] = useState("");
+  const [terminalLines, setTerminalLines] = useState(BASE_TERMINAL_LINES);
+  const [selectionError, setSelectionError] = useState("");
+  const terminalBodyRef = useRef(null);
+
+  useEffect(() => {
+    terminalBodyRef.current?.scrollTo({
+      top: terminalBodyRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [terminalLines]);
+
+  const levelPrompt = useMemo(() => {
+    return selectedLevel ? `level locked: ${selectedLevel}` : "Type your level";
+  }, [selectedLevel]);
+
+  function resolveLevel(rawValue) {
+    const normalized = rawValue.trim().toLowerCase();
+    return LEVELS.find((level) => level.toLowerCase() === normalized) || "";
+  }
+
+  function applyLevelSelection(rawValue) {
+    const level = resolveLevel(rawValue);
+    if (!level || selectedLevel) {
+      if (!level) {
+        setSelectionError("Choose Novice, Junior, Mid, Senior, or SRE.");
+      }
+      return;
+    }
+
+    setSelectionError("");
+    setSelectedLevel(level);
+    setLevelInput(level);
+    setTerminalLines((prev) => [
+      ...prev,
+      { tone: "prompt", text: `$ ${level}` },
+      { tone: "success", text: `level set: ${level}` },
+      { tone: "muted", text: "calibrating difficulty..." },
+      { tone: "muted", text: "loading incident catalog..." },
+      { tone: "muted", text: "building your incident track..." },
+    ]);
+
+    window.setTimeout(() => {
+      onLevelSelected?.(level);
+    }, 320);
+  }
+
+  function handleLevelSubmit(event) {
+    event.preventDefault();
+    applyLevelSelection(levelInput);
+  }
+
   return (
     <section className="bg-[#0B0F14] text-[#E6EDF3]">
       <div className="mx-auto grid max-w-7xl items-center gap-10 px-6 py-16 sm:py-20 lg:grid-cols-[1.02fr_0.98fr] lg:gap-14 lg:px-8 lg:py-24">
@@ -61,7 +142,7 @@ export default function HeroSection({
               </div>
 
               <div className="flex items-center gap-2 text-xs text-[#9DA7B3]">
-                <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/20 px-2 py-1">
+                <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[#3FB950]">
                   <span className="h-2 w-2 rounded-full bg-[#3FB950]" />
                   live
                 </span>
@@ -74,23 +155,63 @@ export default function HeroSection({
               </div>
             </div>
 
-            <div className="min-h-[380px] bg-[#0B0F14] p-5 font-mono text-[13px] leading-6 text-[#E6EDF3] sm:min-h-[420px] sm:text-sm">
-              <div className="text-[#9DA7B3]">prod-eu-west-1 - bash</div>
-              <div className="text-[#3FB950]">live incident</div>
+            <div className="bg-[#0B0F14] p-5">
+              <div
+                ref={terminalBodyRef}
+                className="h-[360px] overflow-y-auto pr-1 font-mono text-[13px] leading-6 text-[#E6EDF3] sm:h-[400px] sm:text-sm"
+              >
+                {terminalLines.map((line, index) => (
+                  <div key={`${index}-${line.text}`} className={terminalLineClass(line.tone)}>
+                    {line.text || <span>&nbsp;</span>}
+                  </div>
+                ))}
+              </div>
 
-              <div className="mt-4 text-[#F85149]">[12:04:11] requests failing {"\u2191"}</div>
-              <div className="text-[#F85149]">[12:04:13] nginx healthcheck failed</div>
-              <div className="text-[#F85149]">[12:04:17] customer traffic impacted</div>
+              <div className="mt-5 rounded-2xl border border-white/10 bg-black/40 p-4">
+                <div className="text-xs uppercase tracking-wide text-[#9DA7B3]">
+                  choose your level:
+                </div>
 
-              <div className="mt-5">$ systemctl status nginx</div>
-              <div className="text-[#F85149]">nginx.service - failed (Result: exit-code)</div>
-              <div className="text-[#9DA7B3]">Main PID: 1823 (code=exited, status=1/FAILURE)</div>
+                <div className="mt-3 grid gap-2">
+                  {LEVEL_OPTIONS.map((label, index) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => applyLevelSelection(LEVELS[index])}
+                      disabled={Boolean(selectedLevel)}
+                      className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
+                        selectedLevel === LEVELS[index]
+                          ? "border-[#3FB950] bg-[#3FB950]/10 text-[#E6EDF3]"
+                          : "border-white/10 bg-white/5 text-[#9DA7B3] hover:bg-white/10"
+                      } disabled:cursor-not-allowed disabled:opacity-80`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
 
-              <div className="mt-4">$ journalctl -u nginx -n 20 --no-pager</div>
-              <div className="text-[#D29922]">warning: upstream timeout threshold exceeded</div>
-              <div className="text-[#D29922]">bind() to 0.0.0.0:80 failed</div>
+                <form onSubmit={handleLevelSubmit} className="mt-4 flex items-center gap-3">
+                  <span className="font-mono text-sm text-[#9DA7B3]">$</span>
+                  <input
+                    value={levelInput}
+                    onChange={(event) => setLevelInput(event.target.value)}
+                    disabled={Boolean(selectedLevel)}
+                    placeholder={levelPrompt}
+                    className="flex-1 bg-transparent font-mono text-sm text-[#E6EDF3] outline-none placeholder:text-[#6B7280]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={Boolean(selectedLevel)}
+                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#E6EDF3] hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Set level
+                  </button>
+                </form>
 
-              <div className="mt-6 text-[#3FB950]">$</div>
+                {selectionError ? (
+                  <div className="mt-3 text-sm text-[#F85149]">{selectionError}</div>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
@@ -111,4 +232,14 @@ function StatPill({ label, value }) {
 function formatCount(value) {
   if (typeof value !== "number") return String(value);
   return value >= 1000 ? `${Math.round(value / 100) / 10}k+` : String(value);
+}
+
+function terminalLineClass(tone) {
+  if (tone === "success") return "text-[#3FB950]";
+  if (tone === "warning") return "text-[#D29922]";
+  if (tone === "danger") return "text-[#F85149]";
+  if (tone === "prompt") return "text-[#E6EDF3]";
+  if (tone === "neutral") return "text-[#D1D5DB]";
+  if (tone === "empty") return "h-3";
+  return "text-[#9DA7B3]";
 }
