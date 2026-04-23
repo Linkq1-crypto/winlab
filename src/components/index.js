@@ -9,3 +9,6 @@ export { default as MspDashboard } from './MspDashboard';
 export { default as AIPatchPanel } from './AIPatchPanel';
 export { default as IncidentHistoryPanel } from './IncidentHistoryPanel';
 export { default as SafeDiffViewer } from './SafeDiffViewer';
+export { default as AuthModal } from './AuthModal';
+export { default as ChainLaunchExperience } from './ChainLaunchExperience';
+export { default as ChainTerminalController } from './ChainTerminalController';
