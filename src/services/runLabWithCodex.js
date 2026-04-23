@@ -11,6 +11,8 @@ export async function runLabWithCodex({
   repoSourcePath,
   verifyCommand = null,
   level: levelInput = "JUNIOR",
+  incidentSeed = null,
+  variantLabId = null,
 }) {
   const startedAt = Date.now();
   const level = getLevelConfig(levelInput?.id || levelInput);
@@ -64,6 +66,9 @@ export async function runLabWithCodex({
     labId,
     repoSourcePath,
     verifyCommand,
+    incidentSeed,
+    variantLabId,
+    level: level.id,
   });
 
   try {
@@ -75,6 +80,7 @@ export async function runLabWithCodex({
       applyPatch: bridge.applyPatch,
       runVerify: bridge.runVerify,
       level,
+      incident: bridge.incident,
     });
 
     return {
@@ -86,6 +92,7 @@ export async function runLabWithCodex({
       level: level.id,
       durationMs: Date.now() - startedAt,
       result,
+      incident: bridge.incident,
     };
   } catch (error) {
     return {

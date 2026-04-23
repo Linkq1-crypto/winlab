@@ -55,6 +55,24 @@ ${levelInstruction(level)}
 `.trim();
 }
 
+function buildIncidentSection(incident) {
+  if (!incident) return "";
+
+  return `
+Variant:
+- seed: ${incident.seed}
+- rootCauseId: ${incident.rootCauseId}
+- context: ${incident.description}
+
+Variant logs:
+${(incident.logs || []).map((line) => `- ${line}`).join("\n")}
+
+Rules:
+- use the variant logs to infer the root cause
+- do not assume the default static scenario
+`.trim();
+}
+
 export function buildPrompt({ lab, mode = "review", level: levelInput = "JUNIOR" }) {
   const level = getLevelConfig(levelInput?.id || levelInput);
   const scopeLines = (lab.scope || []).map((s) => `- ${s}`).join("\n");
@@ -119,6 +137,7 @@ export function buildLabPrompt({
   failureContext = null,
   lab: labOverride = null,
   level: levelInput = "JUNIOR",
+  incident = null,
 }) {
   const level = getLevelConfig(levelInput?.id || levelInput);
   const catalogLab = getLabConfig(labId);
@@ -142,6 +161,7 @@ export function buildLabPrompt({
   const scopeText = (lab.scope || []).map((item) => `- ${item}`).join("\n");
   const entryText = (lab.entryPoints || []).map((item) => `- ${item}`).join("\n");
   const issueGuidance = getIssueGuidance(lab.issueType);
+  const incidentSection = buildIncidentSection(incident);
   const retrySection = failureContext
     ? `
 Previous attempt failed verification.
@@ -166,6 +186,8 @@ Start from:
 ${entryText}
 
 ${buildLevelSection(level)}
+
+${incidentSection}
 
 Task:
 Explain what this lab does and identify the most likely root cause.
@@ -197,6 +219,8 @@ ${entryText}
 
 ${buildLevelSection(level)}
 
+${incidentSection}
+
 Task:
 Fix the issue with a minimal patch.
 
@@ -217,6 +241,6 @@ Return ONLY a unified diff.
 `.trim();
 }
 
-export const _test = { getIssueGuidance };
+export const _test = { buildIncidentSection, getIssueGuidance };
 
 export default { buildLabPrompt, buildPrompt };

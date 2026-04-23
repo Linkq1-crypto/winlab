@@ -3,6 +3,7 @@ import IncidentHistoryPanel from "../components/IncidentHistoryPanel";
 
 export default function MyIncidents({ user }) {
   const [items, setItems] = useState([]);
+  const [chains, setChains] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedLabId, setSelectedLabId] = useState("");
   const signedIn = Boolean(user?.id || user?.userId);
@@ -19,10 +20,15 @@ export default function MyIncidents({ user }) {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch("/api/lab-progress");
+      const [res, chainRes] = await Promise.all([
+        fetch("/api/lab-progress"),
+        fetch("/api/lab-progress/chains"),
+      ]);
       const data = await res.json();
+      const chainData = await chainRes.json();
       const nextItems = data.items || [];
       setItems(nextItems);
+      setChains(chainData.items || []);
       setSelectedLabId((current) => current || nextItems[0]?.labId || "");
     } finally {
       setLoading(false);
@@ -60,6 +66,29 @@ export default function MyIncidents({ user }) {
         ) : (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
             <div className="grid gap-4">
+              {chains.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded border border-emerald-900/60 bg-zinc-950 p-5"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <div className="text-lg font-medium">{item.chainId}</div>
+                      <div className="mt-1 text-sm text-emerald-500">
+                        chain: {item.lastStatus}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-6 text-sm">
+                      <Metric label="Best score" value={item.bestScore ?? "-"} />
+                      <Metric label="Best grade" value={item.bestGrade ?? "-"} />
+                      <Metric label="Attempts" value={item.attemptsCount} />
+                      <Metric label="Successes" value={item.successCount} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
               {items.map((item) => (
                 <div
                   key={item.id}
@@ -95,7 +124,7 @@ export default function MyIncidents({ user }) {
                 </div>
               ))}
 
-              {items.length === 0 && (
+              {items.length === 0 && chains.length === 0 && (
                 <div className="rounded border border-zinc-800 bg-zinc-950 p-6 text-zinc-500">
                   No incidents yet.
                 </div>

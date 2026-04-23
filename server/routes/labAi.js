@@ -85,6 +85,8 @@ export function validateRunLabBody(body) {
   const labId = typeof input.labId === "string" ? input.labId.trim() : "";
   const mode = typeof input.mode === "string" ? input.mode.trim() : "review";
   const level = typeof input.level === "string" ? input.level.trim().toUpperCase() : "JUNIOR";
+  const incidentSeed = normalizeOptionalSeed(input.incidentSeed);
+  const variantLabId = typeof input.variantLabId === "string" ? input.variantLabId.trim() : null;
 
   if (!labId) {
     errors.push("labId is required");
@@ -136,10 +138,17 @@ export function validateRunLabBody(body) {
       labId,
       mode,
       level,
+      incidentSeed,
+      variantLabId,
       repoSourcePath,
       verifyCommand,
     },
   };
+}
+
+function normalizeOptionalSeed(value) {
+  if (value == null || value === "") return null;
+  return String(value).replace(/[^a-zA-Z0-9:_-]/g, "_").slice(0, 120);
 }
 
 export function validateRepoSourcePath(value) {

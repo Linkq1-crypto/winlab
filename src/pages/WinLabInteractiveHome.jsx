@@ -1,6 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import AIPatchPanel from "../components/AIPatchPanel";
+import { listIncidentChains } from "../config/incidentChains";
 import { LEVEL_OPTIONS, getLevelConfig } from "../config/levels";
+import {
+  completeCurrentStep,
+  createIncidentChainSession,
+  getCurrentChainStep,
+  markCurrentStepAttempt,
+  startCurrentStep,
+} from "../services/incidentChainEngine";
+import { generateIncident, hasIncidentTemplate } from "../services/incidentGenerator";
 import { explainDiff } from "../services/explainDiff";
 
 const INCIDENTS = [
@@ -84,6 +93,9 @@ export default function WinLabInteractiveHome({
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [engagementScore, setEngagementScore] = useState(0);
   const [levelId, setLevelId] = useState("JUNIOR");
+  const [incidentSeed, setIncidentSeed] = useState(() => createSessionSeed("incident"));
+  const [incidentVariant, setIncidentVariant] = useState(null);
+  const [chainSession, setChainSession] = useState(null);
 
   const terminalRef = useRef(null);
 
@@ -92,6 +104,9 @@ export default function WinLabInteractiveHome({
     [selectedIncidentId]
   );
   const level = useMemo(() => getLevelConfig(levelId), [levelId]);
+  const currentChainStep = useMemo(() => getCurrentChainStep(chainSession), [chainSession]);
+  const activeLabId = currentChainStep?.labId || incident.labId;
+  const activeVariantLabId = currentChainStep?.variantLabId || (incident.id === "api-timeout" ? "api-timeout" : incident.labId);
 
   useEffect(() => {
     setElapsed(0);
@@ -103,11 +118,25 @@ export default function WinLabInteractiveHome({
       `prod-eu-west-1 - ${incident.title}`,
       "live incident",
       "",
-      incident.prompt,
+      currentChainStep ? `[chain] ${chainSession.title}` : incident.prompt,
       "",
-      'Type "help" or start debugging.',
+      currentChainStep
+        ? `[step ${currentChainStep.index + 1}/${chainSession.steps.length}] ${currentChainStep.labId}`
+        : 'Type "help" or start debugging.',
     ]);
-  }, [incident]);
+  }, [incident, chainSession, currentChainStep]);
+
+  useEffect(() => {
+    const nextVariant = hasIncidentTemplate(activeVariantLabId)
+      ? generateIncident({
+        labId: activeVariantLabId,
+        seed: incidentSeed,
+        level,
+      })
+      : null;
+
+    setIncidentVariant(nextVariant);
+  }, [activeVariantLabId, incidentSeed, levelId]);
 
   useEffect(() => {
     const timer = setInterval(() => setElapsed((value) => value + 1), 1000);
@@ -128,11 +157,12 @@ export default function WinLabInteractiveHome({
 
   useEffect(() => {
     const stream = setInterval(() => {
-      appendTerminalLine(applyLevelNoise(pickRandom(incident.logs), level));
+      const sourceLogs = incidentVariant?.logs?.length ? incidentVariant.logs : incident.logs;
+      appendTerminalLine(applyLevelNoise(pickRandom(sourceLogs), level));
     }, Math.max(2500, 5200 - level.difficulty * 450));
 
     return () => clearInterval(stream);
-  }, [incident, level]);
+  }, [incident, incidentVariant, level]);
 
   useEffect(() => {
     if (!level.hintsEnabled || !level.hintFrequency) return undefined;
@@ -217,9 +247,11 @@ export default function WinLabInteractiveHome({
       const result = await runLabAI({
         tenantId,
         userId,
-        labId: incident.labId,
+        labId: activeLabId,
         mode: "review",
         level: level.id,
+        incidentSeed,
+        variantLabId: activeVariantLabId,
       });
 
       setReviewResult(result);
@@ -247,9 +279,11 @@ export default function WinLabInteractiveHome({
       const result = await runLabAI({
         tenantId,
         userId,
-        labId: incident.labId,
+        labId: activeLabId,
         mode: "patch",
         level: level.id,
+        incidentSeed,
+        variantLabId: activeVariantLabId,
       });
 
       setPatchResult(result);
@@ -257,7 +291,7 @@ export default function WinLabInteractiveHome({
 
       if (result?.ok) {
         appendTerminalLine("[verify] patch passed");
-        appendTerminalLine("[incident] service stabilized");
+        handleStepSuccess();
       } else {
         appendTerminalLine("[verify] patch failed or partial");
       }
@@ -265,6 +299,58 @@ export default function WinLabInteractiveHome({
       appendTerminalLine(`[ai] patch failed: ${error.message}`);
     } finally {
       setLoading(false);
+    }
+  }
+
+  function startChain(chainId) {
+    const session = createIncidentChainSession(chainId, {
+      seed: createSessionSeed(chainId),
+    });
+    startCurrentStep(session);
+    setChainSession({ ...session });
+    setIncidentSeed(`${session.seed}:0`);
+    setShowSignup(false);
+    appendTerminalLine(`[chain] ${session.title}`);
+    appendTerminalLine(`[step 1/${session.steps.length}] ${session.steps[0].labId}`);
+  }
+
+  function handleStepSuccess() {
+    if (!chainSession) {
+      appendTerminalLine("[incident] service stabilized");
+      return;
+    }
+
+    const updated = structuredClone(chainSession);
+    markCurrentStepAttempt(updated, { usedAI: true });
+    const completedStep = getCurrentChainStep(updated);
+    completeCurrentStep(updated);
+
+    appendTerminalLine(`[verify] ${completedStep?.successMessage || "step restored"}`);
+
+    if (updated.completed) {
+      appendTerminalLine("[chain] final verification passed");
+      appendTerminalLine(`[incident] ${updated.finalMessage}`);
+      setShowSignup(true);
+      recordChain(updated);
+    } else {
+      const nextStep = getCurrentChainStep(updated);
+      appendTerminalLine("[incident] new failure surfaced");
+      appendTerminalLine(`[next] ${nextStep.labId}`);
+      setIncidentSeed(`${updated.seed}:${nextStep.index}`);
+    }
+
+    setChainSession({ ...updated });
+  }
+
+  async function recordChain(session) {
+    try {
+      await fetch("/api/lab-progress/chains/attempt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session }),
+      });
+    } catch {
+      // Guest sessions still complete locally.
     }
   }
 
@@ -300,6 +386,9 @@ export default function WinLabInteractiveHome({
 
               <div className="flex items-center gap-3 text-xs">
                 <span className="text-zinc-500">{level.label}</span>
+                {incidentVariant && (
+                  <span className="text-zinc-500">seed: {incidentVariant.seed}</span>
+                )}
                 <span className={statusBadgeClass(liveStatus)}>{liveStatus}</span>
                 <span className="text-zinc-500">timer: {elapsed}s</span>
               </div>
@@ -378,6 +467,11 @@ export default function WinLabInteractiveHome({
 
             <LevelSelector levelId={level.id} onChange={setLevelId} />
 
+            <ChainSelector
+              activeChainId={chainSession?.chainId || ""}
+              onStartChain={startChain}
+            />
+
             <IncidentSelector
               incidents={INCIDENTS}
               selectedIncidentId={selectedIncidentId}
@@ -426,6 +520,8 @@ export default function WinLabInteractiveHome({
               <MiniMetric label="Live status" value={liveStatus} />
               <MiniMetric label="Difficulty" value={incident.difficulty} />
               <MiniMetric label="Level" value={level.label} />
+              <MiniMetric label="Variant" value={incidentVariant?.rootCauseId || "-"} />
+              <MiniMetric label="Chain" value={chainSession?.title || "single lab"} />
               <MiniMetric label="AI quality" value={patchResult?.quality?.grade || "-"} />
               <MiniMetric label="Verify" value={patchResult?.ok ? "passed" : "pending"} />
             </div>
@@ -551,6 +647,35 @@ function LevelSelector({ levelId, onChange }) {
   );
 }
 
+function ChainSelector({ activeChainId, onStartChain }) {
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-5">
+      <div className="mb-4 text-xs uppercase tracking-wide text-zinc-500">
+        Incident Chains
+      </div>
+      <div className="grid gap-2">
+        {listIncidentChains().map((chain) => (
+          <button
+            key={chain.id}
+            type="button"
+            onClick={() => onStartChain(chain.id)}
+            className={`rounded border px-3 py-2 text-left text-sm transition ${
+              activeChainId === chain.id
+                ? "border-white bg-black text-white"
+                : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:bg-black"
+            }`}
+          >
+            <div className="font-medium">{chain.title}</div>
+            <div className="mt-1 text-xs text-zinc-500">
+              {chain.steps.length} steps - {chain.difficulty}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function IncidentSelector({ incidents, selectedIncidentId, onOpenIncident }) {
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-5">
@@ -647,6 +772,10 @@ function MiniMetric({ label, value }) {
 
 function pickRandom(items) {
   return items[Math.floor(Math.random() * items.length)];
+}
+
+function createSessionSeed(prefix) {
+  return `${prefix}:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function applyLevelNoise(line, level) {

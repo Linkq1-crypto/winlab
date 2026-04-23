@@ -303,6 +303,7 @@ export async function runLabWithAI({
   userId,
   context = {},
   level: levelInput = "JUNIOR",
+  incident = null,
 }) {
   if (!aiRouter || typeof aiRouter.run !== "function") {
     throw new Error("aiRouter.run is required");
@@ -320,7 +321,7 @@ export async function runLabWithAI({
       ...context,
       fileHint: context.fileHint || lab.entryPoints[0],
     },
-    customPrompt: buildLabPrompt({ labId, lab, mode: "review", level }),
+    customPrompt: buildLabPrompt({ labId, lab, mode: "review", level, incident }),
   });
 
   const patchFlow = await runPatchWithRetry({
@@ -344,6 +345,7 @@ export async function runLabWithAI({
       level
     ),
     level,
+    incident,
   });
 
   const finalAttempt = patchFlow.attempts[patchFlow.attempts.length - 1] || null;
@@ -392,7 +394,7 @@ function buildScopeOptions(lab) {
   };
 }
 
-export async function reviewLab({ labId, workspace, aiRunner, level: levelInput = "JUNIOR" }) {
+export async function reviewLab({ labId, workspace, aiRunner, level: levelInput = "JUNIOR", incident = null }) {
   const lab = getLabConfig(labId);
   const level = getLevelConfig(levelInput?.id || levelInput);
   if (!lab) throw new Error(`Unknown labId: ${labId}`);
@@ -400,7 +402,7 @@ export async function reviewLab({ labId, workspace, aiRunner, level: levelInput 
     throw new Error("reviewLab requires aiRunner(prompt, options)");
   }
 
-  const prompt = buildLabPrompt({ labId, mode: "review", level });
+  const prompt = buildLabPrompt({ labId, mode: "review", level, incident });
   const startedAt = Date.now();
   const result = await aiRunner(prompt, {
     workspace,
@@ -416,10 +418,11 @@ export async function reviewLab({ labId, workspace, aiRunner, level: levelInput 
     text: normalizeAiText(result),
     durationMs: Date.now() - startedAt,
     level: level.id,
+    incident,
   };
 }
 
-export async function patchLab({ labId, workspace, aiRunner, applyPatch, runVerify, level: levelInput = "JUNIOR" }) {
+export async function patchLab({ labId, workspace, aiRunner, applyPatch, runVerify, level: levelInput = "JUNIOR", incident = null }) {
   const lab = getLabConfig(labId);
   const level = getLevelConfig(levelInput?.id || levelInput);
   if (!lab) throw new Error(`Unknown labId: ${labId}`);
@@ -432,6 +435,7 @@ export async function patchLab({ labId, workspace, aiRunner, applyPatch, runVeri
     labId,
     workspace,
     level,
+    incident,
     aiRunner: async (prompt) => aiRunner(prompt, {
       workspace,
       mode: "patch",
@@ -477,6 +481,7 @@ export async function patchLab({ labId, workspace, aiRunner, applyPatch, runVeri
     labId,
     durationMs,
     level: level.id,
+    incident,
     finalAttempt: retryResult.finalAttempt,
     attempts: retryResult.attempts.map((item) => ({
       attempt: item.attempt,
@@ -497,13 +502,13 @@ export async function patchLab({ labId, workspace, aiRunner, applyPatch, runVeri
   };
 }
 
-export async function runLab({ labId, mode = "review", workspace, aiRunner, applyPatch, runVerify, level = "JUNIOR" }) {
+export async function runLab({ labId, mode = "review", workspace, aiRunner, applyPatch, runVerify, level = "JUNIOR", incident = null }) {
   if (mode === "review") {
-    return reviewLab({ labId, workspace, aiRunner, level });
+    return reviewLab({ labId, workspace, aiRunner, level, incident });
   }
 
   if (mode === "patch") {
-    return patchLab({ labId, workspace, aiRunner, applyPatch, runVerify, level });
+    return patchLab({ labId, workspace, aiRunner, applyPatch, runVerify, level, incident });
   }
 
   throw new Error(`Unsupported mode: ${mode}`);

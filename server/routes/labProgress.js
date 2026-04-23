@@ -3,6 +3,10 @@ import {
   getUserLabAttempts,
   getUserLabProgress,
 } from "../../src/services/labProgressService.js";
+import {
+  getUserChainProgress,
+  recordChainAttempt,
+} from "../../src/services/chainProgressService.js";
 
 const router = express.Router();
 
@@ -44,6 +48,49 @@ router.get("/attempts", async (req, res) => {
     return res.status(500).json({
       ok: false,
       error: { message: error?.message || "Failed to load attempts" },
+    });
+  }
+});
+
+router.get("/chains", async (req, res) => {
+  try {
+    const userId = resolveRequestUserId(req);
+    if (!userId) {
+      return res.status(400).json({
+        ok: false,
+        error: { message: "userId is required" },
+      });
+    }
+
+    const items = await getUserChainProgress(userId);
+    return res.json({ ok: true, items });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      error: { message: error?.message || "Failed to load chain progress" },
+    });
+  }
+});
+
+router.post("/chains/attempt", async (req, res) => {
+  try {
+    const userId = resolveRequestUserId(req);
+    const session = req.body?.session;
+    const durationMs = Number(req.body?.durationMs || 0) || null;
+
+    if (!userId || !session?.chainId) {
+      return res.status(400).json({
+        ok: false,
+        error: { message: "userId and session.chainId are required" },
+      });
+    }
+
+    const attempt = await recordChainAttempt({ userId, session, durationMs });
+    return res.json({ ok: true, attempt });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      error: { message: error?.message || "Failed to record chain attempt" },
     });
   }
 });

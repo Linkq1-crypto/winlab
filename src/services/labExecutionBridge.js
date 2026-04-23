@@ -3,6 +3,11 @@ import fs from "fs/promises";
 import path from "path";
 import { getLabConfig } from "../config/labCatalog.js";
 import {
+  generateIncident,
+  hasIncidentTemplate,
+} from "./incidentGenerator.js";
+import { applyIncidentMutations } from "./incidentMutations.js";
+import {
   appendAuditLog,
   createCodexSessionWorkspace,
   extractFilesTouchedFromDiff,
@@ -20,6 +25,9 @@ export async function createLabExecutionBridge({
   labId,
   repoSourcePath,
   verifyCommand = null,
+  incidentSeed = null,
+  variantLabId = null,
+  level = "JUNIOR",
 }) {
   const lab = getLabConfig(labId);
   if (!lab) throw new Error(`Unknown labId: ${labId}`);
@@ -31,6 +39,10 @@ export async function createLabExecutionBridge({
     labId,
     repoSourcePath,
   });
+  const incident = buildIncident({ labId, variantLabId, incidentSeed, level });
+  const mutationResult = incident
+    ? await applyIncidentMutations(workspace, incident)
+    : null;
   const policyChecks = buildPolicyChecks(lab);
 
   async function aiRunner(prompt, options = {}) {
@@ -60,6 +72,7 @@ export async function createLabExecutionBridge({
         files_touched: [],
         policy_violation: false,
         policy_checks: policyChecks,
+        incident,
       });
 
       return { text: result?.text || "" };
@@ -88,6 +101,7 @@ export async function createLabExecutionBridge({
         files_touched: filesTouched,
         policy_violation: false,
         policy_checks: policyChecks,
+        incident,
       });
 
       return { diff, text: diff };
@@ -126,6 +140,7 @@ export async function createLabExecutionBridge({
         files_touched: validation.filesTouched || [],
         policy_violation: true,
         policy_checks: policyChecks,
+        incident,
       });
 
       return {
@@ -159,6 +174,7 @@ export async function createLabExecutionBridge({
         files_touched: filesTouched,
         policy_violation: false,
         policy_checks: policyChecks,
+        incident,
       });
 
       return {
@@ -178,8 +194,9 @@ export async function createLabExecutionBridge({
       exit_code: 0,
       files_touched: filesTouched,
       policy_violation: false,
-      policy_checks: policyChecks,
-    });
+        policy_checks: policyChecks,
+        incident,
+      });
 
     return {
       applied: true,
@@ -232,8 +249,9 @@ export async function createLabExecutionBridge({
       exit_code: verifyResult.metrics?.exitCode ?? 1,
       files_touched: [],
       policy_violation: false,
-      policy_checks: policyChecks,
-    });
+        policy_checks: policyChecks,
+        incident,
+      });
 
     return verifyResult;
   }
@@ -247,11 +265,25 @@ export async function createLabExecutionBridge({
 
   return {
     workspace,
+    incident,
+    mutationResult,
     aiRunner,
     applyPatch,
     runVerify,
     cleanup,
   };
+}
+
+function buildIncident({ labId, variantLabId, incidentSeed, level }) {
+  const templateId = variantLabId || labId;
+  if (!incidentSeed && !hasIncidentTemplate(templateId)) return null;
+  if (!hasIncidentTemplate(templateId)) return null;
+
+  return generateIncident({
+    labId: templateId,
+    seed: incidentSeed || `${templateId}:${Date.now()}`,
+    level,
+  });
 }
 
 async function runProcess(cmd, args, { cwd, timeoutMs = 15_000, env } = {}) {
