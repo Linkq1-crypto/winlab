@@ -45,6 +45,8 @@ import { syncLogger, dlqLogger } from "./src/services/logger.js";
 import { createAIRouter } from "./src/services/aiRouter.js";
 import { createAIService } from "./src/services/aiService.js";
 import { cleanupWorkspace, createWorkspace, runLabWithAI } from "./src/services/labRunner.js";
+import labAiRoutes from "./server/routes/labAi.js";
+import labProgressRouter from "./server/routes/labProgress.js";
 
 // try { bootstrapAlertFlow(); } catch (e) { console.warn("[AlertDispatcher] bootstrap skipped:", e.message); }
 try { startHelpdeskWorker(); } catch (e) { console.warn("[Helpdesk] worker skipped:", e.message); }
@@ -1103,6 +1105,8 @@ app.get("/api/ai/labs", requireAuth, (req, res) => {
   res.json({ labs: aiService.labs });
 });
 
+app.use("/api/lab-progress", requireAuth, labProgressRouter);
+
 // POST /api/ai/run
 // Runs a bounded AI review/patch against an auto-discovered lab.
 app.post("/api/ai/run", requireAuth, aiLimiter, codexLimiter, async (req, res) => {
@@ -1127,6 +1131,8 @@ app.post("/api/ai/run", requireAuth, aiLimiter, codexLimiter, async (req, res) =
     res.status(status).json({ error: err.message || "AI run failed" });
   }
 });
+
+app.use("/api/ai/lab", requireAuth, aiLimiter, codexLimiter, labAiRoutes);
 
 // POST /api/lab/run
 // Creates an isolated workspace, asks Codex for a bounded patch, applies it,

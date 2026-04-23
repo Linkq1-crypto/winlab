@@ -3,6 +3,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { getAdaptiveLoader } from "./network/adaptiveLoader";
 import { getInvisibleGuide } from "./network/invisibleGuide";
 import { getAnalytics, getOptimizedPaywall } from "./network/analyticsEngine";
+import AIPatchPanel from "./components/AIPatchPanel";
+import { explainDiff } from "./services/explainDiff";
 
 // ── Region detection (IP-based, fallback to browser) ──────────────────────────
 async function detectRegion() {
@@ -132,6 +134,18 @@ const LABS = [
   },
 ];
 
+const AI_BACKEND_LAB_MAP = {
+  "lab-1-webdown": "nginx-port-conflict",
+  "lab-2-diskfull": "disk-full",
+  "lab-3-security": "permission-denied",
+  "codex-api-timeout": "memory-leak",
+  "codex-auth-bypass": "permission-denied",
+  "codex-stripe-webhook": "nginx-port-conflict",
+  "api-timeout-n-plus-one": "memory-leak",
+  "auth-bypass-jwt-trust": "permission-denied",
+  "stripe-webhook-forgery": "nginx-port-conflict",
+};
+
 // ── Simulated filesystem ─────────────────────────────────────────────────────
 const FILESYSTEM = {
   "/": ["etc", "var", "tmp", "home", "usr", "root"],
@@ -240,6 +254,25 @@ function FakeEditor({ path, content, onClose }) {
   );
 }
 
+async function runLabAIRequest(payload) {
+  const res = await fetch("/api/ai/lab/run", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.error?.message || data?.error || "AI request failed");
+  }
+
+  return data?.result || null;
+}
+
+function resolveBackendAILabId(rawLabId) {
+  return AI_BACKEND_LAB_MAP[rawLabId] || rawLabId;
+}
+
 // ── Terminal Component ───────────────────────────────────────────────────────
 export default function EnhancedTerminalLab({
   labId = "lab-1-webdown",
@@ -273,6 +306,13 @@ export default function EnhancedTerminalLab({
   const [aiLoading, setAiLoading] = useState(false);
   const [codexMode, setCodexMode] = useState("review");
   const [showAiNudge, setShowAiNudge] = useState(false);
+  const [reviewResult, setReviewResult] = useState(null);
+  const [patchResult, setPatchResult] = useState(null);
+  const [showAIPanel, setShowAIPanel] = useState(false);
+  const [aiPatchExplanation, setAiPatchExplanation] = useState("");
+  const [showSignupCTA, setShowSignupCTA] = useState(false);
+  const [aiEngagementScore, setAiEngagementScore] = useState(0);
+  const [loadingAI, setLoadingAI] = useState(false);
   const [commandCount, setCommandCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
   const [labStartTime] = useState(Date.now());
@@ -299,6 +339,12 @@ export default function EnhancedTerminalLab({
     if (defaultMentorOpen) setAiMentorOpen(true);
   }, [defaultMentorOpen]);
   const diffSettings = DIFFICULTY_LEVELS[difficulty];
+
+  useEffect(() => {
+    if (patchResult?.ok || (patchResult?.quality?.score || 0) >= 85 || aiEngagementScore >= 3) {
+      setShowSignupCTA(true);
+    }
+  }, [patchResult, aiEngagementScore]);
 
   // ── Init: region detection + boot sequence + analytics + invisible guide ───
   useEffect(() => {
@@ -478,6 +524,71 @@ export default function EnhancedTerminalLab({
     return response;
   }, [currentLab.id, hintLevel]);
 
+  const runAIReview = useCallback(async () => {
+    setLoadingAI(true);
+    setShowAIPanel(true);
+    setAiEngagementScore(prev => prev + 1);
+    addLine("[ai] running scoped analysis...", "info");
+
+    try {
+      const result = await runLabAIRequest({
+        tenantId: "demo",
+        userId: "guest",
+        labId: resolveBackendAILabId(codexIncident?.labId || labId || currentLab.id),
+        mode: "review",
+      });
+
+      setReviewResult(result);
+      analytics.track("ai_review_clicked", { labId: currentLab.id });
+      addLine("[ai] review completed", "success");
+      if (result?.text) {
+        setAiMessages(prev => [...prev, { role: "ai", text: result.text, mode: "review" }]);
+      }
+    } catch (error) {
+      addLine(`[ai] review failed: ${error.message}`, "err");
+    } finally {
+      setLoadingAI(false);
+    }
+  }, [addLine, analytics, codexIncident, currentLab.id, labId]);
+
+  const runAIPatch = useCallback(async () => {
+    setLoadingAI(true);
+    setShowAIPanel(true);
+    setAiEngagementScore(prev => prev + 2);
+    addLine("[ai] generating sandbox patch...", "info");
+    setTimeout(() => addLine("[verify] executing checks...", "warn"), 400);
+
+    try {
+      const result = await runLabAIRequest({
+        tenantId: "demo",
+        userId: "guest",
+        labId: resolveBackendAILabId(codexIncident?.labId || labId || currentLab.id),
+        mode: "patch",
+      });
+
+      setPatchResult(result);
+      analytics.track("ai_patch_clicked", { labId: currentLab.id });
+
+      if (result?.ok) {
+        addLine("[verify] patch passed", "success");
+        setTimeout(() => addLine("[incident] traffic recovering...", "success"), 700);
+      } else {
+        addLine("[verify] patch failed", "err");
+      }
+    } catch (error) {
+      addLine(`[ai] patch failed: ${error.message}`, "err");
+    } finally {
+      setLoadingAI(false);
+    }
+  }, [addLine, analytics, codexIncident, currentLab.id, labId]);
+
+  const handleExplainPatch = useCallback((diff) => {
+    const text = explainDiff(diff);
+    setAiPatchExplanation(text);
+    setAiEngagementScore(prev => prev + 1);
+    addLine("[ai] explanation generated", "info");
+  }, [addLine]);
+
   // ── Command processing with AI mentor integration ──────────────────────────
   const processCommand = useCallback((cmd) => {
     const trimmed = cmd.trim();
@@ -495,6 +606,23 @@ export default function EnhancedTerminalLab({
     const parts = trimmed.split(/\s+/);
     const command = parts[0].toLowerCase();
     const args = parts.slice(1);
+
+    if (command === "review") {
+      runAIReview();
+      return;
+    }
+
+    if (command === "patch") {
+      runAIPatch();
+      return;
+    }
+
+    if (command === "mentor" && args.length === 0) {
+      setShowAIPanel(true);
+      setAiEngagementScore(prev => prev + 1);
+      addLine("AI Incident Mentor ready: type review or patch.", "info");
+      return;
+    }
 
     // ── AI Mentor command ────────────────────────────────────────────────
     if (command === "ai" || command === "mentor" || command === "hint") {
@@ -913,7 +1041,7 @@ export default function EnhancedTerminalLab({
       // Record command result in invisible guide
       guide.recordCommand(trimmed, responseLines.some(r => r.type === "success" || r.type === "out"), null);
     }, latency + Math.random() * 400);
-  }, [currentLabIndex, latency, difficulty, hintLevel, commandCount, errorCount, labStartTime, diffSettings, resetInactivityTimer, addLine, processAiQuestion, cwd]);
+  }, [currentLabIndex, latency, difficulty, hintLevel, commandCount, errorCount, labStartTime, diffSettings, resetInactivityTimer, addLine, processAiQuestion, cwd, runAIReview, runAIPatch]);
 
   // ── Handle Enter key ───────────────────────────────────────────────────────
   const handleKeyDown = useCallback((e) => {
@@ -1027,7 +1155,8 @@ export default function EnhancedTerminalLab({
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full bg-black rounded-lg overflow-hidden border border-slate-800 relative">
+    <div className="grid h-full overflow-hidden rounded-lg border border-slate-800 bg-black lg:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="relative flex min-h-0 flex-col overflow-hidden bg-black">
       {/* ── Progress Bar ─────────────────────────────────────────────────── */}
       <div className="px-4 py-3 border-b border-slate-800 bg-slate-900/50">
         <div className="flex items-center justify-between mb-2">
@@ -1327,6 +1456,57 @@ export default function EnhancedTerminalLab({
           </div>
         </div>
       )}
+    </div>
+    <aside className={`${showAIPanel ? "flex" : "hidden lg:flex"} min-h-0 flex-col border-t border-slate-800 bg-zinc-950 lg:border-l lg:border-t-0`}>
+      {showAIPanel ? (
+        <>
+          {reviewResult?.text && (
+            <div className="border-b border-zinc-800 p-4">
+              <div className="mb-2 text-xs uppercase tracking-wide text-zinc-500">AI Review</div>
+              <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs text-zinc-200">
+                {reviewResult.text}
+              </pre>
+            </div>
+          )}
+          <div className="min-h-0 flex-1">
+            <AIPatchPanel
+              result={patchResult}
+              onRunVerify={runAIPatch}
+              onExplain={handleExplainPatch}
+            />
+          </div>
+          {aiPatchExplanation && (
+            <div className="max-h-40 overflow-auto border-t border-zinc-800 p-4">
+              <div className="mb-2 text-xs uppercase tracking-wide text-zinc-500">Patch Explanation</div>
+              <pre className="whitespace-pre-wrap text-xs text-zinc-300">
+                {aiPatchExplanation}
+              </pre>
+            </div>
+          )}
+          {showSignupCTA && (
+            <div className="border-t border-zinc-800 p-4">
+              <div className="mb-2 text-xs uppercase tracking-wide text-zinc-500">Continue</div>
+              <h3 className="mb-3 text-lg font-semibold">
+                {patchResult?.ok ? "Incident stabilized. Save your progress." : "Unlock full labs and keep going."}
+              </h3>
+              <div className="flex gap-2">
+                <button className="flex-1 rounded bg-white py-2 text-sm text-black hover:bg-zinc-200">
+                  Create account
+                </button>
+                <button className="flex-1 rounded bg-zinc-800 py-2 text-sm text-zinc-100 hover:bg-zinc-700">
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="flex h-full items-center justify-center p-4 text-sm text-zinc-500">
+          Type <span className="mx-1 font-mono text-zinc-300">review</span> or
+          <span className="mx-1 font-mono text-zinc-300">patch</span>
+        </div>
+      )}
+    </aside>
     </div>
   );
 }

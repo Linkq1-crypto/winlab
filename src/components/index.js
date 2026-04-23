@@ -6,3 +6,6 @@ export { default as EnterpriseArch } from './EnterpriseArch';
 export { default as AutomationLab } from './AutomationLab';
 export { default as CloudInfra } from './CloudInfra';
 export { default as MspDashboard } from './MspDashboard';
+export { default as AIPatchPanel } from './AIPatchPanel';
+export { default as IncidentHistoryPanel } from './IncidentHistoryPanel';
+export { default as SafeDiffViewer } from './SafeDiffViewer';

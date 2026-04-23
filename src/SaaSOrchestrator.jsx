@@ -38,6 +38,8 @@ import ResetPasswordPage from "./ResetPasswordPage";
 import DeceptionDashboard from "./DeceptionDashboard";
 import ABTestOnboarding from "./ABTestOnboarding";
 import NewLandingPage from "./NewLandingPage";
+import MyIncidents from "./pages/MyIncidents";
+import WinLabInteractiveHome from "./pages/WinLabInteractiveHome";
 
 // ── Lazy simulators (one chunk per lab) ───────────────────────────────────────
 // Defined at MODULE level so React always gets the same stable reference.
@@ -652,6 +654,14 @@ export default function SaaSOrchestrator() {
        window.location.pathname === "/72h" ||
        window.location.search.includes("launch=1"));
   });
+  const [isInteractiveHome, setIsInteractiveHome] = useState(() => {
+    return typeof window !== "undefined" &&
+      (window.location.pathname === "/interactive" ||
+       window.location.pathname === "/winlab-interactive");
+  });
+  const [isMyIncidentsRoute, setIsMyIncidentsRoute] = useState(() => {
+    return typeof window !== "undefined" && window.location.pathname === "/my-incidents";
+  });
 
   // Launch tier: true during first 72h, false after → controls which landing to show
   const [launchTierActive, setLaunchTierActive] = useState(true); // optimistic: show launch page until API responds
@@ -703,6 +713,11 @@ export default function SaaSOrchestrator() {
       setIsMyRootRoute(window.location.pathname.startsWith("/myrooting"));
       setMyRootPath(getMyRootPath());
       setIsHoneypot(window.location.pathname === "/dash_board");
+      setIsInteractiveHome(
+        window.location.pathname === "/interactive" ||
+        window.location.pathname === "/winlab-interactive"
+      );
+      setIsMyIncidentsRoute(window.location.pathname === "/my-incidents");
       const onProfile = window.location.pathname === "/profile";
       setIsProfileRoute(onProfile);
       if (onProfile) setView("profile");
@@ -844,6 +859,14 @@ export default function SaaSOrchestrator() {
         }}
       />
     );
+  }
+
+  if (isInteractiveHome) {
+    return <WinLabInteractiveHome />;
+  }
+
+  if (isMyIncidentsRoute) {
+    return <MyIncidents user={user} />;
   }
 
   // Honeypot: fake admin dashboard at /dash_board
