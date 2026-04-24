@@ -1,64 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import AuthFlow from "../components/AuthFlow";
 import HeroSection from "../components/HeroSection";
-import LandingFeaturedLabs from "../components/LandingFeaturedLabs";
-import LandingPricingSection from "../components/LandingPricingSection";
 import LandingTerminalDemo from "../components/LandingTerminalDemo";
 import { track } from "../analytics";
-import { CATALOG_TOTALS, getOnboardingTrack } from "../data/onboardingLabTracks";
+import { getOnboardingTrack } from "../data/onboardingLabTracks";
 import { useAuthModal } from "../hooks/useAuthModal";
-
-const FALLBACK_HOME_DATA = Object.freeze({
-  stats: Object.freeze({
-    engineers: 12000,
-    countries: 120,
-    labs: CATALOG_TOTALS.totalCatalogItems,
-    avgRating: 4.8,
-  }),
-  featuredLabs: Object.freeze([
-    Object.freeze({
-      slug: "nginx-down",
-      title: "Nginx Down",
-      description: "Restore a failed edge service before user traffic fully drops.",
-      durationMin: 12,
-      difficulty: "junior",
-      tier: "free",
-      rating: 4.8,
-    }),
-    Object.freeze({
-      slug: "api-timeout",
-      title: "API Timeout",
-      description: "Trace the timeout chain and restore traffic before impact spreads.",
-      durationMin: 18,
-      difficulty: "junior",
-      tier: "free",
-      rating: 4.8,
-    }),
-    Object.freeze({
-      slug: "permission-denied",
-      title: "Permission Denied",
-      description: "Fix a write path that fails with real production permissions.",
-      durationMin: 16,
-      difficulty: "mid",
-      tier: "pro",
-      rating: 4.9,
-    }),
-  ]),
-  pricing: Object.freeze({
-    freeLabs: CATALOG_TOTALS.starterLabs,
-    proMonthlyUsd: 19,
-    currency: "EUR",
-  }),
-  socialProof: Object.freeze({
-    headline: "Joined by engineers from 120+ countries",
-  }),
-});
 
 export default function WinLabInteractiveHome() {
   const { authModal, openAuthModal, closeAuthModal } = useAuthModal();
-  const [homeData, setHomeData] = useState(FALLBACK_HOME_DATA);
   const [selectedLevel, setSelectedLevel] = useState("");
-  const [previewIncidentSlug, setPreviewIncidentSlug] = useState("");
   const [connectionStage, setConnectionStage] = useState("idle");
   const [demoCompleted, setDemoCompleted] = useState(false);
   const [startingIncident, setStartingIncident] = useState(false);
@@ -66,45 +16,6 @@ export default function WinLabInteractiveHome() {
   const demoRef = useRef(null);
   const connectionTimersRef = useRef([]);
   const selectedTrack = selectedLevel ? getOnboardingTrack(selectedLevel) : null;
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadHomeData() {
-      try {
-        const response = await fetch("/api/public/home", {
-          method: "GET",
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Home API failed with status ${response.status}`);
-        }
-
-        const payload = await response.json();
-        setHomeData({
-          stats: {
-            ...(payload?.stats || FALLBACK_HOME_DATA.stats),
-            labs: CATALOG_TOTALS.totalCatalogItems,
-          },
-          featuredLabs: payload?.featuredLabs || FALLBACK_HOME_DATA.featuredLabs,
-          pricing: {
-            ...(payload?.pricing || FALLBACK_HOME_DATA.pricing),
-            freeLabs: CATALOG_TOTALS.starterLabs,
-            currency: "EUR",
-          },
-          socialProof: payload?.socialProof || FALLBACK_HOME_DATA.socialProof,
-        });
-      } catch (error) {
-        if (error.name !== "AbortError") {
-          setHomeData(FALLBACK_HOME_DATA);
-        }
-      }
-    }
-
-    loadHomeData();
-    return () => controller.abort();
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -154,10 +65,10 @@ export default function WinLabInteractiveHome() {
         openAuthModal({
           mode: "login",
           context: "progress",
-          title: "Login required",
-          description: "Sign in to launch your real incident terminal.",
-          primaryLabel: "Log in",
-          secondaryLabel: "Not now",
+          title: "[AUTH]: authentication required",
+          description: "[SYSTEM]: persist identity to continue routing.",
+          primaryLabel: "[AUTH]: authenticate",
+          secondaryLabel: "[ACCESS]: defer",
         });
         return;
       }
@@ -181,10 +92,10 @@ export default function WinLabInteractiveHome() {
     openAuthModal({
       mode: "signup",
       context: "progress",
-      title: "Nice. Want to try the full incident?",
-      description: "Sign in to continue.",
-      primaryLabel: "Create free account",
-      secondaryLabel: "Not now",
+      title: "[AUTH]: persistence unavailable",
+      description: "[SYSTEM]: create identity to save progress and continue routing.",
+      primaryLabel: "[AUTH]: create identity",
+      secondaryLabel: "[ACCESS]: continue volatile",
     });
   }
 
@@ -196,14 +107,7 @@ export default function WinLabInteractiveHome() {
   return (
     <div className="min-h-screen bg-black text-white">
       <HeroSection
-        stats={homeData.stats}
-        onStart={scrollToDemo}
-        onSeeHowItWorks={scrollToHowItWorks}
         onRoutingReady={scrollToDemo}
-        onPreviewIncident={(incidentSlug) => {
-          setPreviewIncidentSlug(incidentSlug);
-          scrollToDemo();
-        }}
         onLevelSelected={(level) => {
           connectionTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
           connectionTimersRef.current = [];
@@ -230,7 +134,6 @@ export default function WinLabInteractiveHome() {
         <LandingTerminalDemo
           selectedLevel={selectedLevel}
           connectionStage={connectionStage}
-          previewIncidentSlug={previewIncidentSlug}
           onSmallWin={() => handleDemoWin()}
           gateLoading={startingIncident}
           gateError={startError}
@@ -238,16 +141,11 @@ export default function WinLabInteractiveHome() {
           onContinueGuest={() => {
             setStartError("");
           }}
+          onUnlock={() => {
+            window.location.href = "/pricing";
+          }}
         />
       </div>
-
-      <LandingFeaturedLabs featuredLabs={homeData.featuredLabs} />
-      <LandingPricingSection
-        freeLabs={homeData.pricing?.freeLabs || 5}
-        onPricing={() => {
-          window.location.href = "/pricing";
-        }}
-      />
 
       {authModal.open ? (
         <AuthFlow
