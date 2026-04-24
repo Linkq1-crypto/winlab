@@ -103,25 +103,25 @@ export default function HeroSection({
   }, [terminalLines]);
 
   useEffect(() => {
-    let index = 0;
     setTerminalLines([]);
     setBootComplete(false);
+    timersRef.current = [];
 
-    function pushNextLine() {
-      setTerminalLines((prev) => [...prev, BASE_TERMINAL_LINES[index]]);
-      index += 1;
+    BASE_TERMINAL_LINES.forEach((line, index) => {
+      const delay = BASE_TERMINAL_LINES
+        .slice(0, index + 1)
+        .reduce((total, _entry, entryIndex) => total + (entryIndex < 4 ? 80 : 120), 90);
 
-      if (index >= BASE_TERMINAL_LINES.length) {
-        setBootComplete(true);
-        return;
-      }
+      const timerId = window.setTimeout(() => {
+        setTerminalLines((prev) => [...prev, line]);
 
-      const timerId = window.setTimeout(pushNextLine, index < 4 ? 80 : 120);
+        if (index === BASE_TERMINAL_LINES.length - 1) {
+          setBootComplete(true);
+        }
+      }, delay);
+
       timersRef.current.push(timerId);
-    }
-
-    const initialTimer = window.setTimeout(pushNextLine, 90);
-    timersRef.current.push(initialTimer);
+    });
 
     return () => {
       timersRef.current.forEach((timerId) => window.clearTimeout(timerId));
@@ -287,8 +287,11 @@ export default function HeroSection({
                 className="flex-1 overflow-y-auto bg-[#0B0F14] p-7 pr-5 font-mono text-[14px] leading-[1.6] text-[#E6EDF3] md:text-[15px] md:leading-[1.68] lg:text-[16px] lg:leading-[1.75]"
               >
                 {terminalLines.map((line, index) => (
-                  <div key={`${index}-${line.text}`} className={terminalLineClass(line.tone)}>
-                    {line.text || <span>&nbsp;</span>}
+                  <div
+                    key={`${index}-${line?.text ?? "empty"}`}
+                    className={terminalLineClass(line?.tone)}
+                  >
+                    {line?.text || <span>&nbsp;</span>}
                   </div>
                 ))}
 
