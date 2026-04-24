@@ -162,14 +162,14 @@ export default function HeroSection({
   return (
     <section className="bg-[#0B0F14] text-[#E6EDF3]">
       <div className="mx-auto max-w-[1600px] px-6 py-12 lg:px-6 lg:py-14">
-        <div className="grid min-h-[640px] grid-cols-1 items-stretch gap-3 md:gap-4 lg:h-[720px] lg:grid-cols-[1fr_1fr] lg:gap-5">
+        <div className="grid min-h-[640px] grid-cols-1 items-stretch gap-3 md:gap-4 lg:h-[680px] lg:grid-cols-[1fr_1fr] lg:gap-5">
           <div className="flex h-full min-h-[520px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0F141B]">
             <div className="flex h-full flex-col justify-center px-9 py-10 lg:px-12 lg:py-12">
               <div className="font-mono text-[12px] uppercase tracking-[0.22em] text-[#8B96A5]">
                 LIVE PRODUCTION INCIDENTS
               </div>
 
-              <h1 className="mt-6 max-w-[680px] text-[42px] font-semibold tracking-[-0.04em] text-[#E6EDF3] leading-[1.02] md:text-[56px] lg:text-[72px] lg:leading-[0.95]">
+              <h1 className="mt-6 max-w-[680px] text-[42px] font-semibold leading-[1.02] tracking-[-0.04em] text-[#E6EDF3] md:text-[56px] lg:text-[64px] lg:leading-[0.98]">
                 Your server is down. Fix it.
               </h1>
 
@@ -232,31 +232,31 @@ export default function HeroSection({
 
           <div className="flex h-full min-h-[520px]">
             <div className="flex h-[520px] w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0F141B] md:h-[560px] lg:h-full lg:min-h-[640px]">
-            <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-4 py-3">
+            <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-5 py-3.5">
               <div className="flex items-center gap-2">
                 <span className="h-3 w-3 rounded-full bg-[#F85149]" />
                 <span className="h-3 w-3 rounded-full bg-[#D29922]" />
                 <span className="h-3 w-3 rounded-full bg-[#3FB950]" />
               </div>
 
-              <div className="flex items-center gap-2 text-xs text-[#9DA7B3]">
-                <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[#3FB950]">
+              <div className="flex items-center gap-2 text-[13px] text-[#9DA7B3]">
+                <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[#3FB950]">
                   <span className="h-2 w-2 rounded-full bg-[#3FB950]" />
                   live
                 </span>
-                <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[#D29922]">
+                <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[#D29922]">
                   degraded
                 </span>
-                <span className="hidden rounded-full border border-white/10 bg-black/20 px-2 py-1 sm:inline-flex">
+                <span className="hidden rounded-full border border-white/10 bg-black/20 px-2.5 py-1 sm:inline-flex">
                   prod-eu-west-1
                 </span>
               </div>
             </div>
 
-            <div className="flex flex-1 flex-col bg-[#0B0F14] p-5">
+            <div className="flex flex-1 flex-col bg-[#0B0F14] p-7">
               <div
                 ref={terminalBodyRef}
-                className="flex-1 overflow-y-auto pr-1 font-mono text-[13px] leading-6 text-[#E6EDF3] sm:text-sm"
+                className="flex-1 overflow-y-auto pr-2 font-mono text-[14px] leading-[1.6] text-[#E6EDF3] md:text-[15px] md:leading-[1.68] lg:text-[16px] lg:leading-[1.75]"
               >
                 {terminalLines.map((line, index) => (
                   <div key={`${index}-${line.text}`} className={terminalLineClass(line.tone)}>
@@ -265,15 +265,15 @@ export default function HeroSection({
                 ))}
               </div>
 
-              <div className="mt-5 border-t border-white/10 pt-4">
+              <div className="mt-6 border-t border-white/10 pt-5">
                 <form onSubmit={handleLevelSubmit} className="flex items-center gap-3">
-                  <span className="font-mono text-sm text-[#9DA7B3]">$</span>
+                  <span className="font-mono text-[16px] leading-none text-[#9DA7B3]">$</span>
                   <input
                     value={levelInput}
                     onChange={(event) => setLevelInput(event.target.value)}
                     disabled={Boolean(selectedLevel)}
                     placeholder={levelPlaceholder}
-                    className="flex-1 bg-transparent font-mono text-sm text-[#E6EDF3] outline-none placeholder:text-[#6B7280]"
+                    className="flex-1 bg-transparent font-mono text-[14px] leading-[1.6] text-[#E6EDF3] outline-none placeholder:text-[#6B7280] md:text-[15px] md:leading-[1.68] lg:text-[16px] lg:leading-[1.75]"
                   />
                 </form>
 
