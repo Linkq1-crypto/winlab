@@ -1,310 +1,186 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { getOnboardingTrack } from "../data/onboardingLabTracks";
-import { TerminalWindow } from "./HeroSection";
 
-const PORT_CHECK_OUTPUT = 'LISTEN 0.0.0.0:80 users:(("apache2",pid=2041))';
-const ASSIST_LEVELS = new Set(["Novice", "Junior"]);
+const NOVICE_FIX_COMMANDS = [
+  "systemctl stop apache2",
+  "kill 2041",
+  "systemctl restart nginx",
+];
+
+const NEXT_CHECK_COMMANDS = [
+  "ss -ltnp | grep :80",
+  "lsof -i :80",
+  "netstat -tulpn | grep :80",
+];
 
 export default function LandingTerminalDemo({
   selectedLevel = "",
-  selectedLab = "nginx-port-conflict",
-  labStatus = "pending",
-  routerStatus = "awaiting_operator",
-  selectedFile = "",
-  fileOpened = false,
-  slaSeconds = 299,
+  connectionStage = "idle",
+  previewIncidentSlug = "",
+  onSmallWin,
   gateLoading = false,
   gateError = "",
-  onLabStateChange,
-  onTrafficRecovering,
-  onSmallWin,
   onCreateAccount,
   onContinueGuest,
-  onUnlock,
 }) {
   const track = useMemo(
     () => (selectedLevel ? getOnboardingTrack(selectedLevel) : null),
     [selectedLevel]
   );
-  const assistEnabled = ASSIST_LEVELS.has(selectedLevel);
-  const [lines, setLines] = useState(() => buildPendingLines());
+  const [lines, setLines] = useState(() => buildWaitingLines(previewIncidentSlug));
   const [input, setInput] = useState("");
-  const [phase, setPhase] = useState("pending");
-  const [finchShown, setFinchShown] = useState(false);
-  const [streaming, setStreaming] = useState(false);
-  const [analysisActive, setAnalysisActive] = useState(false);
+  const [phase, setPhase] = useState("waiting_level");
+  const [resolved, setResolved] = useState(false);
+  const [connectionMarker, setConnectionMarker] = useState("idle");
   const terminalRef = useRef(null);
-  const inputRef = useRef(null);
+  const commandInputRef = useRef(null);
 
   useEffect(() => {
-    if (!track || labStatus === "pending") {
-      setLines(buildPendingLines());
-      setPhase("pending");
+    if (!track) {
+      setLines(buildWaitingLines(previewIncidentSlug));
       setInput("");
-      setFinchShown(false);
-      setStreaming(false);
-      setAnalysisActive(false);
+      setPhase("waiting_level");
+      setResolved(false);
+      setConnectionMarker("idle");
       return;
     }
 
-    if (labStatus === "ready") {
-      setLines(buildReadyLines(track, selectedLab));
+    setLines(buildTrackLines(track, previewIncidentSlug));
+    setInput("");
+    setPhase("waiting_connection");
+    setResolved(false);
+    setConnectionMarker("prepared");
+  }, [previewIncidentSlug, track]);
+
+  useEffect(() => {
+    if (!track) return;
+
+    if (connectionStage === "connected" && connectionMarker === "prepared") {
+      setLines((prev) => [...prev, "", "connected to prod-eu-west-1"]);
+      setConnectionMarker("connected");
+      return;
+    }
+
+    if (connectionStage === "prompt" && connectionMarker !== "prompt") {
+      setLines((prev) => [
+        ...prev,
+        "winlab@prod-server:~$ _",
+        'Type "start" to begin the demo.',
+      ]);
       setPhase("awaiting_start");
-      setInput("");
-      return;
+      setConnectionMarker("prompt");
     }
-
-    if (labStatus === "breached") {
-      setLines((prev) => [
-        ...prev,
-        "",
-        "[ERROR]: SLA breached",
-        "[SYSTEM]: customer traffic remained unavailable",
-        '[SYSTEM]: session terminated. Type "restart" to retry.',
-      ]);
-      setPhase("breached");
-      setInput("");
-    }
-  }, [track, labStatus, selectedLab]);
+  }, [connectionMarker, connectionStage, track]);
 
   useEffect(() => {
-    if (phase === "waiting_file" && fileOpened) {
-      setLines((prev) => [
-        ...prev,
-        "[kernel-assistant]: port_collision detected. target_pid: 2041.",
-        '[kernel-assistant]: type "check" or click [CHECK_STATUS].',
-      ]);
-      onTrafficRecovering?.();
-      setPhase("awaiting_check");
-      setInput("");
-    }
-  }, [fileOpened, onTrafficRecovering, phase]);
-
-  useEffect(() => {
-    terminalRef.current?.scrollTo({ top: terminalRef.current.scrollHeight, behavior: "smooth" });
+    terminalRef.current?.scrollTo({ top: terminalRef.current.scrollHeight });
   }, [lines]);
 
-  useEffect(() => {
-    if (!streaming) {
-      inputRef.current?.focus();
-    }
-  }, [phase, streaming]);
+  const helperText = useMemo(() => {
+    if (!track) return "Choose your level in the hero terminal first.";
+    if (phase === "waiting_connection") return "Environment routing in progress...";
+    if (phase === "awaiting_start") return "start";
+    if (phase === "awaiting_check") return NEXT_CHECK_COMMANDS[0];
+    if (phase === "awaiting_fix") return NOVICE_FIX_COMMANDS[0];
+    if (resolved) return "Create a free account to unlock the full track.";
+    return track.commands[0];
+  }, [phase, resolved, track]);
+
+  function focusInput() {
+    commandInputRef.current?.focus();
+  }
 
   function appendLines(nextLines) {
     setLines((prev) => [...prev, ...nextLines]);
   }
 
-  async function withAnalysis(task, duration = 520) {
-    setAnalysisActive(true);
-    try {
-      await task();
-    } finally {
-      window.setTimeout(() => setAnalysisActive(false), duration);
-    }
-  }
+  function runCommand(rawCommand) {
+    const command = rawCommand.trim();
+    if (!command) return;
 
-  async function streamLines(nextLines, delay = 90) {
-    setStreaming(true);
-    for (const line of nextLines) {
-      // Keep staggered amber output deterministic.
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => {
-        window.setTimeout(() => {
-          setLines((prev) => [...prev, line]);
-          resolve();
-        }, delay);
-      });
-    }
-    setStreaming(false);
-  }
+    appendLines([`$ ${command}`]);
 
-  function executeSuggestedCommand(command) {
-    if (!command || streaming) return;
-    setInput(command);
-    window.setTimeout(() => {
-      runCommand(command);
-      setInput("");
-    }, 40);
-  }
-
-  async function runCommand(rawValue) {
-    const trimmed = rawValue.trim();
-    const command = normalizeCommand(trimmed);
-    if (!command || streaming) return;
-
-    appendLines([`winlab@prod-server:~$ ${trimmed}`]);
-
-    if (command === "finch") {
-      if (!finchShown) {
-        appendLines([
-          "[WINLAB-AUTH]: Identity confirmed.",
-          '[H. FINCH]: "Eventually, everyone has a friend..."',
-          "[SYSTEM]: Access granted to the Irrelevant List.",
-          "[SYSTEM]: Loading hidden incidents: shadow-incident-routing, ghost-node-failure.",
-        ]);
-        setFinchShown(true);
-      }
+    if (!track) {
+      appendLines(['[hint] Choose your operator level in the hero terminal first.']);
       setInput("");
       return;
     }
 
-    if (!track || labStatus === "pending") {
-      appendLines(["[SYSTEM]: router standby", "[SYSTEM]: awaiting operator assignment"]);
+    if (phase === "waiting_connection") {
+      appendLines(['[hint] Wait for the terminal handoff to finish.']);
       setInput("");
       return;
-    }
-
-    if (phase === "post_success" || phase === "awaiting_unlock") {
-      if (command === "winlab plans") {
-        await withAnalysis(async () => {
-          await streamLines(buildPlansSequence(), 50);
-        }, 400);
-        setPhase("awaiting_unlock");
-        setInput("");
-        return;
-      }
-
-      if (command === "upgrade") {
-        appendLines(["[PROMPT]: specify target with upgrade early-access | upgrade pro | upgrade lifetime"]);
-        setInput("");
-        return;
-      }
-
-      if (command.startsWith("upgrade ")) {
-        const normalizedPlan = normalizeUpgradePlan(command.slice("upgrade ".length).trim());
-        if (!normalizedPlan) {
-          appendLines(['[ERROR]: type "upgrade starter", "upgrade early-access", "upgrade pro", or "upgrade lifetime"']);
-          setInput("");
-          return;
-        }
-
-        if (normalizedPlan === "starter") {
-          appendLines([
-            "[ACCESS]: starter status already available",
-            "[SYSTEM]: continue routing in free capacity",
-          ]);
-          setInput("");
-          return;
-        }
-
-        await withAnalysis(async () => {
-          appendLines([
-            "[ACCESS]: upgrade trajectory initialized",
-            "[PAYMENT]: validating payment trajectory...",
-            "[PAYMENT]: probable outcome: successful enrollment",
-          ]);
-        }, 700);
-        setInput("");
-        onUnlock?.(normalizedPlan);
-        return;
-      }
     }
 
     if (phase === "awaiting_start") {
-      if (command !== "start") {
-        appendLines(['[ERROR]: type "start"']);
-      } else {
-        await withAnalysis(async () => {
-          appendLines([
-            "attaching to node...",
-            "loading service state...",
-            "[SYSTEM]: live incident attached",
-            "[SYSTEM]: Emergency detected in prod-eu-west-1.",
-            "[SYSTEM]: Click the highlighted file to analyze the error log.",
-          ]);
-        });
-        onLabStateChange?.("active");
-        setPhase("waiting_file");
+      if (normalizeCommand(command) !== "start") {
+        appendLines(['[hint] Type "start" to begin the demo.']);
+        setInput("");
+        return;
       }
-      setInput("");
-      return;
-    }
 
-    if (phase === "waiting_file") {
-      appendLines([`[ERROR]: open ${selectedFile || "incident_nginx.err"} first`]);
+      appendLines(buildDemoStartLines(track.level));
+      setPhase(track.level === "Novice" || track.level === "Junior" ? "awaiting_check" : "awaiting_resolution");
       setInput("");
       return;
     }
 
     if (phase === "awaiting_check") {
-      if (command !== "check" && command !== "status") {
-        appendLines(['[ERROR]: type "check" or "status"']);
-      } else {
-        await withAnalysis(async () => {
-          appendLines([
-            PORT_CHECK_OUTPUT,
-            "[kernel-assistant]: port_collision confirmed. target_pid: 2041.",
-            '[kernel-assistant]: type "fix" or click [RESOLVE].',
-          ]);
-        });
+      if (NEXT_CHECK_COMMANDS.some((candidate) => normalizeCommand(candidate) === normalizeCommand(command))) {
+        appendLines([
+          'LISTEN 0.0.0.0:80 users:(("apache2",pid=2041))',
+          "What should you fix next?",
+        ]);
         setPhase("awaiting_fix");
+      } else {
+        appendLines(['[hint] Check what is already bound to port 80.']);
       }
       setInput("");
       return;
     }
 
     if (phase === "awaiting_fix") {
-      if (command !== "fix") {
-        appendLines(['[ERROR]: type "fix"']);
+      if (NOVICE_FIX_COMMANDS.some((candidate) => normalizeCommand(candidate) === normalizeCommand(command))) {
+        appendLines(buildResolvedLines(track.level));
+        setResolved(true);
+        setPhase("resolved");
+        onSmallWin?.(track.primaryLab?.slug || "nginx-port-conflict");
       } else {
-        await withAnalysis(async () => {
-          appendLines([
-            "[SUCCESS] SERVICE RESTORED",
-            "[SYSTEM]: traffic normalized",
-            "[SYSTEM]: incident closed",
-            "[SYSTEM]: progress not persisted",
-            "[SYSTEM]: credit this resolution to your profile?",
-            'type "save" to create account',
-            'type "continue" to proceed without saving',
-            'type "winlab plans" to inspect operator capacity',
-          ]);
-        }, 820);
-        setPhase("post_success");
-        onSmallWin?.(selectedLab);
+        appendLines(['[hint] Stop the process that already owns port 80, then restart nginx.']);
       }
       setInput("");
       return;
     }
 
-    if (phase === "post_success") {
-      if (command === "save") {
-        appendLines([
-          "[ACCESS]: additional incidents locked",
-          '[SYSTEM]: type "winlab plans" to inspect operator capacity.',
-        ]);
-        setPhase("awaiting_unlock");
-        onCreateAccount?.();
-      } else if (command === "continue") {
-        appendLines(["[ACCESS]: guest session acknowledged"]);
-        onContinueGuest?.();
+    if (phase === "awaiting_resolution") {
+      const expected = track.commands;
+      if (normalizeCommand(command) === normalizeCommand(expected[0])) {
+        appendLines(levelSpecificResponse(track.level, 0));
+        setPhase("awaiting_resolution_2");
+        setInput("");
+        return;
+      }
+
+      appendLines([`[hint] Start with "${expected[0]}".`]);
+      setInput("");
+      return;
+    }
+
+    if (phase === "awaiting_resolution_2") {
+      const expected = track.commands;
+      if (normalizeCommand(command) === normalizeCommand(expected[1])) {
+        appendLines([...levelSpecificResponse(track.level, 1), ...buildResolvedLines(track.level)]);
+        setResolved(true);
+        setPhase("resolved");
+        onSmallWin?.(track.primaryLab?.slug || "");
       } else {
-        appendLines(['[ERROR]: type "save", "continue", or "winlab plans"']);
+        appendLines([`[hint] Now inspect with "${expected[1]}".`]);
       }
       setInput("");
       return;
     }
 
-    if (phase === "awaiting_unlock") {
-      if (command === "continue") {
-        appendLines(["[ACCESS]: guest session acknowledged"]);
-        onContinueGuest?.();
-      } else {
-        appendLines(['[ERROR]: type "winlab plans", "upgrade <id>", or "continue"']);
-      }
-      setInput("");
-      return;
-    }
-
-    if (phase === "breached") {
-      if (command === "restart") {
-        setLines(buildReadyLines(track, selectedLab));
-        setPhase("awaiting_start");
-      } else {
-        appendLines(['[ERROR]: type "restart"']);
-      }
-      setInput("");
-    }
+    setInput("");
   }
 
   function handleSubmit(event) {
@@ -312,109 +188,234 @@ export default function LandingTerminalDemo({
     runCommand(input);
   }
 
-  function handleKeyDown(event) {
-    if (event.key === "Tab" && assistEnabled) {
-      const suggestion = ghostSuggestion(phase, selectedFile, assistEnabled);
-      if (suggestion) {
-        event.preventDefault();
-        setInput(suggestion);
-      }
-    }
-  }
-
-  const ghostText = !input ? ghostSuggestion(phase, selectedFile, assistEnabled) : "";
-
   return (
-    <TerminalWindow
-      title="live-lab-terminal"
-      subtitle={`${routerStatus} | ${labStatus}`}
-      accent={analysisActive ? "red" : "amber"}
-      overlay={
-        <AnimatePresence>
-          {analysisActive ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              className="pointer-events-none absolute right-5 top-16 w-64 border border-[#ff0000] bg-black/90 p-3 font-mono text-[11px] uppercase tracking-[0.18em] text-[#ff3b3b]"
-              style={{ fontFamily: '"Courier New", "Lucida Console", monospace' }}
-            >
-              <div>Calculating data trajectory....</div>
-              <div className="mt-3 space-y-2 text-[10px] text-[#ff6b6b]">
-                <div>/\\/\\/\\/\\/\\/\\/\\/\\</div>
-                <div>&gt; vector: prod-eu-west-1</div>
-                <div>&gt; matrix: operator_shell</div>
-                <div>&gt; secure_bridge: active</div>
+    <section id="interactive-demo" className="border-t border-zinc-900 bg-black text-white">
+      <div className="mx-auto max-w-7xl px-4 py-14 md:px-6">
+        <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+              <div>
+                <div className="text-sm text-zinc-400">onboarding terminal</div>
+                <div className="text-xs text-zinc-600">
+                  {track ? `active track: ${track.trackLabel}` : "operator assignment pending"}
+                </div>
               </div>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-      }
-    >
-      <div
-        ref={terminalRef}
-        className="h-full overflow-y-auto bg-black p-5 font-mono text-[14px] leading-[1.7] text-[#ffb000] md:text-[15px] lg:text-[16px]"
-        style={{ fontFamily: '"Courier New", "Lucida Console", monospace' }}
-      >
-        {lines.map((line, index) => (
-          <motion.div
-            key={`${index}-${line}`}
-            initial={{ opacity: 0, x: -4 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.12 }}
-            className={lineClassName(line)}
-          >
-            <InteractiveLine line={line} onCommand={executeSuggestedCommand} />
-          </motion.div>
-        ))}
+              <button
+                type="button"
+                onClick={focusInput}
+                className="rounded-full border border-zinc-800 px-3 py-1 text-xs text-zinc-300 hover:bg-black"
+              >
+                Focus input
+              </button>
+            </div>
 
-        <form onSubmit={handleSubmit} className="mt-3 flex items-center gap-3">
-          <span className="text-[#ffb000]">winlab@prod-server:~$</span>
-          <div className="relative flex-1">
-            {ghostText ? (
-              <div className="pointer-events-none absolute inset-0 flex items-center text-[#5b3e00]">
-                {ghostText}
-              </div>
-            ) : null}
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={streaming}
-              className="relative w-full bg-transparent text-[#ffd36d] outline-none disabled:text-[#8f6b23]"
+            <div
+              ref={terminalRef}
+              className="h-[420px] overflow-y-auto bg-black p-4 font-mono text-sm leading-7"
+            >
+              {lines.map((line, index) => (
+                <div key={`${index}-${line}`} className={lineClassName(line)}>
+                  {renderTerminalLine(line)}
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-zinc-800 bg-zinc-950 px-4 py-3">
+              {track ? (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {phase === "awaiting_check"
+                    ? NEXT_CHECK_COMMANDS.map((command) => (
+                        <QuickCommand key={command} command={command} onRun={runCommand} />
+                      ))
+                    : phase === "awaiting_fix"
+                      ? NOVICE_FIX_COMMANDS.map((command) => (
+                          <QuickCommand key={command} command={command} onRun={runCommand} />
+                        ))
+                      : phase === "awaiting_start"
+                        ? [<QuickCommand key="start" command="start" onRun={runCommand} />]
+                        : phase === "awaiting_resolution" || phase === "awaiting_resolution_2"
+                          ? track.commands.map((command) => (
+                              <QuickCommand key={command} command={command} onRun={runCommand} />
+                            ))
+                          : null}
+                </div>
+              ) : null}
+
+              <form onSubmit={handleSubmit} className="flex items-center gap-3">
+                <span className="font-mono text-sm text-zinc-500">winlab@prod-server:~$</span>
+                <input
+                  ref={commandInputRef}
+                  value={input}
+                  onChange={(event) => setInput(event.target.value)}
+                  className="flex-1 bg-transparent font-mono text-sm text-white outline-none placeholder:text-zinc-600"
+                  placeholder={helperText}
+                />
+                <button
+                  type="submit"
+                  className="rounded-xl bg-white px-3 py-2 text-sm text-black hover:bg-zinc-200"
+                >
+                  Run
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <LevelStatusCard track={track} />
+            <HowItWorksCard />
+            <GateCard
+              completed={resolved}
+              loading={gateLoading}
+              error={gateError}
+              onCreateAccount={onCreateAccount}
+              onContinueGuest={onContinueGuest}
             />
           </div>
-          {!streaming ? <span className="animate-pulse text-[#ffb000]">_</span> : null}
-        </form>
-
-        {phaseHint(phase, selectedFile, slaSeconds, assistEnabled) ? (
-          <div className="mt-2 text-[13px] text-[#8f6b23]">
-            {phaseHint(phase, selectedFile, slaSeconds, assistEnabled)}
-          </div>
-        ) : null}
-
-        {gateLoading ? <div className="mt-3 text-[#ffb000]">[AUTH]: persistence request in progress</div> : null}
-        {gateError ? <div className="mt-3 text-[#ff3b3b]">[ERROR]: {gateError}</div> : null}
+        </div>
       </div>
-    </TerminalWindow>
+    </section>
   );
 }
 
-function buildPendingLines() {
-  return [
-    "[SYSTEM]: router standby",
-    "[SYSTEM]: awaiting operator assignment",
-    "[SYSTEM]: environment offline",
-  ];
+function QuickCommand({ command, onRun }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onRun(command)}
+      className="rounded-full border border-zinc-800 bg-black px-3 py-1 text-xs text-zinc-300 hover:border-zinc-700 hover:text-white"
+    >
+      {command}
+    </button>
+  );
 }
 
-function buildReadyLines(track, selectedLab) {
+function LevelStatusCard({ track }) {
+  if (!track) {
+    return (
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
+        <div className="mb-3 text-xs uppercase tracking-wide text-zinc-500">Operator Level</div>
+        <h2 className="text-2xl font-semibold leading-tight">Awaiting router handoff</h2>
+        <p className="mt-3 text-sm text-zinc-400">
+          [SYSTEM]: active terminal pending operator assignment.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
+      <div className="mb-3 text-xs uppercase tracking-wide text-zinc-500">Operator Level</div>
+      <h2 className="text-2xl font-semibold leading-tight">{track.level}</h2>
+      <p className="mt-3 text-sm text-zinc-400">
+        The lab terminal is already calibrated before the handoff finishes.
+      </p>
+      <div className="mt-5 flex flex-wrap gap-2">
+        <StatusChip label="level" value={track.level} tone="success" />
+        <StatusChip label="incident" value={track.primaryLab?.slug || "pending"} tone="warning" />
+        <StatusChip label="hints" value={track.hints} tone="muted" />
+        <StatusChip label="AI mentor" value={track.aiMentor} tone="muted" />
+        <StatusChip label="status" value="live" tone="success" />
+      </div>
+    </div>
+  );
+}
+
+function StatusChip({ label, value, tone }) {
+  const toneClass =
+    tone === "success"
+      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+      : tone === "warning"
+        ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+        : "border-zinc-800 bg-black text-zinc-300";
+
+  return (
+    <div className={`rounded-full border px-3 py-1 text-xs ${toneClass}`}>
+      <span className="text-zinc-500">{label}:</span> {value}
+    </div>
+  );
+}
+
+function HowItWorksCard() {
+  return (
+    <div id="how-it-works" className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
+      <div className="mb-3 text-xs uppercase tracking-wide text-zinc-500">How it works</div>
+      <div className="grid gap-3">
+        <FlowRow index="01" text="[SYSTEM]: operator classified in router." />
+        <FlowRow index="02" text="[SYSTEM]: calibrated terminal routed live." />
+        <FlowRow index="03" text='[SYSTEM]: type "start" and stabilize the incident.' />
+        <FlowRow index="04" text="[SYSTEM]: authenticate only after the first recovery." />
+      </div>
+    </div>
+  );
+}
+
+function GateCard({ completed, loading, error, onCreateAccount, onContinueGuest }) {
+  return (
+    <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
+      <div className="mb-3 text-xs uppercase tracking-wide text-zinc-500">Continue</div>
+      <h2 className="text-2xl font-semibold leading-tight">
+        [SYSTEM]: incident routing active
+      </h2>
+      <p className="mt-3 text-sm text-zinc-400">
+        {completed
+          ? "[SYSTEM]: account gate remains offline until the first incident is stabilized."
+          : "[SYSTEM]: account gate remains offline until the first incident is stabilized."}
+      </p>
+
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <button
+          type="button"
+          onClick={onCreateAccount}
+          disabled={!completed || loading}
+          className="rounded-2xl bg-white px-5 py-3 text-black hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {loading ? "Starting incident..." : "Create free account"}
+        </button>
+        <button
+          type="button"
+          onClick={onContinueGuest}
+          disabled={!completed || loading}
+          className="rounded-2xl border border-zinc-800 bg-black px-5 py-3 text-white hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Continue as guest
+        </button>
+      </div>
+
+      {error ? <div className="mt-3 text-sm text-red-400">{error}</div> : null}
+    </div>
+  );
+}
+
+function FlowRow({ index, text }) {
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-black px-4 py-4 text-sm text-zinc-300">
+      <span className="mr-3 text-zinc-500">{index}</span>
+      {text}
+    </div>
+  );
+}
+
+function buildWaitingLines(previewIncidentSlug) {
+  const lines = [
+    "[SYSTEM]: operator assignment pending",
+    "[SYSTEM]: router standby",
+    "[SYSTEM]: waiting for operator assignment",
+    "winlab@prod-server:~$",
+    "router handoff pending",
+  ];
+  if (previewIncidentSlug) {
+    lines.push(`preview incident: ${previewIncidentSlug}`);
+  }
+  return lines;
+}
+
+function buildTrackLines(track, previewIncidentSlug) {
+  const selectedIncident = previewIncidentSlug || track.primaryLab?.slug || "pending";
   return [
     "connected to prod-eu-west-1",
     `operator: ${track.level.toUpperCase()}`,
     "",
-    `incident: ${selectedLab || track.primaryLab?.slug || "nginx-port-conflict"}`,
+    `incident: ${selectedIncident}`,
     "status: degraded",
     "impact: public traffic unavailable",
     "",
@@ -422,134 +423,139 @@ function buildReadyLines(track, selectedLab) {
     `AI mentor: ${track.aiMentor}`,
     "",
     "[SYSTEM]: terminal active",
-    'type "start"',
   ];
 }
 
-function buildPlansSequence() {
+function buildDemoStartLines(level) {
+  if (level === "Novice" || level === "Junior") {
+    return [
+      "$ systemctl status nginx",
+      "nginx.service - failed",
+      "bind() to 0.0.0.0:80 failed",
+      "",
+      "What should you check next?",
+    ];
+  }
+
+  if (level === "Mid") {
+    return [
+      "objective loaded: permission-denied",
+      "A service dependency is failing after deploy.",
+      `Try "${getOnboardingTrack(level).commands[0]}".`,
+    ];
+  }
+
+  if (level === "Senior") {
+    return [
+      "objective loaded: memory-leak",
+      "The app is flapping under pressure.",
+      `Try "${getOnboardingTrack(level).commands[0]}".`,
+    ];
+  }
+
   return [
-    "[SYSTEM]: Accessing encrypted billing_nodes...",
-    "[SYSTEM]: Connection established with Central Billing API.",
-    "[SYSTEM]: Formatting operator_matrix in EUR (\u20ac)...",
-    "",
-    ".-------------------------------------------------------.",
-    "| PLAN ID                                                   | CAPACITY | MONTHLY COST    |",
-    "| --------------------------------------------------------- | -------- | --------------- |",
-    "| STARTER                                                   | 01 LABS  | \u20ac 0.00          |",
-    "| EARLY ACCESS                                              | 10 LABS  | \u20ac 5.00          |",
-    "| PRO OPERATOR                                              | 34 LABS  | \u20ac 19.00         |",
-    "| LIFETIME                                                  | 34 LABS  | \u20ac 199.00 (ONCE) |",
-    "| '-------------------------------------------------------' |          |                 |",
-    "",
-    "[INFO]: 34 production labs available for PRO/LIFETIME levels.",
-    "[PROMPT]: Type upgrade to initiate secure_bridge (Stripe integration).",
+    "objective loaded: real-server",
+    "No hints. No AI. Full pressure.",
+    `Try "${getOnboardingTrack(level).commands[0]}".`,
   ];
 }
 
-function normalizeUpgradePlan(planId) {
-  if (planId === "starter") return "starter";
-  if (planId === "early" || planId === "early-access") return "early-access";
-  if (planId === "pro") return "pro";
-  if (planId === "lifetime") return "lifetime";
-  return "";
-}
-
-function normalizeCommand(value) {
-  return value.trim().replace(/\s+/g, " ").toLowerCase();
-}
-
-function ghostSuggestion(phase, selectedFile, assistEnabled) {
-  if (!assistEnabled) return "";
-  if (phase === "awaiting_start") return "start";
-  if (phase === "waiting_file") return `open ${selectedFile || "incident_nginx.err"}`;
-  if (phase === "awaiting_check") return "check";
-  if (phase === "awaiting_fix") return "fix";
-  if (phase === "post_success") return "save";
-  if (phase === "awaiting_unlock") return "winlab plans";
-  if (phase === "breached") return "restart";
-  return "";
-}
-
-function phaseHint(phase, selectedFile, slaSeconds, assistEnabled) {
-  if (!assistEnabled && phase !== "awaiting_unlock") return "";
-  if (phase === "waiting_file") return `[kernel-assistant]: open ${selectedFile || "incident_nginx.err"} to inspect port collision`;
-  if (phase === "awaiting_unlock") return `[ACCESS]: escalation window ${formatSlaSeconds(slaSeconds)} | type 'winlab plans'`;
-  return "";
-}
-
-function formatSlaSeconds(totalSeconds) {
-  const safeSeconds = Math.max(totalSeconds, 0);
-  const minutes = Math.floor(safeSeconds / 60)
-    .toString()
-    .padStart(2, "0");
-  const seconds = (safeSeconds % 60).toString().padStart(2, "0");
-  return `${minutes}:${seconds}`;
-}
-
-function InteractiveLine({ line, onCommand }) {
-  const tokens = [];
-  const regex = /"([^"]+)"|\[([A-Z_]+)\]/g;
-  let lastIndex = 0;
-  let match = regex.exec(line);
-
-  while (match) {
-    if (match.index > lastIndex) {
-      tokens.push({ type: "text", value: line.slice(lastIndex, match.index) });
-    }
-
-    const quoted = match[1];
-    const bracketed = match[2];
-    const command = quoted || bracketToCommand(bracketed);
-    tokens.push({ type: "command", label: quoted ? `"${quoted}"` : `[${bracketed}]`, command });
-    lastIndex = regex.lastIndex;
-    match = regex.exec(line);
+function buildResolvedLines(level) {
+  if (level === "Mid") {
+    return [
+      "",
+      "INCIDENT RESOLVED",
+      "public traffic restored",
+      "lesson: production debugging starts with isolating the failing permission boundary fast.",
+    ];
   }
 
-  if (lastIndex < line.length) {
-    tokens.push({ type: "text", value: line.slice(lastIndex) });
+  if (level === "Senior") {
+    return [
+      "",
+      "INCIDENT RESOLVED",
+      "public traffic restored",
+      "lesson: on-call recovery means stabilizing the runtime before chasing every symptom.",
+    ];
   }
 
-  if (!tokens.some((token) => token.type === "command")) {
-    return line || <span>&nbsp;</span>;
+  if (level === "SRE") {
+    return [
+      "",
+      "INCIDENT RESOLVED",
+      "public traffic restored",
+      "lesson: pressure-mode recovery is about isolating blast radius before the next cascade.",
+    ];
   }
 
-  return tokens.map((token, index) =>
-    token.type === "command" ? (
-      <button
-        key={`${token.label}-${index}`}
-        type="button"
-        onClick={() => onCommand(token.command)}
-        className="mx-0.5 border border-[#ffb000]/30 px-1 text-[#ffd36d] hover:border-[#ffb000] hover:bg-[#1b1200]"
-      >
-        {token.label}
-      </button>
-    ) : (
-      <React.Fragment key={`${token.value}-${index}`}>{token.value}</React.Fragment>
-    )
-  );
+  return [
+    "",
+    "INCIDENT RESOLVED",
+    "public traffic restored",
+    "lesson: nginx failed because another process was already bound to port 80.",
+  ];
 }
 
-function bracketToCommand(value) {
-  if (value === "CHECK_STATUS") return "status";
-  if (value === "RESOLVE") return "fix";
-  return value.toLowerCase();
+function levelSpecificResponse(level, step) {
+  if (level === "Mid") {
+    return step === 0
+      ? [
+          "myapp.service - failed (Result: exit-code)",
+          "Permission denied while opening /var/run/myapp.sock",
+        ]
+      : [
+          "warning: service could not bind privileged socket",
+          "[recovery] You isolated the permission boundary failure.",
+        ];
+  }
+
+  if (level === "Senior") {
+    return step === 0
+      ? [
+          "myapp.service - activating (auto-restart)",
+          "Main PID: 2284 (code=exited, status=1/FAILURE)",
+        ]
+      : [
+          "warning: heap usage spiked above restart threshold",
+          "[recovery] You isolated the unstable production service.",
+        ];
+  }
+
+  return step === 0
+    ? [
+        "myapp-6d4f9b-xk2p9   0/1   CrashLoopBackOff",
+        "postgres-8b4d7c-p9lm1   1/1   Running",
+      ]
+    : [
+        "Warning: Back-off restarting failed container",
+        "[recovery] You isolated the SRE pressure-path failure.",
+      ];
+}
+
+function normalizeCommand(command) {
+  return command.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 function lineClassName(line) {
-  if (!line) return "h-4";
-  if (/^\[SUCCESS\]/.test(line) || /\[SYSTEM\]: traffic normalized|\[SYSTEM\]: incident closed/.test(line)) {
-    return "text-[#ffd36d]";
+  if (!line) return "h-3";
+  if (/\[recovery\]|INCIDENT RESOLVED|public traffic restored|connected to prod-eu-west-1/i.test(line)) return "text-emerald-400";
+  if (/warning|What should you check next|hints:|AI mentor:|Type "start"|status: degraded/i.test(line)) return "text-amber-300";
+  if (/failed|failing|impacted|bind\(\)|crashloopbackoff|error|permission denied/i.test(line)) return "text-red-400";
+  if (/^\[SYSTEM\]|^operator:|^incident:|^impact:/i.test(line)) return "text-zinc-400";
+  if (/^\$ /i.test(line) || /^winlab@prod-server:~\$/.test(line)) return "text-zinc-200";
+  return "text-zinc-300";
+}
+
+function renderTerminalLine(line) {
+  if (!line) return <span>&nbsp;</span>;
+
+  if (line === "winlab@prod-server:~$ _") {
+    return (
+      <span>
+        winlab@prod-server:~$ <span className="inline-block animate-pulse">_</span>
+      </span>
+    );
   }
-  if (/^\[ERROR\]/.test(line) || /failed|offline|degraded|bind\(\)|trajectory/i.test(line)) {
-    return "text-[#ff3b3b]";
-  }
-  if (/^\[kernel-assistant\]|^\[INFO\]|^\[PROMPT\]|^hints:|^AI mentor:/i.test(line)) {
-    return "text-[#d3961a]";
-  }
-  if (/^\[SYSTEM\]|^\[ACCESS\]|^\[PAYMENT\]|^connected to|^operator:|^incident:|^\||^\./i.test(line)) {
-    return "text-[#ffb000]";
-  }
-  if (/^\[H\. FINCH\]/.test(line)) return "text-[#ffe1a3]";
-  if (/^winlab@prod-server:~\$/.test(line)) return "text-[#ffd36d]";
-  return "text-[#ffb000]";
+
+  return line;
 }

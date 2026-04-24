@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { getOnboardingTrack } from "../data/onboardingLabTracks";
 
 const LEVEL_MAP = {
@@ -15,215 +14,309 @@ const LEVEL_MAP = {
   sre: "SRE",
 };
 
-const BOOT_LINES = [
-  "] PR#6",
-  "APPLE IIe // WINLAB-KERNEL v1.0",
-  "-----------------------------------",
-  "STORAGE: 1313.4 TB (IFT MOUNT)",
-  "NODES: 34 SABRE BLADES (DELL SC1425)",
-  "CAPACITY: 1.31 PB / 1,344,921.6 GB",
-  "HARDWARE: IFT SABRE BLADE 2437 / DELL POWEREDGE SC1425",
-  "-----------------------------------",
-  "[INFO] Connection rerouted through prod-eu-west-1.",
-  "[INFO] Identity obfuscated. You are now Irrelevant.",
-  "",
-  "[12:04:11] requests failing ↑",
-  "[12:04:13] nginx healthcheck failed",
-  "[12:04:17] customer traffic impacted",
-  "",
-  "ERROR: operator not assigned",
-  ">> awaiting operator classification...",
-  "",
-  "type your level (1-5):",
-  "1 novice 2 junior 3 mid 4 senior 5 sre",
+const BASE_TERMINAL_LINES = [
+  { tone: "muted", text: "WINLAB INCIDENT ROUTER v1.0" },
+  { tone: "muted", text: "region: prod-eu-west-1" },
+  { tone: "warning", text: "status: degraded" },
+  { tone: "empty", text: "" },
+  { tone: "warning", text: `[12:04:11] requests failing ${"\u2191"}` },
+  { tone: "danger", text: "[12:04:13] nginx healthcheck failed" },
+  { tone: "danger", text: "[12:04:17] customer traffic impacted" },
+  { tone: "empty", text: "" },
+  { tone: "danger", text: "ERROR: operator not assigned" },
+  { tone: "muted", text: ">> awaiting operator classification..." },
+  { tone: "empty", text: "" },
+  { tone: "muted", text: "type your level (1-5):" },
+  { tone: "muted", text: "1 novice 2 junior 3 mid 4 senior 5 sre" },
 ];
 
-const ROUTING_TIMELINE = [
-  { delay: 120, text: (level) => `operator assigned: ${level.toUpperCase()}`, tone: "success" },
-  { delay: 280, text: () => "routing incident...", tone: "muted" },
-  { delay: 470, text: () => "[OK] difficulty calibrated", tone: "success" },
-  { delay: 650, text: (_level, slug) => `[OK] incident profile: ${slug}`, tone: "success" },
-  { delay: 850, text: () => "[OK] environment ready", tone: "success" },
-  { delay: 1050, text: () => "handoff -> calibrated terminal", tone: "muted" },
+const ROUTING_TIMELINE_MS = [
+  { delay: 100, step: "assigned" },
+  { delay: 300, step: "routing" },
+  { delay: 520, step: "difficulty" },
+  { delay: 720, step: "profile" },
+  { delay: 920, step: "ready" },
+  { delay: 1100, step: "scrolling" },
+  { delay: 1200, step: "handoff" },
+];
+
+const HERO_INCIDENT_PREVIEWS = [
+  {
+    id: "nginx-port-conflict",
+    tier: "starter",
+    status: "degraded",
+    signal: "port 80 already bound",
+  },
+  {
+    id: "disk-full",
+    tier: "starter",
+    status: "critical",
+    signal: "/var at 100%",
+  },
+  {
+    id: "permission-denied",
+    tier: "pro",
+    status: "failing",
+    signal: "write path blocked",
+  },
+  {
+    id: "memory-leak",
+    tier: "pro",
+    status: "unstable",
+    signal: "RSS climbing",
+  },
+  {
+    id: "db-dead",
+    tier: "pro",
+    status: "offline",
+    signal: "database unreachable",
+  },
+  {
+    id: "api-timeout",
+    tier: "codex",
+    status: "degraded",
+    signal: "p95 latency high",
+  },
 ];
 
 export default function HeroSection({
-  selectedLab = "nginx-port-conflict",
+  onStart,
+  onSeeHowItWorks,
   onLevelSelected,
-  onStatusChange,
   onRoutingReady,
+  onPreviewIncident,
+  stats = { labs: 34 },
 }) {
   const [levelInput, setLevelInput] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("");
-  const [lines, setLines] = useState([]);
+  const [terminalLines, setTerminalLines] = useState([]);
+  const [selectionError, setSelectionError] = useState("");
   const [bootComplete, setBootComplete] = useState(false);
-  const [flickerIndex, setFlickerIndex] = useState(-1);
-  const bodyRef = useRef(null);
-  const inputRef = useRef(null);
+  const terminalBodyRef = useRef(null);
   const timersRef = useRef([]);
 
   useEffect(() => {
-    console.log(
-      "%c[SYSTEM]: The Machine is watching you, Operator.",
-      "color:#FFB000;font-family:monospace;font-weight:bold;"
-    );
-  }, []);
+    terminalBodyRef.current?.scrollTo({
+      top: terminalBodyRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [terminalLines]);
 
   useEffect(() => {
-    bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: "smooth" });
-  }, [lines]);
-
-  useEffect(() => {
-    setLines([]);
-    setBootComplete(false);
     timersRef.current = [];
-    onStatusChange?.("booting");
+    setTerminalLines([]);
+    setBootComplete(false);
 
-    BOOT_LINES.forEach((text, index) => {
+    BASE_TERMINAL_LINES.forEach((line, index) => {
       const timerId = window.setTimeout(() => {
-        setLines((prev) => [...prev, { tone: resolveTone(text), text }]);
-        setFlickerIndex(index);
-        window.setTimeout(() => setFlickerIndex(-1), 90);
-        if (index === BOOT_LINES.length - 1) {
+        setTerminalLines((prev) => [...prev, line]);
+        if (index === BASE_TERMINAL_LINES.length - 1) {
           setBootComplete(true);
-          onStatusChange?.("awaiting_operator");
         }
-      }, 80 + index * 85);
-
+      }, 70 + index * 80);
       timersRef.current.push(timerId);
     });
 
     return () => {
       timersRef.current.forEach((timerId) => window.clearTimeout(timerId));
-      timersRef.current = [];
     };
-  }, [onStatusChange]);
+  }, []);
 
-  useEffect(() => {
-    if (bootComplete && !selectedLevel) {
-      inputRef.current?.focus();
-    }
-  }, [bootComplete, selectedLevel]);
+  const levelPlaceholder = useMemo(() => {
+    if (selectedLevel) return `operator locked: ${selectedLevel.toUpperCase()}`;
+    return "1 novice   2 junior   3 mid   4 senior   5 sre";
+  }, [selectedLevel]);
 
-  function appendLine(tone, text) {
-    setLines((prev) => [...prev, { tone, text }]);
+  function resolveLevel(rawValue) {
+    const normalized = rawValue.trim().toLowerCase();
+    return LEVEL_MAP[normalized] || "";
   }
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    if (selectedLevel) return;
+  function appendLine(tone, text) {
+    setTerminalLines((prev) => [...prev, { tone, text }]);
+  }
 
-    const raw = levelInput.trim();
-    if (!raw) return;
-
-    const resolved = LEVEL_MAP[raw.toLowerCase()] || "";
-    if (!resolved) {
-      appendLine("prompt", `$ ${raw}`);
-      appendLine("danger", "[ERROR]: invalid operator class");
-      setLevelInput("");
+  function applyLevelSelection(rawValue) {
+    const level = resolveLevel(rawValue);
+    if (!level || selectedLevel) {
+      if (!level) {
+        setSelectionError("invalid operator class");
+      }
       return;
     }
 
-    const track = getOnboardingTrack(resolved);
-    const incidentSlug = selectedLab || track.primaryLab?.slug || "nginx-port-conflict";
+    const track = getOnboardingTrack(level);
+    timersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    timersRef.current = [];
 
-    setSelectedLevel(resolved);
-    setLevelInput("");
-    appendLine("prompt", `$ ${raw}`);
-    onLevelSelected?.(resolved);
-    onStatusChange?.("routing");
+    setSelectionError("");
+    setSelectedLevel(level);
+    setLevelInput(level);
+    appendLine("prompt", `$ ${rawValue.trim()}`);
+    onLevelSelected?.(level);
 
-    ROUTING_TIMELINE.forEach(({ delay, text, tone }, index) => {
+    ROUTING_TIMELINE_MS.forEach(({ delay, step }) => {
       const timerId = window.setTimeout(() => {
-        appendLine(tone, text(resolved, incidentSlug));
-        if (index === ROUTING_TIMELINE.length - 1) {
-          onStatusChange?.("ready");
-          window.setTimeout(() => onRoutingReady?.(), 120);
-        }
+        if (step === "assigned") appendLine("success", `operator assigned: ${level.toUpperCase()}`);
+        if (step === "routing") appendLine("muted", "routing incident...");
+        if (step === "difficulty") appendLine("ok", "[OK] difficulty calibrated");
+        if (step === "profile") appendLine("ok", `[OK] incident profile: ${track.primaryLab?.slug || "pending"}`);
+        if (step === "ready") appendLine("ok", "[OK] environment ready");
+        if (step === "scrolling") appendLine("muted", "scrolling to active terminal...");
+        if (step === "handoff") onRoutingReady?.();
       }, delay);
       timersRef.current.push(timerId);
     });
   }
 
-  return (
-    <TerminalWindow title="incident-router" subtitle="prod-eu-west-1" accent="amber">
-      <div
-        ref={bodyRef}
-        className="h-full overflow-y-auto bg-black p-5 font-mono text-[14px] leading-[1.7] text-[#ffb000] md:text-[15px] lg:text-[16px]"
-        style={{ fontFamily: '"Courier New", "Lucida Console", monospace' }}
-      >
-        {lines.map((line, index) => (
-          <motion.div
-            key={`${index}-${line.text}`}
-            initial={{ opacity: 0, y: 3 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.14 }}
-            className={`${routerLineClass(line.tone)} ${flickerIndex === index ? "opacity-80" : ""}`}
-          >
-            {line.text || <span>&nbsp;</span>}
-          </motion.div>
-        ))}
+  function handleLevelSubmit(event) {
+    event.preventDefault();
+    applyLevelSelection(levelInput);
+  }
 
-        <form onSubmit={handleSubmit} className="mt-3 flex items-center gap-3">
-          <span className="text-[#ffb000]">$</span>
-          <input
-            ref={inputRef}
-            value={levelInput}
-            onChange={(event) => setLevelInput(event.target.value)}
-            disabled={!bootComplete || Boolean(selectedLevel)}
-            placeholder="1 novice   2 junior   3 mid   4 senior   5 sre"
-            className="flex-1 bg-transparent text-[#ffcf6b] outline-none placeholder:text-[#5b3e00]"
-            style={{ fontFamily: '"Courier New", "Lucida Console", monospace' }}
-          />
-          {!selectedLevel ? <span className="animate-pulse text-[#ffb000]">_</span> : null}
-        </form>
+  return (
+    <section className="bg-[#0B0F14] text-[#E6EDF3]">
+      <div className="mx-auto max-w-[1600px] px-6 py-12 lg:px-6 lg:py-14">
+        <div className="grid min-h-[640px] grid-cols-1 items-stretch gap-3 md:gap-4 lg:h-[720px] lg:grid-cols-[1fr_1fr] lg:gap-5">
+          <div className="flex h-full min-h-[520px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0F141B]">
+            <div className="flex h-full flex-col justify-center px-9 py-10 lg:px-12 lg:py-12">
+              <div className="font-mono text-[12px] uppercase tracking-[0.22em] text-[#8B96A5]">
+                LIVE PRODUCTION INCIDENTS
+              </div>
+
+              <h1 className="mt-6 max-w-[680px] text-[42px] font-semibold tracking-[-0.04em] text-[#E6EDF3] leading-[1.02] md:text-[56px] lg:text-[72px] lg:leading-[0.95]">
+                Your server is down. Fix it.
+              </h1>
+
+              <p className="mt-6 max-w-[580px] text-[18px] leading-[1.55] text-[#9DA7B3] lg:text-[22px]">
+                Break real servers. Get hired. No simulations.
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={onStart}
+                  className="inline-flex h-12 items-center justify-center rounded-xl bg-[#4F8CFF] px-5 text-sm font-medium text-white transition hover:brightness-110"
+                >
+                  Start first incident
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onSeeHowItWorks}
+                  className="inline-flex h-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 text-sm font-medium text-[#E6EDF3] transition hover:bg-white/10"
+                >
+                  See how it works
+                </button>
+              </div>
+
+              <div className="mt-8 max-w-[620px]">
+                <div className="text-[12px] uppercase tracking-[0.18em] text-[#8B96A5]">
+                  Active incidents
+                </div>
+                <p className="mt-2 text-sm text-[#9DA7B3]">
+                  Choose your level. WinLab assigns the right outage.
+                </p>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  {HERO_INCIDENT_PREVIEWS.map((incident) => (
+                    <button
+                      key={incident.id}
+                      type="button"
+                      onClick={() => onPreviewIncident?.(incident.id)}
+                      className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left transition hover:border-white/20 hover:bg-white/[0.05]"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="font-mono text-[12px] uppercase tracking-[0.12em] text-[#E6EDF3]">
+                          {incident.id}
+                        </div>
+                        <span className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-wide ${incidentChipClass(incident)}`}>
+                          {incident.tier}
+                        </span>
+                      </div>
+                      <div className="mt-3 text-xs text-[#8B96A5]">status: {incident.status}</div>
+                      <div className="mt-1 text-sm text-[#C5CED8]">signal: {incident.signal}</div>
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-4 text-sm text-[#8B96A5]">
+                  {Math.max(0, (stats.labs || 34) - HERO_INCIDENT_PREVIEWS.length)} more labs
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex h-full min-h-[520px]">
+            <div className="flex h-[520px] w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0F141B] md:h-[560px] lg:h-full lg:min-h-[640px]">
+              <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-[#F85149]" />
+                  <span className="h-3 w-3 rounded-full bg-[#D29922]" />
+                  <span className="h-3 w-3 rounded-full bg-[#3FB950]" />
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-[#9DA7B3]">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[#3FB950]">
+                    <span className="h-2 w-2 rounded-full bg-[#3FB950]" />
+                    live
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[#D29922]">
+                    degraded
+                  </span>
+                  <span className="hidden rounded-full border border-white/10 bg-black/20 px-2 py-1 sm:inline-flex">
+                    prod-eu-west-1
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-1 flex-col bg-[#0B0F14] p-5">
+                <div
+                  ref={terminalBodyRef}
+                  className="flex-1 overflow-y-auto pr-1 font-mono text-[13px] leading-6 text-[#E6EDF3] sm:text-sm"
+                >
+                  {terminalLines.map((line, index) => (
+                    <div key={`${index}-${line.text}`} className={terminalLineClass(line.tone)}>
+                      {line.text || <span>&nbsp;</span>}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-5 border-t border-white/10 pt-4">
+                  <form onSubmit={handleLevelSubmit} className="flex items-center gap-3">
+                    <span className="font-mono text-sm text-[#9DA7B3]">$</span>
+                    <input
+                      value={levelInput}
+                      onChange={(event) => setLevelInput(event.target.value)}
+                      disabled={!bootComplete || Boolean(selectedLevel)}
+                      placeholder={levelPlaceholder}
+                      className="flex-1 bg-transparent font-mono text-sm text-[#E6EDF3] outline-none placeholder:text-[#6B7280]"
+                    />
+                  </form>
+
+                  {selectionError ? (
+                    <div className="mt-3 animate-pulse text-sm text-[#F85149]">{selectionError}</div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </TerminalWindow>
+    </section>
   );
 }
 
-export function TerminalWindow({ title, subtitle, accent = "amber", children, overlay }) {
-  const borderClass = accent === "red" ? "border-[#ff0000]/70" : "border-[#ffb000]/30";
-  const titleClass = accent === "red" ? "text-[#ff3b3b]" : "text-[#ffb000]";
-
-  return (
-    <div className={`relative overflow-hidden rounded-none border ${borderClass} bg-black shadow-[0_24px_80px_rgba(0,0,0,0.55)]`}>
-      <div className="pointer-events-none absolute inset-0 opacity-[0.08]" style={{ backgroundImage: "repeating-linear-gradient(to bottom, rgba(255,176,0,0.18) 0px, rgba(255,176,0,0.18) 1px, transparent 2px, transparent 4px)" }} />
-      <div className="relative flex items-center justify-between border-b border-[#ffb000]/20 bg-[#070707] px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-none border border-[#ff0000] bg-[#190000]" />
-          <span className="h-2.5 w-2.5 rounded-none border border-[#ffb000] bg-[#1c1300]" />
-          <span className="h-2.5 w-2.5 rounded-none border border-[#ffb000] bg-[#102000]" />
-        </div>
-        <div
-          className={`font-mono text-[12px] uppercase tracking-[0.22em] ${titleClass}`}
-          style={{ fontFamily: '"Courier New", "Lucida Console", monospace' }}
-        >
-          {title}
-          {subtitle ? ` | ${subtitle}` : ""}
-        </div>
-        <div className="w-14" />
-      </div>
-      <div className="relative h-full">{children}</div>
-      {overlay}
-    </div>
-  );
+function terminalLineClass(tone) {
+  if (tone === "success" || tone === "ok") return "text-[#3FB950]";
+  if (tone === "warning") return "text-[#D29922]";
+  if (tone === "danger") return "text-[#F85149]";
+  if (tone === "prompt") return "text-[#E6EDF3]";
+  if (tone === "neutral") return "text-[#D1D5DB]";
+  if (tone === "empty") return "h-3";
+  return "text-[#9DA7B3]";
 }
 
-function resolveTone(text) {
-  if (!text) return "empty";
-  if (/ERROR|failed|impacted/i.test(text)) return "danger";
-  if (/^\[INFO\]|STORAGE|NODES|CAPACITY|HARDWARE|APPLE IIe|PR#6|type your level/i.test(text)) return "muted";
-  if (/status: degraded|requests failing/i.test(text)) return "warning";
-  return "amber";
-}
-
-function routerLineClass(tone) {
-  if (tone === "success") return "text-[#ffd36d]";
-  if (tone === "warning") return "text-[#ffbf3c]";
-  if (tone === "danger") return "text-[#ff3b3b]";
-  if (tone === "prompt") return "text-[#ffe1a3]";
-  if (tone === "empty") return "h-4";
-  if (tone === "muted") return "text-[#d3961a]";
-  return "text-[#ffb000]";
+function incidentChipClass(incident) {
+  if (incident.tier === "starter") return "border-emerald-500/20 text-emerald-300";
+  if (incident.tier === "pro") return "border-amber-500/20 text-amber-300";
+  return "border-zinc-700 text-zinc-300";
 }
