@@ -15,6 +15,7 @@ const NEXT_CHECK_COMMANDS = [
 
 export default function LandingTerminalDemo({
   selectedLevel = "",
+  connectionStage = "idle",
   onSmallWin,
   gateLoading = false,
   gateError = "",
@@ -29,6 +30,7 @@ export default function LandingTerminalDemo({
   const [input, setInput] = useState("");
   const [phase, setPhase] = useState("waiting_level");
   const [resolved, setResolved] = useState(false);
+  const [connectionMarker, setConnectionMarker] = useState("idle");
   const terminalRef = useRef(null);
   const commandInputRef = useRef(null);
 
@@ -38,14 +40,36 @@ export default function LandingTerminalDemo({
       setInput("");
       setPhase("waiting_level");
       setResolved(false);
+      setConnectionMarker("idle");
       return;
     }
 
     setLines(buildTrackLines(track));
     setInput("");
-    setPhase("awaiting_start");
+    setPhase("waiting_connection");
     setResolved(false);
+    setConnectionMarker("prepared");
   }, [track]);
+
+  useEffect(() => {
+    if (!track) return;
+
+    if (connectionStage === "connected" && connectionMarker === "prepared") {
+      setLines((prev) => [...prev, "", "connected to prod-eu-west-1"]);
+      setConnectionMarker("connected");
+      return;
+    }
+
+    if (connectionStage === "prompt" && connectionMarker !== "prompt") {
+      setLines((prev) => [
+        ...prev,
+        "winlab@prod-server:~$ _",
+        'Type "start" to begin the demo.',
+      ]);
+      setPhase("awaiting_start");
+      setConnectionMarker("prompt");
+    }
+  }, [connectionMarker, connectionStage, track]);
 
   useEffect(() => {
     terminalRef.current?.scrollTo({ top: terminalRef.current.scrollHeight });
@@ -53,11 +77,12 @@ export default function LandingTerminalDemo({
 
   const helperText = useMemo(() => {
     if (!track) return "Choose your level in the hero terminal first.";
-    if (phase === "awaiting_start") return 'Type "start" to begin the demo.';
-    if (phase === "awaiting_check") return `Try "${NEXT_CHECK_COMMANDS[0]}"`;
-    if (phase === "awaiting_fix") return `Try "${NOVICE_FIX_COMMANDS[0]}"`;
+    if (phase === "waiting_connection") return "Environment routing in progress...";
+    if (phase === "awaiting_start") return "start";
+    if (phase === "awaiting_check") return NEXT_CHECK_COMMANDS[0];
+    if (phase === "awaiting_fix") return NOVICE_FIX_COMMANDS[0];
     if (resolved) return "Create a free account to unlock the full track.";
-    return `Try "${track.commands[0]}"`;
+    return track.commands[0];
   }, [phase, resolved, track]);
 
   function focusInput() {
@@ -76,6 +101,12 @@ export default function LandingTerminalDemo({
 
     if (!track) {
       appendLines(['[hint] Choose your operator level in the hero terminal first.']);
+      setInput("");
+      return;
+    }
+
+    if (phase === "waiting_connection") {
+      appendLines(['[hint] Wait for the terminal handoff to finish.']);
       setInput("");
       return;
     }
@@ -183,7 +214,7 @@ export default function LandingTerminalDemo({
             >
               {lines.map((line, index) => (
                 <div key={`${index}-${line}`} className={lineClassName(line)}>
-                  {line || <span>&nbsp;</span>}
+                  {renderTerminalLine(line)}
                 </div>
               ))}
             </div>
@@ -201,9 +232,11 @@ export default function LandingTerminalDemo({
                         ))
                       : phase === "awaiting_start"
                         ? [<QuickCommand key="start" command="start" onRun={runCommand} />]
-                        : track.commands.map((command) => (
-                            <QuickCommand key={command} command={command} onRun={runCommand} />
-                          ))}
+                        : phase === "awaiting_resolution" || phase === "awaiting_resolution_2"
+                          ? track.commands.map((command) => (
+                              <QuickCommand key={command} command={command} onRun={runCommand} />
+                            ))
+                          : null}
                 </div>
               ) : null}
 
@@ -273,14 +306,14 @@ function LevelStatusCard({ track }) {
       <div className="mb-3 text-xs uppercase tracking-wide text-zinc-500">Level Active</div>
       <h2 className="text-2xl font-semibold leading-tight">{track.level}</h2>
       <p className="mt-3 text-sm text-zinc-400">
-        The terminal below is calibrated to this operator level before any real backend incident starts.
+        The lab terminal is already calibrated before the handoff finishes.
       </p>
       <div className="mt-5 flex flex-wrap gap-2">
-        <StatusChip label="live" value={track.trackLabel} tone="success" />
+        <StatusChip label="level" value={track.level} tone="success" />
         <StatusChip label="incident" value={track.primaryLab?.slug || "pending"} tone="warning" />
         <StatusChip label="hints" value={track.hints} tone="muted" />
         <StatusChip label="AI mentor" value={track.aiMentor} tone="muted" />
-        <StatusChip label="status" value="degraded" tone="warning" />
+        <StatusChip label="status" value="live" tone="success" />
       </div>
       <div className="mt-4 rounded-2xl border border-zinc-800 bg-black px-4 py-4 text-sm text-zinc-300">
         difficulty: <span className="text-white">{track.difficulty}</span>
@@ -328,10 +361,10 @@ function HowItWorksCard() {
     <div id="how-it-works" className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
       <div className="mb-3 text-xs uppercase tracking-wide text-zinc-500">How it works</div>
       <div className="grid gap-3">
-        <FlowRow index="01" text="Choose your level in the live incident router." />
-        <FlowRow index="02" text="Review the personalized track built from the real catalog." />
-        <FlowRow index="03" text="Type start, resolve a short incident, and get a small win." />
-        <FlowRow index="04" text="Sign up only after value, then start the real incident." />
+        <FlowRow index="01" text="Choose a level in the incident router." />
+        <FlowRow index="02" text="Watch the system route you into the calibrated terminal." />
+        <FlowRow index="03" text="Type start and resolve a short incident for your first win." />
+        <FlowRow index="04" text="Sign up only after value, then launch the real incident." />
       </div>
     </div>
   );
@@ -347,7 +380,7 @@ function GateCard({ completed, loading, error, onCreateAccount, onContinueGuest 
       <p className="mt-3 text-sm text-zinc-400">
         {completed
           ? "You just resolved your first production incident. Create a free account to save progress and unlock your full track."
-          : "The system will offer signup only after you resolve the onboarding incident."}
+          : "The signup gate appears only after the terminal handoff and the first resolved incident."}
       </p>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -384,9 +417,7 @@ function FlowRow({ index, text }) {
 }
 
 function buildWaitingLines() {
-  return [
-    'Select a level in the hero terminal to build your first incident track.',
-  ];
+  return ["Select a level in the hero terminal to build your first incident track."];
 }
 
 function buildTrackLines(track) {
@@ -395,14 +426,13 @@ function buildTrackLines(track) {
     "region: prod-eu-west-1",
     "status: degraded",
     "",
-    "level set: " + track.level,
-    "calibrating difficulty...",
-    "loading incident catalog...",
-    "building your incident track...",
-    "",
+    `operator profile: ${track.level}`,
     `track: ${track.trackLabel}`,
+    `selected incident: ${track.primaryLab?.slug || "pending"}`,
+    `difficulty: ${track.difficulty}`,
     `hints: ${track.hints}`,
     `AI mentor: ${track.aiMentor}`,
+    "",
   ];
 
   track.metrics.forEach((metric) => {
@@ -413,14 +443,7 @@ function buildTrackLines(track) {
   track.previewLabs.forEach((lab) => {
     lines.push(`- ${lab.slug}`);
   });
-  lines.push("");
-  lines.push("first recommended incident:");
-  lines.push(track.primaryLab?.title || "Incident pending");
-  lines.push("");
-  lines.push("objective:");
-  lines.push("restore public traffic before the incident escalates.");
-  lines.push("");
-  lines.push('Type "start" to begin the demo.');
+
   return lines;
 }
 
@@ -536,10 +559,24 @@ function normalizeCommand(command) {
 
 function lineClassName(line) {
   if (!line) return "h-3";
-  if (/resolved|public traffic restored/i.test(line)) return "text-emerald-400";
-  if (/status: degraded|warning|what should you check next|track:|hints:|AI mentor:|objective:/i.test(line)) return "text-amber-300";
+  if (/\[recovery\]|INCIDENT RESOLVED|public traffic restored|connected to prod-eu-west-1/i.test(line)) return "text-emerald-400";
+  if (/warning|What should you check next|track:|hints:|AI mentor:|Type "start"|status: degraded/i.test(line)) return "text-amber-300";
   if (/failed|failing|impacted|bind\(\)|crashloopbackoff|error|permission denied/i.test(line)) return "text-red-400";
-  if (/^\[12:|^WINLAB INCIDENT ROUTER|^region:|^level set:|^calibrating|^loading|^building|^first recommended incident|^Type "start"|^Select a level/i.test(line)) return "text-zinc-400";
-  if (/^\$ /i.test(line)) return "text-zinc-200";
+  if (/^WINLAB INCIDENT ROUTER|^region:|^operator profile:|^selected incident:|^difficulty:|^operator assigned|^routing incident/i.test(line)) return "text-zinc-400";
+  if (/^\$ /i.test(line) || /^winlab@prod-server:~\$/.test(line)) return "text-zinc-200";
   return "text-zinc-300";
+}
+
+function renderTerminalLine(line) {
+  if (!line) return <span>&nbsp;</span>;
+
+  if (line === "winlab@prod-server:~$ _") {
+    return (
+      <span>
+        winlab@prod-server:~$ <span className="inline-block animate-pulse">_</span>
+      </span>
+    );
+  }
+
+  return line;
 }

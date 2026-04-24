@@ -58,10 +58,12 @@ export default function WinLabInteractiveHome() {
   const { authModal, openAuthModal, closeAuthModal } = useAuthModal();
   const [homeData, setHomeData] = useState(FALLBACK_HOME_DATA);
   const [selectedLevel, setSelectedLevel] = useState("");
+  const [connectionStage, setConnectionStage] = useState("idle");
   const [demoCompleted, setDemoCompleted] = useState(false);
   const [startingIncident, setStartingIncident] = useState(false);
   const [startError, setStartError] = useState("");
   const demoRef = useRef(null);
+  const connectionTimersRef = useRef([]);
   const selectedTrack = selectedLevel ? getOnboardingTrack(selectedLevel) : null;
 
   useEffect(() => {
@@ -101,6 +103,12 @@ export default function WinLabInteractiveHome() {
 
     loadHomeData();
     return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      connectionTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    };
   }, []);
 
   function scrollToDemo() {
@@ -188,20 +196,35 @@ export default function WinLabInteractiveHome() {
     <div className="min-h-screen bg-black text-white">
       <HeroSection
         stats={homeData.stats}
-        socialProof={homeData.socialProof}
         onStart={scrollToDemo}
         onSeeHowItWorks={scrollToHowItWorks}
+        onRoutingReady={scrollToDemo}
         onLevelSelected={(level) => {
+          connectionTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+          connectionTimersRef.current = [];
           setSelectedLevel(level);
+          setConnectionStage("prepared");
           setDemoCompleted(false);
           setStartError("");
-          scrollToDemo();
+
+          connectionTimersRef.current.push(
+            window.setTimeout(() => {
+              setConnectionStage("connected");
+            }, 1300)
+          );
+
+          connectionTimersRef.current.push(
+            window.setTimeout(() => {
+              setConnectionStage("prompt");
+            }, 1450)
+          );
         }}
       />
 
       <div ref={demoRef}>
         <LandingTerminalDemo
           selectedLevel={selectedLevel}
+          connectionStage={connectionStage}
           onSmallWin={() => handleDemoWin()}
           gateLoading={startingIncident}
           gateError={startError}

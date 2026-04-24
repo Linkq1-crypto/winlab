@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { getOnboardingTrack } from "../data/onboardingLabTracks";
 
 const LEVEL_OPTIONS = [
   "1. Novice - I know basic Linux commands",
@@ -15,7 +16,7 @@ const BASE_TERMINAL_LINES = [
   { tone: "muted", text: "region: prod-eu-west-1" },
   { tone: "warning", text: "status: degraded" },
   { tone: "empty", text: "" },
-  { tone: "muted", text: "[12:04:11] requests failing ↑" },
+  { tone: "warning", text: `[12:04:11] requests failing ${"\u2191"}` },
   { tone: "danger", text: "[12:04:13] nginx healthcheck failed" },
   { tone: "danger", text: "[12:04:17] customer traffic impacted" },
   { tone: "empty", text: "" },
@@ -25,18 +26,29 @@ const BASE_TERMINAL_LINES = [
   { tone: "muted", text: "Type your level:" },
 ];
 
+const ROUTING_TIMELINE_MS = [
+  { delay: 100, step: "assigned" },
+  { delay: 300, step: "routing" },
+  { delay: 520, step: "difficulty" },
+  { delay: 720, step: "profile" },
+  { delay: 920, step: "ready" },
+  { delay: 1100, step: "scrolling" },
+  { delay: 1200, step: "handoff" },
+];
+
 export default function HeroSection({
   onStart,
   onSeeHowItWorks,
   onLevelSelected,
+  onRoutingReady,
   stats,
-  socialProof,
 }) {
   const [levelInput, setLevelInput] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("");
   const [terminalLines, setTerminalLines] = useState(BASE_TERMINAL_LINES);
   const [selectionError, setSelectionError] = useState("");
   const terminalBodyRef = useRef(null);
+  const timersRef = useRef([]);
 
   useEffect(() => {
     terminalBodyRef.current?.scrollTo({
@@ -45,13 +57,23 @@ export default function HeroSection({
     });
   }, [terminalLines]);
 
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    };
+  }, []);
+
   const levelPrompt = useMemo(() => {
-    return selectedLevel ? `level locked: ${selectedLevel}` : "Type your level";
+    return selectedLevel ? `operator locked: ${selectedLevel.toUpperCase()}` : "Type your level";
   }, [selectedLevel]);
 
   function resolveLevel(rawValue) {
     const normalized = rawValue.trim().toLowerCase();
     return LEVELS.find((level) => level.toLowerCase() === normalized) || "";
+  }
+
+  function appendLine(tone, text) {
+    setTerminalLines((prev) => [...prev, { tone, text }]);
   }
 
   function applyLevelSelection(rawValue) {
@@ -63,21 +85,27 @@ export default function HeroSection({
       return;
     }
 
+    const track = getOnboardingTrack(level);
+    timersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    timersRef.current = [];
+
     setSelectionError("");
     setSelectedLevel(level);
     setLevelInput(level);
-    setTerminalLines((prev) => [
-      ...prev,
-      { tone: "prompt", text: `$ ${level}` },
-      { tone: "success", text: `level set: ${level}` },
-      { tone: "muted", text: "calibrating difficulty..." },
-      { tone: "muted", text: "loading incident catalog..." },
-      { tone: "muted", text: "building your incident track..." },
-    ]);
+    onLevelSelected?.(level);
 
-    window.setTimeout(() => {
-      onLevelSelected?.(level);
-    }, 320);
+    ROUTING_TIMELINE_MS.forEach(({ delay, step }) => {
+      const timerId = window.setTimeout(() => {
+        if (step === "assigned") appendLine("success", `operator assigned: ${level.toUpperCase()}`);
+        if (step === "routing") appendLine("muted", "routing incident...");
+        if (step === "difficulty") appendLine("ok", "[OK] difficulty calibrated");
+        if (step === "profile") appendLine("ok", `[OK] incident profile: ${track.primaryLab?.slug || "pending"}`);
+        if (step === "ready") appendLine("ok", "[OK] environment ready");
+        if (step === "scrolling") appendLine("muted", "scrolling to active terminal...");
+        if (step === "handoff") onRoutingReady?.();
+      }, delay);
+      timersRef.current.push(timerId);
+    });
   }
 
   function handleLevelSubmit(event) {
@@ -87,18 +115,17 @@ export default function HeroSection({
 
   return (
     <section className="bg-[#0B0F14] text-[#E6EDF3]">
-      <div className="mx-auto grid max-w-7xl items-center gap-10 px-6 py-16 sm:py-20 lg:grid-cols-[1.02fr_0.98fr] lg:gap-14 lg:px-8 lg:py-24">
-        <div className="max-w-2xl">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-[#9DA7B3]">
-            <span className="h-2 w-2 rounded-full bg-[#3FB950]" />
+      <div className="mx-auto grid min-h-[620px] max-w-7xl items-stretch gap-12 px-6 py-20 sm:py-24 lg:grid-cols-[1fr_1.02fr] lg:gap-16 lg:px-8 lg:py-28">
+        <div className="flex min-h-[560px] flex-col justify-center">
+          <div className="font-mono text-[12px] uppercase tracking-[0.22em] text-[#8B96A5]">
             Live production incidents
           </div>
 
-          <h1 className="max-w-xl text-4xl font-semibold tracking-tight text-[#E6EDF3] sm:text-5xl lg:text-6xl">
+          <h1 className="mt-6 max-w-[11ch] text-[42px] font-semibold tracking-[-0.04em] text-[#E6EDF3] sm:text-[52px] sm:leading-[1.02] lg:text-[68px] lg:leading-[0.96]">
             Your server is down. Fix it.
           </h1>
 
-          <p className="mt-5 max-w-xl text-base leading-7 text-[#9DA7B3] sm:text-lg">
+          <p className="mt-6 max-w-[560px] text-[18px] leading-8 text-[#9DA7B3] lg:text-[20px]">
             Break real servers. Get hired. No simulations.
           </p>
 
@@ -106,7 +133,7 @@ export default function HeroSection({
             <button
               type="button"
               onClick={onStart}
-              className="inline-flex items-center justify-center rounded-xl bg-[#4F8CFF] px-5 py-3 text-sm font-medium text-white transition hover:brightness-110"
+              className="inline-flex h-12 items-center justify-center rounded-xl bg-[#4F8CFF] px-5 text-sm font-medium text-white transition hover:brightness-110"
             >
               Start first incident
             </button>
@@ -114,26 +141,28 @@ export default function HeroSection({
             <button
               type="button"
               onClick={onSeeHowItWorks}
-              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-[#E6EDF3] transition hover:bg-white/10"
+              className="inline-flex h-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 text-sm font-medium text-[#E6EDF3] transition hover:bg-white/10"
             >
               See how it works
             </button>
           </div>
 
-          <div className="mt-8 border-t border-white/10 pt-6">
-            <p className="text-sm text-[#9DA7B3]">{socialProof.headline}</p>
+          <div className="mt-8 border-t border-white/10 pt-8">
+            <p className="text-sm text-[#9DA7B3]">
+              Trusted by {formatTrustCount(stats.engineers)} engineers in {stats.countries}+ countries
+            </p>
           </div>
 
-          <div className="mt-6 grid max-w-xl grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatPill label="Engineers" value={formatCount(stats.engineers)} />
+          <div className="mt-8 grid max-w-[560px] grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatPill label="Engineers" value={formatTrustCount(stats.engineers)} />
             <StatPill label="Countries" value={`${stats.countries}+`} />
             <StatPill label="Labs" value={String(stats.labs)} />
             <StatPill label="Rating" value={`${stats.avgRating}*`} />
           </div>
         </div>
 
-        <div className="relative">
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0F141B] shadow-2xl shadow-black/30">
+        <div className="flex h-full min-h-[560px]">
+          <div className="flex h-[580px] w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0F141B] shadow-2xl shadow-black/30">
             <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-4 py-3">
               <div className="flex items-center gap-2">
                 <span className="h-3 w-3 rounded-full bg-[#F85149]" />
@@ -155,7 +184,7 @@ export default function HeroSection({
               </div>
             </div>
 
-            <div className="bg-[#0B0F14] p-5">
+            <div className="flex-1 bg-[#0B0F14] p-5">
               <div
                 ref={terminalBodyRef}
                 className="h-[360px] overflow-y-auto pr-1 font-mono text-[13px] leading-6 text-[#E6EDF3] sm:h-[400px] sm:text-sm"
@@ -209,7 +238,7 @@ export default function HeroSection({
                 </form>
 
                 {selectionError ? (
-                  <div className="mt-3 text-sm text-[#F85149]">{selectionError}</div>
+                  <div className="mt-3 animate-pulse text-sm text-[#F85149]">{selectionError}</div>
                 ) : null}
               </div>
             </div>
@@ -229,13 +258,13 @@ function StatPill({ label, value }) {
   );
 }
 
-function formatCount(value) {
+function formatTrustCount(value) {
   if (typeof value !== "number") return String(value);
-  return value >= 1000 ? `${Math.round(value / 100) / 10}k+` : String(value);
+  return `${value.toLocaleString("en-US")}+`;
 }
 
 function terminalLineClass(tone) {
-  if (tone === "success") return "text-[#3FB950]";
+  if (tone === "success" || tone === "ok") return "text-[#3FB950]";
   if (tone === "warning") return "text-[#D29922]";
   if (tone === "danger") return "text-[#F85149]";
   if (tone === "prompt") return "text-[#E6EDF3]";
