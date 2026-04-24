@@ -51,9 +51,9 @@ export default function PricingPage({
 
         <section className="mt-10 grid gap-5 xl:grid-cols-4">
           <PlanCard
-            title="Free"
-            price="Free"
-            subtitle="Enter the system"
+            title="Starter"
+            price="free"
+            subtitle="Base access"
             active={currentPlan === "FREE"}
             features={[
               "5 free labs",
@@ -62,14 +62,14 @@ export default function PricingPage({
               "Basic AI access",
               "Try before you commit",
             ]}
-            ctaLabel="Start Free"
+            ctaLabel="Enter Starter"
             onClick={onStartFree}
           />
 
           <PlanCard
-            title="Founding Unlock"
-            price="$5"
-            subtitle="One-time early access"
+            title="Early Access"
+            price="€5/month"
+            subtitle="Locked launch price"
             badge="Best entry"
             highlight
             features={[
@@ -79,14 +79,14 @@ export default function PricingPage({
               "Unlock tracked progression",
               "Best way to get in early",
             ]}
-            ctaLabel="Get Founding Unlock"
+            ctaLabel="Enter Early Access"
             onClick={onBuyFounding}
-            footnote="One-time unlock. Ideal after your first successful run."
+            footnote="Locked launch access for early operators."
           />
 
           <PlanCard
             title="Pro"
-            price="$19/mo"
+            price="€19/month"
             subtitle="For real usage"
             active={currentPlan === "PRO"}
             features={[
@@ -96,13 +96,13 @@ export default function PricingPage({
               "Full AI actions",
               "Scoring, history, leaderboard",
             ]}
-            ctaLabel="Start Pro"
+            ctaLabel="Enter Pro"
             onClick={onBuyPro}
           />
 
           <PlanCard
             title="Lifetime"
-            price="$199"
+            price="€199 one-time"
             subtitle="Own your training"
             active={currentPlan === "LIFETIME"}
             features={[
@@ -112,7 +112,7 @@ export default function PricingPage({
               "Hardcore / SRE direction",
               "No recurring subscription",
             ]}
-            ctaLabel="Get Lifetime"
+            ctaLabel="Enter Lifetime"
             onClick={onBuyLifetime}
           />
         </section>

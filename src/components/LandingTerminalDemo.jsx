@@ -334,15 +334,15 @@ function buildAccessLines() {
 
 function buildFinchLines() {
   return [
-    "[WINLAB-AUTH]: identity confirmed",
+    "[WINLAB-AUTH]: Identity confirmed.",
     "",
-    "[H. FINCH]:",
-    '"Eventually, everyone has a friend.',
-    "If you don't have one,",
-    "I'll be your friend.",
-    'But I\'ll be a very, very quiet one."',
+    '[H. FINCH]: "Eventually, everyone has a friend. If you don\'t have one, I\'ll be your friend. But I\'ll be a very, very quiet one."',
     "",
-    "[SYSTEM]: access granted to the irrelevant list",
+    "[SYSTEM]: Access granted to the Irrelevant List.",
+    "[SYSTEM]: Loading hidden incidents...",
+    "",
+    "* shadow-incident-routing",
+    "* ghost-node-failure",
   ];
 }
 

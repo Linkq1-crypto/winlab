@@ -18,6 +18,8 @@ const BASE_TERMINAL_LINES = [
   { tone: "muted", text: "WINLAB INCIDENT ROUTER v1.0" },
   { tone: "muted", text: "region: prod-eu-west-1" },
   { tone: "warning", text: "status: degraded" },
+  { tone: "muted", text: "[INFO] Connection rerouted through prod-eu-west-1." },
+  { tone: "muted", text: "[INFO] Identity obfuscated. You are now Irrelevant." },
   { tone: "empty", text: "" },
   { tone: "warning", text: "[12:04:11] requests failing ↑" },
   { tone: "danger", text: "[12:04:13] nginx healthcheck failed" },
@@ -47,6 +49,13 @@ export default function HeroSection({ onLevelSelected, onRoutingReady }) {
   const routerBodyRef = useRef(null);
   const inputRef = useRef(null);
   const timersRef = useRef([]);
+
+  useEffect(() => {
+    console.log(
+      "%c[SYSTEM]: The Machine is watching you, Operator.",
+      "color:#00ff00;font-family:monospace;font-weight:bold;"
+    );
+  }, []);
 
   useEffect(() => {
     routerBodyRef.current?.scrollTo({
