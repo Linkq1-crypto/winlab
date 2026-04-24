@@ -2,10 +2,14 @@
 set -euo pipefail
 
 LAB_ID="${LAB_ID:-disk-full}"
+LAB_VARIANT="${LAB_VARIANT:-}"
 LAB_DIR="/labs/${LAB_ID}"
 
 echo "[winlab-lab-runner] booting generic runner"
 echo "[winlab-lab-runner] LAB_ID=${LAB_ID}"
+if [[ -n "${LAB_VARIANT}" ]]; then
+  echo "[winlab-lab-runner] LAB_VARIANT=${LAB_VARIANT}"
+fi
 
 if [[ ! -d "${LAB_DIR}" ]]; then
   echo "[winlab-lab-runner] unknown lab: ${LAB_ID}" >&2

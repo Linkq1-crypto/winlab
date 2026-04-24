@@ -1,1 +1,10 @@
-{"id":"k8s-crashloop","title":"Kubernetes CrashLoopBackOff","tier":"ops","difficulty":"hard","duration":18,"tags":["kubernetes","crashloop","containers"],"type":"playbook","status":"placeholder"}
+{
+  "id": "k8s-crashloop",
+  "title": "Kubernetes CrashLoopBackOff",
+  "tier": "ops",
+  "difficulty": "hard",
+  "duration": 18,
+  "tags": ["kubernetes", "crashloop", "containers"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

@@ -1,1 +1,18 @@
-{"id":"advanced-scenarios","title":"Advanced Scenarios","tier":"pro","difficulty":"hard","duration":20,"tags":["nginx","mysql","disk","ssl","cron","java","oom","production"],"type":"ubuntu","status":"placeholder"}
+{
+  "id": "advanced-scenarios",
+  "title": "Advanced Scenarios",
+  "tier": "pro",
+  "difficulty": "hard",
+  "duration": 20,
+  "tags": ["nginx", "mysql", "disk", "ssl", "cron", "java", "oom", "production"],
+  "type": "ubuntu",
+  "status": "runnable",
+  "variants": [
+    "nginx-php-user-mismatch",
+    "mysql-replica-deadlock",
+    "disk-log-flood",
+    "ssl-chain-expired",
+    "cron-stopped-jobs",
+    "java-oom"
+  ]
+}

@@ -6,5 +6,6 @@ services:
       dockerfile: docker/lab-runner/Dockerfile
     environment:
       LAB_ID: ${LAB_ID:-disk-full}
+      LAB_VARIANT: ${LAB_VARIANT:-}
     stdin_open: true
     tty: true

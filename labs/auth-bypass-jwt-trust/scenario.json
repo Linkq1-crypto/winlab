@@ -1,1 +1,10 @@
-{"id":"auth-bypass-jwt-trust","title":"Auth Bypass JWT Trust","tier":"codex","difficulty":"hard","duration":20,"tags":["auth","jwt","security","privilege-escalation"],"type":"codex","status":"placeholder"}
+{
+  "id": "auth-bypass-jwt-trust",
+  "title": "Auth Bypass JWT Trust",
+  "tier": "codex",
+  "difficulty": "hard",
+  "duration": 20,
+  "tags": ["auth", "jwt", "security", "privilege-escalation"],
+  "type": "codex",
+  "status": "runnable"
+}

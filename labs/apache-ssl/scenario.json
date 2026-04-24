@@ -1,1 +1,10 @@
-{"id":"apache-ssl","title":"Apache SSL","tier":"business","difficulty":"medium","duration":15,"tags":["apache","ssl","tls"],"type":"business","status":"placeholder"}
+{
+  "id": "apache-ssl",
+  "title": "Apache SSL",
+  "tier": "business",
+  "difficulty": "medium",
+  "duration": 15,
+  "tags": ["apache", "ssl", "tls"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

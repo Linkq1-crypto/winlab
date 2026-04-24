@@ -1,1 +1,10 @@
-{"id":"k8s-node-notready","title":"Kubernetes Node NotReady","tier":"ops","difficulty":"hard","duration":18,"tags":["kubernetes","node","ops"],"type":"playbook","status":"placeholder"}
+{
+  "id": "k8s-node-notready",
+  "title": "Kubernetes Node NotReady",
+  "tier": "ops",
+  "difficulty": "hard",
+  "duration": 18,
+  "tags": ["kubernetes", "node", "ops"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

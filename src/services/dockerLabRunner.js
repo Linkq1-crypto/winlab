@@ -56,9 +56,10 @@ function runProcess(command, args, options = {}) {
   });
 }
 
-export async function startDockerLabSession({ labId, sessionId }) {
+export async function startDockerLabSession({ labId, sessionId, variantId }) {
   const safeLabId = sanitizeToken(labId, "disk-full");
   const safeSessionId = sanitizeToken(sessionId, "default");
+  const safeVariantId = variantId ? sanitizeToken(variantId, "default") : "";
   const containerName = getContainerName(safeSessionId);
 
   await runProcess(
@@ -67,6 +68,7 @@ export async function startDockerLabSession({ labId, sessionId }) {
     {
       env: {
         LAB_ID: safeLabId,
+        LAB_VARIANT: safeVariantId,
         LAB_CONTAINER_NAME: containerName,
       },
     }
@@ -74,6 +76,7 @@ export async function startDockerLabSession({ labId, sessionId }) {
 
   return {
     labId: safeLabId,
+    variantId: safeVariantId || null,
     sessionId: safeSessionId,
     containerName,
     shellCommand: getDockerLabShellCommand({ sessionId: safeSessionId }),
