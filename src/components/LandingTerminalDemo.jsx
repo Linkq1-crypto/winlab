@@ -1,24 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { getOnboardingTrack } from "../data/onboardingLabTracks";
+import { TerminalWindow } from "./HeroSection";
 
-const PORT_CHECK_COMMANDS = [
-  "ss -ltnp | grep :80",
-  "lsof -i :80",
-  "netstat -tulpn | grep :80",
-];
-
-const FIX_COMMANDS = [
-  "systemctl stop apache2",
-  "kill 2041",
-  "systemctl restart nginx",
-];
+const PORT_CHECK_OUTPUT = 'LISTEN 0.0.0.0:80 users:(("apache2",pid=2041))';
 
 export default function LandingTerminalDemo({
   selectedLevel = "",
-  connectionStage = "idle",
-  onSmallWin,
+  selectedLab = "nginx-port-conflict",
+  labStatus = "pending",
+  routerStatus = "awaiting_operator",
+  selectedFile = "",
+  fileOpened = false,
   gateLoading = false,
   gateError = "",
+  onLabStateChange,
+  onTrafficRecovering,
+  onSmallWin,
   onCreateAccount,
   onContinueGuest,
   onUnlock,
@@ -27,37 +24,41 @@ export default function LandingTerminalDemo({
     () => (selectedLevel ? getOnboardingTrack(selectedLevel) : null),
     [selectedLevel]
   );
-  const [lines, setLines] = useState(() => buildStandbyLines());
+  const [lines, setLines] = useState(() => buildPendingLines());
   const [input, setInput] = useState("");
-  const [phase, setPhase] = useState("waiting_level");
+  const [phase, setPhase] = useState("pending");
   const [finchShown, setFinchShown] = useState(false);
-  const [showAccess, setShowAccess] = useState(false);
   const terminalRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (!track) {
-      setLines(buildStandbyLines());
+    if (!track || labStatus === "pending") {
+      setLines(buildPendingLines());
+      setPhase("pending");
       setInput("");
-      setPhase("waiting_level");
       setFinchShown(false);
-      setShowAccess(false);
       return;
     }
 
-    setLines(buildWaitingHandoffLines());
-    setInput("");
-    setPhase("waiting_connection");
-    setFinchShown(false);
-    setShowAccess(false);
-  }, [track]);
+    if (labStatus === "ready") {
+      setLines(buildReadyLines(track, selectedLab));
+      setPhase("awaiting_start");
+      setInput("");
+    }
+  }, [track, labStatus, selectedLab]);
 
   useEffect(() => {
-    if (track && connectionStage === "prompt") {
-      setLines(buildActiveTerminalLines(track));
-      setPhase("awaiting_start");
+    if (phase === "waiting_file" && fileOpened) {
+      setLines((prev) => [
+        ...prev,
+        '[H. FINCH]: The log says port 80 is already occupied by another service.',
+        '[H. FINCH]: We need to see who is responsible. Type "check".',
+      ]);
+      onTrafficRecovering?.();
+      setPhase("awaiting_check");
+      setInput("");
     }
-  }, [connectionStage, track]);
+  }, [fileOpened, onTrafficRecovering, phase]);
 
   useEffect(() => {
     terminalRef.current?.scrollTo({ top: terminalRef.current.scrollHeight, behavior: "smooth" });
@@ -80,21 +81,24 @@ export default function LandingTerminalDemo({
 
     if (command === "finch") {
       if (!finchShown) {
-        appendLines(buildFinchLines());
+        appendLines([
+          "[WINLAB-AUTH]: Identity confirmed.",
+          "",
+          '[H. FINCH]: "Eventually, everyone has a friend. If you don\'t have one, I\'ll be your friend. But I\'ll be a very, very quiet one."',
+          "",
+          "[SYSTEM]: Access granted to the Irrelevant List.",
+          "[SYSTEM]: Loading hidden incidents...",
+          "* shadow-incident-routing",
+          "* ghost-node-failure",
+        ]);
         setFinchShown(true);
       }
       setInput("");
       return;
     }
 
-    if (!track) {
-      appendLines(["[ERROR]: operator assignment required"]);
-      setInput("");
-      return;
-    }
-
-    if (phase === "waiting_connection") {
-      appendLines(["[ROUTER]: handoff in progress"]);
+    if (!track || labStatus === "pending") {
+      appendLines(["[SYSTEM]: router standby", "[SYSTEM]: awaiting operator assignment"]);
       setInput("");
       return;
     }
@@ -103,34 +107,57 @@ export default function LandingTerminalDemo({
       if (command !== "start") {
         appendLines(['[ERROR]: type "start"']);
       } else {
-        appendLines(buildIncidentAttachLines());
-        setPhase("awaiting_check");
+        appendLines([
+          "attaching to node...",
+          "loading service state...",
+          "",
+          "[SYSTEM]: live incident attached",
+          "[SYSTEM]: Emergency detected in prod-eu-west-1.",
+          "[SYSTEM]: Click the highlighted file to analyze the error log.",
+        ]);
+        onLabStateChange?.("active");
+        setPhase("waiting_file");
       }
       setInput("");
       return;
     }
 
+    if (phase === "waiting_file") {
+      appendLines([`[ERROR]: open ${selectedFile || "incident_nginx.err"} first`]);
+      setInput("");
+      return;
+    }
+
     if (phase === "awaiting_check") {
-      if (PORT_CHECK_COMMANDS.includes(command)) {
+      if (command !== "check") {
+        appendLines(['[ERROR]: type "check"']);
+      } else {
         appendLines([
-          'LISTEN 0.0.0.0:80 users:(("apache2",pid=2041))',
-          "[INCIDENT]: conflicting process detected",
+          PORT_CHECK_OUTPUT,
+          "[SYSTEM]: Identified conflict: apache (httpd) is blocking the web server.",
+          '[TUTORIAL]: To repair the system, write "fix" and press Enter.',
         ]);
         setPhase("awaiting_fix");
-      } else {
-        appendLines(["[ERROR]: inspect port 80 ownership"]);
       }
       setInput("");
       return;
     }
 
     if (phase === "awaiting_fix") {
-      if (FIX_COMMANDS.includes(command)) {
-        appendLines(buildSuccessLines());
-        setPhase("post_success");
-        onSmallWin?.("nginx-port-conflict");
+      if (command !== "fix") {
+        appendLines(['[ERROR]: type "fix"']);
       } else {
-        appendLines(["[ERROR]: release port 80 and recover nginx"]);
+        appendLines([
+          "[SUCCESS] SERVICE RESTORED",
+          "[SYSTEM]: traffic normalized",
+          "[SYSTEM]: incident closed",
+          "[SYSTEM]: progress not persisted",
+          "",
+          'type "save" to create account',
+          'type "continue" to proceed without saving',
+        ]);
+        setPhase("post_success");
+        onSmallWin?.(selectedLab);
       }
       setInput("");
       return;
@@ -138,9 +165,7 @@ export default function LandingTerminalDemo({
 
     if (phase === "post_success") {
       if (command === "save") {
-        appendLines(["[AUTH]: persistence requested"]);
         appendLines(buildAccessLines());
-        setShowAccess(true);
         setPhase("awaiting_unlock");
         onCreateAccount?.();
       } else if (command === "continue") {
@@ -164,10 +189,7 @@ export default function LandingTerminalDemo({
         appendLines(['[ERROR]: type "unlock" or "continue"']);
       }
       setInput("");
-      return;
     }
-
-    setInput("");
   }
 
   function handleSubmit(event) {
@@ -176,79 +198,37 @@ export default function LandingTerminalDemo({
   }
 
   return (
-    <section className="border-t border-zinc-900 bg-black text-white">
-      <div className="mx-auto max-w-[1600px] px-6 py-6 lg:py-8">
-        <div className="grid gap-4">
-          <TerminalFrame
-            title="[INCIDENT]: live system terminal"
-            subtitle={track ? `[ROUTER]: operator ${track.level.toLowerCase()}` : "[ROUTER]: standby"}
-          >
-            <div
-              ref={terminalRef}
-              className="h-[520px] overflow-y-auto bg-[#05080d] p-6 font-mono text-[14px] leading-[1.65] text-zinc-200 md:text-[15px] lg:text-[16px] lg:leading-[1.75]"
-            >
-              {lines.map((line, index) => (
-                <div key={`${index}-${line}`} className={lineClassName(line)}>
-                  {renderLine(line)}
-                </div>
-              ))}
+    <TerminalWindow title="live-lab-terminal" subtitle={`${routerStatus} | ${labStatus}`}>
+      <div
+        ref={terminalRef}
+        className="h-full overflow-y-auto bg-[#05080d] p-5 font-mono text-[14px] leading-[1.65] text-zinc-200 md:text-[15px] lg:text-[16px] lg:leading-[1.75]"
+      >
+        {lines.map((line, index) => (
+          <div key={`${index}-${line}`} className={lineClassName(line)}>
+            {line || <span>&nbsp;</span>}
+          </div>
+        ))}
 
-              <form onSubmit={handleSubmit} className="mt-3 flex items-center gap-3">
-                <span className="text-zinc-400">winlab@prod-server:~$</span>
-                <input
-                  ref={inputRef}
-                  value={input}
-                  onChange={(event) => setInput(event.target.value)}
-                  className="flex-1 bg-transparent text-zinc-100 outline-none"
-                />
-                <span className="animate-pulse text-zinc-500">_</span>
-              </form>
+        <form onSubmit={handleSubmit} className="mt-3 flex items-center gap-3">
+          <span className="text-zinc-400">winlab@prod-server:~$</span>
+          <input
+            ref={inputRef}
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            placeholder={placeholderForPhase(phase, selectedFile)}
+            className="flex-1 bg-transparent text-zinc-100 outline-none placeholder:text-zinc-600"
+          />
+          <span className="animate-pulse text-zinc-500">_</span>
+        </form>
 
-              {gateLoading ? <div className="mt-3 text-amber-300">[AUTH]: persistence request in progress</div> : null}
-              {gateError ? <div className="mt-3 text-red-400">[ERROR]: {gateError}</div> : null}
-            </div>
-          </TerminalFrame>
-
-          {showAccess ? (
-            <TerminalFrame
-              title="[ACCESS]: routing control"
-              subtitle="[SYSTEM]: restricted incident set"
-            >
-              <div className="bg-[#05080d] p-6 font-mono text-[14px] leading-[1.65] text-zinc-200 md:text-[15px] lg:text-[16px] lg:leading-[1.75]">
-                {buildAccessLines().map((line, index) => (
-                  <div key={`${index}-${line}`} className={lineClassName(line)}>
-                    {renderLine(line)}
-                  </div>
-                ))}
-              </div>
-            </TerminalFrame>
-          ) : null}
-        </div>
+        {gateLoading ? <div className="mt-3 text-amber-300">[AUTH]: persistence request in progress</div> : null}
+        {gateError ? <div className="mt-3 text-red-400">[ERROR]: {gateError}</div> : null}
       </div>
-    </section>
+    </TerminalWindow>
   );
 }
 
-function TerminalFrame({ title, subtitle, children }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0F141B]">
-      <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-5 py-3">
-        <div>
-          <div className="font-mono text-[12px] uppercase tracking-[0.18em] text-zinc-400">{title}</div>
-          <div className="mt-1 font-mono text-[12px] text-zinc-600">{subtitle}</div>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-[#F85149]" />
-          <span className="h-3 w-3 rounded-full bg-[#D29922]" />
-          <span className="h-3 w-3 rounded-full bg-[#3FB950]" />
-        </div>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function buildStandbyLines() {
+function buildPendingLines() {
   return [
     "[SYSTEM]: router standby",
     "[SYSTEM]: awaiting operator assignment",
@@ -256,20 +236,12 @@ function buildStandbyLines() {
   ];
 }
 
-function buildWaitingHandoffLines() {
-  return [
-    "[SYSTEM]: router standby",
-    "[SYSTEM]: awaiting operator assignment",
-    "[SYSTEM]: environment offline",
-  ];
-}
-
-function buildActiveTerminalLines(track) {
+function buildReadyLines(track, selectedLab) {
   return [
     "connected to prod-eu-west-1",
     `operator: ${track.level.toUpperCase()}`,
     "",
-    `incident: ${track.primaryLab?.slug || "nginx-port-conflict"}`,
+    `incident: ${selectedLab || track.primaryLab?.slug || "nginx-port-conflict"}`,
     "status: degraded",
     "impact: public traffic unavailable",
     "",
@@ -281,37 +253,9 @@ function buildActiveTerminalLines(track) {
   ];
 }
 
-function buildIncidentAttachLines() {
-  return [
-    "attaching to node...",
-    "loading service state...",
-    "",
-    "[SYSTEM]: live incident attached",
-    "",
-    "$ systemctl status nginx",
-    "",
-    "nginx.service - failed",
-    "bind() to 0.0.0.0:80 failed",
-  ];
-}
-
-function buildSuccessLines() {
-  return [
-    "",
-    "[SUCCESS] service restored",
-    "[SYSTEM]: traffic normalized",
-    "[SYSTEM]: incident closed",
-    "[SYSTEM]: progress not persisted",
-    "",
-    'type "save" to create account',
-    'type "continue" to proceed without saving',
-  ];
-}
-
 function buildAccessLines() {
   return [
     "[ACCESS]: additional incidents locked",
-    "",
     "available incidents:",
     "* disk-full",
     "* permission-denied",
@@ -321,28 +265,13 @@ function buildAccessLines() {
     "+29 more",
     "",
     "[ACCESS]: restricted",
-    "",
     "plans:",
-    "* starter: free",
-    "* early-access: €5/month",
-    "* pro: €19/month",
-    "* lifetime: €199",
+    "starter: free",
+    "early-access: \u20ac5/month",
+    "pro: \u20ac19/month",
+    "lifetime: \u20ac199",
     "",
     'type "unlock" to continue',
-  ];
-}
-
-function buildFinchLines() {
-  return [
-    "[WINLAB-AUTH]: Identity confirmed.",
-    "",
-    '[H. FINCH]: "Eventually, everyone has a friend. If you don\'t have one, I\'ll be your friend. But I\'ll be a very, very quiet one."',
-    "",
-    "[SYSTEM]: Access granted to the Irrelevant List.",
-    "[SYSTEM]: Loading hidden incidents...",
-    "",
-    "* shadow-incident-routing",
-    "* ghost-node-failure",
   ];
 }
 
@@ -350,18 +279,31 @@ function normalizeCommand(value) {
   return value.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-function lineClassName(line) {
-  if (!line) return "h-4";
-  if (/^\[SUCCESS\]/.test(line) || /\[SYSTEM\]: traffic normalized|\[SYSTEM\]: incident closed/.test(line)) return "text-emerald-400";
-  if (/^\[ERROR\]/.test(line) || /failed|unavailable|offline|degraded|bind\(\)/i.test(line)) return "text-red-400";
-  if (/^\[ACCESS\]|^\[AUTH\]|^status: degraded|^impact:|^hints:|^AI mentor:|^type "start"|^type "unlock"|^type "save"|^type "continue"/i.test(line)) return "text-amber-300";
-  if (/^\[SYSTEM\]|^\[ROUTER\]|^connected to|^operator:|^incident:|^plans:|^available incidents:/i.test(line)) return "text-zinc-400";
-  if (/^\[H\. FINCH\]|^\[WINLAB-AUTH\]/.test(line)) return "text-zinc-200";
-  if (/^winlab@prod-server:~\$|^\$ /.test(line)) return "text-zinc-100";
-  return "text-zinc-300";
+function placeholderForPhase(phase, selectedFile) {
+  if (phase === "awaiting_start") return "start";
+  if (phase === "waiting_file") return `open ${selectedFile || "incident_nginx.err"}`;
+  if (phase === "awaiting_check") return "check";
+  if (phase === "awaiting_fix") return "fix";
+  if (phase === "post_success") return "save";
+  if (phase === "awaiting_unlock") return "unlock";
+  return "";
 }
 
-function renderLine(line) {
-  if (!line) return <span>&nbsp;</span>;
-  return line;
+function lineClassName(line) {
+  if (!line) return "h-4";
+  if (/^\[SUCCESS\]/.test(line) || /\[SYSTEM\]: traffic normalized|\[SYSTEM\]: incident closed/.test(line)) {
+    return "text-emerald-400";
+  }
+  if (/^\[ERROR\]/.test(line) || /failed|unavailable|offline|degraded|bind\(\)/i.test(line)) {
+    return "text-red-400";
+  }
+  if (/^\[ACCESS\]|^\[AUTH\]|^\[TUTORIAL\]|^status: degraded|^impact:|^hints:|^AI mentor:|^type /i.test(line)) {
+    return "text-amber-300";
+  }
+  if (/^\[SYSTEM\]|^\[ROUTER\]|^\[INCIDENT\]|^\[WINLAB-AUTH\]|^connected to|^operator:|^incident:|^plans:|^\* |^\+29 more/i.test(line)) {
+    return "text-zinc-400";
+  }
+  if (/^\[H\. FINCH\]/.test(line)) return "text-zinc-200";
+  if (/^winlab@prod-server:~\$|^\$ /.test(line)) return "text-zinc-100";
+  return "text-zinc-300";
 }
