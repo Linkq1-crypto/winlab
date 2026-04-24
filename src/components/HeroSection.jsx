@@ -1,15 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { getOnboardingTrack } from "../data/onboardingLabTracks";
 
-const LEVEL_OPTIONS = [
-  "1. Novice - I know basic Linux commands",
-  "2. Junior - I can read logs and restart services",
-  "3. Mid - I debug production issues sometimes",
-  "4. Senior - I have been on-call before",
-  "5. SRE - No hints. No AI. Full pressure.",
-];
-
-const LEVELS = ["Novice", "Junior", "Mid", "Senior", "SRE"];
+const LEVEL_MAP = {
+  "1": "Novice",
+  "2": "Junior",
+  "3": "Mid",
+  "4": "Senior",
+  "5": "SRE",
+  novice: "Novice",
+  junior: "Junior",
+  mid: "Mid",
+  senior: "Senior",
+  sre: "SRE",
+};
 
 const BASE_TERMINAL_LINES = [
   { tone: "muted", text: "WINLAB INCIDENT ROUTER v1.0" },
@@ -20,10 +23,10 @@ const BASE_TERMINAL_LINES = [
   { tone: "danger", text: "[12:04:13] nginx healthcheck failed" },
   { tone: "danger", text: "[12:04:17] customer traffic impacted" },
   { tone: "empty", text: "" },
-  { tone: "muted", text: "Before assigning your first incident, choose your operator level:" },
-  ...LEVEL_OPTIONS.map((text) => ({ tone: "neutral", text })),
+  { tone: "danger", text: "ERROR: operator not assigned" },
+  { tone: "muted", text: ">> awaiting operator classification..." },
   { tone: "empty", text: "" },
-  { tone: "muted", text: "Type your level:" },
+  { tone: "muted", text: "type your level (1-5):" },
 ];
 
 const ROUTING_TIMELINE_MS = [
@@ -103,13 +106,14 @@ export default function HeroSection({
     };
   }, []);
 
-  const levelPrompt = useMemo(() => {
-    return selectedLevel ? `operator locked: ${selectedLevel.toUpperCase()}` : "Type your level";
+  const levelPlaceholder = useMemo(() => {
+    if (selectedLevel) return `operator locked: ${selectedLevel.toUpperCase()}`;
+    return "1 novice   2 junior   3 mid   4 senior   5 sre";
   }, [selectedLevel]);
 
   function resolveLevel(rawValue) {
     const normalized = rawValue.trim().toLowerCase();
-    return LEVELS.find((level) => level.toLowerCase() === normalized) || "";
+    return LEVEL_MAP[normalized] || "";
   }
 
   function appendLine(tone, text) {
@@ -120,7 +124,7 @@ export default function HeroSection({
     const level = resolveLevel(rawValue);
     if (!level || selectedLevel) {
       if (!level) {
-        setSelectionError("Choose Novice, Junior, Mid, Senior, or SRE.");
+        setSelectionError("invalid operator class");
       }
       return;
     }
@@ -132,6 +136,7 @@ export default function HeroSection({
     setSelectionError("");
     setSelectedLevel(level);
     setLevelInput(level);
+    appendLine("prompt", `$ ${rawValue.trim()}`);
     onLevelSelected?.(level);
 
     ROUTING_TIMELINE_MS.forEach(({ delay, step }) => {
@@ -155,74 +160,77 @@ export default function HeroSection({
 
   return (
     <section className="bg-[#0B0F14] text-[#E6EDF3]">
-      <div className="mx-auto grid min-h-[620px] max-w-7xl items-stretch gap-12 px-6 py-20 sm:py-24 lg:grid-cols-[1fr_1.02fr] lg:gap-16 lg:px-8 lg:py-28">
-        <div className="flex min-h-[560px] flex-col justify-center">
-          <div className="font-mono text-[12px] uppercase tracking-[0.22em] text-[#8B96A5]">
-            Live production incidents
-          </div>
+      <div className="mx-auto max-w-[1600px] px-6 py-12 lg:px-6 lg:py-14">
+        <div className="grid min-h-[640px] grid-cols-1 items-stretch gap-3 md:gap-4 lg:h-[720px] lg:grid-cols-[1fr_1fr] lg:gap-5">
+          <div className="flex h-full min-h-[520px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0F141B]">
+            <div className="flex h-full flex-col justify-center px-9 py-10 lg:px-12 lg:py-12">
+              <div className="font-mono text-[12px] uppercase tracking-[0.22em] text-[#8B96A5]">
+                LIVE PRODUCTION INCIDENTS
+              </div>
 
-          <h1 className="mt-6 max-w-[11ch] text-[42px] font-semibold tracking-[-0.04em] text-[#E6EDF3] sm:text-[52px] sm:leading-[1.02] lg:text-[68px] lg:leading-[0.96]">
-            Your server is down. Fix it.
-          </h1>
+              <h1 className="mt-6 max-w-[680px] text-[42px] font-semibold tracking-[-0.04em] text-[#E6EDF3] leading-[1.02] md:text-[56px] lg:text-[72px] lg:leading-[0.95]">
+                Your server is down. Fix it.
+              </h1>
 
-          <p className="mt-6 max-w-[560px] text-[18px] leading-8 text-[#9DA7B3] lg:text-[20px]">
-            Break real servers. Get hired. No simulations.
-          </p>
+              <p className="mt-6 max-w-[580px] text-[18px] leading-[1.55] text-[#9DA7B3] lg:text-[22px]">
+                Break real servers. Get hired. No simulations.
+              </p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={onStart}
-              className="inline-flex h-12 items-center justify-center rounded-xl bg-[#4F8CFF] px-5 text-sm font-medium text-white transition hover:brightness-110"
-            >
-              Start first incident
-            </button>
-
-            <button
-              type="button"
-              onClick={onSeeHowItWorks}
-              className="inline-flex h-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 text-sm font-medium text-[#E6EDF3] transition hover:bg-white/10"
-            >
-              See how it works
-            </button>
-          </div>
-
-          <div className="mt-8 max-w-[580px]">
-            <div className="text-[12px] uppercase tracking-[0.18em] text-[#8B96A5]">
-              Active incidents
-            </div>
-            <p className="mt-2 text-sm text-[#9DA7B3]">
-              Choose your level. WinLab assigns the right outage.
-            </p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {HERO_INCIDENT_PREVIEWS.map((incident) => (
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <button
-                  key={incident.id}
                   type="button"
-                  onClick={() => onPreviewIncident?.(incident.id)}
-                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left transition hover:border-white/20 hover:bg-white/[0.05]"
+                  onClick={onStart}
+                  className="inline-flex h-12 items-center justify-center rounded-xl bg-[#4F8CFF] px-5 text-sm font-medium text-white transition hover:brightness-110"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="font-mono text-[12px] uppercase tracking-[0.12em] text-[#E6EDF3]">
-                      {incident.id}
-                    </div>
-                    <span className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-wide ${incidentChipClass(incident)}`}>
-                      {incident.tier}
-                    </span>
-                  </div>
-                  <div className="mt-3 text-xs text-[#8B96A5]">status: {incident.status}</div>
-                  <div className="mt-1 text-sm text-[#C5CED8]">signal: {incident.signal}</div>
+                  Start first incident
                 </button>
-              ))}
-            </div>
-            <div className="mt-4 text-sm text-[#8B96A5]">
-              {Math.max(0, stats.labs - HERO_INCIDENT_PREVIEWS.length)} more labs
+
+                <button
+                  type="button"
+                  onClick={onSeeHowItWorks}
+                  className="inline-flex h-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 text-sm font-medium text-[#E6EDF3] transition hover:bg-white/10"
+                >
+                  See how it works
+                </button>
+              </div>
+
+              <div className="mt-8 max-w-[620px]">
+                <div className="text-[12px] uppercase tracking-[0.18em] text-[#8B96A5]">
+                  Active incidents
+                </div>
+                <p className="mt-2 text-sm text-[#9DA7B3]">
+                  Choose your level. WinLab assigns the right outage.
+                </p>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  {HERO_INCIDENT_PREVIEWS.map((incident) => (
+                    <button
+                      key={incident.id}
+                      type="button"
+                      onClick={() => onPreviewIncident?.(incident.id)}
+                      className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left transition hover:border-white/20 hover:bg-white/[0.05]"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="font-mono text-[12px] uppercase tracking-[0.12em] text-[#E6EDF3]">
+                          {incident.id}
+                        </div>
+                        <span className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-wide ${incidentChipClass(incident)}`}>
+                          {incident.tier}
+                        </span>
+                      </div>
+                      <div className="mt-3 text-xs text-[#8B96A5]">status: {incident.status}</div>
+                      <div className="mt-1 text-sm text-[#C5CED8]">signal: {incident.signal}</div>
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-4 text-sm text-[#8B96A5]">
+                  {Math.max(0, stats.labs - HERO_INCIDENT_PREVIEWS.length)} more labs
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex h-full min-h-[560px]">
-          <div className="flex h-[580px] w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0F141B] shadow-2xl shadow-black/30">
+          <div className="flex h-full min-h-[520px]">
+            <div className="flex h-[520px] w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0F141B] md:h-[560px] lg:h-full lg:min-h-[640px]">
             <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-4 py-3">
               <div className="flex items-center gap-2">
                 <span className="h-3 w-3 rounded-full bg-[#F85149]" />
@@ -244,10 +252,10 @@ export default function HeroSection({
               </div>
             </div>
 
-            <div className="flex-1 bg-[#0B0F14] p-5">
+            <div className="flex flex-1 flex-col bg-[#0B0F14] p-5">
               <div
                 ref={terminalBodyRef}
-                className="h-[360px] overflow-y-auto pr-1 font-mono text-[13px] leading-6 text-[#E6EDF3] sm:h-[400px] sm:text-sm"
+                className="flex-1 overflow-y-auto pr-1 font-mono text-[13px] leading-6 text-[#E6EDF3] sm:text-sm"
               >
                 {terminalLines.map((line, index) => (
                   <div key={`${index}-${line.text}`} className={terminalLineClass(line.tone)}>
@@ -256,45 +264,16 @@ export default function HeroSection({
                 ))}
               </div>
 
-              <div className="mt-5 rounded-2xl border border-white/10 bg-black/40 p-4">
-                <div className="text-xs uppercase tracking-wide text-[#9DA7B3]">
-                  choose your level:
-                </div>
-
-                <div className="mt-3 grid gap-2">
-                  {LEVEL_OPTIONS.map((label, index) => (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={() => applyLevelSelection(LEVELS[index])}
-                      disabled={Boolean(selectedLevel)}
-                      className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
-                        selectedLevel === LEVELS[index]
-                          ? "border-[#3FB950] bg-[#3FB950]/10 text-[#E6EDF3]"
-                          : "border-white/10 bg-white/5 text-[#9DA7B3] hover:bg-white/10"
-                      } disabled:cursor-not-allowed disabled:opacity-80`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
-                <form onSubmit={handleLevelSubmit} className="mt-4 flex items-center gap-3">
+              <div className="mt-5 border-t border-white/10 pt-4">
+                <form onSubmit={handleLevelSubmit} className="flex items-center gap-3">
                   <span className="font-mono text-sm text-[#9DA7B3]">$</span>
                   <input
                     value={levelInput}
                     onChange={(event) => setLevelInput(event.target.value)}
                     disabled={Boolean(selectedLevel)}
-                    placeholder={levelPrompt}
+                    placeholder={levelPlaceholder}
                     className="flex-1 bg-transparent font-mono text-sm text-[#E6EDF3] outline-none placeholder:text-[#6B7280]"
                   />
-                  <button
-                    type="submit"
-                    disabled={Boolean(selectedLevel)}
-                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#E6EDF3] hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Set level
-                  </button>
                 </form>
 
                 {selectionError ? (
@@ -303,6 +282,7 @@ export default function HeroSection({
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </section>
