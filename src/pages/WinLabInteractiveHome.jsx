@@ -58,6 +58,7 @@ export default function WinLabInteractiveHome() {
   const { authModal, openAuthModal, closeAuthModal } = useAuthModal();
   const [homeData, setHomeData] = useState(FALLBACK_HOME_DATA);
   const [selectedLevel, setSelectedLevel] = useState("");
+  const [previewIncidentSlug, setPreviewIncidentSlug] = useState("");
   const [connectionStage, setConnectionStage] = useState("idle");
   const [demoCompleted, setDemoCompleted] = useState(false);
   const [startingIncident, setStartingIncident] = useState(false);
@@ -199,6 +200,10 @@ export default function WinLabInteractiveHome() {
         onStart={scrollToDemo}
         onSeeHowItWorks={scrollToHowItWorks}
         onRoutingReady={scrollToDemo}
+        onPreviewIncident={(incidentSlug) => {
+          setPreviewIncidentSlug(incidentSlug);
+          scrollToDemo();
+        }}
         onLevelSelected={(level) => {
           connectionTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
           connectionTimersRef.current = [];
@@ -225,6 +230,7 @@ export default function WinLabInteractiveHome() {
         <LandingTerminalDemo
           selectedLevel={selectedLevel}
           connectionStage={connectionStage}
+          previewIncidentSlug={previewIncidentSlug}
           onSmallWin={() => handleDemoWin()}
           gateLoading={startingIncident}
           gateError={startError}

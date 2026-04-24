@@ -36,11 +36,51 @@ const ROUTING_TIMELINE_MS = [
   { delay: 1200, step: "handoff" },
 ];
 
+const HERO_INCIDENT_PREVIEWS = [
+  {
+    id: "nginx-port-conflict",
+    tier: "starter",
+    status: "degraded",
+    signal: "port 80 already bound",
+  },
+  {
+    id: "disk-full",
+    tier: "starter",
+    status: "critical",
+    signal: "/var at 100%",
+  },
+  {
+    id: "permission-denied",
+    tier: "pro",
+    status: "failing",
+    signal: "write path blocked",
+  },
+  {
+    id: "memory-leak",
+    tier: "pro",
+    status: "unstable",
+    signal: "RSS climbing",
+  },
+  {
+    id: "db-dead",
+    tier: "pro",
+    status: "offline",
+    signal: "database unreachable",
+  },
+  {
+    id: "api-timeout",
+    tier: "codex",
+    status: "degraded",
+    signal: "p95 latency high",
+  },
+];
+
 export default function HeroSection({
   onStart,
   onSeeHowItWorks,
   onLevelSelected,
   onRoutingReady,
+  onPreviewIncident,
   stats,
 }) {
   const [levelInput, setLevelInput] = useState("");
@@ -147,17 +187,37 @@ export default function HeroSection({
             </button>
           </div>
 
-          <div className="mt-8 border-t border-white/10 pt-8">
-            <p className="text-sm text-[#9DA7B3]">
-              Trusted by {formatTrustCount(stats.engineers)} engineers in {stats.countries}+ countries
+          <div className="mt-8 max-w-[580px]">
+            <div className="text-[12px] uppercase tracking-[0.18em] text-[#8B96A5]">
+              Active incidents
+            </div>
+            <p className="mt-2 text-sm text-[#9DA7B3]">
+              Choose your level. WinLab assigns the right outage.
             </p>
-          </div>
-
-          <div className="mt-8 grid max-w-[560px] grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatPill label="Engineers" value={formatTrustCount(stats.engineers)} />
-            <StatPill label="Countries" value={`${stats.countries}+`} />
-            <StatPill label="Labs" value={String(stats.labs)} />
-            <StatPill label="Rating" value={`${stats.avgRating}*`} />
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {HERO_INCIDENT_PREVIEWS.map((incident) => (
+                <button
+                  key={incident.id}
+                  type="button"
+                  onClick={() => onPreviewIncident?.(incident.id)}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left transition hover:border-white/20 hover:bg-white/[0.05]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="font-mono text-[12px] uppercase tracking-[0.12em] text-[#E6EDF3]">
+                      {incident.id}
+                    </div>
+                    <span className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-wide ${incidentChipClass(incident)}`}>
+                      {incident.tier}
+                    </span>
+                  </div>
+                  <div className="mt-3 text-xs text-[#8B96A5]">status: {incident.status}</div>
+                  <div className="mt-1 text-sm text-[#C5CED8]">signal: {incident.signal}</div>
+                </button>
+              ))}
+            </div>
+            <div className="mt-4 text-sm text-[#8B96A5]">
+              {Math.max(0, stats.labs - HERO_INCIDENT_PREVIEWS.length)} more labs
+            </div>
           </div>
         </div>
 
@@ -249,20 +309,6 @@ export default function HeroSection({
   );
 }
 
-function StatPill({ label, value }) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
-      <div className="text-[11px] uppercase tracking-wide text-[#9DA7B3]">{label}</div>
-      <div className="mt-1 text-sm font-medium text-[#E6EDF3]">{value}</div>
-    </div>
-  );
-}
-
-function formatTrustCount(value) {
-  if (typeof value !== "number") return String(value);
-  return `${value.toLocaleString("en-US")}+`;
-}
-
 function terminalLineClass(tone) {
   if (tone === "success" || tone === "ok") return "text-[#3FB950]";
   if (tone === "warning") return "text-[#D29922]";
@@ -271,4 +317,10 @@ function terminalLineClass(tone) {
   if (tone === "neutral") return "text-[#D1D5DB]";
   if (tone === "empty") return "h-3";
   return "text-[#9DA7B3]";
+}
+
+function incidentChipClass(incident) {
+  if (incident.tier === "starter") return "border-emerald-500/20 text-emerald-300";
+  if (incident.tier === "pro") return "border-amber-500/20 text-amber-300";
+  return "border-zinc-700 text-zinc-300";
 }

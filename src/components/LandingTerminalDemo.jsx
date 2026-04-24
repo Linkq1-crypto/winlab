@@ -16,6 +16,7 @@ const NEXT_CHECK_COMMANDS = [
 export default function LandingTerminalDemo({
   selectedLevel = "",
   connectionStage = "idle",
+  previewIncidentSlug = "",
   onSmallWin,
   gateLoading = false,
   gateError = "",
@@ -36,7 +37,7 @@ export default function LandingTerminalDemo({
 
   useEffect(() => {
     if (!track) {
-      setLines(buildWaitingLines());
+      setLines(buildWaitingLines(previewIncidentSlug));
       setInput("");
       setPhase("waiting_level");
       setResolved(false);
@@ -44,12 +45,12 @@ export default function LandingTerminalDemo({
       return;
     }
 
-    setLines(buildTrackLines(track));
+      setLines(buildTrackLines(track, previewIncidentSlug));
     setInput("");
     setPhase("waiting_connection");
     setResolved(false);
     setConnectionMarker("prepared");
-  }, [track]);
+  }, [previewIncidentSlug, track]);
 
   useEffect(() => {
     if (!track) return;
@@ -416,11 +417,16 @@ function FlowRow({ index, text }) {
   );
 }
 
-function buildWaitingLines() {
-  return ["Select a level in the hero terminal to build your first incident track."];
+function buildWaitingLines(previewIncidentSlug) {
+  const lines = ["Select a level in the hero terminal to build your first incident track."];
+  if (previewIncidentSlug) {
+    lines.push(`preview incident: ${previewIncidentSlug}`);
+  }
+  return lines;
 }
 
-function buildTrackLines(track) {
+function buildTrackLines(track, previewIncidentSlug) {
+  const selectedIncident = previewIncidentSlug || track.primaryLab?.slug || "pending";
   const lines = [
     "WINLAB INCIDENT ROUTER v1.0",
     "region: prod-eu-west-1",
@@ -428,7 +434,7 @@ function buildTrackLines(track) {
     "",
     `operator profile: ${track.level}`,
     `track: ${track.trackLabel}`,
-    `selected incident: ${track.primaryLab?.slug || "pending"}`,
+    `selected incident: ${selectedIncident}`,
     `difficulty: ${track.difficulty}`,
     `hints: ${track.hints}`,
     `AI mentor: ${track.aiMentor}`,
