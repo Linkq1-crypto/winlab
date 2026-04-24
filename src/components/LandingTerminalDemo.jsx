@@ -29,6 +29,7 @@ export default function LandingTerminalDemo({
   const [input, setInput] = useState("");
   const [phase, setPhase] = useState("pending");
   const [finchShown, setFinchShown] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const terminalRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -38,6 +39,7 @@ export default function LandingTerminalDemo({
       setPhase("pending");
       setInput("");
       setFinchShown(false);
+      setStreaming(false);
       return;
     }
 
@@ -79,17 +81,34 @@ export default function LandingTerminalDemo({
   }, [lines]);
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, [phase]);
+    if (!streaming) {
+      inputRef.current?.focus();
+    }
+  }, [phase, streaming]);
 
   function appendLines(nextLines) {
     setLines((prev) => [...prev, ...nextLines]);
   }
 
-  function runCommand(rawValue) {
+  async function streamLines(nextLines, delay = 170) {
+    setStreaming(true);
+    for (const line of nextLines) {
+      // Keep the terminal feeling sequential without adding loaders.
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => {
+        window.setTimeout(() => {
+          setLines((prev) => [...prev, line]);
+          resolve();
+        }, delay);
+      });
+    }
+    setStreaming(false);
+  }
+
+  async function runCommand(rawValue) {
     const trimmed = rawValue.trim();
     const command = normalizeCommand(trimmed);
-    if (!command) return;
+    if (!command || streaming) return;
 
     appendLines([`winlab@prod-server:~$ ${trimmed}`]);
 
@@ -115,6 +134,47 @@ export default function LandingTerminalDemo({
       appendLines(["[SYSTEM]: router standby", "[SYSTEM]: awaiting operator assignment"]);
       setInput("");
       return;
+    }
+
+    if (phase === "post_success" || phase === "awaiting_unlock") {
+      if (command === "winlab plans") {
+        await streamLines(buildPlansSequence());
+        setPhase("awaiting_unlock");
+        setInput("");
+        return;
+      }
+
+      if (command.startsWith("upgrade ")) {
+        const normalizedPlan = normalizeUpgradePlan(command.slice("upgrade ".length).trim());
+        if (!normalizedPlan) {
+          appendLines(['[ERROR]: type "upgrade starter", "upgrade early-access", "upgrade pro", or "upgrade lifetime"']);
+          setInput("");
+          return;
+        }
+
+        if (normalizedPlan === "starter") {
+          appendLines([
+            "[ACCESS]: starter status already available",
+            "[SYSTEM]: continue routing in free capacity",
+          ]);
+          setInput("");
+          return;
+        }
+
+        appendLines([
+          "[ACCESS]: upgrade trajectory initialized",
+          "[PAYMENT]: validating payment trajectory...",
+          "[PAYMENT]: probable outcome: successful enrollment",
+          "",
+          "+-------------------------------------------+",
+          "| VALIDATING PAYMENT TRAJECTORY...          |",
+          "| PROBABLE OUTCOME: SUCCESSFUL ENROLLMENT.  |",
+          "+-------------------------------------------+",
+        ]);
+        setInput("");
+        onUnlock?.(normalizedPlan);
+        return;
+      }
     }
 
     if (phase === "awaiting_start") {
@@ -170,6 +230,7 @@ export default function LandingTerminalDemo({
           "",
           'type "save" to create account',
           'type "continue" to proceed without saving',
+          'type "winlab plans" to inspect operator capacity',
         ]);
         setPhase("post_success");
         onSmallWin?.(selectedLab);
@@ -180,28 +241,28 @@ export default function LandingTerminalDemo({
 
     if (phase === "post_success") {
       if (command === "save") {
-        appendLines(buildAccessLines());
+        appendLines([
+          "[ACCESS]: additional incidents locked",
+          '[SYSTEM]: type "winlab plans" to inspect operator capacity.',
+        ]);
         setPhase("awaiting_unlock");
         onCreateAccount?.();
       } else if (command === "continue") {
         appendLines(["[ACCESS]: guest session acknowledged"]);
         onContinueGuest?.();
       } else {
-        appendLines(['[ERROR]: type "save" or "continue"']);
+        appendLines(['[ERROR]: type "save", "continue", or "winlab plans"']);
       }
       setInput("");
       return;
     }
 
     if (phase === "awaiting_unlock") {
-      if (command === "unlock") {
-        appendLines(["[ACCESS]: upgrade path selected"]);
-        onUnlock?.();
-      } else if (command === "continue") {
+      if (command === "continue") {
         appendLines(["[ACCESS]: guest session acknowledged"]);
         onContinueGuest?.();
       } else {
-        appendLines(['[ERROR]: type "unlock" or "continue"']);
+        appendLines(['[ERROR]: type "winlab plans", "upgrade <id>", or "continue"']);
       }
       setInput("");
       return;
@@ -242,9 +303,10 @@ export default function LandingTerminalDemo({
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder={placeholderForPhase(phase, selectedFile)}
-            className="flex-1 bg-transparent text-zinc-100 outline-none placeholder:text-zinc-600"
+            disabled={streaming}
+            className="flex-1 bg-transparent text-zinc-100 outline-none placeholder:text-zinc-600 disabled:text-zinc-500"
           />
-          <span className="animate-pulse text-zinc-500">_</span>
+          {!streaming ? <span className="animate-pulse text-zinc-500">_</span> : null}
         </form>
 
         {ghostHintForPhase(phase, selectedFile, slaSeconds) ? (
@@ -285,26 +347,32 @@ function buildReadyLines(track, selectedLab) {
   ];
 }
 
-function buildAccessLines() {
+function buildPlansSequence() {
   return [
-    "[ACCESS]: additional incidents locked",
-    "available incidents:",
-    "* disk-full",
-    "* permission-denied",
-    "* memory-leak",
-    "* db-dead",
-    "* api-timeout",
-    "+29 more",
+    "[SYSTEM]: Accessing encrypted billing_nodes...",
+    "[SYSTEM]: Connection established with Central Billing API.",
+    "[SYSTEM]: Formatting operator_matrix in EUR (€)...",
     "",
-    "[ACCESS]: restricted",
-    "plans:",
-    "starter: free",
-    "early-access: \u20ac5/month",
-    "pro: \u20ac19/month",
-    "lifetime: \u20ac199",
+    ".-------------------------------------------------------.",
+    "| PLAN ID                                                   | CAPACITY | MONTHLY COST    |",
+    "| --------------------------------------------------------- | -------- | --------------- |",
+    "| STARTER                                                   | 01 LABS  | € 0.00          |",
+    "| EARLY ACCESS                                              | 10 LABS  | € 5.00          |",
+    "| PRO                                                       | 34 LABS  | € 19.00         |",
+    "| LIFETIME                                                  | 34 LABS  | € 199.00 (ONCE) |",
+    "| '-------------------------------------------------------' |          |                 |",
     "",
-    'type "unlock" to continue',
+    "[INFO]: 34 production labs available for PRO/LIFETIME levels.",
+    "[PROMPT]: Type 'upgrade <id>' to promote your status.",
   ];
+}
+
+function normalizeUpgradePlan(planId) {
+  if (planId === "starter") return "starter";
+  if (planId === "early" || planId === "early-access") return "early-access";
+  if (planId === "pro") return "pro";
+  if (planId === "lifetime") return "lifetime";
+  return "";
 }
 
 function normalizeCommand(value) {
@@ -317,7 +385,7 @@ function placeholderForPhase(phase, selectedFile) {
   if (phase === "awaiting_check") return "hint: check or status";
   if (phase === "awaiting_fix") return "fix";
   if (phase === "post_success") return "save";
-  if (phase === "awaiting_unlock") return "unlock";
+  if (phase === "awaiting_unlock") return "winlab plans";
   if (phase === "breached") return "restart";
   return "";
 }
@@ -326,7 +394,7 @@ function ghostHintForPhase(phase, selectedFile, slaSeconds) {
   if (phase === "awaiting_start") return "[SUGGESTION]: type 'start'";
   if (phase === "waiting_file") return `[SUGGESTION]: click ${selectedFile || "incident_nginx.err"} in the file manager`;
   if (phase === "awaiting_check") return "[SUGGESTION]: type 'check' or 'status'";
-  if (phase === "awaiting_unlock") return `[ACCESS]: escalation window ${formatSlaSeconds(slaSeconds)}`;
+  if (phase === "awaiting_unlock") return `[ACCESS]: escalation window ${formatSlaSeconds(slaSeconds)} | type 'winlab plans'`;
   return "";
 }
 
@@ -341,16 +409,21 @@ function formatSlaSeconds(totalSeconds) {
 
 function lineClassName(line) {
   if (!line) return "h-4";
-  if (/^\[SUCCESS\]/.test(line) || /\[SYSTEM\]: traffic normalized|\[SYSTEM\]: incident closed/.test(line)) {
+  if (
+    /^\[SUCCESS\]/.test(line) ||
+    /\[SYSTEM\]: traffic normalized|\[SYSTEM\]: incident closed|^\[ACCESS\]: upgrade trajectory initialized|^\[PAYMENT\]: probable outcome/i.test(
+      line
+    )
+  ) {
     return "text-emerald-400";
   }
-  if (/^\[ERROR\]/.test(line) || /failed|unavailable|offline|degraded|bind\(\)/i.test(line)) {
+  if (/^\[ERROR\]/.test(line) || /failed|unavailable|offline|degraded|bind\(\)|VALIDATING PAYMENT TRAJECTORY/i.test(line)) {
     return "text-red-400";
   }
-  if (/^\[ACCESS\]|^\[AUTH\]|^\[TUTORIAL\]|^status: degraded|^impact:|^hints:|^AI mentor:|^type /i.test(line)) {
+  if (/^\[ACCESS\]|^\[AUTH\]|^\[TUTORIAL\]|^\[INFO\]|^\[PROMPT\]|^status: degraded|^impact:|^hints:|^AI mentor:|^type /i.test(line)) {
     return "text-amber-300";
   }
-  if (/^\[SYSTEM\]|^\[ROUTER\]|^\[INCIDENT\]|^\[WINLAB-AUTH\]|^connected to|^operator:|^incident:|^plans:|^\* |^\+29 more/i.test(line)) {
+  if (/^\[SYSTEM\]|^\[ROUTER\]|^\[INCIDENT\]|^\[WINLAB-AUTH\]|^connected to|^operator:|^incident:|^\||^\./i.test(line)) {
     return "text-zinc-400";
   }
   if (/^\[H\. FINCH\]/.test(line)) return "text-zinc-200";

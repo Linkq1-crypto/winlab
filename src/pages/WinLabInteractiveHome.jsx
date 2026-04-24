@@ -20,6 +20,8 @@ export default function WinLabInteractiveHome() {
   const [slaSeconds, setSlaSeconds] = useState(299);
   const [startingIncident, setStartingIncident] = useState(false);
   const [startError, setStartError] = useState("");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
   const track = useMemo(
     () => (selectedLevel ? getOnboardingTrack(selectedLevel) : null),
     [selectedLevel]
@@ -87,6 +89,32 @@ export default function WinLabInteractiveHome() {
     await startFullIncident(selectedLab);
   }
 
+  async function startCheckout(planId) {
+    setCheckoutLoading(true);
+    setCheckoutError("");
+
+    try {
+      const response = await fetch("/api/checkout/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ planId }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (response.ok && payload?.checkoutUrl) {
+        window.location.href = payload.checkoutUrl;
+        return;
+      }
+
+      throw new Error(payload?.error?.message || "Unable to initialize payment trajectory.");
+    } catch (error) {
+      setCheckoutError(error.message || "Unable to initialize payment trajectory.");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  }
+
   useEffect(() => {
     if (labStatus !== "active" || demoCompleted) return;
 
@@ -142,6 +170,7 @@ export default function WinLabInteractiveHome() {
                 setDemoCompleted(false);
                 setSlaSeconds(299);
                 setStartError("");
+                setCheckoutError("");
               }}
               onRoutingReady={() => {
                 setLabStatus("ready");
@@ -156,8 +185,8 @@ export default function WinLabInteractiveHome() {
               selectedFile={selectedFile}
               fileOpened={fileOpened}
               slaSeconds={slaSeconds}
-              gateLoading={startingIncident}
-              gateError={startError}
+              gateLoading={startingIncident || checkoutLoading}
+              gateError={startError || checkoutError}
               onLabStateChange={(nextStatus) => {
                 setLabStatus(nextStatus);
                 if (nextStatus === "active") {
@@ -173,9 +202,7 @@ export default function WinLabInteractiveHome() {
               }}
               onCreateAccount={handleAuthRequest}
               onContinueGuest={() => setStartError("")}
-              onUnlock={() => {
-                window.location.href = "/pricing";
-              }}
+              onUnlock={startCheckout}
             />
           </div>
 
