@@ -1,0 +1,10 @@
+{
+  "id": "raid-simulator",
+  "title": "RAID Simulator",
+  "tier": "pro",
+  "difficulty": "medium",
+  "duration": 20,
+  "tags": ["raid", "storage", "mdadm", "linux", "disk-recovery"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

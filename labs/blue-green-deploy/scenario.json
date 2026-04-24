@@ -1,0 +1,10 @@
+{
+  "id": "blue-green-deploy",
+  "title": "Blue Green Deploy",
+  "tier": "ops",
+  "difficulty": "medium",
+  "duration": 14,
+  "tags": ["deploy", "blue-green", "release"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

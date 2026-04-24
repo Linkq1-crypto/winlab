@@ -1,0 +1,10 @@
+{
+  "id": "ssl-certificate-renewal",
+  "title": "SSL Certificate Renewal",
+  "tier": "ops",
+  "difficulty": "medium",
+  "duration": 12,
+  "tags": ["ssl", "tls", "certbot"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

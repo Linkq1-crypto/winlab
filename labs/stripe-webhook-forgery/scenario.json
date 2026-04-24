@@ -1,0 +1,1 @@
+{"id":"stripe-webhook-forgery","title":"Stripe Webhook Forgery","tier":"codex","difficulty":"hard","duration":20,"tags":["stripe","webhook","security","signatures"],"type":"codex","status":"placeholder"}

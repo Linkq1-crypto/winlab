@@ -1,0 +1,10 @@
+{
+  "id": "disk-full",
+  "title": "Disk Full",
+  "tier": "starter",
+  "difficulty": "easy",
+  "duration": 8,
+  "tags": ["disk", "storage", "linux", "find"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

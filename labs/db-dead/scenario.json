@@ -1,0 +1,10 @@
+{
+  "id": "db-dead",
+  "title": "Database Dead",
+  "tier": "pro",
+  "difficulty": "hard",
+  "duration": 20,
+  "tags": ["database", "mysql", "postgresql", "recovery", "linux"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

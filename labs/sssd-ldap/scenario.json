@@ -1,0 +1,10 @@
+{
+  "id": "sssd-ldap",
+  "title": "SSSD LDAP",
+  "tier": "pro",
+  "difficulty": "hard",
+  "duration": 25,
+  "tags": ["sssd", "ldap", "active-directory", "authentication", "enterprise"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

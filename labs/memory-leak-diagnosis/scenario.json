@@ -1,0 +1,10 @@
+{
+  "id": "memory-leak-diagnosis",
+  "title": "Memory Leak Diagnosis",
+  "tier": "ops",
+  "difficulty": "medium",
+  "duration": 12,
+  "tags": ["memory", "performance", "diagnosis"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

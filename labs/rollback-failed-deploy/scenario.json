@@ -1,0 +1,10 @@
+{
+  "id": "rollback-failed-deploy",
+  "title": "Rollback Failed Deploy",
+  "tier": "ops",
+  "difficulty": "medium",
+  "duration": 15,
+  "tags": ["rollback", "deploy", "ops"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

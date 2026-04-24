@@ -1,0 +1,10 @@
+{
+  "id": "enhanced-terminal",
+  "title": "Enhanced Terminal",
+  "tier": "starter",
+  "difficulty": "easy",
+  "duration": 20,
+  "tags": ["linux", "apache", "disk", "security", "guided"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

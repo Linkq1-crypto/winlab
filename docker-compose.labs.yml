@@ -1,0 +1,10 @@
+services:
+  lab:
+    container_name: ${LAB_CONTAINER_NAME:-winlab-lab}
+    build:
+      context: .
+      dockerfile: docker/lab-runner/Dockerfile
+    environment:
+      LAB_ID: ${LAB_ID:-disk-full}
+    stdin_open: true
+    tty: true

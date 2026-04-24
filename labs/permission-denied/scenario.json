@@ -1,0 +1,10 @@
+{
+  "id": "permission-denied",
+  "title": "Permission Denied",
+  "tier": "pro",
+  "difficulty": "medium",
+  "duration": 10,
+  "tags": ["permissions", "chmod", "selinux", "acl", "linux"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

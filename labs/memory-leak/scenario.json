@@ -1,0 +1,10 @@
+{
+  "id": "memory-leak",
+  "title": "Memory Leak",
+  "tier": "pro",
+  "difficulty": "hard",
+  "duration": 15,
+  "tags": ["memory", "performance", "debug", "linux", "nodejs"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

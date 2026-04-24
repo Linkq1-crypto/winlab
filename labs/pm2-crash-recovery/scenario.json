@@ -1,0 +1,10 @@
+{
+  "id": "pm2-crash-recovery",
+  "title": "PM2 Crash Recovery",
+  "tier": "ops",
+  "difficulty": "medium",
+  "duration": 12,
+  "tags": ["pm2", "nodejs", "process-manager"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

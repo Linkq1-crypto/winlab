@@ -1,0 +1,10 @@
+{
+  "id": "nginx-reload",
+  "title": "Nginx Reload",
+  "tier": "ops",
+  "difficulty": "medium",
+  "duration": 10,
+  "tags": ["nginx", "reload", "config"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

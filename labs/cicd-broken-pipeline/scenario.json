@@ -1,0 +1,10 @@
+{
+  "id": "cicd-broken-pipeline",
+  "title": "CI CD Broken Pipeline",
+  "tier": "ops",
+  "difficulty": "medium",
+  "duration": 15,
+  "tags": ["ci", "cd", "pipeline", "secrets"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

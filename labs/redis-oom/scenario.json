@@ -1,0 +1,10 @@
+{
+  "id": "redis-oom",
+  "title": "Redis OOM",
+  "tier": "ops",
+  "difficulty": "hard",
+  "duration": 15,
+  "tags": ["redis", "oom", "cache"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

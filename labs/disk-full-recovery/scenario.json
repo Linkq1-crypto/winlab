@@ -1,0 +1,10 @@
+{
+  "id": "disk-full-recovery",
+  "title": "Disk Full Recovery",
+  "tier": "ops",
+  "difficulty": "medium",
+  "duration": 12,
+  "tags": ["disk", "storage", "recovery"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

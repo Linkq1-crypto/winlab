@@ -1,0 +1,10 @@
+{
+  "id": "deploy-new-version",
+  "title": "Deploy New Version",
+  "tier": "ops",
+  "difficulty": "medium",
+  "duration": 15,
+  "tags": ["deploy", "release", "ops"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

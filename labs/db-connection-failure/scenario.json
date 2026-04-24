@@ -1,0 +1,10 @@
+{
+  "id": "db-connection-failure",
+  "title": "DB Connection Failure",
+  "tier": "ops",
+  "difficulty": "medium",
+  "duration": 12,
+  "tags": ["database", "connectivity", "ops"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "nginx-port-conflict",
+  "title": "Nginx Port Conflict",
+  "tier": "starter",
+  "difficulty": "easy",
+  "duration": 6,
+  "tags": ["nginx", "port", "systemd", "linux"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

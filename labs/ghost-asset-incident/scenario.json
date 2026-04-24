@@ -1,0 +1,10 @@
+{
+  "id": "ghost-asset-incident",
+  "title": "Ghost Asset Incident",
+  "tier": "ops",
+  "difficulty": "medium",
+  "duration": 15,
+  "tags": ["assets", "cdn", "frontend"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

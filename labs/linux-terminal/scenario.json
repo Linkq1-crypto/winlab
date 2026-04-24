@@ -1,0 +1,10 @@
+{
+  "id": "linux-terminal",
+  "title": "Linux Terminal",
+  "tier": "starter",
+  "difficulty": "easy",
+  "duration": 15,
+  "tags": ["linux", "bash", "terminal", "basics", "filesystem"],
+  "type": "ubuntu",
+  "status": "runnable"
+}

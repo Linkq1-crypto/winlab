@@ -1,0 +1,10 @@
+{
+  "id": "env-var-update",
+  "title": "Environment Variable Update",
+  "tier": "ops",
+  "difficulty": "medium",
+  "duration": 10,
+  "tags": ["env", "config", "ops"],
+  "type": "ubuntu",
+  "status": "runnable"
+}
