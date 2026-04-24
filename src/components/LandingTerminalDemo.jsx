@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { getOnboardingTrack } from "../data/onboardingLabTracks";
 import { TerminalWindow } from "./HeroSection";
 
 const PORT_CHECK_OUTPUT = 'LISTEN 0.0.0.0:80 users:(("apache2",pid=2041))';
+const ASSIST_LEVELS = new Set(["Novice", "Junior"]);
 
 export default function LandingTerminalDemo({
   selectedLevel = "",
@@ -25,11 +27,13 @@ export default function LandingTerminalDemo({
     () => (selectedLevel ? getOnboardingTrack(selectedLevel) : null),
     [selectedLevel]
   );
+  const assistEnabled = ASSIST_LEVELS.has(selectedLevel);
   const [lines, setLines] = useState(() => buildPendingLines());
   const [input, setInput] = useState("");
   const [phase, setPhase] = useState("pending");
   const [finchShown, setFinchShown] = useState(false);
   const [streaming, setStreaming] = useState(false);
+  const [analysisActive, setAnalysisActive] = useState(false);
   const terminalRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -40,6 +44,7 @@ export default function LandingTerminalDemo({
       setInput("");
       setFinchShown(false);
       setStreaming(false);
+      setAnalysisActive(false);
       return;
     }
 
@@ -67,8 +72,8 @@ export default function LandingTerminalDemo({
     if (phase === "waiting_file" && fileOpened) {
       setLines((prev) => [
         ...prev,
-        '[H. FINCH]: The log says port 80 is already occupied by another service.',
-        '[H. FINCH]: We need to see who is responsible. Type "check".',
+        "[kernel-assistant]: port_collision detected. target_pid: 2041.",
+        '[kernel-assistant]: type "check" or click [CHECK_STATUS].',
       ]);
       onTrafficRecovering?.();
       setPhase("awaiting_check");
@@ -90,10 +95,19 @@ export default function LandingTerminalDemo({
     setLines((prev) => [...prev, ...nextLines]);
   }
 
-  async function streamLines(nextLines, delay = 170) {
+  async function withAnalysis(task, duration = 520) {
+    setAnalysisActive(true);
+    try {
+      await task();
+    } finally {
+      window.setTimeout(() => setAnalysisActive(false), duration);
+    }
+  }
+
+  async function streamLines(nextLines, delay = 90) {
     setStreaming(true);
     for (const line of nextLines) {
-      // Keep the terminal feeling sequential without adding loaders.
+      // Keep staggered amber output deterministic.
       // eslint-disable-next-line no-await-in-loop
       await new Promise((resolve) => {
         window.setTimeout(() => {
@@ -103,6 +117,15 @@ export default function LandingTerminalDemo({
       });
     }
     setStreaming(false);
+  }
+
+  function executeSuggestedCommand(command) {
+    if (!command || streaming) return;
+    setInput(command);
+    window.setTimeout(() => {
+      runCommand(command);
+      setInput("");
+    }, 40);
   }
 
   async function runCommand(rawValue) {
@@ -116,13 +139,9 @@ export default function LandingTerminalDemo({
       if (!finchShown) {
         appendLines([
           "[WINLAB-AUTH]: Identity confirmed.",
-          "",
-          '[H. FINCH]: "Eventually, everyone has a friend. If you don\'t have one, I\'ll be your friend. But I\'ll be a very, very quiet one."',
-          "",
+          '[H. FINCH]: "Eventually, everyone has a friend..."',
           "[SYSTEM]: Access granted to the Irrelevant List.",
-          "[SYSTEM]: Loading hidden incidents...",
-          "* shadow-incident-routing",
-          "* ghost-node-failure",
+          "[SYSTEM]: Loading hidden incidents: shadow-incident-routing, ghost-node-failure.",
         ]);
         setFinchShown(true);
       }
@@ -138,8 +157,16 @@ export default function LandingTerminalDemo({
 
     if (phase === "post_success" || phase === "awaiting_unlock") {
       if (command === "winlab plans") {
-        await streamLines(buildPlansSequence());
+        await withAnalysis(async () => {
+          await streamLines(buildPlansSequence(), 50);
+        }, 400);
         setPhase("awaiting_unlock");
+        setInput("");
+        return;
+      }
+
+      if (command === "upgrade") {
+        appendLines(["[PROMPT]: specify target with upgrade early-access | upgrade pro | upgrade lifetime"]);
         setInput("");
         return;
       }
@@ -161,16 +188,13 @@ export default function LandingTerminalDemo({
           return;
         }
 
-        appendLines([
-          "[ACCESS]: upgrade trajectory initialized",
-          "[PAYMENT]: validating payment trajectory...",
-          "[PAYMENT]: probable outcome: successful enrollment",
-          "",
-          "+-------------------------------------------+",
-          "| VALIDATING PAYMENT TRAJECTORY...          |",
-          "| PROBABLE OUTCOME: SUCCESSFUL ENROLLMENT.  |",
-          "+-------------------------------------------+",
-        ]);
+        await withAnalysis(async () => {
+          appendLines([
+            "[ACCESS]: upgrade trajectory initialized",
+            "[PAYMENT]: validating payment trajectory...",
+            "[PAYMENT]: probable outcome: successful enrollment",
+          ]);
+        }, 700);
         setInput("");
         onUnlock?.(normalizedPlan);
         return;
@@ -181,14 +205,15 @@ export default function LandingTerminalDemo({
       if (command !== "start") {
         appendLines(['[ERROR]: type "start"']);
       } else {
-        appendLines([
-          "attaching to node...",
-          "loading service state...",
-          "",
-          "[SYSTEM]: live incident attached",
-          "[SYSTEM]: Emergency detected in prod-eu-west-1.",
-          "[SYSTEM]: Click the highlighted file to analyze the error log.",
-        ]);
+        await withAnalysis(async () => {
+          appendLines([
+            "attaching to node...",
+            "loading service state...",
+            "[SYSTEM]: live incident attached",
+            "[SYSTEM]: Emergency detected in prod-eu-west-1.",
+            "[SYSTEM]: Click the highlighted file to analyze the error log.",
+          ]);
+        });
         onLabStateChange?.("active");
         setPhase("waiting_file");
       }
@@ -206,11 +231,13 @@ export default function LandingTerminalDemo({
       if (command !== "check" && command !== "status") {
         appendLines(['[ERROR]: type "check" or "status"']);
       } else {
-        appendLines([
-          PORT_CHECK_OUTPUT,
-          "[SYSTEM]: Identified conflict: apache (httpd) is blocking the web server.",
-          '[TUTORIAL]: To repair the system, write "fix" and press Enter.',
-        ]);
+        await withAnalysis(async () => {
+          appendLines([
+            PORT_CHECK_OUTPUT,
+            "[kernel-assistant]: port_collision confirmed. target_pid: 2041.",
+            '[kernel-assistant]: type "fix" or click [RESOLVE].',
+          ]);
+        });
         setPhase("awaiting_fix");
       }
       setInput("");
@@ -221,17 +248,18 @@ export default function LandingTerminalDemo({
       if (command !== "fix") {
         appendLines(['[ERROR]: type "fix"']);
       } else {
-        appendLines([
-          "[SUCCESS] SERVICE RESTORED",
-          "[SYSTEM]: traffic normalized",
-          "[SYSTEM]: incident closed",
-          "[SYSTEM]: progress not persisted",
-          "[SYSTEM]: credit this resolution to your profile?",
-          "",
-          'type "save" to create account',
-          'type "continue" to proceed without saving',
-          'type "winlab plans" to inspect operator capacity',
-        ]);
+        await withAnalysis(async () => {
+          appendLines([
+            "[SUCCESS] SERVICE RESTORED",
+            "[SYSTEM]: traffic normalized",
+            "[SYSTEM]: incident closed",
+            "[SYSTEM]: progress not persisted",
+            "[SYSTEM]: credit this resolution to your profile?",
+            'type "save" to create account',
+            'type "continue" to proceed without saving',
+            'type "winlab plans" to inspect operator capacity',
+          ]);
+        }, 820);
         setPhase("post_success");
         onSmallWin?.(selectedLab);
       }
@@ -284,39 +312,90 @@ export default function LandingTerminalDemo({
     runCommand(input);
   }
 
+  function handleKeyDown(event) {
+    if (event.key === "Tab" && assistEnabled) {
+      const suggestion = ghostSuggestion(phase, selectedFile, assistEnabled);
+      if (suggestion) {
+        event.preventDefault();
+        setInput(suggestion);
+      }
+    }
+  }
+
+  const ghostText = !input ? ghostSuggestion(phase, selectedFile, assistEnabled) : "";
+
   return (
-    <TerminalWindow title="live-lab-terminal" subtitle={`${routerStatus} | ${labStatus}`}>
+    <TerminalWindow
+      title="live-lab-terminal"
+      subtitle={`${routerStatus} | ${labStatus}`}
+      accent={analysisActive ? "red" : "amber"}
+      overlay={
+        <AnimatePresence>
+          {analysisActive ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="pointer-events-none absolute right-5 top-16 w-64 border border-[#ff0000] bg-black/90 p-3 font-mono text-[11px] uppercase tracking-[0.18em] text-[#ff3b3b]"
+              style={{ fontFamily: '"Courier New", "Lucida Console", monospace' }}
+            >
+              <div>Calculating data trajectory....</div>
+              <div className="mt-3 space-y-2 text-[10px] text-[#ff6b6b]">
+                <div>/\\/\\/\\/\\/\\/\\/\\/\\</div>
+                <div>&gt; vector: prod-eu-west-1</div>
+                <div>&gt; matrix: operator_shell</div>
+                <div>&gt; secure_bridge: active</div>
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      }
+    >
       <div
         ref={terminalRef}
-        className="h-full overflow-y-auto bg-[#05080d] p-5 font-mono text-[14px] leading-[1.65] text-zinc-200 md:text-[15px] lg:text-[16px] lg:leading-[1.75]"
+        className="h-full overflow-y-auto bg-black p-5 font-mono text-[14px] leading-[1.7] text-[#ffb000] md:text-[15px] lg:text-[16px]"
+        style={{ fontFamily: '"Courier New", "Lucida Console", monospace' }}
       >
         {lines.map((line, index) => (
-          <div key={`${index}-${line}`} className={lineClassName(line)}>
-            {line || <span>&nbsp;</span>}
-          </div>
+          <motion.div
+            key={`${index}-${line}`}
+            initial={{ opacity: 0, x: -4 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.12 }}
+            className={lineClassName(line)}
+          >
+            <InteractiveLine line={line} onCommand={executeSuggestedCommand} />
+          </motion.div>
         ))}
 
         <form onSubmit={handleSubmit} className="mt-3 flex items-center gap-3">
-          <span className="text-zinc-400">winlab@prod-server:~$</span>
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            placeholder={placeholderForPhase(phase, selectedFile)}
-            disabled={streaming}
-            className="flex-1 bg-transparent text-zinc-100 outline-none placeholder:text-zinc-600 disabled:text-zinc-500"
-          />
-          {!streaming ? <span className="animate-pulse text-zinc-500">_</span> : null}
+          <span className="text-[#ffb000]">winlab@prod-server:~$</span>
+          <div className="relative flex-1">
+            {ghostText ? (
+              <div className="pointer-events-none absolute inset-0 flex items-center text-[#5b3e00]">
+                {ghostText}
+              </div>
+            ) : null}
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={streaming}
+              className="relative w-full bg-transparent text-[#ffd36d] outline-none disabled:text-[#8f6b23]"
+            />
+          </div>
+          {!streaming ? <span className="animate-pulse text-[#ffb000]">_</span> : null}
         </form>
 
-        {ghostHintForPhase(phase, selectedFile, slaSeconds) ? (
-          <div className="mt-2 text-[13px] text-zinc-600">
-            {ghostHintForPhase(phase, selectedFile, slaSeconds)}
+        {phaseHint(phase, selectedFile, slaSeconds, assistEnabled) ? (
+          <div className="mt-2 text-[13px] text-[#8f6b23]">
+            {phaseHint(phase, selectedFile, slaSeconds, assistEnabled)}
           </div>
         ) : null}
 
-        {gateLoading ? <div className="mt-3 text-amber-300">[AUTH]: persistence request in progress</div> : null}
-        {gateError ? <div className="mt-3 text-red-400">[ERROR]: {gateError}</div> : null}
+        {gateLoading ? <div className="mt-3 text-[#ffb000]">[AUTH]: persistence request in progress</div> : null}
+        {gateError ? <div className="mt-3 text-[#ff3b3b]">[ERROR]: {gateError}</div> : null}
       </div>
     </TerminalWindow>
   );
@@ -351,19 +430,19 @@ function buildPlansSequence() {
   return [
     "[SYSTEM]: Accessing encrypted billing_nodes...",
     "[SYSTEM]: Connection established with Central Billing API.",
-    "[SYSTEM]: Formatting operator_matrix in EUR (€)...",
+    "[SYSTEM]: Formatting operator_matrix in EUR (\u20ac)...",
     "",
     ".-------------------------------------------------------.",
     "| PLAN ID                                                   | CAPACITY | MONTHLY COST    |",
     "| --------------------------------------------------------- | -------- | --------------- |",
-    "| STARTER                                                   | 01 LABS  | € 0.00          |",
-    "| EARLY ACCESS                                              | 10 LABS  | € 5.00          |",
-    "| PRO                                                       | 34 LABS  | € 19.00         |",
-    "| LIFETIME                                                  | 34 LABS  | € 199.00 (ONCE) |",
+    "| STARTER                                                   | 01 LABS  | \u20ac 0.00          |",
+    "| EARLY ACCESS                                              | 10 LABS  | \u20ac 5.00          |",
+    "| PRO OPERATOR                                              | 34 LABS  | \u20ac 19.00         |",
+    "| LIFETIME                                                  | 34 LABS  | \u20ac 199.00 (ONCE) |",
     "| '-------------------------------------------------------' |          |                 |",
     "",
     "[INFO]: 34 production labs available for PRO/LIFETIME levels.",
-    "[PROMPT]: Type 'upgrade <id>' to promote your status.",
+    "[PROMPT]: Type upgrade to initiate secure_bridge (Stripe integration).",
   ];
 }
 
@@ -379,10 +458,11 @@ function normalizeCommand(value) {
   return value.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-function placeholderForPhase(phase, selectedFile) {
+function ghostSuggestion(phase, selectedFile, assistEnabled) {
+  if (!assistEnabled) return "";
   if (phase === "awaiting_start") return "start";
   if (phase === "waiting_file") return `open ${selectedFile || "incident_nginx.err"}`;
-  if (phase === "awaiting_check") return "hint: check or status";
+  if (phase === "awaiting_check") return "check";
   if (phase === "awaiting_fix") return "fix";
   if (phase === "post_success") return "save";
   if (phase === "awaiting_unlock") return "winlab plans";
@@ -390,10 +470,9 @@ function placeholderForPhase(phase, selectedFile) {
   return "";
 }
 
-function ghostHintForPhase(phase, selectedFile, slaSeconds) {
-  if (phase === "awaiting_start") return "[SUGGESTION]: type 'start'";
-  if (phase === "waiting_file") return `[SUGGESTION]: click ${selectedFile || "incident_nginx.err"} in the file manager`;
-  if (phase === "awaiting_check") return "[SUGGESTION]: type 'check' or 'status'";
+function phaseHint(phase, selectedFile, slaSeconds, assistEnabled) {
+  if (!assistEnabled && phase !== "awaiting_unlock") return "";
+  if (phase === "waiting_file") return `[kernel-assistant]: open ${selectedFile || "incident_nginx.err"} to inspect port collision`;
   if (phase === "awaiting_unlock") return `[ACCESS]: escalation window ${formatSlaSeconds(slaSeconds)} | type 'winlab plans'`;
   return "";
 }
@@ -407,26 +486,70 @@ function formatSlaSeconds(totalSeconds) {
   return `${minutes}:${seconds}`;
 }
 
+function InteractiveLine({ line, onCommand }) {
+  const tokens = [];
+  const regex = /"([^"]+)"|\[([A-Z_]+)\]/g;
+  let lastIndex = 0;
+  let match = regex.exec(line);
+
+  while (match) {
+    if (match.index > lastIndex) {
+      tokens.push({ type: "text", value: line.slice(lastIndex, match.index) });
+    }
+
+    const quoted = match[1];
+    const bracketed = match[2];
+    const command = quoted || bracketToCommand(bracketed);
+    tokens.push({ type: "command", label: quoted ? `"${quoted}"` : `[${bracketed}]`, command });
+    lastIndex = regex.lastIndex;
+    match = regex.exec(line);
+  }
+
+  if (lastIndex < line.length) {
+    tokens.push({ type: "text", value: line.slice(lastIndex) });
+  }
+
+  if (!tokens.some((token) => token.type === "command")) {
+    return line || <span>&nbsp;</span>;
+  }
+
+  return tokens.map((token, index) =>
+    token.type === "command" ? (
+      <button
+        key={`${token.label}-${index}`}
+        type="button"
+        onClick={() => onCommand(token.command)}
+        className="mx-0.5 border border-[#ffb000]/30 px-1 text-[#ffd36d] hover:border-[#ffb000] hover:bg-[#1b1200]"
+      >
+        {token.label}
+      </button>
+    ) : (
+      <React.Fragment key={`${token.value}-${index}`}>{token.value}</React.Fragment>
+    )
+  );
+}
+
+function bracketToCommand(value) {
+  if (value === "CHECK_STATUS") return "status";
+  if (value === "RESOLVE") return "fix";
+  return value.toLowerCase();
+}
+
 function lineClassName(line) {
   if (!line) return "h-4";
-  if (
-    /^\[SUCCESS\]/.test(line) ||
-    /\[SYSTEM\]: traffic normalized|\[SYSTEM\]: incident closed|^\[ACCESS\]: upgrade trajectory initialized|^\[PAYMENT\]: probable outcome/i.test(
-      line
-    )
-  ) {
-    return "text-emerald-400";
+  if (/^\[SUCCESS\]/.test(line) || /\[SYSTEM\]: traffic normalized|\[SYSTEM\]: incident closed/.test(line)) {
+    return "text-[#ffd36d]";
   }
-  if (/^\[ERROR\]/.test(line) || /failed|unavailable|offline|degraded|bind\(\)|VALIDATING PAYMENT TRAJECTORY/i.test(line)) {
-    return "text-red-400";
+  if (/^\[ERROR\]/.test(line) || /failed|offline|degraded|bind\(\)|trajectory/i.test(line)) {
+    return "text-[#ff3b3b]";
   }
-  if (/^\[ACCESS\]|^\[AUTH\]|^\[TUTORIAL\]|^\[INFO\]|^\[PROMPT\]|^status: degraded|^impact:|^hints:|^AI mentor:|^type /i.test(line)) {
-    return "text-amber-300";
+  if (/^\[kernel-assistant\]|^\[INFO\]|^\[PROMPT\]|^hints:|^AI mentor:/i.test(line)) {
+    return "text-[#d3961a]";
   }
-  if (/^\[SYSTEM\]|^\[ROUTER\]|^\[INCIDENT\]|^\[WINLAB-AUTH\]|^connected to|^operator:|^incident:|^\||^\./i.test(line)) {
-    return "text-zinc-400";
+  if (/^\[SYSTEM\]|^\[ACCESS\]|^\[PAYMENT\]|^connected to|^operator:|^incident:|^\||^\./i.test(line)) {
+    return "text-[#ffb000]";
   }
-  if (/^\[H\. FINCH\]/.test(line)) return "text-zinc-200";
-  if (/^winlab@prod-server:~\$|^\$ /.test(line)) return "text-zinc-100";
-  return "text-zinc-300";
+  if (/^\[H\. FINCH\]/.test(line)) return "text-[#ffe1a3]";
+  if (/^winlab@prod-server:~\$/.test(line)) return "text-[#ffd36d]";
+  return "text-[#ffb000]";
 }
