@@ -32,6 +32,7 @@ export default function LandingTerminalDemo({
   const [phase, setPhase] = useState("waiting_level");
   const [resolved, setResolved] = useState(false);
   const [connectionMarker, setConnectionMarker] = useState("idle");
+  const [portCleared, setPortCleared] = useState(false);
   const terminalRef = useRef(null);
   const commandInputRef = useRef(null);
 
@@ -42,6 +43,7 @@ export default function LandingTerminalDemo({
       setPhase("waiting_level");
       setResolved(false);
       setConnectionMarker("idle");
+      setPortCleared(false);
       return;
     }
 
@@ -50,6 +52,7 @@ export default function LandingTerminalDemo({
     setPhase("waiting_connection");
     setResolved(false);
     setConnectionMarker("prepared");
+    setPortCleared(false);
   }, [previewIncidentSlug, track]);
 
   useEffect(() => {
@@ -121,6 +124,7 @@ export default function LandingTerminalDemo({
 
       appendLines(buildDemoStartLines(track.level));
       setPhase(track.level === "Novice" || track.level === "Junior" ? "awaiting_check" : "awaiting_resolution");
+      setPortCleared(false);
       setInput("");
       return;
     }
@@ -129,7 +133,8 @@ export default function LandingTerminalDemo({
       if (NEXT_CHECK_COMMANDS.some((candidate) => normalizeCommand(candidate) === normalizeCommand(command))) {
         appendLines([
           'LISTEN 0.0.0.0:80 users:(("apache2",pid=2041))',
-          "What should you fix next?",
+          "apache2 is occupying port 80.",
+          "Stop the conflicting process before restarting nginx.",
         ]);
         setPhase("awaiting_fix");
       } else {
@@ -140,14 +145,52 @@ export default function LandingTerminalDemo({
     }
 
     if (phase === "awaiting_fix") {
-      if (NOVICE_FIX_COMMANDS.some((candidate) => normalizeCommand(candidate) === normalizeCommand(command))) {
+      const normalized = normalizeCommand(command);
+
+      if (normalized === normalizeCommand("systemctl stop apache2")) {
+        appendLines([
+          "Stopping apache2.service...",
+          "[ok] apache2 stopped",
+          "[ok] port 80 released",
+          "Now restart nginx.",
+        ]);
+        setPortCleared(true);
+        setInput("");
+        return;
+      }
+
+      if (normalized === normalizeCommand("kill 2041")) {
+        appendLines([
+          "SIGTERM sent to pid 2041",
+          "[ok] conflicting process terminated",
+          "[ok] port 80 released",
+          "Now restart nginx.",
+        ]);
+        setPortCleared(true);
+        setInput("");
+        return;
+      }
+
+      if (normalized === normalizeCommand("systemctl restart nginx")) {
+        if (!portCleared) {
+          appendLines([
+            "Job for nginx.service failed because the control process exited with error code.",
+            "bind() to 0.0.0.0:80 failed (98: Address already in use)",
+            '[hint] apache2 is still holding port 80. Stop it first.',
+          ]);
+          setInput("");
+          return;
+        }
+
         appendLines(buildResolvedLines(track.level));
         setResolved(true);
         setPhase("resolved");
         onSmallWin?.(track.primaryLab?.slug || "nginx-port-conflict");
-      } else {
-        appendLines(['[hint] Stop the process that already owns port 80, then restart nginx.']);
+        setInput("");
+        return;
       }
+
+      appendLines(['[hint] Stop the process that already owns port 80, then restart nginx.']);
       setInput("");
       return;
     }
