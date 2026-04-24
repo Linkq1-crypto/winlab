@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getOnboardingTrack } from "../data/onboardingLabTracks";
 
 const LEVEL_MAP = {
@@ -89,9 +89,10 @@ export default function HeroSection({
 }) {
   const [levelInput, setLevelInput] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("");
-  const [terminalLines, setTerminalLines] = useState(BASE_TERMINAL_LINES);
-  const [selectionError, setSelectionError] = useState("");
+  const [terminalLines, setTerminalLines] = useState([]);
+  const [bootComplete, setBootComplete] = useState(false);
   const terminalBodyRef = useRef(null);
+  const inputRef = useRef(null);
   const timersRef = useRef([]);
 
   useEffect(() => {
@@ -102,15 +103,37 @@ export default function HeroSection({
   }, [terminalLines]);
 
   useEffect(() => {
+    let index = 0;
+    setTerminalLines([]);
+    setBootComplete(false);
+
+    function pushNextLine() {
+      setTerminalLines((prev) => [...prev, BASE_TERMINAL_LINES[index]]);
+      index += 1;
+
+      if (index >= BASE_TERMINAL_LINES.length) {
+        setBootComplete(true);
+        return;
+      }
+
+      const timerId = window.setTimeout(pushNextLine, index < 4 ? 80 : 120);
+      timersRef.current.push(timerId);
+    }
+
+    const initialTimer = window.setTimeout(pushNextLine, 90);
+    timersRef.current.push(initialTimer);
+
     return () => {
       timersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+      timersRef.current = [];
     };
   }, []);
 
-  const levelPlaceholder = useMemo(() => {
-    if (selectedLevel) return "";
-    return "";
-  }, [selectedLevel]);
+  useEffect(() => {
+    if (bootComplete && !selectedLevel) {
+      inputRef.current?.focus();
+    }
+  }, [bootComplete, selectedLevel]);
 
   function resolveLevel(rawValue) {
     const normalized = rawValue.trim().toLowerCase();
@@ -123,10 +146,17 @@ export default function HeroSection({
 
   function applyLevelSelection(rawValue) {
     const level = resolveLevel(rawValue);
-    if (!level || selectedLevel) {
-      if (!level) {
-        setSelectionError("invalid operator class");
-      }
+    if (selectedLevel) {
+      return;
+    }
+
+    if (!level) {
+      setTerminalLines((prev) => [
+        ...prev,
+        { tone: "prompt", text: `$ ${rawValue.trim()}` },
+        { tone: "danger", text: "ERROR: invalid operator class" },
+      ]);
+      setLevelInput("");
       return;
     }
 
@@ -134,9 +164,8 @@ export default function HeroSection({
     timersRef.current.forEach((timerId) => window.clearTimeout(timerId));
     timersRef.current = [];
 
-    setSelectionError("");
     setSelectedLevel(level);
-    setLevelInput(level);
+    setLevelInput("");
     appendLine("prompt", `$ ${rawValue.trim()}`);
     onLevelSelected?.(level);
 
@@ -232,58 +261,51 @@ export default function HeroSection({
 
           <div className="flex h-full min-h-[520px]">
             <div className="flex h-[520px] w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0F141B] md:h-[560px] lg:h-full lg:min-h-[640px]">
-            <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-5 py-3.5">
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-[#F85149]" />
-                <span className="h-3 w-3 rounded-full bg-[#D29922]" />
-                <span className="h-3 w-3 rounded-full bg-[#3FB950]" />
+              <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-5 py-3.5">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-[#F85149]" />
+                  <span className="h-3 w-3 rounded-full bg-[#D29922]" />
+                  <span className="h-3 w-3 rounded-full bg-[#3FB950]" />
+                </div>
+
+                <div className="flex items-center gap-2 text-[13px] text-[#9DA7B3]">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[#3FB950]">
+                    <span className="h-2 w-2 rounded-full bg-[#3FB950]" />
+                    live
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[#D29922]">
+                    degraded
+                  </span>
+                  <span className="hidden rounded-full border border-white/10 bg-black/20 px-2.5 py-1 sm:inline-flex">
+                    prod-eu-west-1
+                  </span>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 text-[13px] text-[#9DA7B3]">
-                <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[#3FB950]">
-                  <span className="h-2 w-2 rounded-full bg-[#3FB950]" />
-                  live
-                </span>
-                <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[#D29922]">
-                  degraded
-                </span>
-                <span className="hidden rounded-full border border-white/10 bg-black/20 px-2.5 py-1 sm:inline-flex">
-                  prod-eu-west-1
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-1 flex-col bg-[#0B0F14] p-7">
               <div
                 ref={terminalBodyRef}
-                className="flex-1 overflow-y-auto pr-2 font-mono text-[14px] leading-[1.6] text-[#E6EDF3] md:text-[15px] md:leading-[1.68] lg:text-[16px] lg:leading-[1.75]"
+                className="flex-1 overflow-y-auto bg-[#0B0F14] p-7 pr-5 font-mono text-[14px] leading-[1.6] text-[#E6EDF3] md:text-[15px] md:leading-[1.68] lg:text-[16px] lg:leading-[1.75]"
               >
                 {terminalLines.map((line, index) => (
                   <div key={`${index}-${line.text}`} className={terminalLineClass(line.tone)}>
                     {line.text || <span>&nbsp;</span>}
                   </div>
                 ))}
-              </div>
 
-              <div className="mt-6 border-t border-white/10 pt-5">
-                <form onSubmit={handleLevelSubmit} className="flex items-center gap-3">
+                <form onSubmit={handleLevelSubmit} className="mt-3 flex items-center gap-3">
                   <span className="font-mono text-[16px] leading-none text-[#9DA7B3]">$</span>
                   <input
+                    ref={inputRef}
                     value={levelInput}
                     onChange={(event) => setLevelInput(event.target.value)}
-                    disabled={Boolean(selectedLevel)}
-                    placeholder={levelPlaceholder}
+                    disabled={!bootComplete || Boolean(selectedLevel)}
                     className="flex-1 bg-transparent font-mono text-[14px] leading-[1.6] text-[#E6EDF3] outline-none placeholder:text-[#6B7280] md:text-[15px] md:leading-[1.68] lg:text-[16px] lg:leading-[1.75]"
                   />
+                  {!selectedLevel ? <span className="inline-block animate-pulse text-[#9DA7B3]">_</span> : null}
                 </form>
-
-                {selectionError ? (
-                  <div className="mt-3 animate-pulse text-sm text-[#F85149]">{selectionError}</div>
-                ) : null}
               </div>
             </div>
           </div>
-        </div>
         </div>
       </div>
     </section>
