@@ -11,6 +11,7 @@ export default function LandingTerminalDemo({
   routerStatus = "awaiting_operator",
   selectedFile = "",
   fileOpened = false,
+  slaSeconds = 299,
   gateLoading = false,
   gateError = "",
   onLabStateChange,
@@ -43,6 +44,19 @@ export default function LandingTerminalDemo({
     if (labStatus === "ready") {
       setLines(buildReadyLines(track, selectedLab));
       setPhase("awaiting_start");
+      setInput("");
+      return;
+    }
+
+    if (labStatus === "breached") {
+      setLines((prev) => [
+        ...prev,
+        "",
+        "[ERROR]: SLA breached",
+        "[SYSTEM]: customer traffic remained unavailable",
+        '[SYSTEM]: session terminated. Type "restart" to retry.',
+      ]);
+      setPhase("breached");
       setInput("");
     }
   }, [track, labStatus, selectedLab]);
@@ -129,8 +143,8 @@ export default function LandingTerminalDemo({
     }
 
     if (phase === "awaiting_check") {
-      if (command !== "check") {
-        appendLines(['[ERROR]: type "check"']);
+      if (command !== "check" && command !== "status") {
+        appendLines(['[ERROR]: type "check" or "status"']);
       } else {
         appendLines([
           PORT_CHECK_OUTPUT,
@@ -152,6 +166,7 @@ export default function LandingTerminalDemo({
           "[SYSTEM]: traffic normalized",
           "[SYSTEM]: incident closed",
           "[SYSTEM]: progress not persisted",
+          "[SYSTEM]: credit this resolution to your profile?",
           "",
           'type "save" to create account',
           'type "continue" to proceed without saving',
@@ -189,6 +204,17 @@ export default function LandingTerminalDemo({
         appendLines(['[ERROR]: type "unlock" or "continue"']);
       }
       setInput("");
+      return;
+    }
+
+    if (phase === "breached") {
+      if (command === "restart") {
+        setLines(buildReadyLines(track, selectedLab));
+        setPhase("awaiting_start");
+      } else {
+        appendLines(['[ERROR]: type "restart"']);
+      }
+      setInput("");
     }
   }
 
@@ -220,6 +246,12 @@ export default function LandingTerminalDemo({
           />
           <span className="animate-pulse text-zinc-500">_</span>
         </form>
+
+        {ghostHintForPhase(phase, selectedFile, slaSeconds) ? (
+          <div className="mt-2 text-[13px] text-zinc-600">
+            {ghostHintForPhase(phase, selectedFile, slaSeconds)}
+          </div>
+        ) : null}
 
         {gateLoading ? <div className="mt-3 text-amber-300">[AUTH]: persistence request in progress</div> : null}
         {gateError ? <div className="mt-3 text-red-400">[ERROR]: {gateError}</div> : null}
@@ -282,11 +314,29 @@ function normalizeCommand(value) {
 function placeholderForPhase(phase, selectedFile) {
   if (phase === "awaiting_start") return "start";
   if (phase === "waiting_file") return `open ${selectedFile || "incident_nginx.err"}`;
-  if (phase === "awaiting_check") return "check";
+  if (phase === "awaiting_check") return "hint: check or status";
   if (phase === "awaiting_fix") return "fix";
   if (phase === "post_success") return "save";
   if (phase === "awaiting_unlock") return "unlock";
+  if (phase === "breached") return "restart";
   return "";
+}
+
+function ghostHintForPhase(phase, selectedFile, slaSeconds) {
+  if (phase === "awaiting_start") return "[SUGGESTION]: type 'start'";
+  if (phase === "waiting_file") return `[SUGGESTION]: click ${selectedFile || "incident_nginx.err"} in the file manager`;
+  if (phase === "awaiting_check") return "[SUGGESTION]: type 'check' or 'status'";
+  if (phase === "awaiting_unlock") return `[ACCESS]: escalation window ${formatSlaSeconds(slaSeconds)}`;
+  return "";
+}
+
+function formatSlaSeconds(totalSeconds) {
+  const safeSeconds = Math.max(totalSeconds, 0);
+  const minutes = Math.floor(safeSeconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = (safeSeconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${seconds}`;
 }
 
 function lineClassName(line) {

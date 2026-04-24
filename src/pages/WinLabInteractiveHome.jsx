@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import AuthFlow from "../components/AuthFlow";
 import HeroSection, { TerminalWindow } from "../components/HeroSection";
 import LandingTerminalDemo from "../components/LandingTerminalDemo";
@@ -17,6 +17,7 @@ export default function WinLabInteractiveHome() {
   const [fileOpened, setFileOpened] = useState(false);
   const [trafficState, setTrafficState] = useState("down");
   const [demoCompleted, setDemoCompleted] = useState(false);
+  const [slaSeconds, setSlaSeconds] = useState(299);
   const [startingIncident, setStartingIncident] = useState(false);
   const [startError, setStartError] = useState("");
   const track = useMemo(
@@ -86,12 +87,30 @@ export default function WinLabInteractiveHome() {
     await startFullIncident(selectedLab);
   }
 
+  useEffect(() => {
+    if (labStatus !== "active" || demoCompleted) return;
+
+    const timerId = window.setInterval(() => {
+      setSlaSeconds((current) => {
+        if (current <= 1) {
+          window.clearInterval(timerId);
+          setLabStatus("breached");
+          setTrafficState("down");
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timerId);
+  }, [demoCompleted, labStatus]);
+
   return (
     <div className="h-screen overflow-hidden bg-[#06090d] text-white">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(239,68,68,0.10),transparent_30%)]" />
 
       <div className="relative flex h-full flex-col">
-        <TopSystemBar routerStatus={routerStatus} labStatus={labStatus} />
+        <TopSystemBar routerStatus={routerStatus} labStatus={labStatus} slaSeconds={slaSeconds} />
 
         <div className="grid flex-1 gap-4 overflow-hidden px-4 py-4 lg:grid-cols-[260px_1.1fr_0.72fr]">
           <div className="grid gap-4 overflow-hidden">
@@ -121,6 +140,7 @@ export default function WinLabInteractiveHome() {
                 setFileOpened(false);
                 setTrafficState("down");
                 setDemoCompleted(false);
+                setSlaSeconds(299);
                 setStartError("");
               }}
               onRoutingReady={() => {
@@ -135,9 +155,16 @@ export default function WinLabInteractiveHome() {
               labStatus={labStatus}
               selectedFile={selectedFile}
               fileOpened={fileOpened}
+              slaSeconds={slaSeconds}
               gateLoading={startingIncident}
               gateError={startError}
-              onLabStateChange={setLabStatus}
+              onLabStateChange={(nextStatus) => {
+                setLabStatus(nextStatus);
+                if (nextStatus === "active") {
+                  setSlaSeconds(299);
+                  setTrafficState("down");
+                }
+              }}
               onTrafficRecovering={() => setTrafficState("recovering")}
               onSmallWin={() => {
                 setDemoCompleted(true);
@@ -153,7 +180,7 @@ export default function WinLabInteractiveHome() {
           </div>
 
           <div className="grid gap-4 overflow-hidden lg:grid-rows-[0.56fr_0.44fr]">
-            <TrafficMonitorPanel trafficState={trafficState} />
+            <TrafficMonitorPanel trafficState={trafficState} slaSeconds={slaSeconds} />
             <PreviewPane fileOpened={fileOpened} selectedFile={selectedFile} />
           </div>
         </div>
@@ -184,13 +211,16 @@ export default function WinLabInteractiveHome() {
   );
 }
 
-function TopSystemBar({ routerStatus, labStatus }) {
+function TopSystemBar({ routerStatus, labStatus, slaSeconds }) {
   return (
     <div className="flex h-10 items-center justify-between border-b border-zinc-800 bg-[#0b0f14] px-4 font-mono text-[12px] text-zinc-400">
       <div>winlab-os :: prod-eu-west-1</div>
       <div className="flex items-center gap-4">
         <span>router={routerStatus}</span>
         <span>lab={labStatus}</span>
+        <span className={slaSeconds <= 60 ? "text-red-400" : "text-amber-300"}>
+          sla={formatSla(slaSeconds)}
+        </span>
         <span>uptime=00:03:17</span>
       </div>
     </div>
@@ -261,39 +291,77 @@ function IncidentCatalogPanel({ selectedLab, track }) {
   );
 }
 
-function TrafficMonitorPanel({ trafficState }) {
-  const bars =
+function TrafficMonitorPanel({ trafficState, slaSeconds }) {
+  const requests =
     trafficState === "stable"
-      ? [22, 31, 38, 47, 59, 72, 78, 81]
+      ? [18, 24, 31, 46, 58, 69, 77, 82]
       : trafficState === "recovering"
-        ? [10, 14, 18, 22, 31, 42, 51, 58]
-        : [64, 52, 41, 28, 18, 12, 8, 5];
+        ? [10, 12, 16, 22, 31, 46, 57, 66]
+        : [74, 68, 52, 34, 22, 16, 12, 9];
+
+  const errors =
+    trafficState === "stable"
+      ? [46, 30, 20, 12, 8, 5, 3, 2]
+      : trafficState === "recovering"
+        ? [98, 96, 88, 73, 56, 38, 24, 12]
+        : [92, 94, 97, 99, 100, 100, 100, 100];
 
   return (
     <TerminalWindow title="traffic-monitor" subtitle="public edge / 5m">
       <div className="flex h-full flex-col bg-[#05080d] p-4">
-        <div className="mb-4 font-mono text-[13px] text-zinc-500">
-          status={trafficState === "stable" ? "normalized" : trafficState === "recovering" ? "recovering" : "degraded"}
+        <div className="mb-4 flex items-center justify-between font-mono text-[13px] text-zinc-500">
+          <div>
+            status={trafficState === "stable" ? "normalized" : trafficState === "recovering" ? "recovering" : "degraded"}
+          </div>
+          <div className={slaSeconds <= 60 ? "text-red-400" : "text-amber-300"}>
+            SLA BREACH IN: {formatSla(slaSeconds)}
+          </div>
         </div>
-        <div className="flex flex-1 items-end gap-2">
-          {bars.map((bar, index) => (
-            <div key={`${index}-${bar}`} className="flex flex-1 items-end">
-              <div
-                className={`w-full rounded-t-md ${
-                  trafficState === "stable"
-                    ? "bg-blue-500"
-                    : trafficState === "recovering"
-                      ? "bg-cyan-500"
-                      : "bg-red-500"
-                }`}
-                style={{ height: `${bar}%` }}
-              />
-            </div>
-          ))}
+        <div className="mb-3 flex items-center gap-4 font-mono text-[12px] text-zinc-500">
+          <span className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
+            requests
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+            errors
+          </span>
         </div>
+        <TrafficChart requests={requests} errors={errors} />
       </div>
     </TerminalWindow>
   );
+}
+
+function TrafficChart({ requests, errors }) {
+  const width = 360;
+  const height = 170;
+  const requestPath = buildChartPath(requests, width, height);
+  const errorPath = buildChartPath(errors, width, height);
+
+  return (
+    <div className="relative flex-1 overflow-hidden rounded-xl border border-zinc-800 bg-[#071019]">
+      <div className="absolute inset-0 grid grid-rows-4 opacity-40">
+        {[0, 1, 2, 3].map((row) => (
+          <div key={row} className="border-b border-zinc-800/70" />
+        ))}
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} className="relative h-full w-full">
+        <path d={errorPath} fill="none" stroke="#f87171" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={requestPath} fill="none" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+function buildChartPath(points, width, height) {
+  return points
+    .map((value, index) => {
+      const x = (index / (points.length - 1)) * width;
+      const y = height - (value / 100) * height;
+      return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
+    })
+    .join(" ");
 }
 
 function PreviewPane({ fileOpened, selectedFile }) {
@@ -330,4 +398,13 @@ function DockBar({ selectedLevel, selectedLab, fileOpened }) {
       </div>
     </div>
   );
+}
+
+function formatSla(totalSeconds) {
+  const safeSeconds = Math.max(totalSeconds, 0);
+  const minutes = Math.floor(safeSeconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = (safeSeconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${seconds}`;
 }
