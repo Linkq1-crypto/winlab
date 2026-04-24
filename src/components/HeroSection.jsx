@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { getOnboardingTrack } from "../data/onboardingLabTracks";
 
 const LEVEL_MAP = {
   "1": "Novice",
@@ -29,29 +30,13 @@ const BASE_TERMINAL_LINES = [
   { tone: "muted", text: "1 novice 2 junior 3 mid 4 senior 5 sre" },
 ];
 
-const LEFT_PANEL_LINES = [
-  "[SYSTEM]: production fabric unstable",
-  "[INCIDENT]: public edge degraded",
-  "[ACCESS]: operator session ephemeral",
-  "[AUTH]: persistence offline until incident closure",
-  "",
-  "[ROUTER]: queued incidents",
-  "[INCIDENT]: nginx-port-conflict",
-  "[INCIDENT]: disk-full",
-  "[INCIDENT]: permission-denied",
-  "[INCIDENT]: memory-leak",
-  "[INCIDENT]: db-dead",
-  "[INCIDENT]: api-timeout",
-  "[ACCESS]: +29 additional incidents restricted",
-];
-
 const ROUTING_TIMELINE_MS = [
-  { delay: 100, text: "operator assigned: {LEVEL}", tone: "success" },
-  { delay: 300, text: "routing incident...", tone: "muted" },
-  { delay: 520, text: "[OK] difficulty calibrated", tone: "ok" },
-  { delay: 720, text: "[OK] incident profile: nginx-port-conflict", tone: "ok" },
-  { delay: 920, text: "[OK] environment ready", tone: "ok" },
-  { delay: 1100, text: "handoff → calibrated terminal", tone: "muted" },
+  { delay: 100, step: "assigned" },
+  { delay: 300, step: "routing" },
+  { delay: 520, step: "difficulty" },
+  { delay: 720, step: "profile" },
+  { delay: 920, step: "ready" },
+  { delay: 1100, step: "handoff" },
 ];
 
 export default function HeroSection({ onLevelSelected, onRoutingReady }) {
@@ -115,10 +100,9 @@ export default function HeroSection({ onLevelSelected, onRoutingReady }) {
     if (selectedLevel) return;
 
     const rawValue = levelInput.trim();
-    const level = resolveLevel(rawValue);
-
     if (!rawValue) return;
 
+    const level = resolveLevel(rawValue);
     if (!level) {
       setRouterLines((prev) => [
         ...prev,
@@ -129,15 +113,22 @@ export default function HeroSection({ onLevelSelected, onRoutingReady }) {
       return;
     }
 
+    const track = getOnboardingTrack(level);
+
     setSelectedLevel(level);
     setLevelInput("");
     appendLine("prompt", `$ ${rawValue}`);
     onLevelSelected?.(level);
 
-    ROUTING_TIMELINE_MS.forEach(({ delay, text, tone }) => {
+    ROUTING_TIMELINE_MS.forEach(({ delay, step }) => {
       const timerId = window.setTimeout(() => {
-        appendLine(tone, text.replace("{LEVEL}", level.toUpperCase()));
-        if (delay === 1100) {
+        if (step === "assigned") appendLine("success", `operator assigned: ${level.toUpperCase()}`);
+        if (step === "routing") appendLine("muted", "routing incident...");
+        if (step === "difficulty") appendLine("ok", "[OK] difficulty calibrated");
+        if (step === "profile") appendLine("ok", `[OK] incident profile: ${track.primaryLab?.slug || "nginx-port-conflict"}`);
+        if (step === "ready") appendLine("ok", "[OK] environment ready");
+        if (step === "handoff") {
+          appendLine("muted", "handoff → calibrated terminal");
           window.setTimeout(() => onRoutingReady?.(), 100);
         }
       }, delay);
@@ -149,27 +140,27 @@ export default function HeroSection({ onLevelSelected, onRoutingReady }) {
   return (
     <section className="bg-black text-white">
       <div className="mx-auto max-w-[1600px] px-6 py-6 lg:py-8">
-        <div className="grid min-h-[640px] grid-cols-1 items-stretch gap-4 lg:h-[680px] lg:grid-cols-[0.92fr_1.08fr]">
-          <TerminalShell
-            title="[SYSTEM]: incident fabric"
-            subtitle="[ROUTER]: live production state"
-          >
-            <div className="h-[520px] overflow-y-auto bg-[#05080d] p-6 font-mono text-[14px] leading-[1.65] text-zinc-200 md:h-[560px] md:text-[15px] lg:h-full lg:text-[16px] lg:leading-[1.75]">
-              {LEFT_PANEL_LINES.map((line, index) => (
-                <div key={`${index}-${line}`} className={systemLineClass(line)}>
-                  {line || <span>&nbsp;</span>}
+        <div className="min-h-[640px] lg:h-[680px]">
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0F141B]">
+            <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-5 py-3">
+              <div>
+                <div className="font-mono text-[12px] uppercase tracking-[0.18em] text-zinc-400">
+                  [ROUTER]: operator assignment
                 </div>
-              ))}
+                <div className="mt-1 font-mono text-[12px] text-zinc-600">
+                  [SYSTEM]: prod-eu-west-1 degraded
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-[#F85149]" />
+                <span className="h-3 w-3 rounded-full bg-[#D29922]" />
+                <span className="h-3 w-3 rounded-full bg-[#3FB950]" />
+              </div>
             </div>
-          </TerminalShell>
 
-          <TerminalShell
-            title="[ROUTER]: operator assignment"
-            subtitle="[SYSTEM]: prod-eu-west-1 degraded"
-          >
             <div
               ref={routerBodyRef}
-              className="h-[520px] overflow-y-auto bg-[#05080d] p-6 font-mono text-[14px] leading-[1.65] text-zinc-200 md:h-[560px] md:text-[15px] lg:h-full lg:text-[16px] lg:leading-[1.75]"
+              className="h-[520px] overflow-y-auto bg-[#05080d] p-6 font-mono text-[14px] leading-[1.65] text-zinc-200 md:h-[560px] md:text-[15px] lg:h-[680px] lg:text-[16px] lg:leading-[1.75]"
             >
               {routerLines.map((line, index) => (
                 <div key={`${index}-${line?.text ?? "empty"}`} className={routerLineClass(line?.tone)}>
@@ -189,40 +180,11 @@ export default function HeroSection({ onLevelSelected, onRoutingReady }) {
                 {!selectedLevel ? <span className="animate-pulse text-zinc-500">_</span> : null}
               </form>
             </div>
-          </TerminalShell>
+          </div>
         </div>
       </div>
     </section>
   );
-}
-
-function TerminalShell({ title, subtitle, children }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0F141B]">
-      <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-5 py-3">
-        <div>
-          <div className="font-mono text-[12px] uppercase tracking-[0.18em] text-zinc-400">{title}</div>
-          <div className="mt-1 font-mono text-[12px] text-zinc-600">{subtitle}</div>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-[#F85149]" />
-          <span className="h-3 w-3 rounded-full bg-[#D29922]" />
-          <span className="h-3 w-3 rounded-full bg-[#3FB950]" />
-        </div>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function systemLineClass(line) {
-  if (!line) return "h-4";
-  if (/^\[ERROR\]/.test(line)) return "text-red-400";
-  if (/^\[ACCESS\]/.test(line)) return "text-amber-300";
-  if (/^\[SYSTEM\]|^\[ROUTER\]/.test(line)) return "text-zinc-400";
-  if (/^\[INCIDENT\]/.test(line)) return "text-zinc-200";
-  if (/^\[AUTH\]/.test(line)) return "text-zinc-500";
-  return "text-zinc-300";
 }
 
 function routerLineClass(tone) {

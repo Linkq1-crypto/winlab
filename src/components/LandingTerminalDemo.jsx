@@ -31,7 +31,7 @@ export default function LandingTerminalDemo({
   const [input, setInput] = useState("");
   const [phase, setPhase] = useState("waiting_level");
   const [finchShown, setFinchShown] = useState(false);
-  const [closedIncident, setClosedIncident] = useState(false);
+  const [showAccess, setShowAccess] = useState(false);
   const terminalRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -41,7 +41,7 @@ export default function LandingTerminalDemo({
       setInput("");
       setPhase("waiting_level");
       setFinchShown(false);
-      setClosedIncident(false);
+      setShowAccess(false);
       return;
     }
 
@@ -49,13 +49,11 @@ export default function LandingTerminalDemo({
     setInput("");
     setPhase("waiting_connection");
     setFinchShown(false);
-    setClosedIncident(false);
+    setShowAccess(false);
   }, [track]);
 
   useEffect(() => {
-    if (!track) return;
-
-    if (connectionStage === "prompt") {
+    if (track && connectionStage === "prompt") {
       setLines(buildActiveTerminalLines(track));
       setPhase("awaiting_start");
     }
@@ -69,17 +67,16 @@ export default function LandingTerminalDemo({
     inputRef.current?.focus();
   }, [phase]);
 
-  const accessLines = useMemo(() => buildAccessLines(closedIncident), [closedIncident]);
-
   function appendLines(nextLines) {
     setLines((prev) => [...prev, ...nextLines]);
   }
 
   function runCommand(rawValue) {
-    const command = normalizeCommand(rawValue);
+    const trimmed = rawValue.trim();
+    const command = normalizeCommand(trimmed);
     if (!command) return;
 
-    appendLines([`winlab@prod-server:~$ ${rawValue.trim()}`]);
+    appendLines([`winlab@prod-server:~$ ${trimmed}`]);
 
     if (command === "finch") {
       if (!finchShown) {
@@ -131,7 +128,6 @@ export default function LandingTerminalDemo({
       if (FIX_COMMANDS.includes(command)) {
         appendLines(buildSuccessLines());
         setPhase("post_success");
-        setClosedIncident(true);
         onSmallWin?.("nginx-port-conflict");
       } else {
         appendLines(["[ERROR]: release port 80 and recover nginx"]);
@@ -143,28 +139,34 @@ export default function LandingTerminalDemo({
     if (phase === "post_success") {
       if (command === "save") {
         appendLines(["[AUTH]: persistence requested"]);
+        appendLines(buildAccessLines());
+        setShowAccess(true);
+        setPhase("awaiting_unlock");
         onCreateAccount?.();
       } else if (command === "continue") {
         appendLines(["[ACCESS]: guest session acknowledged"]);
         onContinueGuest?.();
-      } else if (command === "unlock") {
-        appendLines(["[ACCESS]: routing to access control"]);
-        onUnlock?.();
       } else {
-        appendLines(['[ERROR]: type "save", "continue", or "unlock"']);
+        appendLines(['[ERROR]: type "save" or "continue"']);
       }
       setInput("");
       return;
     }
 
-    if (command === "unlock") {
-      appendLines(["[ACCESS]: routing to access control"]);
-      onUnlock?.();
+    if (phase === "awaiting_unlock") {
+      if (command === "unlock") {
+        appendLines(["[ACCESS]: upgrade path selected"]);
+        onUnlock?.();
+      } else if (command === "continue") {
+        appendLines(["[ACCESS]: guest session acknowledged"]);
+        onContinueGuest?.();
+      } else {
+        appendLines(['[ERROR]: type "unlock" or "continue"']);
+      }
       setInput("");
       return;
     }
 
-    appendLines(["[ERROR]: command rejected"]);
     setInput("");
   }
 
@@ -176,7 +178,7 @@ export default function LandingTerminalDemo({
   return (
     <section className="border-t border-zinc-900 bg-black text-white">
       <div className="mx-auto max-w-[1600px] px-6 py-6 lg:py-8">
-        <div className="grid gap-4 lg:grid-cols-[1fr_0.82fr]">
+        <div className="grid gap-4">
           <TerminalFrame
             title="[INCIDENT]: live system terminal"
             subtitle={track ? `[ROUTER]: operator ${track.level.toLowerCase()}` : "[ROUTER]: standby"}
@@ -197,7 +199,7 @@ export default function LandingTerminalDemo({
                   ref={inputRef}
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
-                  className="flex-1 bg-transparent text-zinc-100 outline-none placeholder:text-zinc-600"
+                  className="flex-1 bg-transparent text-zinc-100 outline-none"
                 />
                 <span className="animate-pulse text-zinc-500">_</span>
               </form>
@@ -207,18 +209,20 @@ export default function LandingTerminalDemo({
             </div>
           </TerminalFrame>
 
-          <TerminalFrame
-            title="[ACCESS]: routing control"
-            subtitle="[SYSTEM]: incident catalog state"
-          >
-            <div className="h-[520px] overflow-y-auto bg-[#05080d] p-6 font-mono text-[14px] leading-[1.65] text-zinc-200 md:text-[15px] lg:text-[16px] lg:leading-[1.75]">
-              {accessLines.map((line, index) => (
-                <div key={`${index}-${line}`} className={lineClassName(line)}>
-                  {renderLine(line)}
-                </div>
-              ))}
-            </div>
-          </TerminalFrame>
+          {showAccess ? (
+            <TerminalFrame
+              title="[ACCESS]: routing control"
+              subtitle="[SYSTEM]: restricted incident set"
+            >
+              <div className="bg-[#05080d] p-6 font-mono text-[14px] leading-[1.65] text-zinc-200 md:text-[15px] lg:text-[16px] lg:leading-[1.75]">
+                {buildAccessLines().map((line, index) => (
+                  <div key={`${index}-${line}`} className={lineClassName(line)}>
+                    {renderLine(line)}
+                  </div>
+                ))}
+              </div>
+            </TerminalFrame>
+          ) : null}
         </div>
       </div>
     </section>
@@ -249,8 +253,6 @@ function buildStandbyLines() {
     "[SYSTEM]: router standby",
     "[SYSTEM]: awaiting operator assignment",
     "[SYSTEM]: environment offline",
-    "",
-    "winlab@prod-server:~$",
   ];
 }
 
@@ -258,10 +260,7 @@ function buildWaitingHandoffLines() {
   return [
     "[SYSTEM]: router standby",
     "[SYSTEM]: awaiting operator assignment",
-    "[ROUTER]: operator classified",
-    "[ROUTER]: handoff pending",
-    "",
-    "winlab@prod-server:~$",
+    "[SYSTEM]: environment offline",
   ];
 }
 
@@ -270,7 +269,7 @@ function buildActiveTerminalLines(track) {
     "connected to prod-eu-west-1",
     `operator: ${track.level.toUpperCase()}`,
     "",
-    "incident: nginx-port-conflict",
+    `incident: ${track.primaryLab?.slug || "nginx-port-conflict"}`,
     "status: degraded",
     "impact: public traffic unavailable",
     "",
@@ -279,8 +278,6 @@ function buildActiveTerminalLines(track) {
     "",
     "[SYSTEM]: terminal active",
     'type "start"',
-    "",
-    "winlab@prod-server:~$ _",
   ];
 }
 
@@ -304,16 +301,16 @@ function buildSuccessLines() {
     "[SUCCESS] service restored",
     "[SYSTEM]: traffic normalized",
     "[SYSTEM]: incident closed",
-    "",
     "[SYSTEM]: progress not persisted",
-    '[AUTH]: type "save" to create account',
-    '[ACCESS]: type "continue" to proceed without saving',
+    "",
+    'type "save" to create account',
+    'type "continue" to proceed without saving',
   ];
 }
 
-function buildAccessLines(closedIncident) {
+function buildAccessLines() {
   return [
-    "[SYSTEM]: additional incidents locked",
+    "[ACCESS]: additional incidents locked",
     "",
     "available incidents:",
     "* disk-full",
@@ -324,9 +321,6 @@ function buildAccessLines(closedIncident) {
     "+29 more",
     "",
     "[ACCESS]: restricted",
-    closedIncident
-      ? "upgrade required to continue routing"
-      : "[SYSTEM]: first incident must close before access escalates",
     "",
     "plans:",
     "* starter: free",
@@ -360,7 +354,7 @@ function lineClassName(line) {
   if (!line) return "h-4";
   if (/^\[SUCCESS\]/.test(line) || /\[SYSTEM\]: traffic normalized|\[SYSTEM\]: incident closed/.test(line)) return "text-emerald-400";
   if (/^\[ERROR\]/.test(line) || /failed|unavailable|offline|degraded|bind\(\)/i.test(line)) return "text-red-400";
-  if (/^\[ACCESS\]|^\[AUTH\]|^status: degraded|^impact:|^hints:|^AI mentor:|^type "start"|^type "unlock"/i.test(line)) return "text-amber-300";
+  if (/^\[ACCESS\]|^\[AUTH\]|^status: degraded|^impact:|^hints:|^AI mentor:|^type "start"|^type "unlock"|^type "save"|^type "continue"/i.test(line)) return "text-amber-300";
   if (/^\[SYSTEM\]|^\[ROUTER\]|^connected to|^operator:|^incident:|^plans:|^available incidents:/i.test(line)) return "text-zinc-400";
   if (/^\[H\. FINCH\]|^\[WINLAB-AUTH\]/.test(line)) return "text-zinc-200";
   if (/^winlab@prod-server:~\$|^\$ /.test(line)) return "text-zinc-100";
@@ -369,14 +363,5 @@ function lineClassName(line) {
 
 function renderLine(line) {
   if (!line) return <span>&nbsp;</span>;
-
-  if (line === "winlab@prod-server:~$ _") {
-    return (
-      <span>
-        winlab@prod-server:~$ <span className="inline-block animate-pulse text-zinc-500">_</span>
-      </span>
-    );
-  }
-
   return line;
 }
