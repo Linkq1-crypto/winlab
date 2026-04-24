@@ -45,6 +45,11 @@ import { syncLogger, dlqLogger } from "./src/services/logger.js";
 import { createAIRouter } from "./src/services/aiRouter.js";
 import { createAIService } from "./src/services/aiService.js";
 import { cleanupWorkspace, createWorkspace, runLabWithAI } from "./src/services/labRunner.js";
+import {
+  startDockerLabSession,
+  stopDockerLabSession,
+  verifyDockerLabSession,
+} from "./src/services/dockerLabRunner.js";
 import labAiRoutes from "./server/routes/labAi.js";
 import labProgressRouter from "./server/routes/labProgress.js";
 
@@ -416,6 +421,51 @@ app.use("/api/helpdesk", helpdeskRouter);
 
 // ── Health check ─────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => res.json({ ok: true, ts: Date.now() }));
+
+app.post("/api/lab/start", async (req, res) => {
+  try {
+    const { labId, sessionId, variantId } = req.body || {};
+    if (!labId || !sessionId) {
+      return res.status(400).json({ error: "labId and sessionId are required" });
+    }
+
+    const result = await startDockerLabSession({ labId, sessionId, variantId });
+    res.json({ ok: true, ...result });
+  } catch (error) {
+    console.error("POST /api/lab/start error:", error);
+    res.status(500).json({ ok: false, error: String(error?.message || error) });
+  }
+});
+
+app.post("/api/lab/verify", async (req, res) => {
+  try {
+    const { labId, sessionId } = req.body || {};
+    if (!labId || !sessionId) {
+      return res.status(400).json({ error: "labId and sessionId are required" });
+    }
+
+    const result = await verifyDockerLabSession({ labId, sessionId });
+    res.json(result);
+  } catch (error) {
+    console.error("POST /api/lab/verify error:", error);
+    res.status(500).json({ success: false, error: String(error?.message || error) });
+  }
+});
+
+app.post("/api/lab/stop", async (req, res) => {
+  try {
+    const { sessionId } = req.body || {};
+    if (!sessionId) {
+      return res.status(400).json({ error: "sessionId is required" });
+    }
+
+    await stopDockerLabSession({ sessionId });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error("POST /api/lab/stop error:", error);
+    res.status(500).json({ ok: false, error: String(error?.message || error) });
+  }
+});
 
 // ── Public API v1 (external integrations + SDK) ──────────────────────
 app.use("/api/v1", tenantMiddleware, qosMiddleware, publicApiRouter);

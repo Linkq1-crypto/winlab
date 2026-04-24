@@ -111,10 +111,11 @@ export async function verifyDockerLabSession({ labId, sessionId }) {
       "bash",
       `/labs/${safeLabId}/verify.sh`,
     ]);
-    return { ok: true, containerName, ...result };
+    return { ok: true, success: true, containerName, ...result };
   } catch (error) {
     return {
       ok: false,
+      success: false,
       containerName,
       code: error.code ?? 1,
       stdout: error.stdout || "",
@@ -128,9 +129,14 @@ export function getDockerLabShellCommand({ sessionId }) {
   return `docker exec -it ${getContainerName(safeSessionId)} bash`;
 }
 
+export function getDockerShellCommand({ sessionId }) {
+  return getDockerLabShellCommand({ sessionId });
+}
+
 export default {
   startDockerLabSession,
   stopDockerLabSession,
   verifyDockerLabSession,
   getDockerLabShellCommand,
+  getDockerShellCommand,
 };

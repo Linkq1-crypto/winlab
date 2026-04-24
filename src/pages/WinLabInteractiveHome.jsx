@@ -63,6 +63,11 @@ export default function WinLabInteractiveHome() {
   const [demoCompleted, setDemoCompleted] = useState(false);
   const [startingIncident, setStartingIncident] = useState(false);
   const [startError, setStartError] = useState("");
+  const sessionIdRef = useRef(
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `winlab-${Date.now()}`
+  );
   const demoRef = useRef(null);
   const connectionTimersRef = useRef([]);
   const selectedTrack = selectedLevel ? getOnboardingTrack(selectedLevel) : null;
@@ -193,6 +198,57 @@ export default function WinLabInteractiveHome() {
     await startFullIncident(selectedTrack?.primaryLab?.slug || "nginx-port-conflict");
   }
 
+  async function startDockerLab(labId) {
+    const selectedLabId = labId || selectedTrack?.primaryLab?.slug || "nginx-port-conflict";
+    const response = await fetch("/api/lab/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        labId: selectedLabId,
+        sessionId: sessionIdRef.current,
+      }),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload?.error || "Failed to start Docker lab session.");
+    }
+
+    return response.json();
+  }
+
+  async function verifyDockerLab(labId) {
+    const selectedLabId = labId || selectedTrack?.primaryLab?.slug || "nginx-port-conflict";
+    const response = await fetch("/api/lab/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        labId: selectedLabId,
+        sessionId: sessionIdRef.current,
+      }),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload?.error || "Failed to verify Docker lab session.");
+    }
+
+    return response.json();
+  }
+
+  function openSignupAfterVerify() {
+    window.setTimeout(() => {
+      openAuthModal({
+        mode: "signup",
+        context: "progress",
+        title: "Save your progress and unlock more incidents",
+        description: "Create your free account to continue from this recovery.",
+        primaryLabel: "Create free account",
+        secondaryLabel: "Not now",
+      });
+    }, 1200);
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
       <HeroSection
@@ -232,6 +288,9 @@ export default function WinLabInteractiveHome() {
           connectionStage={connectionStage}
           previewIncidentSlug={previewIncidentSlug}
           onSmallWin={handleDemoWin}
+          onStartLab={startDockerLab}
+          onVerifyLab={verifyDockerLab}
+          onVerifySuccess={openSignupAfterVerify}
           gateLoading={startingIncident}
           gateError={startError}
           onCreateAccount={handleAuthContinue}

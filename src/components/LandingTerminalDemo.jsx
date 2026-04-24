@@ -18,6 +18,9 @@ export default function LandingTerminalDemo({
   connectionStage = "idle",
   previewIncidentSlug = "",
   onSmallWin,
+  onStartLab,
+  onVerifyLab,
+  onVerifySuccess,
   gateLoading = false,
   gateError = "",
   onCreateAccount,
@@ -31,6 +34,8 @@ export default function LandingTerminalDemo({
   const [input, setInput] = useState("");
   const [phase, setPhase] = useState("waiting_level");
   const [resolved, setResolved] = useState(false);
+  const [dockerLabStarted, setDockerLabStarted] = useState(false);
+  const [verifyState, setVerifyState] = useState("idle");
   const [connectionMarker, setConnectionMarker] = useState("idle");
   const [portCleared, setPortCleared] = useState(false);
   const terminalRef = useRef(null);
@@ -42,6 +47,8 @@ export default function LandingTerminalDemo({
       setInput("");
       setPhase("waiting_level");
       setResolved(false);
+      setDockerLabStarted(false);
+      setVerifyState("idle");
       setConnectionMarker("idle");
       setPortCleared(false);
       return;
@@ -51,6 +58,8 @@ export default function LandingTerminalDemo({
     setInput("");
     setPhase("waiting_connection");
     setResolved(false);
+    setDockerLabStarted(false);
+    setVerifyState("idle");
     setConnectionMarker("prepared");
     setPortCleared(false);
   }, [previewIncidentSlug, track]);
@@ -122,9 +131,23 @@ export default function LandingTerminalDemo({
         return;
       }
 
-      appendLines(buildDemoStartLines(track.level));
-      setPhase(track.level === "Novice" || track.level === "Junior" ? "awaiting_check" : "awaiting_resolution");
-      setPortCleared(false);
+      Promise.resolve(onStartLab?.(track.primaryLab?.slug || "nginx-port-conflict"))
+        .then(() => {
+          setDockerLabStarted(true);
+          appendLines([
+            "[docker] lab session attached",
+            ...buildDemoStartLines(track.level),
+          ]);
+          setPhase(
+            track.level === "Novice" || track.level === "Junior"
+              ? "awaiting_check"
+              : "awaiting_resolution"
+          );
+          setPortCleared(false);
+        })
+        .catch((error) => {
+          appendLines([`[docker] failed to start session: ${error.message || "unknown error"}`]);
+        });
       setInput("");
       return;
     }
@@ -186,6 +209,24 @@ export default function LandingTerminalDemo({
         setResolved(true);
         setPhase("resolved");
         onSmallWin?.(track.primaryLab?.slug || "nginx-port-conflict");
+        if (dockerLabStarted) {
+          setVerifyState("running");
+          Promise.resolve(onVerifyLab?.(track.primaryLab?.slug || "nginx-port-conflict"))
+            .then((data) => {
+              if (data?.success) {
+                appendLines(["[verify] system recovered ✅"]);
+                setVerifyState("passed");
+                onVerifySuccess?.();
+                return;
+              }
+              appendLines(["[verify] still broken ❌"]);
+              setVerifyState("failed");
+            })
+            .catch((error) => {
+              appendLines([`[verify] failed to run: ${error.message || "unknown error"}`]);
+              setVerifyState("failed");
+            });
+        }
         setInput("");
         return;
       }
@@ -216,6 +257,24 @@ export default function LandingTerminalDemo({
         setResolved(true);
         setPhase("resolved");
         onSmallWin?.(track.primaryLab?.slug || "");
+        if (dockerLabStarted) {
+          setVerifyState("running");
+          Promise.resolve(onVerifyLab?.(track.primaryLab?.slug || "nginx-port-conflict"))
+            .then((data) => {
+              if (data?.success) {
+                appendLines(["[verify] system recovered ✅"]);
+                setVerifyState("passed");
+                onVerifySuccess?.();
+                return;
+              }
+              appendLines(["[verify] still broken ❌"]);
+              setVerifyState("failed");
+            })
+            .catch((error) => {
+              appendLines([`[verify] failed to run: ${error.message || "unknown error"}`]);
+              setVerifyState("failed");
+            });
+        }
       } else {
         appendLines([`[hint] Now inspect with "${expected[1]}".`]);
       }
@@ -297,7 +356,7 @@ export default function LandingTerminalDemo({
                   type="submit"
                   className="rounded-xl bg-white px-3 py-2 text-sm text-black hover:bg-zinc-200"
                 >
-                  Run
+                  {verifyState === "running" ? "Verifying..." : "Run"}
                 </button>
               </form>
             </div>
