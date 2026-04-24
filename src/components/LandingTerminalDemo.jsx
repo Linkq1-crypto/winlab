@@ -32,6 +32,7 @@ export default function LandingTerminalDemo({
   const [phase, setPhase] = useState("waiting_level");
   const [resolved, setResolved] = useState(false);
   const [connectionMarker, setConnectionMarker] = useState("idle");
+  const [finchUsed, setFinchUsed] = useState(false);
   const terminalRef = useRef(null);
   const commandInputRef = useRef(null);
 
@@ -42,21 +43,23 @@ export default function LandingTerminalDemo({
       setPhase("waiting_level");
       setResolved(false);
       setConnectionMarker("idle");
+      setFinchUsed(false);
       return;
     }
 
-      setLines(buildTrackLines(track, previewIncidentSlug));
+    setLines(buildTrackLines(track, previewIncidentSlug));
     setInput("");
     setPhase("waiting_connection");
     setResolved(false);
     setConnectionMarker("prepared");
+    setFinchUsed(false);
   }, [previewIncidentSlug, track]);
 
   useEffect(() => {
     if (!track) return;
 
     if (connectionStage === "connected" && connectionMarker === "prepared") {
-      setLines((prev) => [...prev, "", "connected to prod-eu-west-1"]);
+      setLines((prev) => [...prev, "", "[SYSTEM]: connected to prod-eu-west-1"]);
       setConnectionMarker("connected");
       return;
     }
@@ -65,7 +68,8 @@ export default function LandingTerminalDemo({
       setLines((prev) => [
         ...prev,
         "winlab@prod-server:~$ _",
-        'Type "start" to begin the demo.',
+        '[H. FINCH]: You do not fix systems. You survive them.',
+        '[SYSTEM]: type "start" to begin the demo.',
       ]);
       setPhase("awaiting_start");
       setConnectionMarker("prompt");
@@ -77,12 +81,12 @@ export default function LandingTerminalDemo({
   }, [lines]);
 
   const helperText = useMemo(() => {
-    if (!track) return "Choose your level in the hero terminal first.";
-    if (phase === "waiting_connection") return "Environment routing in progress...";
+    if (!track) return "router handoff pending";
+    if (phase === "waiting_connection") return "environment handoff pending";
     if (phase === "awaiting_start") return "start";
     if (phase === "awaiting_check") return NEXT_CHECK_COMMANDS[0];
     if (phase === "awaiting_fix") return NOVICE_FIX_COMMANDS[0];
-    if (resolved) return "Create a free account to unlock the full track.";
+    if (resolved) return "create free account";
     return track.commands[0];
   }, [phase, resolved, track]);
 
@@ -100,21 +104,30 @@ export default function LandingTerminalDemo({
 
     appendLines([`$ ${command}`]);
 
+    if (normalizeCommand(command) === "finch") {
+      if (!finchUsed) {
+        appendLines(["[H. FINCH]: You do not fix systems. You survive them."]);
+        setFinchUsed(true);
+      }
+      setInput("");
+      return;
+    }
+
     if (!track) {
-      appendLines(['[hint] Choose your operator level in the hero terminal first.']);
+      appendLines(["[SYSTEM]: operator assignment pending"]);
       setInput("");
       return;
     }
 
     if (phase === "waiting_connection") {
-      appendLines(['[hint] Wait for the terminal handoff to finish.']);
+      appendLines(["[SYSTEM]: terminal handoff in progress"]);
       setInput("");
       return;
     }
 
     if (phase === "awaiting_start") {
       if (normalizeCommand(command) !== "start") {
-        appendLines(['[hint] Type "start" to begin the demo.']);
+        appendLines(['[SYSTEM]: type "start" to begin the demo.']);
         setInput("");
         return;
       }
@@ -129,11 +142,11 @@ export default function LandingTerminalDemo({
       if (NEXT_CHECK_COMMANDS.some((candidate) => normalizeCommand(candidate) === normalizeCommand(command))) {
         appendLines([
           'LISTEN 0.0.0.0:80 users:(("apache2",pid=2041))',
-          "What should you fix next?",
+          "[SYSTEM]: identify the conflicting process",
         ]);
         setPhase("awaiting_fix");
       } else {
-        appendLines(['[hint] Check what is already bound to port 80.']);
+        appendLines(["[SYSTEM]: inspect what already owns port 80"]);
       }
       setInput("");
       return;
@@ -146,7 +159,7 @@ export default function LandingTerminalDemo({
         setPhase("resolved");
         onSmallWin?.(track.primaryLab?.slug || "nginx-port-conflict");
       } else {
-        appendLines(['[hint] Stop the process that already owns port 80, then restart nginx.']);
+        appendLines(["[SYSTEM]: release port 80, then recover nginx"]);
       }
       setInput("");
       return;
@@ -161,7 +174,7 @@ export default function LandingTerminalDemo({
         return;
       }
 
-      appendLines([`[hint] Start with "${expected[0]}".`]);
+      appendLines([`[SYSTEM]: start with "${expected[0]}"`]);
       setInput("");
       return;
     }
@@ -174,7 +187,7 @@ export default function LandingTerminalDemo({
         setPhase("resolved");
         onSmallWin?.(track.primaryLab?.slug || "");
       } else {
-        appendLines([`[hint] Now inspect with "${expected[1]}".`]);
+        appendLines([`[SYSTEM]: continue with "${expected[1]}"`]);
       }
       setInput("");
       return;
@@ -197,7 +210,7 @@ export default function LandingTerminalDemo({
               <div>
                 <div className="text-sm text-zinc-400">onboarding terminal</div>
                 <div className="text-xs text-zinc-600">
-                  {track ? `active track: ${track.trackLabel}` : "waiting for operator level"}
+                  {track ? `[SYSTEM]: active track ${track.trackLabel}` : "[SYSTEM]: operator assignment pending"}
                 </div>
               </div>
               <button
@@ -294,9 +307,9 @@ function LevelStatusCard({ track }) {
     return (
       <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
         <div className="mb-3 text-xs uppercase tracking-wide text-zinc-500">Operator Level</div>
-        <h2 className="text-2xl font-semibold leading-tight">Awaiting selection</h2>
+        <h2 className="text-2xl font-semibold leading-tight">Awaiting router handoff</h2>
         <p className="mt-3 text-sm text-zinc-400">
-          Choose a level in the hero terminal to build a personalized incident track.
+          [SYSTEM]: active terminal pending operator assignment.
         </p>
       </div>
     );
@@ -307,7 +320,7 @@ function LevelStatusCard({ track }) {
       <div className="mb-3 text-xs uppercase tracking-wide text-zinc-500">Level Active</div>
       <h2 className="text-2xl font-semibold leading-tight">{track.level}</h2>
       <p className="mt-3 text-sm text-zinc-400">
-        The lab terminal is already calibrated before the handoff finishes.
+        [SYSTEM]: terminal calibrated before handoff completes.
       </p>
       <div className="mt-5 flex flex-wrap gap-2">
         <StatusChip label="level" value={track.level} tone="success" />
@@ -362,10 +375,10 @@ function HowItWorksCard() {
     <div id="how-it-works" className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
       <div className="mb-3 text-xs uppercase tracking-wide text-zinc-500">How it works</div>
       <div className="grid gap-3">
-        <FlowRow index="01" text="Choose a level in the incident router." />
-        <FlowRow index="02" text="Watch the system route you into the calibrated terminal." />
-        <FlowRow index="03" text="Type start and resolve a short incident for your first win." />
-        <FlowRow index="04" text="Sign up only after value, then launch the real incident." />
+        <FlowRow index="01" text="[SYSTEM]: operator classified in router." />
+        <FlowRow index="02" text="[SYSTEM]: calibrated terminal routed live." />
+        <FlowRow index="03" text='[SYSTEM]: type "start" and stabilize the incident.' />
+        <FlowRow index="04" text="[SYSTEM]: authenticate only after the first recovery." />
       </div>
     </div>
   );
@@ -376,12 +389,12 @@ function GateCard({ completed, loading, error, onCreateAccount, onContinueGuest 
     <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
       <div className="mb-3 text-xs uppercase tracking-wide text-zinc-500">Continue</div>
       <h2 className="text-2xl font-semibold leading-tight">
-        {completed ? "Nice work." : "Get a quick win first."}
+        {completed ? "[SYSTEM]: incident resolved" : "[SYSTEM]: incident routing active"}
       </h2>
       <p className="mt-3 text-sm text-zinc-400">
         {completed
-          ? "You just resolved your first production incident. Create a free account to save progress and unlock your full track."
-          : "The signup gate appears only after the terminal handoff and the first resolved incident."}
+          ? "[SYSTEM]: public traffic restored. [SYSTEM]: create a free account to save progress and unlock the full track."
+          : "[SYSTEM]: account gate remains offline until the first incident is stabilized."}
       </p>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -418,9 +431,9 @@ function FlowRow({ index, text }) {
 }
 
 function buildWaitingLines(previewIncidentSlug) {
-  const lines = ["Select a level in the hero terminal to build your first incident track."];
+  const lines = ["[SYSTEM]: router standby", "[SYSTEM]: waiting for operator assignment"];
   if (previewIncidentSlug) {
-    lines.push(`preview incident: ${previewIncidentSlug}`);
+    lines.push(`[SYSTEM]: preview incident ${previewIncidentSlug}`);
   }
   return lines;
 }
@@ -432,22 +445,22 @@ function buildTrackLines(track, previewIncidentSlug) {
     "region: prod-eu-west-1",
     "status: degraded",
     "",
-    `operator profile: ${track.level}`,
-    `track: ${track.trackLabel}`,
-    `selected incident: ${selectedIncident}`,
-    `difficulty: ${track.difficulty}`,
-    `hints: ${track.hints}`,
-    `AI mentor: ${track.aiMentor}`,
+    `[SYSTEM]: operator profile ${track.level}`,
+    `[SYSTEM]: track ${track.trackLabel}`,
+    `[SYSTEM]: selected incident ${selectedIncident}`,
+    `[SYSTEM]: difficulty ${track.difficulty}`,
+    `[SYSTEM]: hints ${track.hints}`,
+    `[SYSTEM]: AI mentor ${track.aiMentor}`,
     "",
   ];
 
   track.metrics.forEach((metric) => {
-    lines.push(`${metric.label}: ${metric.value}`);
+    lines.push(`[SYSTEM]: ${metric.label} ${metric.value}`);
   });
 
   lines.push("");
   track.previewLabs.forEach((lab) => {
-    lines.push(`- ${lab.slug}`);
+    lines.push(`[SYSTEM]: catalog ${lab.slug}`);
   });
 
   return lines;
@@ -460,30 +473,30 @@ function buildDemoStartLines(level) {
       "nginx.service - failed",
       "bind() to 0.0.0.0:80 failed",
       "",
-      "What should you check next?",
+      "[SYSTEM]: what should you check next?",
     ];
   }
 
   if (level === "Mid") {
     return [
       "objective loaded: permission-denied",
-      "A service dependency is failing after deploy.",
-      `Try "${getOnboardingTrack(level).commands[0]}".`,
+      "[SYSTEM]: service dependency failing after deploy.",
+      `[SYSTEM]: try "${getOnboardingTrack(level).commands[0]}".`,
     ];
   }
 
   if (level === "Senior") {
     return [
       "objective loaded: memory-leak",
-      "The app is flapping under pressure.",
-      `Try "${getOnboardingTrack(level).commands[0]}".`,
+      "[SYSTEM]: application unstable under pressure.",
+      `[SYSTEM]: try "${getOnboardingTrack(level).commands[0]}".`,
     ];
   }
 
   return [
     "objective loaded: real-server",
-    "No hints. No AI. Full pressure.",
-    `Try "${getOnboardingTrack(level).commands[0]}".`,
+    "[SYSTEM]: hints disabled. AI mentor offline.",
+    `[SYSTEM]: try "${getOnboardingTrack(level).commands[0]}".`,
   ];
 }
 
@@ -492,8 +505,8 @@ function buildResolvedLines(level) {
     return [
       "",
       "INCIDENT RESOLVED",
-      "public traffic restored",
-      "lesson: production debugging starts with isolating the failing permission boundary fast.",
+      "[SYSTEM]: public traffic restored",
+      "[H. FINCH]: You are starting to see it now.",
     ];
   }
 
@@ -501,8 +514,8 @@ function buildResolvedLines(level) {
     return [
       "",
       "INCIDENT RESOLVED",
-      "public traffic restored",
-      "lesson: on-call recovery means stabilizing the runtime before chasing every symptom.",
+      "[SYSTEM]: public traffic restored",
+      "[H. FINCH]: You are starting to see it now.",
     ];
   }
 
@@ -510,16 +523,16 @@ function buildResolvedLines(level) {
     return [
       "",
       "INCIDENT RESOLVED",
-      "public traffic restored",
-      "lesson: pressure-mode recovery is about isolating blast radius before the next cascade.",
+      "[SYSTEM]: public traffic restored",
+      "[H. FINCH]: You are starting to see it now.",
     ];
   }
 
   return [
     "",
     "INCIDENT RESOLVED",
-    "public traffic restored",
-    "lesson: nginx failed because another process was already bound to port 80.",
+    "[SYSTEM]: public traffic restored",
+    "[H. FINCH]: You are starting to see it now.",
   ];
 }
 
@@ -565,10 +578,11 @@ function normalizeCommand(command) {
 
 function lineClassName(line) {
   if (!line) return "h-3";
-  if (/\[recovery\]|INCIDENT RESOLVED|public traffic restored|connected to prod-eu-west-1/i.test(line)) return "text-emerald-400";
-  if (/warning|What should you check next|track:|hints:|AI mentor:|Type "start"|status: degraded/i.test(line)) return "text-amber-300";
+  if (/^\[H\. FINCH\]/i.test(line)) return "text-zinc-200";
+  if (/\[recovery\]|INCIDENT RESOLVED|\[SYSTEM\]: public traffic restored|\[SYSTEM\]: connected to prod-eu-west-1/i.test(line)) return "text-emerald-400";
+  if (/warning|\[SYSTEM\]: what should you check next|\[SYSTEM\]: track |\[SYSTEM\]: hints |\[SYSTEM\]: AI mentor |\[SYSTEM\]: type "start"|status: degraded/i.test(line)) return "text-amber-300";
   if (/failed|failing|impacted|bind\(\)|crashloopbackoff|error|permission denied/i.test(line)) return "text-red-400";
-  if (/^WINLAB INCIDENT ROUTER|^region:|^operator profile:|^selected incident:|^difficulty:|^operator assigned|^routing incident/i.test(line)) return "text-zinc-400";
+  if (/^WINLAB INCIDENT ROUTER|^region:|^\[SYSTEM\]: operator profile|^\[SYSTEM\]: selected incident|^\[SYSTEM\]: difficulty|^operator assigned|^routing incident|^\[SYSTEM\]:/i.test(line)) return "text-zinc-400";
   if (/^\$ /i.test(line) || /^winlab@prod-server:~\$/.test(line)) return "text-zinc-200";
   return "text-zinc-300";
 }

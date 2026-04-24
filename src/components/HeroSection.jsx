@@ -27,6 +27,7 @@ const BASE_TERMINAL_LINES = [
   { tone: "muted", text: ">> awaiting operator classification..." },
   { tone: "empty", text: "" },
   { tone: "muted", text: "type your level (1-5):" },
+  { tone: "muted", text: "1 novice   2 junior   3 mid   4 senior   5 sre" },
 ];
 
 const ROUTING_TIMELINE_MS = [
@@ -107,8 +108,8 @@ export default function HeroSection({
   }, []);
 
   const levelPlaceholder = useMemo(() => {
-    if (selectedLevel) return `operator locked: ${selectedLevel.toUpperCase()}`;
-    return "1 novice   2 junior   3 mid   4 senior   5 sre";
+    if (selectedLevel) return "";
+    return "";
   }, [selectedLevel]);
 
   function resolveLevel(rawValue) {

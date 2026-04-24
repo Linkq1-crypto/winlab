@@ -30,10 +30,10 @@ export default function LandingPricingSection({ freeLabs = 5, onPricing }) {
         <div className="mb-8 max-w-3xl">
           <div className="mb-3 text-xs uppercase tracking-wide text-zinc-500">Pricing</div>
           <h2 className="text-3xl font-semibold leading-tight md:text-5xl">
-            Pay only after the product already hit.
+            [SYSTEM]: additional incidents locked
           </h2>
           <p className="mt-4 text-zinc-400">
-            Free first. Login only after value. Paywall only after the user understands why they want more.
+            [SYSTEM]: upgrade required to continue routing.
           </p>
         </div>
 
@@ -88,7 +88,7 @@ export default function LandingPricingSection({ freeLabs = 5, onPricing }) {
             onClick={onPricing}
             className="rounded-2xl border border-zinc-800 bg-zinc-950 px-5 py-3 hover:bg-black"
           >
-            View pricing
+            [SYSTEM]: view pricing
           </button>
         </div>
       </div>
