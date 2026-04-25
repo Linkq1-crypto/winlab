@@ -49,6 +49,8 @@ import {
   startDockerLabSession,
   stopDockerLabSession,
   verifyDockerLabSession,
+  execCommandInContainer,
+  isContainerRunning,
 } from "./src/services/dockerLabRunner.js";
 import labAiRoutes from "./server/routes/labAi.js";
 import labProgressRouter from "./server/routes/labProgress.js";
@@ -218,6 +220,14 @@ app.use(express.static(path.join(__dirname, "dist")));
 // ── Rate limiters ────────────────────────────────────────────────────
 const authLimiter    = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false });
 const aiLimiter      = rateLimit({ windowMs: 60_000, max: 30 });
+const freeLabLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 2,
+  keyGenerator: (req) => req.ip,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, error: "Too many lab sessions — please wait a moment." },
+});
 const codexLimiter   = rateLimit({
   windowMs: 60_000,
   max: 8,
@@ -422,7 +432,20 @@ app.use("/api/helpdesk", helpdeskRouter);
 // ── Health check ─────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => res.json({ ok: true, ts: Date.now() }));
 
-app.post("/api/lab/start", async (req, res) => {
+// ── Free-lab session TTL (15 min inactivity → auto-remove container) ──
+const labSessionActivity = new Map(); // sessionId → lastActivityMs
+
+setInterval(async () => {
+  const now = Date.now();
+  for (const [sid, lastActive] of labSessionActivity) {
+    if (now - lastActive > 15 * 60_000) {
+      labSessionActivity.delete(sid);
+      try { await stopDockerLabSession({ sessionId: sid }); } catch { /* already gone */ }
+    }
+  }
+}, 60_000);
+
+app.post("/api/lab/start", freeLabLimiter, async (req, res) => {
   try {
     const { labId, sessionId, variantId } = req.body || {};
     if (!labId || !sessionId) {
@@ -430,9 +453,32 @@ app.post("/api/lab/start", async (req, res) => {
     }
 
     const result = await startDockerLabSession({ labId, sessionId, variantId });
+    labSessionActivity.set(result.sessionId, Date.now());
     res.json({ ok: true, ...result });
   } catch (error) {
     console.error("POST /api/lab/start error:", error);
+    res.status(500).json({ ok: false, error: String(error?.message || error) });
+  }
+});
+
+app.post("/api/lab/command", async (req, res) => {
+  try {
+    const { sessionId, command } = req.body || {};
+    if (!sessionId || !command) {
+      return res.status(400).json({ ok: false, error: "sessionId and command required" });
+    }
+
+    const safeSessionId = sessionId.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-");
+    const running = await isContainerRunning(`winlab-lab-${safeSessionId}`);
+    if (!running) {
+      return res.status(404).json({ ok: false, error: "Lab session not found or not running" });
+    }
+
+    labSessionActivity.set(sessionId, Date.now());
+    const result = await execCommandInContainer({ sessionId, command });
+    res.json({ ok: true, output: result.stdout + result.stderr, exitCode: result.exitCode });
+  } catch (error) {
+    console.error("POST /api/lab/command error:", error);
     res.status(500).json({ ok: false, error: String(error?.message || error) });
   }
 });

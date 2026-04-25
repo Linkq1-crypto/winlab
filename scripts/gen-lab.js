@@ -113,7 +113,7 @@ function genEnJson(sections, hints) {
 
   const out = {
     title: 'TODO: short title',
-    description: firstSentence(sections['ROOT CAUSE'] ?? ''),
+    description: firstSentence(sections['INCIDENT SUMMARY'] ?? sections['ROOT CAUSE'] ?? ''),
     lesson: stripMarkdown(lesson),
   };
 

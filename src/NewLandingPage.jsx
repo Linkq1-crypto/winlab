@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { getVariant } from "./ABTestOnboarding";
 import CookieBanner from "./CookieBanner";
 import { initPosthog } from "./services/posthog";
+import FreeLabTerminal from "./components/FreeLabTerminal.jsx";
 
 function track(event, props = {}) {
   try { if (window.posthog) window.posthog.capture(event, props); } catch {}
@@ -406,7 +407,10 @@ export default function NewLandingPage({ onLogin, onRegister }) {
               <div style={{ position:"absolute", top:-14, right:24, background:"#ff4c00", color:"#000", fontFamily:"'IBM Plex Mono',monospace", fontSize:9, fontWeight:600, letterSpacing:"0.2em", textTransform:"uppercase", padding:"5px 14px", zIndex:1 }}>
                 ⚡ Live Incident
               </div>
-              <Terminal variant={variant} scenarioKey="nginx" onSuccess={handleSuccess} />
+              <FreeLabTerminal
+                labId="nginx-port-conflict"
+                onConvert={() => { track("free_lab_convert", { variant }); onRegister?.(); }}
+              />
             </div>
           )}
         </div>

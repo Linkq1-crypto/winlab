@@ -5,7 +5,9 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, "../..");
-const COMPOSE_FILE = path.join(REPO_ROOT, "docker-compose.labs.yml");
+
+const LAB_IMAGE       = process.env.LAB_IMAGE       || "winlab-lab-runner:latest";
+const EXEC_TIMEOUT_MS = process.env.EXEC_TIMEOUT_MS  ? Number(process.env.EXEC_TIMEOUT_MS) : 10_000;
 
 function sanitizeToken(value, fallback) {
   const safe = String(value || fallback)
@@ -56,28 +58,78 @@ function runProcess(command, args, options = {}) {
   });
 }
 
+export async function isContainerRunning(containerName) {
+  try {
+    const { stdout } = await runProcess("docker", [
+      "inspect", "--format", "{{.State.Running}}", containerName,
+    ]);
+    return stdout.trim() === "true";
+  } catch {
+    return false;
+  }
+}
+
+export async function execCommandInContainer({ sessionId, command }) {
+  const containerName = getContainerName(sanitizeToken(sessionId, "default"));
+
+  return new Promise((resolve) => {
+    const child = spawn(
+      "docker",
+      ["exec", containerName, "bash", "-c", command],
+      { cwd: REPO_ROOT, env: process.env, stdio: ["ignore", "pipe", "pipe"] }
+    );
+
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (chunk) => { stdout += chunk.toString("utf8"); });
+    child.stderr.on("data", (chunk) => { stderr += chunk.toString("utf8"); });
+
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      resolve({ exitCode: 124, stdout, stderr: "Command timed out" });
+    }, EXEC_TIMEOUT_MS);
+
+    child.on("error", (err) => {
+      clearTimeout(timer);
+      resolve({ exitCode: 1, stdout: "", stderr: err.message });
+    });
+
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      resolve({ exitCode: code ?? 1, stdout, stderr });
+    });
+  });
+}
+
 export async function startDockerLabSession({ labId, sessionId, variantId }) {
-  const safeLabId = sanitizeToken(labId, "disk-full");
-  const safeSessionId = sanitizeToken(sessionId, "default");
+  const safeLabId     = sanitizeToken(labId,      "disk-full");
+  const safeSessionId = sanitizeToken(sessionId,  "default");
   const safeVariantId = variantId ? sanitizeToken(variantId, "default") : "";
   const containerName = getContainerName(safeSessionId);
 
-  await runProcess(
-    "docker",
-    ["compose", "-f", COMPOSE_FILE, "up", "-d", "--build"],
-    {
-      env: {
-        LAB_ID: safeLabId,
-        LAB_VARIANT: safeVariantId,
-        LAB_CONTAINER_NAME: containerName,
-      },
-    }
-  );
+  // Remove a stale container with the same name before starting a fresh one
+  try {
+    await runProcess("docker", ["rm", "-f", containerName]);
+  } catch { /* no-op if it doesn't exist */ }
+
+  await runProcess("docker", [
+    "run",
+    "--name",    containerName,
+    "--rm",
+    "-d",
+    "--network", "none",
+    "--memory",  "256m",
+    "--cpus",    "0.5",
+    "-e", `LAB_ID=${safeLabId}`,
+    "-e", `LAB_VARIANT=${safeVariantId}`,
+    LAB_IMAGE,
+  ]);
 
   return {
-    labId: safeLabId,
-    variantId: safeVariantId || null,
-    sessionId: safeSessionId,
+    labId:      safeLabId,
+    variantId:  safeVariantId || null,
+    sessionId:  safeSessionId,
     containerName,
     shellCommand: getDockerLabShellCommand({ sessionId: safeSessionId }),
   };
@@ -137,6 +189,8 @@ export default {
   startDockerLabSession,
   stopDockerLabSession,
   verifyDockerLabSession,
+  execCommandInContainer,
+  isContainerRunning,
   getDockerLabShellCommand,
   getDockerShellCommand,
 };
