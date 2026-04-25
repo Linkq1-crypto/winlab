@@ -30,4 +30,4 @@ fi
 "${LAB_DIR}/seed.sh"
 
 echo "[winlab-lab-runner] lab seeded; dropping into shell"
-exec /bin/bash
+exec tail -f /dev/null
