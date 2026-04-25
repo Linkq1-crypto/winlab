@@ -198,9 +198,8 @@ export default function Dashboard({ labs = [], progress = {}, plan, onOpenLab, o
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
           <div style={{ fontSize: 9, letterSpacing: ".25em", textTransform: "uppercase", color: T.orange }}>// SYSTEM_DASHBOARD</div>
           <div style={{ display: "flex", gap: 10 }}>
-            {hasPro && (
-              <button className="wl-btn-ghost" onClick={onManageBilling}>Manage plan</button>
-            )}
+            {hasPro && <button onClick={onManageBilling} className="wl-btn-ghost">Manage plan</button>}
+            <button onClick={onReferral || copyInvite} className="wl-btn-ghost">Referrals ({state.referrals})</button>
             {achievements.length > 0 && (
               <span style={{ fontSize: 9, letterSpacing: ".18em", textTransform: "uppercase", color: T.mid, border: `1px solid ${T.border}`, padding: "6px 12px" }}>
                 {achievements.length} badge{achievements.length !== 1 ? "s" : ""}
@@ -208,6 +207,19 @@ export default function Dashboard({ labs = [], progress = {}, plan, onOpenLab, o
             )}
           </div>
         </div>
+
+        {/* intelligent resume banner */}
+        {nextLab && progress[nextLab.id] && !progress[nextLab.id].completed && (
+          <div style={{ padding: "16px 20px", background: "rgba(255, 76, 0, 0.08)", border: `1px solid ${T.orangeDim}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: T.white, marginBottom: 4 }}>Welcome back!</div>
+              <div style={{ fontSize: 12, color: T.text, fontWeight: 300 }}>Want to pick up the <strong>{nextLab.title || nextLab.name || nextLab.id}</strong> lab right where you left off?</div>
+            </div>
+            <button onClick={() => onOpenLab?.(nextLab.id)} className="wl-btn-ghost" style={{ border: `1px solid ${T.orangeDim}`, color: T.orange }}>
+              Resume →
+            </button>
+          </div>
+        )}
 
         {/* ACTIVE INCIDENT */}
         <section className="wl-block" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 24 }}>
