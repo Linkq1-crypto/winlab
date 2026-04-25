@@ -1,0 +1,3 @@
+api-gateway has crashed and left a core dump.
+
+→ read /opt/winlab/real-server/coredump.report to see the analysis state.

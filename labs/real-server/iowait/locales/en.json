@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The server is showing high I/O wait, causing application latency spikes. A large file is saturating disk throughput. The file must be removed and the service state set to stable.",
+  "lesson": "",
+  "hint_1": "check du -sh on /opt/winlab/real-server/ to find the large file",
+  "hint_2": "remove it",
+  "hint_3": "set service.state to stable",
+  "hint_4": "rm -f /opt/winlab/real-server/hot-disk.img && echo stable > /opt/winlab/real-server/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

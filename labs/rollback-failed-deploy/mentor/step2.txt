@@ -1,0 +1,3 @@
+safe_version is v1.3.9 and its status.txt is healthy.
+
+→ restore current_version to v1.3.9.

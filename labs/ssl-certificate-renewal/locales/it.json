@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: inspect the certificate at /opt/winlab/ssl-certificate-renewal/certs/current.pem",
+  "hint_2": "TODO: the cert is expired, update to a future date (2027+)",
+  "hint_3": "TODO: also set cert.state to renewed",
+  "hint_4": "TODO: sed -i 's/^not_after=.*/not_after=2027-01-01T00:00:00Z/' /opt/winlab/ssl-certificate-renewal/certs/current.pem && echo renewed > /opt/winlab/ssl-certificate-renewal/cert.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

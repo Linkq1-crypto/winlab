@@ -1,0 +1,3 @@
+HTTPS is failing with certificate errors.
+
+→ read /opt/winlab/advanced-scenarios/certificate.pem to find the expiry date.

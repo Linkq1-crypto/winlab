@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/real-server/apache.status to see worker saturation",
+  "hint_2": "TODO: workers must be freed",
+  "hint_3": "TODO: Reduce current_workers to 90 to represent a recovered state with available slots",
+  "hint_4": "TODO: sed -i 's/current_workers=150/current_workers=90/' /opt/winlab/real-server/apache.status && echo stable > /opt/winlab/real-server/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

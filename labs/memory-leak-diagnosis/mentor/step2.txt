@@ -1,0 +1,3 @@
+diagnostic_leak.py is confirmed running, PID in leak.pid.
+
+→ observe with top, then kill it.

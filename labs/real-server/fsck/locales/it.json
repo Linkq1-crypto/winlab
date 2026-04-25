@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/real-server/filesystem.state to see the repair status",
+  "hint_2": "TODO: fsck must run",
+  "hint_3": "TODO: After fsck completes, the filesystem is clean and repair is confirmed",
+  "hint_4": "TODO: sed -i 's/ext4=dirty/ext4=clean/;s/repair=required/repair=completed/' /opt/winlab/real-server/filesystem.state && echo stable > /opt/winlab/real-server/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

@@ -1,0 +1,1 @@
+Change -Xmx128m to -Xmx512m so the JVM has enough heap to handle the workload

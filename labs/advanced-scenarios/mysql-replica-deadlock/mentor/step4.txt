@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/sql_thread=stopped/sql_thread=running/;s/replication_delay=900/replication_delay=0/' /opt/winlab/advanced-scenarios/replica.status && echo synced > /opt/winlab/advanced-scenarios/service.state.

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The filesystem is under artificial disk pressure. A 64 MB filler file was created at /opt/winlab/disk-full/filler.img to simulate a disk-full condition. Writes to the affected path are failing. The pressure must be relieved to restore normal operation.",
+  "lesson": "",
+  "hint_1": "check available space with df -h",
+  "hint_2": "inspect with du -sh and ls -lh",
+  "hint_3": "remove it",
+  "hint_4": "rm /opt/winlab/disk-full/filler.img",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

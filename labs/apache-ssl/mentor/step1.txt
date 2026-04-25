@@ -1,0 +1,3 @@
+HTTPS is failing with a certificate error.
+
+→ inspect the vhost config.

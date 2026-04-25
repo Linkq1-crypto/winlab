@@ -1,0 +1,3 @@
+nginx config has a syntax error.
+
+→ run nginx -t to find it.

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The server has 28,000 TCP sockets in TIME_WAIT state, exhausting the local port range and preventing new outbound connections. Applications are failing with \"Cannot assign requested address\". The TIME_WAIT count must be reduced to 500 and port exhaustion cleared, with the service state set to stable.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/real-server/socket.state to see the socket count",
+  "hint_2": "port_exhaustion=true confirms no ports are left",
+  "hint_3": "Enable tcp_tw_reuse or reduce connection rate to drop TIME_WAIT count; then set time_wait=500 and port_exhaustion=false",
+  "hint_4": "sed -i 's/time_wait=28000/time_wait=500/;s/port_exhaustion=true/port_exhaustion=false/' /opt/winlab/real-server/socket.state && echo stable > /opt/winlab/real-server/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/victim=nginx/victim=none/;s/heap=leaking/heap=contained/' /opt/winlab/real-server/oom.report && echo stable > /opt/winlab/real-server/service.state.

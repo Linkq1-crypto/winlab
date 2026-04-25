@@ -1,0 +1,3 @@
+Fix.
+
+→ rm /opt/winlab/enhanced-terminal/tmp/cache.fill && chmod 755 /opt/winlab/enhanced-terminal/app && echo "status=ready" > /opt/winlab/enhanced-terminal/app/.mentor.

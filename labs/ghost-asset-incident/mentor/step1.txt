@@ -1,0 +1,3 @@
+logo.svg is showing as missing.
+
+→ inspect manifests/assets.json and assets/logo.svg.state.

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The Apache virtual host is configured to use an expired SSL certificate. The SSLCertificateFile directive points to /etc/ssl/winlab/expired.pem. HTTPS connections will fail TLS handshake. A valid replacement certificate exists at /etc/ssl/winlab/current.pem.",
+  "lesson": "",
+  "hint_1": "inspect the vhost config",
+  "hint_2": "a current.pem exists in the same directory",
+  "hint_3": "edit vhost.conf",
+  "hint_4": "sed -i 's|expired.pem|current.pem|' /opt/winlab/apache-ssl/vhost.conf && echo active > /opt/winlab/apache-ssl/cert.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

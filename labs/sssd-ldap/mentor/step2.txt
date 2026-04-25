@@ -1,0 +1,3 @@
+ldap_uri points to offline.winlab.local.
+
+→ change it to directory.winlab.local.

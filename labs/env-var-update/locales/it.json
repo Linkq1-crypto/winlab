@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: inspect /opt/winlab/env-var-update/app.env for misconfigured values",
+  "hint_2": "TODO: set APP_MODE=production",
+  "hint_3": "TODO: also set FEATURE_LOGIN=enabled",
+  "hint_4": "TODO: sed -i 's/^APP_MODE=.*/APP_MODE=production/;s/^FEATURE_LOGIN=.*/FEATURE_LOGIN=enabled/' /opt/winlab/env-var-update/app.env",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

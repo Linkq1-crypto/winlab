@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/advanced-scenarios/certificate.pem to find the expiry date",
+  "hint_2": "TODO: the certificate is past its validity window",
+  "hint_3": "TODO: Update not_after to a 2027 date and set chain=valid to restore a valid certificate",
+  "hint_4": "TODO: sed -i 's/not_after=2024-01-01T00:00:00Z/not_after=2027-12-31T00:00:00Z/' /opt/winlab/advanced-scenarios/certificate.pem && sed -i 's/chain=expired/chain=valid/' /opt/winlab/advanced-scenarios/certificate.pem && echo renewed > /opt/winlab/advanced-scenarios/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

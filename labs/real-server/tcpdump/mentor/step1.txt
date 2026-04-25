@@ -1,0 +1,3 @@
+Packet capture shows unexpected outbound connection.
+
+→ read /opt/winlab/real-server/capture.summary to find the source IP.

@@ -1,0 +1,3 @@
+Fix.
+
+→ edit mdadm.detail with sed to correct all four fields (exact spacing required), then echo rebuilt > /opt/winlab/raid-simulator/array.state.

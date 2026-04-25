@@ -1,0 +1,3 @@
+Audit failed.
+
+→ read /opt/winlab/security-audit/audit.report to find the findings.

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The application process managed by the process supervisor has crashed. pm2.status reads crashed and no process is listening on port 4001. A start-app.sh script is provided to restart the process and restore the online status marker.",
+  "lesson": "",
+  "hint_1": "check if anything is listening on port 4001",
+  "hint_2": "look for a recovery script in the lab directory",
+  "hint_3": "run it to restart the process and update the status marker",
+  "hint_4": "bash /opt/winlab/pm2-crash-recovery/start-app.sh",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

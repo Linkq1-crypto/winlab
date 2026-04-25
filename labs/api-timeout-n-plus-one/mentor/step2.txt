@@ -1,0 +1,3 @@
+Each order triggers a separate db.users.findById() call.
+
+→ this is an N+1 pattern.

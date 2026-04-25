@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The authentication handler has a critical security flaw: it trusts the role claim from a JWT payload even when the signature has not been verified. An attacker can forge any role by crafting an unsigned or self-signed JWT. The code must be fixed to return \"guest\" when the signature is not verified, and marked with JWT_SIGNATURE_REQUIRED=true.",
+  "lesson": "",
+  "hint_1": "read auth.js",
+  "hint_2": "this allows JWT forgery",
+  "hint_3": "rewrite the !verifySignature branch",
+  "hint_4": "replace \"return payload.role || \\\"guest\\\"\" with \"return \\\"guest\\\"\" and add // JWT_SIGNATURE_REQUIRED=true",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

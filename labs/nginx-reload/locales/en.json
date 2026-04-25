@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "nginx is running but serving a broken config. A new virtual host was added to /etc/nginx/conf.d/winlab-reload.conf with a syntax error — a missing semicolon after the return directive. nginx started with the old config but the new config has not been loaded. A reload will fail until the syntax is fixed.",
+  "lesson": "",
+  "hint_1": "run nginx -t to find it",
+  "hint_2": "inspect the conf.d file",
+  "hint_3": "add the semicolon",
+  "hint_4": "sed -i 's/return 200 \"reload pending\"/return 200 \"reload pending\";/' /etc/nginx/conf.d/winlab-reload.conf && nginx -t && nginx -s reload",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

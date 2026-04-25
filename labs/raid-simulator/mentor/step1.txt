@@ -1,0 +1,3 @@
+RAID array is degraded.
+
+→ read /opt/winlab/raid-simulator/mdadm.detail and array.state to understand the failure.

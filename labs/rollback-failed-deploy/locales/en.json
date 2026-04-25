@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A deployment to v1.4.0 has failed. deploy.state reads failed and current_version points to the broken release. A known-good version v1.3.9 exists at releases/v1.3.9/ with status.txt=healthy. The rollback must restore current_version to v1.3.9, update deploy.state to rolled_back, and create rollback.complete to confirm the action.",
+  "lesson": "",
+  "hint_1": "check safe_version for the last known-good release",
+  "hint_2": "restore current_version to v1.3.9",
+  "hint_3": "update deploy.state to rolled_back",
+  "hint_4": "echo v1.3.9 > current_version && echo rolled_back > deploy.state && echo ok > rollback.complete",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

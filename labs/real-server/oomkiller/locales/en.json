@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The kernel OOM killer has terminated the nginx process due to a heap leak in a worker. The server is out of memory and further processes are at risk. The heap leak must be contained, nginx restarted, and the OOM report updated to victim=none and heap=contained, with the service state set to stable.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/real-server/oom.report to see what was killed and why",
+  "hint_2": "patch the leak and restart nginx",
+  "hint_3": "After patching the leak and restarting nginx, update victim=none and heap=contained",
+  "hint_4": "sed -i 's/victim=nginx/victim=none/;s/heap=leaking/heap=contained/' /opt/winlab/real-server/oom.report && echo stable > /opt/winlab/real-server/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

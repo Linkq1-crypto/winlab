@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The ext4 filesystem was not unmounted cleanly after a crash and is marked dirty. A filesystem check is required before it can be mounted read-write. The filesystem state must be set to clean with repair=completed, and the service state set to stable.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/real-server/filesystem.state to see the repair status",
+  "hint_2": "fsck must run",
+  "hint_3": "After fsck completes, the filesystem is clean and repair is confirmed",
+  "hint_4": "sed -i 's/ext4=dirty/ext4=clean/;s/repair=required/repair=completed/' /opt/winlab/real-server/filesystem.state && echo stable > /opt/winlab/real-server/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

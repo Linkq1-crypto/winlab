@@ -1,0 +1,3 @@
+Config and disk cleaned up.
+
+→ update service.state to stable to complete the fix.

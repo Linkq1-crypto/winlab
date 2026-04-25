@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The CI/CD pipeline is failing. pipeline.state reads failed. The pipeline config at pipeline.env is missing a required secret (CI_SECRET is empty) and targets the wrong environment (DEPLOY_ENV=staging instead of production). Both must be fixed and pipeline.state set to passed.",
+  "lesson": "",
+  "hint_1": "inspect /opt/winlab/cicd-broken-pipeline/pipeline.env for missing config",
+  "hint_2": "set CI_SECRET to any non-empty value and change DEPLOY_ENV to production",
+  "hint_3": "update pipeline.state to passed",
+  "hint_4": "sed -i 's/^CI_SECRET=$/CI_SECRET=token/;s/^DEPLOY_ENV=.*/DEPLOY_ENV=production/' /opt/winlab/cicd-broken-pipeline/pipeline.env && echo passed > /opt/winlab/cicd-broken-pipeline/pipeline.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

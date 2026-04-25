@@ -1,0 +1,3 @@
+stale_asset=true means the edge cache was not cleared.
+
+→ set it to false.

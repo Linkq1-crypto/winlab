@@ -1,0 +1,3 @@
+Fix.
+
+→ rm /opt/winlab/disk-full/filler.img.

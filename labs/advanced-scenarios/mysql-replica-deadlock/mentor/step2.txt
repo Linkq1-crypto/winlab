@@ -1,0 +1,3 @@
+sql_thread=stopped means the replica has halted binlog application.
+
+→ set it to running.

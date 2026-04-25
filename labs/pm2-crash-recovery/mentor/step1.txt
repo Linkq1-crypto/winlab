@@ -1,0 +1,3 @@
+Application is down, pm2.status is crashed.
+
+→ check if anything is listening on port 4001.

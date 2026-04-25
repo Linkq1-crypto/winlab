@@ -1,0 +1,3 @@
+Authentication may be granting roles without signature verification.
+
+→ read auth.js.

@@ -1,0 +1,3 @@
+Applications fail with cannot assign address errors.
+
+→ read /opt/winlab/real-server/socket.state to see the socket count.

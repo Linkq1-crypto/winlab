@@ -1,0 +1,3 @@
+Disk writes are failing.
+
+→ check available space with df -h.

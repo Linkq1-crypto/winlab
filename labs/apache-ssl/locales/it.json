@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: inspect the vhost config",
+  "hint_2": "TODO: a current.pem exists in the same directory",
+  "hint_3": "TODO: edit vhost.conf",
+  "hint_4": "TODO: sed -i 's|expired.pem|current.pem|' /opt/winlab/apache-ssl/vhost.conf && echo active > /opt/winlab/apache-ssl/cert.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

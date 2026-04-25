@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "An incident log file is stuck in the incoming/ intake queue and has not been archived. The filesystem intake is stalled. The recovery procedure requires moving the log to archive/ and creating a recovered.flag marker to confirm the action.",
+  "lesson": "",
+  "hint_1": "check incoming/ for unprocessed files",
+  "hint_2": "move it to archive/",
+  "hint_3": "create the recovered.flag with the exact content linux-terminal-ok",
+  "hint_4": "mv /opt/winlab/linux-terminal/incoming/incident.log /opt/winlab/linux-terminal/archive/ && echo linux-terminal-ok > /opt/winlab/linux-terminal/archive/recovered.flag",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

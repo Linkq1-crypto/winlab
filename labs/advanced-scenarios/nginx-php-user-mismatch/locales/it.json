@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/advanced-scenarios/php-fpm.conf to find the user mismatch",
+  "hint_2": "TODO: the socket is inaccessible to Nginx",
+  "hint_3": "TODO: Change user and group to www-data so Nginx can connect to the PHP-FPM socket",
+  "hint_4": "TODO: sed -i 's/user=apache/user=www-data/;s/group=apache/group=www-data/' /opt/winlab/advanced-scenarios/php-fpm.conf && echo healthy > /opt/winlab/advanced-scenarios/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

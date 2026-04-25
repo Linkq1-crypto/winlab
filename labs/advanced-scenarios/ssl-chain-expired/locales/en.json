@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The TLS certificate for advanced.winlab.local expired on 2024-01-01 and the chain is invalid. Clients are receiving SSL handshake errors. The certificate file must be updated with a valid 2027 expiry date, the chain set to valid, and the service state set to renewed.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/advanced-scenarios/certificate.pem to find the expiry date",
+  "hint_2": "the certificate is past its validity window",
+  "hint_3": "Update not_after to a 2027 date and set chain=valid to restore a valid certificate",
+  "hint_4": "sed -i 's/not_after=2024-01-01T00:00:00Z/not_after=2027-12-31T00:00:00Z/' /opt/winlab/advanced-scenarios/certificate.pem && sed -i 's/chain=expired/chain=valid/' /opt/winlab/advanced-scenarios/certificate.pem && echo renewed > /opt/winlab/advanced-scenarios/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

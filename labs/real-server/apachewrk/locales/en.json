@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "Apache has hit its MaxRequestWorkers limit. All 150 worker slots are occupied and new connections are being queued or refused. The worker count must be reduced to 90 (representing a recovered state) and the service state set to stable.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/real-server/apache.status to see worker saturation",
+  "hint_2": "workers must be freed",
+  "hint_3": "Reduce current_workers to 90 to represent a recovered state with available slots",
+  "hint_4": "sed -i 's/current_workers=150/current_workers=90/' /opt/winlab/real-server/apache.status && echo stable > /opt/winlab/real-server/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

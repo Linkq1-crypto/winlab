@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A process is flooding syslog at thousands of messages per second. The spam file has grown to 32 MB. The flood log must be removed, the directory brought below 4 MB, and the service state set to stable.",
+  "lesson": "",
+  "hint_1": "check du -sh on /opt/winlab/real-server/ to find the flood file",
+  "hint_2": "remove it",
+  "hint_3": "set service.state to stable",
+  "hint_4": "rm -f /opt/winlab/real-server/syslog.spam && echo stable > /opt/winlab/real-server/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/advanced-scenarios/jvm.options to find the heap setting",
+  "hint_2": "TODO: raise it to 512m",
+  "hint_3": "TODO: Change -Xmx128m to -Xmx512m so the JVM has enough heap to handle the workload",
+  "hint_4": "TODO: sed -i 's/-Xmx128m/-Xmx512m/' /opt/winlab/advanced-scenarios/jvm.options && echo stable > /opt/winlab/advanced-scenarios/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

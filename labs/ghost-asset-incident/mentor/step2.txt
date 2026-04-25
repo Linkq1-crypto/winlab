@@ -1,0 +1,3 @@
+Both show missing.
+
+→ update assets.json to "present" and logo.svg.state to restored.

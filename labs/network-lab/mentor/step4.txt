@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/^api.internal unreachable$/api.internal via 10.0.0.10/' /opt/winlab/network-lab/routing.table && echo healthy > /opt/winlab/network-lab/network.state.

@@ -1,0 +1,1 @@
+Fix mdadm.detail: change State to clean, Total Devices to 2, Failed Devices to 0, replace removed with active sync /dev/sdb1

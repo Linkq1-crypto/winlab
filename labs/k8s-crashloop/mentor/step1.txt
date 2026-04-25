@@ -1,0 +1,3 @@
+Pod is in CrashLoopBackOff.
+
+→ read deployment.yaml to find the two broken fields.

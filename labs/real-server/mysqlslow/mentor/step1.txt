@@ -1,0 +1,3 @@
+MySQL response times are degraded and slow queries are accumulating.
+
+→ read /opt/winlab/real-server/mysql.processlist.

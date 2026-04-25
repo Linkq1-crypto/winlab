@@ -1,0 +1,3 @@
+HTTPS is failing.
+
+→ inspect the certificate at /opt/winlab/ssl-certificate-renewal/certs/current.pem.

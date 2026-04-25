@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The Java service is crashing with OutOfMemoryError: Java heap space. The JVM is configured with a maximum heap of only 128m, which is insufficient for the application's working set. The heap ceiling must be raised to 512m and the service state set to stable.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/advanced-scenarios/jvm.options to find the heap setting",
+  "hint_2": "raise it to 512m",
+  "hint_3": "Change -Xmx128m to -Xmx512m so the JVM has enough heap to handle the workload",
+  "hint_4": "sed -i 's/-Xmx128m/-Xmx512m/' /opt/winlab/advanced-scenarios/jvm.options && echo stable > /opt/winlab/advanced-scenarios/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

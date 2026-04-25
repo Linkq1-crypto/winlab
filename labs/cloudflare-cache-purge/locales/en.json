@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A stale asset is being served to users because the Cloudflare cache was not purged after a deployment. The cache state file shows stale_asset=true and purge_status=pending. Both fields must be updated to confirm the purge completed and the edge is serving fresh content.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/cloudflare-cache-purge/cache.state to see the purge status",
+  "hint_2": "set it to false",
+  "hint_3": "set it to completed",
+  "hint_4": "sed -i 's/stale_asset=true/stale_asset=false/;s/purge_status=pending/purge_status=completed/' /opt/winlab/cloudflare-cache-purge/cache.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

@@ -1,0 +1,3 @@
+Fix.
+
+→ chown -R winlabapp:winlabapp /opt/winlab/permission-denied/data && chmod 0755 /opt/winlab/permission-denied/data.

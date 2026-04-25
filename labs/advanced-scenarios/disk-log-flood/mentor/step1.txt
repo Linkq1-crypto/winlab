@@ -1,0 +1,3 @@
+Disk is nearly full and logs are growing rapidly.
+
+→ check du -sh on /opt/winlab/advanced-scenarios/logs/.

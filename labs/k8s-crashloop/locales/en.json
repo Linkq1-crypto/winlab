@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A Kubernetes pod is stuck in CrashLoopBackOff. The deployment file shows a broken liveness probe, an invalid image tag, and an unhealthy pod status. The pod restarts indefinitely because the container never passes its health check. The three fields must be corrected to restore the deployment to a running state.",
+  "lesson": "",
+  "hint_1": "read deployment.yaml to find the two broken fields",
+  "hint_2": "fix livenessProbe to healthy first",
+  "hint_3": "also change imageTag to stable",
+  "hint_4": "sed -i 's/livenessProbe: broken/livenessProbe: healthy/;s/imageTag: bad-build/imageTag: stable/;s/podStatus: CrashLoopBackOff/podStatus: Running/' /opt/winlab/k8s-crashloop/deployment.yaml",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

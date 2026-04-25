@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A security audit has flagged two critical misconfigurations. audit.report shows ssh_root_login=enabled and world_writable_backup=true. Both must be remediated and status set to passed to clear the audit finding.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/security-audit/audit.report to find the findings",
+  "hint_2": "set it to disabled",
+  "hint_3": "set it to false",
+  "hint_4": "sed -i 's/ssh_root_login=enabled/ssh_root_login=disabled/;s/world_writable_backup=true/world_writable_backup=false/;s/status=failed/status=passed/' /opt/winlab/security-audit/audit.report",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

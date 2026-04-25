@@ -1,0 +1,3 @@
+cache.fill removed.
+
+→ restore write access: chmod 755 /opt/winlab/enhanced-terminal/app.

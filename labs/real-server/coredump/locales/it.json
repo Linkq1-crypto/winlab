@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/real-server/coredump.report to see the analysis state",
+  "hint_2": "TODO: analyse the core dump with gdb",
+  "hint_3": "TODO: Run gdb on the core dump, identify the crashing frame, fix the root cause, and restart the service",
+  "hint_4": "TODO: sed -i 's/analysis=pending/analysis=completed/' /opt/winlab/real-server/coredump.report && echo stable > /opt/winlab/real-server/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

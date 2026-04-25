@@ -1,0 +1,3 @@
+green is healthy.
+
+→ switch live_slot from blue to green.

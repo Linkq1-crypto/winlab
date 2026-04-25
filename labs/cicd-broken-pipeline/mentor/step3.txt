@@ -1,0 +1,3 @@
+Config is fixed.
+
+→ update pipeline.state to passed.

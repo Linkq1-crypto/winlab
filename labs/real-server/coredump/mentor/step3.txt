@@ -1,0 +1,1 @@
+Run gdb on the core dump, identify the crashing frame, fix the root cause, and restart the service

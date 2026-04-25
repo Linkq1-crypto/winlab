@@ -1,0 +1,3 @@
+Deploy has failed, current_version is v1.4.0.
+
+→ check safe_version for the last known-good release.

@@ -1,0 +1,3 @@
+Path needs updating from expired.pem to current.pem.
+
+→ edit vhost.conf.

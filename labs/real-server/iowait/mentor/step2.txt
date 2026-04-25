@@ -1,0 +1,3 @@
+hot-disk.img is a 64 MB file saturating disk throughput.
+
+→ remove it.

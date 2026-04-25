@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/root_cause=unknown/root_cause=lock_cleared/' /opt/winlab/real-server/hung-process.trace && echo stable > /opt/winlab/real-server/service.state.

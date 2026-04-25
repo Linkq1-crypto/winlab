@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The primary network interface eth0 is flapping — going up and down repeatedly — with an unstable carrier signal. Services are experiencing intermittent connectivity loss. The NIC state must be corrected to up with a stable carrier, and the service state set to stable.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/real-server/nic.state to see the interface state",
+  "hint_2": "the physical link is unstable",
+  "hint_3": "Fix the carrier by checking the cable and driver, then restore eth0=up and carrier=stable",
+  "hint_4": "sed -i 's/eth0=flapping/eth0=up/;s/carrier=unstable/carrier=stable/' /opt/winlab/real-server/nic.state && echo stable > /opt/winlab/real-server/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

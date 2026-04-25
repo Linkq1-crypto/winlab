@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A runaway application log has consumed nearly all available disk space. /opt/winlab/advanced-scenarios/logs/app.log is 48 MB and growing. The directory must be brought below 8 MB and the service state set to clear.",
+  "lesson": "",
+  "hint_1": "check du -sh on /opt/winlab/advanced-scenarios/logs/",
+  "hint_2": "remove it to free disk",
+  "hint_3": "set service.state to clear",
+  "hint_4": "rm -f /opt/winlab/advanced-scenarios/logs/app.log && echo clear > /opt/winlab/advanced-scenarios/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

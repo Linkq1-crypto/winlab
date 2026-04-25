@@ -1,0 +1,1 @@
+After fsck completes, the filesystem is clean and repair is confirmed

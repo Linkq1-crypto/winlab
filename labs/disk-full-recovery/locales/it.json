@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: run du -sh /opt/winlab/disk-full-recovery/* to find what's large",
+  "hint_2": "TODO: remove both",
+  "hint_3": "TODO: du -sm /opt/winlab/disk-full-recovery/",
+  "hint_4": "TODO: rm cache/blob.bin logs/error.log && echo cleared=true > /opt/winlab/disk-full-recovery/recovery.report",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

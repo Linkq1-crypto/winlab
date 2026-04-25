@@ -1,0 +1,3 @@
+Fix.
+
+→ mv /opt/winlab/linux-terminal/incoming/incident.log /opt/winlab/linux-terminal/archive/ && echo linux-terminal-ok > /opt/winlab/linux-terminal/archive/recovered.flag.

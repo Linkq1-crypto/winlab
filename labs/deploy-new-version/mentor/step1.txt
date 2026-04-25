@@ -1,0 +1,3 @@
+Deploy is pending, current_version is v1.1.0.
+
+→ check target_version to find what should be promoted.

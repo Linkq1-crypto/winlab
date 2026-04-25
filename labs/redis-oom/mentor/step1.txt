@@ -1,0 +1,3 @@
+Redis is rejecting writes with OOM errors.
+
+→ inspect the eviction policy in redis.conf.

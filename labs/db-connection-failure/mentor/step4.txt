@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/;s/^DB_PORT=.*/DB_PORT=5432/' /opt/winlab/db-connection-failure/app.env && echo connected > /opt/winlab/db-connection-failure/connection.state.

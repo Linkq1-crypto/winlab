@@ -1,0 +1,3 @@
+maxmemory-policy is noeviction.
+
+→ change to allkeys-lru and remove the stale cache.rdb.

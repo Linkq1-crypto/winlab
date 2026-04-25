@@ -1,0 +1,3 @@
+Fix.
+
+→ replace "return payload.role || \"guest\"" with "return \"guest\"" and add // JWT_SIGNATURE_REQUIRED=true.

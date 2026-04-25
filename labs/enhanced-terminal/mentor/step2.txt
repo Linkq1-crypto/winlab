@@ -1,0 +1,3 @@
+Runbook lists three steps.
+
+→ start with rm /opt/winlab/enhanced-terminal/tmp/cache.fill.

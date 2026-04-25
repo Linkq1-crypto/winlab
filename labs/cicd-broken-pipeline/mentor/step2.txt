@@ -1,0 +1,3 @@
+CI_SECRET is empty and DEPLOY_ENV is staging.
+
+→ set CI_SECRET to any non-empty value and change DEPLOY_ENV to production.

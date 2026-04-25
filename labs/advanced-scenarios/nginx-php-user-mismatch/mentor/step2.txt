@@ -1,0 +1,3 @@
+user=apache and group=apache do not match Nginx's www-data user.
+
+→ the socket is inaccessible to Nginx.

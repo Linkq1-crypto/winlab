@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The logo.svg asset is missing from the CDN. The asset manifest at manifests/assets.json records it as \"missing\", assets/logo.svg.state reads missing, and cdn.state reads broken. Users are seeing broken image placeholders. The asset must be declared restored in all three locations.",
+  "lesson": "",
+  "hint_1": "inspect manifests/assets.json and assets/logo.svg.state",
+  "hint_2": "update assets.json to \"present\" and logo.svg.state to restored",
+  "hint_3": "also set cdn.state to warm to simulate cache purge",
+  "hint_4": "sed -i 's/\"logo.svg\": \"missing\"/\"logo.svg\": \"present\"/' manifests/assets.json && echo restored > assets/logo.svg.state && echo warm > cdn.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

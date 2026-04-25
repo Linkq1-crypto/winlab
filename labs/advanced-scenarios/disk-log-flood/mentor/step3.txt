@@ -1,0 +1,3 @@
+After clearing the log, the service can restart cleanly.
+
+→ set service.state to clear.

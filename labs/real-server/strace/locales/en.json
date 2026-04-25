@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A process is hung waiting on a lock file at /srv/shared/lockfile. The root cause is unknown. The lock must be cleared and the root cause recorded as lock_cleared, with the service state set to stable.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/real-server/hung-process.trace to see what it is waiting for",
+  "hint_2": "waiting_on=/srv/shared/lockfile means the process is blocked on a lock held by another process that may have crashed",
+  "hint_3": "Identify the lock holder with lsof, remove the stale lock file, and the hung process unblocks",
+  "hint_4": "sed -i 's/root_cause=unknown/root_cause=lock_cleared/' /opt/winlab/real-server/hung-process.trace && echo stable > /opt/winlab/real-server/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

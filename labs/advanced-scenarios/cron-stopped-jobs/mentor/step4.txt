@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/cron=stopped/cron=running/;s/backup_job=missed/backup_job=scheduled/' /opt/winlab/advanced-scenarios/scheduler.state && echo resumed > /opt/winlab/advanced-scenarios/service.state.

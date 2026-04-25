@@ -1,0 +1,3 @@
+victim=nginx and heap=leaking mean a memory leak caused the OOM kill.
+
+→ patch the leak and restart nginx.

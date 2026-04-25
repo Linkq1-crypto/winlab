@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/user=apache/user=www-data/;s/group=apache/group=www-data/' /opt/winlab/advanced-scenarios/php-fpm.conf && echo healthy > /opt/winlab/advanced-scenarios/service.state.

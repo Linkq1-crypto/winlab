@@ -1,0 +1,3 @@
+Fix.
+
+→ rm -f /opt/winlab/advanced-scenarios/logs/app.log && echo clear > /opt/winlab/advanced-scenarios/service.state.

@@ -1,0 +1,3 @@
+Application cannot write files and tmp is blocked.
+
+→ read the runbook at runbooks/checklist.txt.

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The TLS certificate for app.winlab.local has expired. current.pem shows not_after=2024-01-01T00:00:00Z, which is in the past. All HTTPS connections will fail. The certificate must be renewed (updating not_after to a future date) and cert.state must be set to renewed.",
+  "lesson": "",
+  "hint_1": "inspect the certificate at /opt/winlab/ssl-certificate-renewal/certs/current.pem",
+  "hint_2": "the cert is expired, update to a future date (2027+)",
+  "hint_3": "also set cert.state to renewed",
+  "hint_4": "sed -i 's/^not_after=.*/not_after=2027-01-01T00:00:00Z/' /opt/winlab/ssl-certificate-renewal/certs/current.pem && echo renewed > /opt/winlab/ssl-certificate-renewal/cert.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

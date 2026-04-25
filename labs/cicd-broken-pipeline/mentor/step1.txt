@@ -1,0 +1,3 @@
+Pipeline is failing.
+
+→ inspect /opt/winlab/cicd-broken-pipeline/pipeline.env for missing config.

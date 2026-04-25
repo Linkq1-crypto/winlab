@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/-Xmx128m/-Xmx512m/' /opt/winlab/advanced-scenarios/jvm.options && echo stable > /opt/winlab/advanced-scenarios/service.state.

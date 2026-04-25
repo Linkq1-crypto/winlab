@@ -1,0 +1,3 @@
+Replace JSON.parse with stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret).
+
+→ this validates the HMAC signature.

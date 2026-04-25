@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/real-server/capture.summary to find the source IP",
+  "hint_2": "TODO: suspicious_connection=true from 198.51.100.24 indicates a potentially compromised process making unexpected outbound calls",
+  "hint_3": "TODO: Identify the process, block the IP with iptables, and stop the offending process",
+  "hint_4": "TODO: sed -i 's/suspicious_connection=true/suspicious_connection=false/' /opt/winlab/real-server/capture.summary && echo stable > /opt/winlab/real-server/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

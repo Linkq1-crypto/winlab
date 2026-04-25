@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/real-server/nic.state to see the interface state",
+  "hint_2": "TODO: the physical link is unstable",
+  "hint_3": "TODO: Fix the carrier by checking the cable and driver, then restore eth0=up and carrier=stable",
+  "hint_4": "TODO: sed -i 's/eth0=flapping/eth0=up/;s/carrier=unstable/carrier=stable/' /opt/winlab/real-server/nic.state && echo stable > /opt/winlab/real-server/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

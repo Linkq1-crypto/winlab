@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: inspect /etc/sssd/sssd.conf and /opt/winlab/sssd-ldap/directory.state",
+  "hint_2": "TODO: change it to directory.winlab.local",
+  "hint_3": "TODO: set it to true so logins work during LDAP downtime",
+  "hint_4": "TODO: sed -i 's|ldap_uri = ldap://offline.winlab.local|ldap_uri = ldap://directory.winlab.local|' /etc/sssd/sssd.conf && sed -i 's/cache_credentials = false/cache_credentials = true/' /etc/sssd/sssd.conf && echo online > /opt/winlab/sssd-ldap/directory.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

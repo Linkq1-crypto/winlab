@@ -1,0 +1,3 @@
+Memory is growing fast.
+
+→ identify the process with pgrep -f diagnostic_leak.py or ps aux.

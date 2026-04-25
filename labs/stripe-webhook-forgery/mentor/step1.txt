@@ -1,0 +1,3 @@
+Payment webhook may be accepting forged events.
+
+→ read webhook.js to find the missing verification.

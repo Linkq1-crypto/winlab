@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A Python process is consuming memory without bound. The process runs leak.py, which appends 1 MB strings in an infinite loop. Its PID is stored in /opt/winlab/memory-leak/leak.pid. Memory will exhaust until the process is killed.",
+  "lesson": "",
+  "hint_1": "find the leaking process with ps aux or top",
+  "hint_2": "read the pid file",
+  "hint_3": "kill it using the stored PID",
+  "hint_4": "kill \"$(cat /opt/winlab/memory-leak/leak.pid)\"",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

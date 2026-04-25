@@ -1,0 +1,3 @@
+incident.log is in incoming/ and has not been archived.
+
+→ move it to archive/.

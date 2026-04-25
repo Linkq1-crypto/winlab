@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/eth0=flapping/eth0=up/;s/carrier=unstable/carrier=stable/' /opt/winlab/real-server/nic.state && echo stable > /opt/winlab/real-server/service.state.

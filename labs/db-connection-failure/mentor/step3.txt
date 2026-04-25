@@ -1,0 +1,3 @@
+Config updated.
+
+→ also update the connection.state marker to complete the fix.

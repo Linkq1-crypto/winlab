@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/return 200 "reload pending"/return 200 "reload pending";/' /etc/nginx/conf.d/winlab-reload.conf && nginx -t && nginx -s reload.

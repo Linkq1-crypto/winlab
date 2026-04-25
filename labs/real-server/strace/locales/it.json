@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/real-server/hung-process.trace to see what it is waiting for",
+  "hint_2": "TODO: waiting_on=/srv/shared/lockfile means the process is blocked on a lock held by another process that may have crashed",
+  "hint_3": "TODO: Identify the lock holder with lsof, remove the stale lock file, and the hung process unblocks",
+  "hint_4": "TODO: sed -i 's/root_cause=unknown/root_cause=lock_cleared/' /opt/winlab/real-server/hung-process.trace && echo stable > /opt/winlab/real-server/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

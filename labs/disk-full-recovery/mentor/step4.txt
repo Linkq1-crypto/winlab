@@ -1,0 +1,3 @@
+Fix.
+
+→ rm cache/blob.bin logs/error.log && echo cleared=true > /opt/winlab/disk-full-recovery/recovery.report.

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The MySQL replica SQL thread has stopped with error 1213 (deadlock) and replication is lagging by 900 seconds. The replica is not applying changes from the primary, causing data divergence. The SQL thread must be restarted by fixing the status file and the replication delay cleared, with the service state set to synced.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/advanced-scenarios/replica.status to see the thread state and delay",
+  "hint_2": "set it to running",
+  "hint_3": "reset it to 0",
+  "hint_4": "sed -i 's/sql_thread=stopped/sql_thread=running/;s/replication_delay=900/replication_delay=0/' /opt/winlab/advanced-scenarios/replica.status && echo synced > /opt/winlab/advanced-scenarios/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/real-server/socket.state to see the socket count",
+  "hint_2": "TODO: port_exhaustion=true confirms no ports are left",
+  "hint_3": "TODO: Enable tcp_tw_reuse or reduce connection rate to drop TIME_WAIT count; then set time_wait=500 and port_exhaustion=false",
+  "hint_4": "TODO: sed -i 's/time_wait=28000/time_wait=500/;s/port_exhaustion=true/port_exhaustion=false/' /opt/winlab/real-server/socket.state && echo stable > /opt/winlab/real-server/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The database service is down. The simulation uses fake_db.py, a Python TCP server that listens on port 5432 and responds to connections. The process is not running. Applications attempting to connect to the database will get Connection refused on port 5432.",
+  "lesson": "",
+  "hint_1": "check if port 5432 is listening with ss -ltn",
+  "hint_2": "confirm fake_db.py exists and is not running",
+  "hint_3": "start it in the background with nohup",
+  "hint_4": "nohup python3 /opt/winlab/db-dead/fake_db.py >/tmp/winlab-db-dead.log 2>&1 & && echo $! > /opt/winlab/db-dead/db.pid",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

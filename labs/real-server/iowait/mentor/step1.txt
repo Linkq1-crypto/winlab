@@ -1,0 +1,3 @@
+Server shows high iowait and application is slow.
+
+→ check du -sh on /opt/winlab/real-server/ to find the large file.

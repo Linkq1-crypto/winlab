@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The application's database configuration points to a wrong host and port. app.env has DB_HOST=db.internal and DB_PORT=9999. The correct values are DB_HOST=127.0.0.1 and DB_PORT=5432. The connection.state marker must also be updated to confirm the fix is applied.",
+  "lesson": "",
+  "hint_1": "inspect the env config file",
+  "hint_2": "correct values are 127.0.0.1 and 5432",
+  "hint_3": "also update the connection.state marker to complete the fix",
+  "hint_4": "sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/;s/^DB_PORT=.*/DB_PORT=5432/' /opt/winlab/db-connection-failure/app.env && echo connected > /opt/winlab/db-connection-failure/connection.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

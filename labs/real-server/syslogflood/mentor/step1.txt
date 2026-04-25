@@ -1,0 +1,3 @@
+Syslog is filling disk rapidly.
+
+→ check du -sh on /opt/winlab/real-server/ to find the flood file.

@@ -1,0 +1,3 @@
+JSON.parse(req.body) processes the payload without checking the Stripe-Signature header.
+
+→ this allows webhook forgery.

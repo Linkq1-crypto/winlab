@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: check available space with df -h",
+  "hint_2": "TODO: inspect with du -sh and ls -lh",
+  "hint_3": "TODO: remove it",
+  "hint_4": "TODO: rm /opt/winlab/disk-full/filler.img",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

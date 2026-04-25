@@ -1,0 +1,3 @@
+analysis=pending means the crash cause has not been identified yet.
+
+→ analyse the core dump with gdb.

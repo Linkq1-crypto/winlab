@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The Stripe webhook handler processes events without verifying the request signature. An attacker can POST any JSON payload to the endpoint and have it treated as a legitimate Stripe event — including fake payment_intent.succeeded events. The code must be rewritten to call stripe.webhooks.constructEvent() and marked with STRIPE_SIGNATURE_VERIFIED=true.",
+  "lesson": "",
+  "hint_1": "read webhook.js to find the missing verification",
+  "hint_2": "this allows webhook forgery",
+  "hint_3": "this validates the HMAC signature",
+  "hint_4": "rewrite webhook.js to call constructEvent and add // STRIPE_SIGNATURE_VERIFIED=true, removing JSON.parse(req.body)",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

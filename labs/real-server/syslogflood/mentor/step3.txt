@@ -1,0 +1,3 @@
+After removing the flood file the directory drops below 4 MB.
+
+→ set service.state to stable.

@@ -1,0 +1,3 @@
+Application cannot connect to the database.
+
+→ inspect the env config file.

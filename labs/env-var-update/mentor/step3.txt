@@ -1,0 +1,3 @@
+APP_MODE fixed.
+
+→ also set FEATURE_LOGIN=enabled.

@@ -1,0 +1,3 @@
+cache/blob.bin (48 MB) and logs/error.log (16 MB) are the culprits.
+
+→ remove both.

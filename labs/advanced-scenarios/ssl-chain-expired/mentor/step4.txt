@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/not_after=2024-01-01T00:00:00Z/not_after=2027-12-31T00:00:00Z/' /opt/winlab/advanced-scenarios/certificate.pem && sed -i 's/chain=expired/chain=valid/' /opt/winlab/advanced-scenarios/certificate.pem && echo renewed > /opt/winlab/advanced-scenarios/service.state.

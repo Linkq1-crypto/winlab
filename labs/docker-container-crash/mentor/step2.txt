@@ -1,0 +1,3 @@
+restart_policy=no is the fault.
+
+→ change to unless-stopped.

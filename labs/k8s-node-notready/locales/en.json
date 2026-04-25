@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A Kubernetes node is stuck in NotReady state. The node status file shows Ready=False and Kubelet=stopped. The node cannot schedule new pods and existing pods on it are evicted. Both fields must be corrected to restore the node to a schedulable state.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/k8s-node-notready/node.status to find the broken fields",
+  "hint_2": "fix it to running first",
+  "hint_3": "also set it to True",
+  "hint_4": "sed -i 's/Kubelet=stopped/Kubelet=running/;s/Ready=False/Ready=True/' /opt/winlab/k8s-node-notready/node.status",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read auth.js",
+  "hint_2": "TODO: this allows JWT forgery",
+  "hint_3": "TODO: rewrite the !verifySignature branch",
+  "hint_4": "TODO: replace \"return payload.role || \\\"guest\\\"\" with \"return \\\"guest\\\"\" and add // JWT_SIGNATURE_REQUIRED=true",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

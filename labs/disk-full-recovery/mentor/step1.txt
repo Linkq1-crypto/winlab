@@ -1,0 +1,3 @@
+Directory is over quota.
+
+→ run du -sh /opt/winlab/disk-full-recovery/* to find what's large.

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A RAID-1 mirror is degraded: one disk has been removed and the array is running on a single device. mdadm.detail shows State : clean, degraded, Total Devices : 1, Failed Devices : 1, and the second device slot shows removed. The array must be repaired to reflect a healthy two-disk mirror.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/raid-simulator/mdadm.detail and array.state to understand the failure",
+  "hint_2": "one disk was removed from the mirror",
+  "hint_3": "Fix mdadm.detail: change State to clean, Total Devices to 2, Failed Devices to 0, replace removed with active sync /dev/sdb1",
+  "hint_4": "edit mdadm.detail with sed to correct all four fields (exact spacing required), then echo rebuilt > /opt/winlab/raid-simulator/array.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

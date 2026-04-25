@@ -1,0 +1,3 @@
+Users are seeing a stale asset after deployment.
+
+→ read /opt/winlab/cloudflare-cache-purge/cache.state to see the purge status.

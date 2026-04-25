@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/advanced-scenarios/replica.status to see the thread state and delay",
+  "hint_2": "TODO: set it to running",
+  "hint_3": "TODO: reset it to 0",
+  "hint_4": "TODO: sed -i 's/sql_thread=stopped/sql_thread=running/;s/replication_delay=900/replication_delay=0/' /opt/winlab/advanced-scenarios/replica.status && echo synced > /opt/winlab/advanced-scenarios/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

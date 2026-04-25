@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/real-server/oom.report to see what was killed and why",
+  "hint_2": "TODO: patch the leak and restart nginx",
+  "hint_3": "TODO: After patching the leak and restarting nginx, update victim=none and heap=contained",
+  "hint_4": "TODO: sed -i 's/victim=nginx/victim=none/;s/heap=leaking/heap=contained/' /opt/winlab/real-server/oom.report && echo stable > /opt/winlab/real-server/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: check the restart policy in container.state",
+  "hint_2": "TODO: change to unless-stopped",
+  "hint_3": "TODO: also set status=running to complete the state transition",
+  "hint_4": "TODO: sed -i 's/^restart_policy=.*/restart_policy=unless-stopped/;s/^status=.*/status=running/' /opt/winlab/docker-container-crash/container.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

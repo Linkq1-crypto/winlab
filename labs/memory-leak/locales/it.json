@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: find the leaking process with ps aux or top",
+  "hint_2": "TODO: read the pid file",
+  "hint_3": "TODO: kill it using the stored PID",
+  "hint_4": "TODO: kill \"$(cat /opt/winlab/memory-leak/leak.pid)\"",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

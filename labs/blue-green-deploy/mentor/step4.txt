@@ -1,0 +1,3 @@
+Fix.
+
+→ echo healthy > green.health && echo green > live_slot && echo switched > deploy.state.

@@ -1,0 +1,1 @@
+Fix the carrier by checking the cable and driver, then restore eth0=up and carrier=stable

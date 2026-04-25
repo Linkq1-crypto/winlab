@@ -1,0 +1,3 @@
+target_version is v1.2.0 but its status.txt is broken.
+
+→ validate the new version and mark it healthy.

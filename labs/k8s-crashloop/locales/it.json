@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read deployment.yaml to find the two broken fields",
+  "hint_2": "TODO: fix livenessProbe to healthy first",
+  "hint_3": "TODO: also change imageTag to stable",
+  "hint_4": "TODO: sed -i 's/livenessProbe: broken/livenessProbe: healthy/;s/imageTag: bad-build/imageTag: stable/;s/podStatus: CrashLoopBackOff/podStatus: Running/' /opt/winlab/k8s-crashloop/deployment.yaml",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

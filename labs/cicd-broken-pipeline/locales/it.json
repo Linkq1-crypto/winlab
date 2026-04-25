@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: inspect /opt/winlab/cicd-broken-pipeline/pipeline.env for missing config",
+  "hint_2": "TODO: set CI_SECRET to any non-empty value and change DEPLOY_ENV to production",
+  "hint_3": "TODO: update pipeline.state to passed",
+  "hint_4": "TODO: sed -i 's/^CI_SECRET=$/CI_SECRET=token/;s/^DEPLOY_ENV=.*/DEPLOY_ENV=production/' /opt/winlab/cicd-broken-pipeline/pipeline.env && echo passed > /opt/winlab/cicd-broken-pipeline/pipeline.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: check incoming/ for unprocessed files",
+  "hint_2": "TODO: move it to archive/",
+  "hint_3": "TODO: create the recovered.flag with the exact content linux-terminal-ok",
+  "hint_4": "TODO: mv /opt/winlab/linux-terminal/incoming/incident.log /opt/winlab/linux-terminal/archive/ && echo linux-terminal-ok > /opt/winlab/linux-terminal/archive/recovered.flag",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

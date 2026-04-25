@@ -1,0 +1,3 @@
+Application cannot write files.
+
+→ check directory ownership and mode with ls -la.

@@ -1,0 +1,3 @@
+cache_credentials is false.
+
+→ set it to true so logins work during LDAP downtime.

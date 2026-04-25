@@ -1,0 +1,3 @@
+not_after updated.
+
+→ also set cert.state to renewed.

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: check green.health to see why traffic hasn't moved",
+  "hint_2": "TODO: validate green, then set it to healthy",
+  "hint_3": "TODO: switch live_slot from blue to green",
+  "hint_4": "TODO: echo healthy > green.health && echo green > live_slot && echo switched > deploy.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

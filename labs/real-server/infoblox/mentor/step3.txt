@@ -1,0 +1,3 @@
+dhcp=degraded means DHCP is not serving leases.
+
+→ restore it after the DNS resolver is healthy.

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/real-server/dns.state to see the Infoblox state",
+  "hint_2": "TODO: the Infoblox Grid member needs to be restarted or failed over",
+  "hint_3": "TODO: restore it after the DNS resolver is healthy",
+  "hint_4": "TODO: sed -i 's/resolver=timeout/resolver=healthy/;s/dhcp=degraded/dhcp=healthy/' /opt/winlab/real-server/dns.state && echo stable > /opt/winlab/real-server/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

@@ -1,0 +1,3 @@
+Java service is crashing with OutOfMemoryError.
+
+→ read /opt/winlab/advanced-scenarios/jvm.options to find the heap setting.

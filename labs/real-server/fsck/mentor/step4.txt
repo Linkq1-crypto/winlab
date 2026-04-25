@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/ext4=dirty/ext4=clean/;s/repair=required/repair=completed/' /opt/winlab/real-server/filesystem.state && echo stable > /opt/winlab/real-server/service.state.

@@ -1,0 +1,3 @@
+/opt/winlab/disk-full/ is consuming space.
+
+→ inspect with du -sh and ls -lh.

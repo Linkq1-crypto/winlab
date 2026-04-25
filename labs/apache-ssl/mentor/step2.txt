@@ -1,0 +1,3 @@
+SSLCertificateFile points to expired.pem.
+
+→ a current.pem exists in the same directory.

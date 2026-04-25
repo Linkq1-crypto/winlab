@@ -1,0 +1,3 @@
+Filesystem is dirty after an unclean shutdown.
+
+→ read /opt/winlab/real-server/filesystem.state to see the repair status.

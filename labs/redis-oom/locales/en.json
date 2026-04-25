@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "Redis is in an OOM (out-of-memory) error state. The config sets maxmemory 16mb with maxmemory-policy noeviction — meaning Redis refuses all writes when the limit is reached rather than evicting old keys. A 24 MB stale cache.rdb dump is also consuming disk. Both must be fixed to restore stability.",
+  "lesson": "",
+  "hint_1": "inspect the eviction policy in redis.conf",
+  "hint_2": "change to allkeys-lru and remove the stale cache.rdb",
+  "hint_3": "update service.state to stable to complete the fix",
+  "hint_4": "sed -i 's/^maxmemory-policy .*/maxmemory-policy allkeys-lru/' /opt/winlab/redis-oom/redis.conf && rm /opt/winlab/redis-oom/cache.rdb && echo stable > /opt/winlab/redis-oom/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

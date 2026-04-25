@@ -1,0 +1,3 @@
+Fix.
+
+→ collect userIds from all orders, call db.users.findByIds(userIds), build a map, attach users per order, add BATCHED_USER_LOOKUP=true.

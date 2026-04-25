@@ -1,0 +1,3 @@
+Database connections are failing.
+
+→ check if port 5432 is listening with ss -ltn.

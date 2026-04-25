@@ -1,0 +1,3 @@
+Network is intermittently dropping connections.
+
+→ read /opt/winlab/real-server/nic.state to see the interface state.

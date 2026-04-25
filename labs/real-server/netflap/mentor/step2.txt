@@ -1,0 +1,3 @@
+eth0=flapping and carrier=unstable mean the NIC is losing carrier signal repeatedly.
+
+→ the physical link is unstable.

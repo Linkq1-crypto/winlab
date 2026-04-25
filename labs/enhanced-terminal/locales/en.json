@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The application directory at /opt/winlab/enhanced-terminal/app is not writable, and a cache.fill file is blocking the temp directory. A guided recovery checklist is provided at runbooks/checklist.txt. All three steps must be completed to restore service.",
+  "lesson": "",
+  "hint_1": "read the runbook at runbooks/checklist.txt",
+  "hint_2": "start with rm /opt/winlab/enhanced-terminal/tmp/cache.fill",
+  "hint_3": "restore write access: chmod 755 /opt/winlab/enhanced-terminal/app",
+  "hint_4": "rm /opt/winlab/enhanced-terminal/tmp/cache.fill && chmod 755 /opt/winlab/enhanced-terminal/app && echo \"status=ready\" > /opt/winlab/enhanced-terminal/app/.mentor",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

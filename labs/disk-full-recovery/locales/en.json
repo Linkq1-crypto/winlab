@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The application directory at /opt/winlab/disk-full-recovery is consuming over 64 MB: a 48 MB cache blob and a 16 MB bloated error log. The recovery procedure requires freeing space below 8 MB total and writing a recovery.report to confirm the action was intentional.",
+  "lesson": "",
+  "hint_1": "run du -sh /opt/winlab/disk-full-recovery/* to find what's large",
+  "hint_2": "remove both",
+  "hint_3": "du -sm /opt/winlab/disk-full-recovery/",
+  "hint_4": "rm cache/blob.bin logs/error.log && echo cleared=true > /opt/winlab/disk-full-recovery/recovery.report",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

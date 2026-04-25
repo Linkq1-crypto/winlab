@@ -1,0 +1,3 @@
+Missing semicolon after return directive.
+
+→ add the semicolon.

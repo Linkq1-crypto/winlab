@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The application user winlabapp cannot write to /opt/winlab/permission-denied/data/. The directory is owned by root:root with mode 0555 (read+execute, no write for anyone). The verify check runs touch as winlabapp to confirm write access is restored.",
+  "lesson": "",
+  "hint_1": "check directory ownership and mode with ls -la",
+  "hint_2": "winlabapp has no write permission",
+  "hint_3": "chown + chmod",
+  "hint_4": "chown -R winlabapp:winlabapp /opt/winlab/permission-denied/data && chmod 0755 /opt/winlab/permission-denied/data",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

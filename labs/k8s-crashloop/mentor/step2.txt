@@ -1,0 +1,3 @@
+livenessProbe is broken and imageTag is bad-build.
+
+→ fix livenessProbe to healthy first.

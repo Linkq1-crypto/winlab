@@ -1,0 +1,3 @@
+time_wait=28000 has exhausted the ephemeral port range.
+
+→ port_exhaustion=true confirms no ports are left.

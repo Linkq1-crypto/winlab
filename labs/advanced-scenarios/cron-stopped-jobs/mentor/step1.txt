@@ -1,0 +1,3 @@
+Scheduled jobs are not running and backups are missing.
+
+→ read /opt/winlab/advanced-scenarios/scheduler.state.

@@ -1,0 +1,3 @@
+OOM killer fired and nginx was killed.
+
+→ read /opt/winlab/real-server/oom.report to see what was killed and why.

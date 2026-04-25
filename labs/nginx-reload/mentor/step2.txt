@@ -1,0 +1,3 @@
+nginx -t reports the bad directive.
+
+→ inspect the conf.d file.

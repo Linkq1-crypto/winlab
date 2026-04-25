@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: run nginx -t to find it",
+  "hint_2": "TODO: inspect the conf.d file",
+  "hint_3": "TODO: add the semicolon",
+  "hint_4": "TODO: sed -i 's/return 200 \"reload pending\"/return 200 \"reload pending\";/' /etc/nginx/conf.d/winlab-reload.conf && nginx -t && nginx -s reload",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

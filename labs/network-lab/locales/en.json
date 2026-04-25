@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The internal API endpoint api.internal is unreachable. The routing table at /opt/winlab/network-lab/routing.table has api.internal unreachable instead of a valid next-hop route. Traffic to the API is being dropped. The network.state marker reads degraded.",
+  "lesson": "",
+  "hint_1": "inspect the routing table at /opt/winlab/network-lab/routing.table",
+  "hint_2": "the correct route is via 10.0.0.10",
+  "hint_3": "also update network.state to healthy",
+  "hint_4": "sed -i 's/^api.internal unreachable$/api.internal via 10.0.0.10/' /opt/winlab/network-lab/routing.table && echo healthy > /opt/winlab/network-lab/network.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

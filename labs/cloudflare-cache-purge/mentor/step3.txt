@@ -1,0 +1,3 @@
+purge_status=pending means the purge never completed.
+
+→ set it to completed.

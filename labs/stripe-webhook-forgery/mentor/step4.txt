@@ -1,0 +1,3 @@
+Fix.
+
+→ rewrite webhook.js to call constructEvent and add // STRIPE_SIGNATURE_VERIFIED=true, removing JSON.parse(req.body).

@@ -1,0 +1,3 @@
+Nginx returns 502 Bad Gateway on PHP requests.
+
+→ read /opt/winlab/advanced-scenarios/php-fpm.conf to find the user mismatch.

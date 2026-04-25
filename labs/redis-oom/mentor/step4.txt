@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/^maxmemory-policy .*/maxmemory-policy allkeys-lru/' /opt/winlab/redis-oom/redis.conf && rm /opt/winlab/redis-oom/cache.rdb && echo stable > /opt/winlab/redis-oom/service.state.

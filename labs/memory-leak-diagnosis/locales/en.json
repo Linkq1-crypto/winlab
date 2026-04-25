@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A Python process (diagnostic_leak.py) is consuming memory at 1 MB per 100ms with no upper bound. The task requires stopping the process AND documenting the root cause in a structured incident report so the on-call handoff is complete.",
+  "lesson": "",
+  "hint_1": "identify the process with pgrep -f diagnostic_leak.py or ps aux",
+  "hint_2": "observe with top, then kill it",
+  "hint_3": "complete the incident report as part of the handoff",
+  "hint_4": "kill \"$(cat /opt/winlab/memory-leak-diagnosis/leak.pid)\" && echo root_cause=memory_leak > /opt/winlab/memory-leak-diagnosis/incident.report",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

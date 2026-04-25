@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: inspect the eviction policy in redis.conf",
+  "hint_2": "TODO: change to allkeys-lru and remove the stale cache.rdb",
+  "hint_3": "TODO: update service.state to stable to complete the fix",
+  "hint_4": "TODO: sed -i 's/^maxmemory-policy .*/maxmemory-policy allkeys-lru/' /opt/winlab/redis-oom/redis.conf && rm /opt/winlab/redis-oom/cache.rdb && echo stable > /opt/winlab/redis-oom/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

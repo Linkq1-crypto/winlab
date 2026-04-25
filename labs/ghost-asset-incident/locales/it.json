@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: inspect manifests/assets.json and assets/logo.svg.state",
+  "hint_2": "TODO: update assets.json to \"present\" and logo.svg.state to restored",
+  "hint_3": "TODO: also set cdn.state to warm to simulate cache purge",
+  "hint_4": "TODO: sed -i 's/\"logo.svg\": \"missing\"/\"logo.svg\": \"present\"/' manifests/assets.json && echo restored > assets/logo.svg.state && echo warm > cdn.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

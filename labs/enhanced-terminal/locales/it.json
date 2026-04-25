@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read the runbook at runbooks/checklist.txt",
+  "hint_2": "TODO: start with rm /opt/winlab/enhanced-terminal/tmp/cache.fill",
+  "hint_3": "TODO: restore write access: chmod 755 /opt/winlab/enhanced-terminal/app",
+  "hint_4": "TODO: rm /opt/winlab/enhanced-terminal/tmp/cache.fill && chmod 755 /opt/winlab/enhanced-terminal/app && echo \"status=ready\" > /opt/winlab/enhanced-terminal/app/.mentor",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

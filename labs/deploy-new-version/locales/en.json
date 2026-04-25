@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A new version v1.2.0 is ready to deploy but has not been promoted. current_version still points to v1.1.0. releases/v1.2.0/status.txt reads broken (the pre-deploy health check placeholder). The task is to promote v1.2.0, validate it, and complete the deployment.",
+  "lesson": "",
+  "hint_1": "check target_version to find what should be promoted",
+  "hint_2": "validate the new version and mark it healthy",
+  "hint_3": "promote it by writing to current_version",
+  "hint_4": "echo healthy > releases/v1.2.0/status.txt && echo v1.2.0 > current_version && echo complete > deploy.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

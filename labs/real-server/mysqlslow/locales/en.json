@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "MySQL is running 78 slow queries, with the longest taking 18 seconds. Application response times are degraded. The slow query count must be cleared to 0 and the service state set to stable.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/real-server/mysql.processlist",
+  "hint_2": "it needs an index",
+  "hint_3": "After adding the index, slow queries resolve and the count drops to 0",
+  "hint_4": "sed -i 's/slow_queries=78/slow_queries=0/' /opt/winlab/real-server/mysql.processlist && echo stable > /opt/winlab/real-server/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

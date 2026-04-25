@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/^restart_policy=.*/restart_policy=unless-stopped/;s/^status=.*/status=running/' /opt/winlab/docker-container-crash/container.state.

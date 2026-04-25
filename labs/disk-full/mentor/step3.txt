@@ -1,0 +1,3 @@
+filler.img is the injected fault — 64 MB with no purpose.
+
+→ remove it.

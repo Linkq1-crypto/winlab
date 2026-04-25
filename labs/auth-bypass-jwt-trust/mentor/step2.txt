@@ -1,0 +1,3 @@
+When verifySignature is false, the code still returns payload.role.
+
+→ this allows JWT forgery.

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The orders endpoint is timing out under load. The root cause is an N+1 query pattern: for each order returned from the database, a separate findById call fetches the associated user. 100 orders = 101 queries. The fix is to batch all user lookups into a single findByIds call, and add the BATCHED_USER_LOOKUP=true marker.",
+  "lesson": "",
+  "hint_1": "read ordersService.js to understand the query pattern",
+  "hint_2": "this is an N+1 pattern",
+  "hint_3": "Replace the per-order loop query with a single batched findByIds() call",
+  "hint_4": "collect userIds from all orders, call db.users.findByIds(userIds), build a map, attach users per order, add BATCHED_USER_LOOKUP=true",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

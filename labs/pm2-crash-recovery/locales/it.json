@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: check if anything is listening on port 4001",
+  "hint_2": "TODO: look for a recovery script in the lab directory",
+  "hint_3": "TODO: run it to restart the process and update the status marker",
+  "hint_4": "TODO: bash /opt/winlab/pm2-crash-recovery/start-app.sh",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

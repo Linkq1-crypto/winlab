@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: check target_version to find what should be promoted",
+  "hint_2": "TODO: validate the new version and mark it healthy",
+  "hint_3": "TODO: promote it by writing to current_version",
+  "hint_4": "TODO: echo healthy > releases/v1.2.0/status.txt && echo v1.2.0 > current_version && echo complete > deploy.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

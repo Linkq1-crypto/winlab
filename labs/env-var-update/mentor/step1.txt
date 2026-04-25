@@ -1,0 +1,3 @@
+Application is broken.
+
+→ inspect /opt/winlab/env-var-update/app.env for misconfigured values.

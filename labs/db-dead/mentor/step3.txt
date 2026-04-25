@@ -1,0 +1,3 @@
+Process not running, file exists.
+
+→ start it in the background with nohup.

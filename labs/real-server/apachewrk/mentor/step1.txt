@@ -1,0 +1,3 @@
+Apache is refusing new connections.
+
+→ read /opt/winlab/real-server/apache.status to see worker saturation.

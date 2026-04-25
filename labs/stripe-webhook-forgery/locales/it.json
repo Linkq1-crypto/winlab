@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read webhook.js to find the missing verification",
+  "hint_2": "TODO: this allows webhook forgery",
+  "hint_3": "TODO: this validates the HMAC signature",
+  "hint_4": "TODO: rewrite webhook.js to call constructEvent and add // STRIPE_SIGNATURE_VERIFIED=true, removing JSON.parse(req.body)",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

@@ -1,0 +1,3 @@
+The fix is to return "guest" when the signature is not verified.
+
+→ rewrite the !verifySignature branch.

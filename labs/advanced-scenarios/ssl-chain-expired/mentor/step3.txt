@@ -1,0 +1,1 @@
+Update not_after to a 2027 date and set chain=valid to restore a valid certificate

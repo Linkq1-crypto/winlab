@@ -1,0 +1,3 @@
+app.log is 48 MB and consuming all available space.
+
+→ remove it to free disk.

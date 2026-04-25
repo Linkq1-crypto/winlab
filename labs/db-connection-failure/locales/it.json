@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: inspect the env config file",
+  "hint_2": "TODO: correct values are 127.0.0.1 and 5432",
+  "hint_3": "TODO: also update the connection.state marker to complete the fix",
+  "hint_4": "TODO: sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/;s/^DB_PORT=.*/DB_PORT=5432/' /opt/winlab/db-connection-failure/app.env && echo connected > /opt/winlab/db-connection-failure/connection.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

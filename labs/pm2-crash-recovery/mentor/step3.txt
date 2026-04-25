@@ -1,0 +1,3 @@
+start-app.sh exists.
+
+→ run it to restart the process and update the status marker.

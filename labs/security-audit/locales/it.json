@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/security-audit/audit.report to find the findings",
+  "hint_2": "TODO: set it to disabled",
+  "hint_3": "TODO: set it to false",
+  "hint_4": "TODO: sed -i 's/ssh_root_login=enabled/ssh_root_login=disabled/;s/world_writable_backup=true/world_writable_backup=false/;s/status=failed/status=passed/' /opt/winlab/security-audit/audit.report",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

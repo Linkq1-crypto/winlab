@@ -1,0 +1,3 @@
+Policy updated.
+
+→ also set status=running to complete the state transition.

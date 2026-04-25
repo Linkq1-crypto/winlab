@@ -1,0 +1,3 @@
+Intake pipeline is stalled.
+
+→ check incoming/ for unprocessed files.

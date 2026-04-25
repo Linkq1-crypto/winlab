@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/slow_queries=78/slow_queries=0/' /opt/winlab/real-server/mysql.processlist && echo stable > /opt/winlab/real-server/service.state.

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The application is in a broken state because its environment configuration has not been updated for the production deployment. app.env has APP_MODE=broken and FEATURE_LOGIN=disabled. Both must be corrected to restore normal operation.",
+  "lesson": "",
+  "hint_1": "inspect /opt/winlab/env-var-update/app.env for misconfigured values",
+  "hint_2": "set APP_MODE=production",
+  "hint_3": "also set FEATURE_LOGIN=enabled",
+  "hint_4": "sed -i 's/^APP_MODE=.*/APP_MODE=production/;s/^FEATURE_LOGIN=.*/FEATURE_LOGIN=enabled/' /opt/winlab/env-var-update/app.env",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

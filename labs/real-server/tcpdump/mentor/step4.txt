@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/suspicious_connection=true/suspicious_connection=false/' /opt/winlab/real-server/capture.summary && echo stable > /opt/winlab/real-server/service.state.

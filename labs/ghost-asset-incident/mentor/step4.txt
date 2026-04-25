@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/"logo.svg": "missing"/"logo.svg": "present"/' manifests/assets.json && echo restored > assets/logo.svg.state && echo warm > cdn.state.

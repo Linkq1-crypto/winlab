@@ -1,0 +1,3 @@
+Replication is stopped with a deadlock error.
+
+→ read /opt/winlab/advanced-scenarios/replica.status to see the thread state and delay.

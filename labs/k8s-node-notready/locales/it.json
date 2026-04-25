@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/k8s-node-notready/node.status to find the broken fields",
+  "hint_2": "TODO: fix it to running first",
+  "hint_3": "TODO: also set it to True",
+  "hint_4": "TODO: sed -i 's/Kubelet=stopped/Kubelet=running/;s/Ready=False/Ready=True/' /opt/winlab/k8s-node-notready/node.status",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

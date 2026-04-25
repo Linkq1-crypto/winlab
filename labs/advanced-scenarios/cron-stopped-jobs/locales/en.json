@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "Scheduled jobs have stopped running. The scheduler state file shows cron=stopped and backup_job=missed. No backups have been created since cron was stopped. Both fields must be corrected and the service state set to resumed.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/advanced-scenarios/scheduler.state",
+  "hint_2": "set it to running",
+  "hint_3": "reset it to scheduled",
+  "hint_4": "sed -i 's/cron=stopped/cron=running/;s/backup_job=missed/backup_job=scheduled/' /opt/winlab/advanced-scenarios/scheduler.state && echo resumed > /opt/winlab/advanced-scenarios/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

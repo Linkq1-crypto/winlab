@@ -1,0 +1,3 @@
+State shows clean, degraded and Total Devices is 1.
+
+→ one disk was removed from the mirror.

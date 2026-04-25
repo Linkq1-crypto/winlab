@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/real-server/mysql.processlist",
+  "hint_2": "TODO: it needs an index",
+  "hint_3": "TODO: After adding the index, slow queries resolve and the count drops to 0",
+  "hint_4": "TODO: sed -i 's/slow_queries=78/slow_queries=0/' /opt/winlab/real-server/mysql.processlist && echo stable > /opt/winlab/real-server/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

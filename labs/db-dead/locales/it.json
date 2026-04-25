@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: check if port 5432 is listening with ss -ltn",
+  "hint_2": "TODO: confirm fake_db.py exists and is not running",
+  "hint_3": "TODO: start it in the background with nohup",
+  "hint_4": "TODO: nohup python3 /opt/winlab/db-dead/fake_db.py >/tmp/winlab-db-dead.log 2>&1 & && echo $! > /opt/winlab/db-dead/db.pid",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

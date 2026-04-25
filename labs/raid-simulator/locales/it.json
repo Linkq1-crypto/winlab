@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/raid-simulator/mdadm.detail and array.state to understand the failure",
+  "hint_2": "TODO: one disk was removed from the mirror",
+  "hint_3": "TODO: Fix mdadm.detail: change State to clean, Total Devices to 2, Failed Devices to 0, replace removed with active sync /dev/sdb1",
+  "hint_4": "TODO: edit mdadm.detail with sed to correct all four fields (exact spacing required), then echo rebuilt > /opt/winlab/raid-simulator/array.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

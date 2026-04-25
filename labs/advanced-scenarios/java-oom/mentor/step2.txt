@@ -1,0 +1,3 @@
+-Xmx128m caps the heap at 128 MB which is too low for the application.
+
+→ raise it to 512m.

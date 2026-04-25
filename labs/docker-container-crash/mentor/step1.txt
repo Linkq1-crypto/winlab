@@ -1,0 +1,3 @@
+Container is not running and does not restart.
+
+→ check the restart policy in container.state.

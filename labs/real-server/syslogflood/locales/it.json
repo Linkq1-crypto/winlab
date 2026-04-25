@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: check du -sh on /opt/winlab/real-server/ to find the flood file",
+  "hint_2": "TODO: remove it",
+  "hint_3": "TODO: set service.state to stable",
+  "hint_4": "TODO: rm -f /opt/winlab/real-server/syslog.spam && echo stable > /opt/winlab/real-server/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

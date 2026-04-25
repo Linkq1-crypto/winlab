@@ -1,0 +1,3 @@
+resolver=timeout means DNS queries are not getting responses.
+
+→ the Infoblox Grid member needs to be restarted or failed over.

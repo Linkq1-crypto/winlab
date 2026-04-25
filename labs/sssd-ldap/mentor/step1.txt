@@ -1,0 +1,3 @@
+Users cannot log in and SSSD is failing.
+
+→ inspect /etc/sssd/sssd.conf and /opt/winlab/sssd-ldap/directory.state.

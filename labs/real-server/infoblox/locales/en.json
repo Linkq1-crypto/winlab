@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The Infoblox DNS/DHCP appliance is degraded. The resolver is timing out and DHCP is not serving leases. Both the DNS resolver and DHCP service must be restored to healthy, with the service state set to stable.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/real-server/dns.state to see the Infoblox state",
+  "hint_2": "the Infoblox Grid member needs to be restarted or failed over",
+  "hint_3": "restore it after the DNS resolver is healthy",
+  "hint_4": "sed -i 's/resolver=timeout/resolver=healthy/;s/dhcp=degraded/dhcp=healthy/' /opt/winlab/real-server/dns.state && echo stable > /opt/winlab/real-server/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

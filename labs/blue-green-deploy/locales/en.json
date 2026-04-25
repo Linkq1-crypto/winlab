@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A blue/green deployment is pending. The green slot is warmed up but not yet promoted. live_slot points to blue, green.health reads warming, and deploy.state is switch_pending. The task is to complete the cutover: mark green as healthy, switch live traffic to green, and update the deploy state.",
+  "lesson": "",
+  "hint_1": "check green.health to see why traffic hasn't moved",
+  "hint_2": "validate green, then set it to healthy",
+  "hint_3": "switch live_slot from blue to green",
+  "hint_4": "echo healthy > green.health && echo green > live_slot && echo switched > deploy.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

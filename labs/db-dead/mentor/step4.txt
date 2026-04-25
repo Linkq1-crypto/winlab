@@ -1,0 +1,3 @@
+Fix.
+
+→ nohup python3 /opt/winlab/db-dead/fake_db.py >/tmp/winlab-db-dead.log 2>&1 & && echo $! > /opt/winlab/db-dead/db.pid.

@@ -1,0 +1,3 @@
+Fix.
+
+→ kill "$(cat /opt/winlab/memory-leak-diagnosis/leak.pid)" && echo root_cause=memory_leak > /opt/winlab/memory-leak-diagnosis/incident.report.

@@ -1,0 +1,3 @@
+DB_HOST=db.internal and DB_PORT=9999 are wrong.
+
+→ correct values are 127.0.0.1 and 5432.

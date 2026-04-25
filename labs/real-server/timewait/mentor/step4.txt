@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/time_wait=28000/time_wait=500/;s/port_exhaustion=true/port_exhaustion=false/' /opt/winlab/real-server/socket.state && echo stable > /opt/winlab/real-server/service.state.

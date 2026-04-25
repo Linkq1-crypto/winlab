@@ -1,0 +1,3 @@
+Both files deleted, but verify total is under 8 MB.
+
+→ du -sm /opt/winlab/disk-full-recovery/.

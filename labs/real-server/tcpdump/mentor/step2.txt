@@ -1,0 +1,1 @@
+suspicious_connection=true from 198.51.100.24 indicates a potentially compromised process making unexpected outbound calls

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: check safe_version for the last known-good release",
+  "hint_2": "TODO: restore current_version to v1.3.9",
+  "hint_3": "TODO: update deploy.state to rolled_back",
+  "hint_4": "TODO: echo v1.3.9 > current_version && echo rolled_back > deploy.state && echo ok > rollback.complete",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

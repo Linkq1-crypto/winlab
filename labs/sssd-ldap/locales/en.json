@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "Users cannot log in because SSSD is configured to contact an offline LDAP server and credential caching is disabled. The ldap_uri points to ldap://offline.winlab.local (a host that does not respond) and cache_credentials = false means SSSD cannot fall back to cached credentials. Both settings must be corrected and the directory state file updated to online.",
+  "lesson": "",
+  "hint_1": "inspect /etc/sssd/sssd.conf and /opt/winlab/sssd-ldap/directory.state",
+  "hint_2": "change it to directory.winlab.local",
+  "hint_3": "set it to true so logins work during LDAP downtime",
+  "hint_4": "sed -i 's|ldap_uri = ldap://offline.winlab.local|ldap_uri = ldap://directory.winlab.local|' /etc/sssd/sssd.conf && sed -i 's/cache_credentials = false/cache_credentials = true/' /etc/sssd/sssd.conf && echo online > /opt/winlab/sssd-ldap/directory.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

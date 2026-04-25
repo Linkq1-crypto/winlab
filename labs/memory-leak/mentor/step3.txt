@@ -1,0 +1,3 @@
+Process is confirmed running.
+
+→ kill it using the stored PID.

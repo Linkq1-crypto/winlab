@@ -1,0 +1,3 @@
+current_workers=150 equals MaxRequestWorkers — all slots are full.
+
+→ workers must be freed.

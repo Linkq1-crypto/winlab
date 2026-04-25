@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read ordersService.js to understand the query pattern",
+  "hint_2": "TODO: this is an N+1 pattern",
+  "hint_3": "TODO: Replace the per-order loop query with a single batched findByIds() call",
+  "hint_4": "TODO: collect userIds from all orders, call db.users.findByIds(userIds), build a map, attach users per order, add BATCHED_USER_LOOKUP=true",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

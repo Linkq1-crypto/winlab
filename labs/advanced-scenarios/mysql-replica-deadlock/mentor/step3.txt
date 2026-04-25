@@ -1,0 +1,3 @@
+replication_delay=900 shows how far behind the replica fell.
+
+→ reset it to 0.

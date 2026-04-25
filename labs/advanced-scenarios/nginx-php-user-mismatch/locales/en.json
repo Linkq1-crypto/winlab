@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "Nginx is returning 502 Bad Gateway for all PHP requests. The root cause is a user mismatch between Nginx and PHP-FPM: the socket at /run/php-fpm.sock is owned by www-data (Nginx's user) but PHP-FPM is running as apache. Nginx cannot write to a socket it does not own. Both user and group in the PHP-FPM config must be changed to www-data, and the service state set to healthy.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/advanced-scenarios/php-fpm.conf to find the user mismatch",
+  "hint_2": "the socket is inaccessible to Nginx",
+  "hint_3": "Change user and group to www-data so Nginx can connect to the PHP-FPM socket",
+  "hint_4": "sed -i 's/user=apache/user=www-data/;s/group=apache/group=www-data/' /opt/winlab/advanced-scenarios/php-fpm.conf && echo healthy > /opt/winlab/advanced-scenarios/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

@@ -1,0 +1,3 @@
+Deployment is paused at switch_pending.
+
+→ check green.health to see why traffic hasn't moved.

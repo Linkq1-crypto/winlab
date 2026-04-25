@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The api-gateway binary has crashed and left a core dump. The crash cause is pending analysis. The report must be updated to analysis=completed after identifying the crash reason, and the service state set to stable.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/real-server/coredump.report to see the analysis state",
+  "hint_2": "analyse the core dump with gdb",
+  "hint_3": "Run gdb on the core dump, identify the crashing frame, fix the root cause, and restart the service",
+  "hint_4": "sed -i 's/analysis=pending/analysis=completed/' /opt/winlab/real-server/coredump.report && echo stable > /opt/winlab/real-server/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

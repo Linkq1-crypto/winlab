@@ -1,0 +1,3 @@
+Fix.
+
+→ rm -f /opt/winlab/real-server/syslog.spam && echo stable > /opt/winlab/real-server/service.state.

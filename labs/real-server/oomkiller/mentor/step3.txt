@@ -1,0 +1,1 @@
+After patching the leak and restarting nginx, update victim=none and heap=contained

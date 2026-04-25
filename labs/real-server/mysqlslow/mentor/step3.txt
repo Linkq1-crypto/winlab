@@ -1,0 +1,1 @@
+After adding the index, slow queries resolve and the count drops to 0

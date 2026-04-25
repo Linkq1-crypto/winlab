@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's|expired.pem|current.pem|' /opt/winlab/apache-ssl/vhost.conf && echo active > /opt/winlab/apache-ssl/cert.state.

@@ -1,0 +1,3 @@
+not_after is 2024-01-01.
+
+→ the cert is expired, update to a future date (2027+).

@@ -1,0 +1,3 @@
+Fix.
+
+→ echo v1.3.9 > current_version && echo rolled_back > deploy.state && echo ok > rollback.complete.

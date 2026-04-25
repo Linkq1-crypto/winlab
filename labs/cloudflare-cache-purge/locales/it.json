@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/cloudflare-cache-purge/cache.state to see the purge status",
+  "hint_2": "TODO: set it to false",
+  "hint_3": "TODO: set it to completed",
+  "hint_4": "TODO: sed -i 's/stale_asset=true/stale_asset=false/;s/purge_status=pending/purge_status=completed/' /opt/winlab/cloudflare-cache-purge/cache.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

@@ -1,0 +1,3 @@
+cron=stopped means the scheduler daemon halted.
+
+→ set it to running.

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "A packet capture has revealed a suspicious outbound connection from 198.51.100.24. The source may indicate exfiltration or a compromised process. The connection must be investigated and blocked, the capture summary updated to suspicious_connection=false, and the service state set to stable.",
+  "lesson": "",
+  "hint_1": "read /opt/winlab/real-server/capture.summary to find the source IP",
+  "hint_2": "suspicious_connection=true from 198.51.100.24 indicates a potentially compromised process making unexpected outbound calls",
+  "hint_3": "Identify the process, block the IP with iptables, and stop the offending process",
+  "hint_4": "sed -i 's/suspicious_connection=true/suspicious_connection=false/' /opt/winlab/real-server/capture.summary && echo stable > /opt/winlab/real-server/service.state",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

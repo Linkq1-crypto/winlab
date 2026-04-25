@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: identify the process with pgrep -f diagnostic_leak.py or ps aux",
+  "hint_2": "TODO: observe with top, then kill it",
+  "hint_3": "TODO: complete the incident report as part of the handoff",
+  "hint_4": "TODO: kill \"$(cat /opt/winlab/memory-leak-diagnosis/leak.pid)\" && echo root_cause=memory_leak > /opt/winlab/memory-leak-diagnosis/incident.report",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

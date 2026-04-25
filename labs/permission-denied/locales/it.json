@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: check directory ownership and mode with ls -la",
+  "hint_2": "TODO: winlabapp has no write permission",
+  "hint_3": "TODO: chown + chmod",
+  "hint_4": "TODO: chown -R winlabapp:winlabapp /opt/winlab/permission-denied/data && chmod 0755 /opt/winlab/permission-denied/data",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

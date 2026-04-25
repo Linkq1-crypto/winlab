@@ -1,0 +1,3 @@
+Fix.
+
+→ sed -i 's/stale_asset=true/stale_asset=false/;s/purge_status=pending/purge_status=completed/' /opt/winlab/cloudflare-cache-purge/cache.state.

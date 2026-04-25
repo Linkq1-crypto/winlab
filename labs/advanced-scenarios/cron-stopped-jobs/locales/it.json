@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: read /opt/winlab/advanced-scenarios/scheduler.state",
+  "hint_2": "TODO: set it to running",
+  "hint_3": "TODO: reset it to scheduled",
+  "hint_4": "TODO: sed -i 's/cron=stopped/cron=running/;s/backup_job=missed/backup_job=scheduled/' /opt/winlab/advanced-scenarios/scheduler.state && echo resumed > /opt/winlab/advanced-scenarios/service.state",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}
