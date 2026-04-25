@@ -1,0 +1,11 @@
+{
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: find and kill the conflicting process",
+  "hint_2": "TODO: validate config",
+  "hint_3": "TODO: duplicate default_server on :80",
+  "hint_4": "TODO: remove /etc/nginx/sites-enabled/default (one default_server only)",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
+}

@@ -1,0 +1,11 @@
+{
+  "title": "TODO: short title",
+  "description": "The container installs both apache2 and nginx. The issue is not a service conflict — it is a nginx configuration error.",
+  "lesson": "Not every port 80 error is a port conflict.",
+  "hint_1": "find and kill the conflicting process",
+  "hint_2": "validate config",
+  "hint_3": "duplicate default_server on :80",
+  "hint_4": "remove /etc/nginx/sites-enabled/default (one default_server only)",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
+}

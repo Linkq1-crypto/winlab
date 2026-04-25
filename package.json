@@ -14,6 +14,7 @@
     "lab:docker:up": "docker compose -f docker-compose.labs.yml up",
     "lab:docker:shell": "docker exec -it winlab-lab bash",
     "lab:docker:verify": "docker exec -it winlab-lab bash /labs/$LAB_ID/verify.sh",
+    "lab:gen": "node scripts/gen-lab.js",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",

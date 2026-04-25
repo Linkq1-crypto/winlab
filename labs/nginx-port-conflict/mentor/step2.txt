@@ -1,0 +1,3 @@
+Port is now free, but nginx still fails.
+
+→ validate config.

@@ -1,0 +1,3 @@
+Fix.
+
+→ remove /etc/nginx/sites-enabled/default (one default_server only).
