@@ -331,14 +331,16 @@ export default function Dashboard({ labs = [], progress = {}, plan, onOpenLab, o
 
       </div>
 
-      {/* NOTIFICATIONS */}
-      <div style={{ position: "fixed", bottom: 24, right: 24, display: "flex", flexDirection: "column", gap: 8, zIndex: 200 }}>
+      {/* Notifications Layer */}
+      <div style={{ position: "fixed", bottom: 32, right: 32, display: "flex", flexDirection: "column", gap: 12, zIndex: 999 }}>
         {notifs.map(n => (
           <div key={n.id} style={{
-            background: T.bg1, border: `1px solid ${T.border}`,
-            padding: "10px 16px", fontFamily: T.mono, fontSize: 12, color: T.light,
-            animation: "wl-notify-in .25s ease",
-          }}>{n.msg}</div>
+            background: '#fff', color: '#000', padding: "12px 20px", 
+            fontSize: 10, fontWeight: 700, letterSpacing: '0.1em',
+            animation: "wl-notify-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards"
+          }}>
+            {n.msg}
+          </div>
         ))}
       </div>
     </div>
