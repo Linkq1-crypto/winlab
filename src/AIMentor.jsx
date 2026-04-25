@@ -1,8 +1,10 @@
 // AIMentor.jsx – Floating AI Mentor that reads live lab state
 // Appears after 20s inactivity. Reads activeLabState from LabContext.
+// ML engine runs locally first; LLM called only when confidence is low.
 // Cost: ~$0 for repeated questions (DB cache), ~$0.0003 on cache miss.
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLab } from "./LabContext";
+import { getMentorResponse } from "./mentor/mentorResponse.js";
 
 const INACTIVITY_MS = 20_000; // show after 20s of no user input
 
@@ -85,7 +87,7 @@ export default function AIMentor({ labId, labState = {} }) {
     };
   }, [resetTimer]);
 
-  // ── Send question to backend ─────────────────────────────────────────────
+  // ── Send question to backend (via ML engine first) ──────────────────────
   async function ask(question) {
     if (!question.trim()) return;
 
@@ -97,23 +99,37 @@ export default function AIMentor({ labId, labState = {} }) {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/ai/help", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question,
-          labState: {
-            labId,
-            // Pass key state variables so AI knows context
-            // Each simulator exposes relevant state via LabContext.activeLabState
-            ...labState,
-          }
-        })
-      });
-      const data = await res.json();
+      // ML engine runs locally; only calls /api/ai/help when confidence is low
+      const response = await getMentorResponse(
+        {
+          labId,
+          commandHistory:   labState?.commandHistory   ?? [],
+          terminalOutput:   labState?.terminalOutput   ?? "",
+          verifyResult:     labState?.verifyResult     ?? null,
+          elapsedMinutes:   labState?.elapsedMinutes   ?? 0,
+          hints:            labState?.mentorHints      ?? [],
+          shownHintIndices: labState?.shownHintIndices ?? [],
+          userQuestion:     question,
+          forceAI:          false,
+        },
+        async (prompt) => {
+          const res = await fetch("/api/ai/help", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question, labState: { labId, ...labState }, mlPrompt: prompt }),
+          });
+          const data = await res.json();
+          return data.reply;
+        }
+      );
+
       setMessages(m => [
         ...m,
-        { role: "ai", text: data.reply, cached: data.cached }
+        {
+          role:   "ai",
+          text:   response.content,
+          cached: response.type === "hint", // local hints are instant
+        },
       ]);
     } catch {
       setMessages(m => [...m, { role: "ai", text: "What is the first service you would check in this situation?" }]);
