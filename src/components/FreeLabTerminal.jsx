@@ -30,13 +30,13 @@ export default function FreeLabTerminal({ labId = "nginx-port-conflict", onConve
   useEffect(() => {
     if (modalShownRef.current) return;
     
-    if (verifyResult?.ok && onSuccess) {
+    if (verifyResult?.success && onSuccess) {
       modalShownRef.current = true;
       onSuccess();
       return;
     }
 
-    if (commandCount >= CONVERSION_TRIGGER_COMMANDS || verifyResult?.ok) {
+    if (commandCount >= CONVERSION_TRIGGER_COMMANDS || verifyResult?.success) {
       modalShownRef.current = true;
       setShowModal(true);
     }

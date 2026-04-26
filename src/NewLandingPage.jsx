@@ -429,24 +429,24 @@ export default function NewLandingPage({ onLogin, onRegister }) {
           `}
         </style>
 
-        <div className="main-dashboard-wrapper fade-in-up">
+        <div className="main-dashboard-wrapper">
           {/* Left */}
-          <div className="hero-branding fade-left">
-            <div className="section-label">Production Alert · Live Incident</div>
-            <h1 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(64px,7vw,110px)", lineHeight:0.9, letterSpacing:"0.02em", color:"#fff" }}>
+          <div className="hero-branding">
+            <div className="fade-1 section-label">Production Alert · Live Incident</div>
+            <h1 className="fade-2" style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(64px,7vw,110px)", lineHeight:0.9, letterSpacing:"0.02em", color:"#fff" }}>
               Your server<br />
               <span style={{ color:"#ff4c00", display:"block" }}>is down.</span>
               Fix it.
             </h1>
-            <p style={{ marginTop:32, fontSize:14, fontWeight:300, lineHeight:1.7, color:"#888", maxWidth:380 }}>
+            <p className="fade-3" style={{ marginTop:32, fontSize:14, fontWeight:300, lineHeight:1.7, color:"#888", maxWidth:380 }}>
               Real production failures. Real terminals. Real skills.
               No simulations, no hand-holding — just you, the incident, and the fix.
             </p>
-            <div style={{ marginTop:48, display:"flex", alignItems:"center", gap:24, flexWrap:"wrap" }}>
+            <div className="fade-4" style={{ marginTop:48, display:"flex", alignItems:"center", gap:24, flexWrap:"wrap" }}>
               <button className="btn-primary" onClick={onRegister}>Start First Incident</button>
               <a href="#how" className="btn-ghost">How it works →</a>
             </div>
-            <div style={{ marginTop:64, display:"flex", alignItems:"center", gap:20 }}>
+            <div className="fade-5" style={{ marginTop:64, display:"flex", alignItems:"center", gap:20 }}>
               <div style={{ display:"flex" }}>
                 {["AS","MK","JL","RB"].map((initials, i) => (
                   <div key={i} style={{ width:32, height:32, borderRadius:"50%", border:"2px solid #000", background:["#1e3a5f","#3b1e1e","#1e3b2f","#3b2d1e"][i], marginLeft: i===0?0:-8, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"#bbb" }}>
@@ -462,7 +462,7 @@ export default function NewLandingPage({ onLogin, onRegister }) {
           </div>
 
           {/* Right — terminal interattivo */}
-          <div className="terminal-live-zone fade-right">
+          <div className="terminal-live-zone fade-term">
             {variant === "C" && !heroReady ? (
               <div style={{ height:"100%", display:"flex", alignItems:"center", justifyItems:"center", fontFamily:"'IBM Plex Mono',monospace", color:"#555", fontSize:12 }}>
                 connecting to prod-eu-west-1…
