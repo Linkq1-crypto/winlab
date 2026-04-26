@@ -218,25 +218,56 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, "dist")));
 
 // ── Rate limiters ────────────────────────────────────────────────────
-const authLimiter    = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false });
-const aiLimiter      = rateLimit({ windowMs: 60_000, max: 30 });
+const authLimiter    = rateLimit({ 
+  windowMs: 60_000, 
+  max: 10, 
+  standardHeaders: true, 
+  legacyHeaders: false,
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || req.ip 
+});
+
+const aiLimiter      = rateLimit({ 
+  windowMs: 60_000, 
+  max: 30,
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || req.ip
+});
+
 const freeLabLimiter = rateLimit({
   windowMs: 60_000,
   max: 2,
-  keyGenerator: (req) => req.ip,
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: false, error: "Too many lab sessions — please wait a moment." },
 });
+
 const codexLimiter   = rateLimit({
   windowMs: 60_000,
   max: 8,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => `${req.user?.id || "anonymous"}:${req.headers["x-tenant-id"] || "default"}`,
+  keyGenerator: (req) => {
+    const userPart = req.user?.id || "anonymous";
+    const ipPart   = req.headers["cf-connecting-ip"] || req.ip;
+    return `${userPart}:${ipPart}`;
+  },
 });
-const paymentLimiter = rateLimit({ windowMs: 60_000, max: 5 });
-const generalLimiter = rateLimit({ windowMs: 60_000, max: 2_000 });
+
+const paymentLimiter = rateLimit({ 
+  windowMs: 60_000, 
+  max: 5,
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || req.ip
+});
+
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || req.ip,
+  validate: { 
+    xForwardedForHeader: false, 
+    default: false 
+  }
+});
 app.use("/api/", generalLimiter);
 
 // ── Auth middleware ──────────────────────────────────────────────────
