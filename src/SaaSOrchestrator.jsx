@@ -864,7 +864,7 @@ export default function SaaSOrchestrator() {
   }
 
   if (isInteractiveHome) {
-    return <WinLabInteractiveHome />;
+    return <NewLandingPage onLogin={() => { setAuthMode("login"); setView("auth"); }} onRegister={() => { setAuthMode("register"); setView("auth"); }} />;
   }
 
   if (isMyIncidentsRoute) {
