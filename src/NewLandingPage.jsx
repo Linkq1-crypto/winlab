@@ -240,6 +240,25 @@ export default function NewLandingPage({ onLogin, onRegister }) {
   const [showSignup, setShowSignup] = useState(false);
   const [activeLab,  setActiveLab]  = useState(null);
   const [mobileMenu, setMobileMenu] = useState(false);
+  
+  // -- Escalation Path Logic --
+  const [currentDemoLab, setCurrentDemoLab] = useState("nginx-port-conflict");
+  const [isGlitching, setIsGlitching] = useState(false);
+
+  function handleLabComplete() {
+    if (currentDemoLab === "nginx-port-conflict") {
+      setIsGlitching(true);
+      
+      // Simula il glitch e il messaggio dell'AI Mentor
+      setTimeout(() => {
+        setIsGlitching(false);
+        setCurrentDemoLab("disk-full");
+      }, 3500); // 3.5 secondi di transizione drammatica
+    } else {
+      // Se finisce anche il secondo, apriamo il modal di conversione
+      onRegister?.();
+    }
+  }
 
   useEffect(() => {
     initPosthog();
@@ -362,57 +381,150 @@ export default function NewLandingPage({ onLogin, onRegister }) {
       )}
 
       {/* ── HERO ── */}
-      <section style={{ minHeight:"100vh", display:"grid", paddingTop:64 }} className="hero-grid" data-style="grid-template-columns:1fr 1fr">
-        <style>{`.hero-grid{grid-template-columns:1fr 1fr}@media(max-width:900px){.hero-grid{grid-template-columns:1fr}}`}</style>
+      <section id="hero" style={{ paddingTop:64, background:"#000" }}>
+        <style>
+          {`
+            .main-dashboard-wrapper {
+              display: flex;
+              flex-direction: row;
+              align-items: stretch; /* Essenziale: Hero e Terminale avranno la stessa altezza */
+              justify-content: center;
+              background: #000;
+              border: 1px solid #333;
+              margin: 20px;
+              min-height: 600px; /* Altezza minima garantita */
+            }
+            /* Lato Sinistro: Testo e Marketing */
+            .hero-branding {
+              flex: 1;
+              padding: 60px;
+              display: flex;
+              flex-direction: column;
+              justify-content: center; /* Centra il testo verticalmente */
+              border-right: 1px solid #333;
+            }
+            /* Lato Destro: Il Terminale */
+            .terminal-live-zone {
+              flex: 1.5; /* Più spazio al terminale */
+              background: #000;
+              padding: 10px;
+              overflow: hidden;
+            }
+            @media(max-width: 900px) {
+              .main-dashboard-wrapper {
+                flex-direction: column;
+                margin: 0;
+                border-left: none;
+                border-right: none;
+              }
+              .hero-branding {
+                border-right: none;
+                border-bottom: 1px solid #333;
+                padding: 40px 20px;
+              }
+              .terminal-live-zone {
+                padding: 0;
+              }
+            }
+          `}
+        </style>
 
-        {/* Left */}
-        <div className="hero-left" style={{ display:"flex", flexDirection:"column", justifyContent:"center", padding:"80px 48px 80px 80px", borderRight:"1px solid #2a2a2a" }}>
-          <div className="fade-1 section-label">Production Alert · Live Incident</div>
-          <h1 className="fade-2" style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(64px,7vw,110px)", lineHeight:0.9, letterSpacing:"0.02em", color:"#fff" }}>
-            Your server<br />
-            <span style={{ color:"#ff4c00", display:"block" }}>is down.</span>
-            Fix it.
-          </h1>
-          <p className="fade-3" style={{ marginTop:32, fontSize:14, fontWeight:300, lineHeight:1.7, color:"#888", maxWidth:380 }}>
-            Real production failures. Real terminals. Real skills.
-            No simulations, no hand-holding — just you, the incident, and the fix.
-          </p>
-          <div className="fade-4" style={{ marginTop:48, display:"flex", alignItems:"center", gap:24, flexWrap:"wrap" }}>
-            <button className="btn-primary" onClick={onRegister}>Start First Incident</button>
-            <a href="#how" className="btn-ghost">How it works →</a>
-          </div>
-          <div className="fade-5" style={{ marginTop:64, display:"flex", alignItems:"center", gap:20 }}>
-            <div style={{ display:"flex" }}>
-              {["AS","MK","JL","RB"].map((initials, i) => (
-                <div key={i} style={{ width:32, height:32, borderRadius:"50%", border:"2px solid #0a0a0a", background:["#1e3a5f","#3b1e1e","#1e3b2f","#3b2d1e"][i], marginLeft: i===0?0:-8, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"#bbb" }}>
-                  {initials}
-                </div>
-              ))}
+        <div className="main-dashboard-wrapper fade-in-up">
+          {/* Left */}
+          <div className="hero-branding fade-left">
+            <div className="section-label">Production Alert · Live Incident</div>
+            <h1 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(64px,7vw,110px)", lineHeight:0.9, letterSpacing:"0.02em", color:"#fff" }}>
+              Your server<br />
+              <span style={{ color:"#ff4c00", display:"block" }}>is down.</span>
+              Fix it.
+            </h1>
+            <p style={{ marginTop:32, fontSize:14, fontWeight:300, lineHeight:1.7, color:"#888", maxWidth:380 }}>
+              Real production failures. Real terminals. Real skills.
+              No simulations, no hand-holding — just you, the incident, and the fix.
+            </p>
+            <div style={{ marginTop:48, display:"flex", alignItems:"center", gap:24, flexWrap:"wrap" }}>
+              <button className="btn-primary" onClick={onRegister}>Start First Incident</button>
+              <a href="#how" className="btn-ghost">How it works →</a>
             </div>
-            <div style={{ fontSize:12, color:"#888", fontWeight:300 }}>
-              Joined by <strong style={{ color:"#f0f0f0", fontWeight:500 }}>12,000+</strong> engineers from{" "}
-              <strong style={{ color:"#f0f0f0", fontWeight:500 }}>120+</strong> countries
-            </div>
-          </div>
-        </div>
-
-        {/* Right — terminal interattivo */}
-        <div className="hero-right" style={{ display:"flex", flexDirection:"column", justifyContent:"center", padding:"80px 80px 80px 48px" }}>
-          {variant === "C" && !heroReady ? (
-            <div style={{ textAlign:"center", fontFamily:"'IBM Plex Mono',monospace", color:"#555", fontSize:12 }}>
-              connecting to prod-eu-west-1…
-            </div>
-          ) : (
-            <div className="fade-term" style={{ position:"relative" }}>
-              <div style={{ position:"absolute", top:-14, right:24, background:"#ff4c00", color:"#000", fontFamily:"'IBM Plex Mono',monospace", fontSize:9, fontWeight:600, letterSpacing:"0.2em", textTransform:"uppercase", padding:"5px 14px", zIndex:1 }}>
-                ⚡ Live Incident
+            <div style={{ marginTop:64, display:"flex", alignItems:"center", gap:20 }}>
+              <div style={{ display:"flex" }}>
+                {["AS","MK","JL","RB"].map((initials, i) => (
+                  <div key={i} style={{ width:32, height:32, borderRadius:"50%", border:"2px solid #000", background:["#1e3a5f","#3b1e1e","#1e3b2f","#3b2d1e"][i], marginLeft: i===0?0:-8, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"#bbb" }}>
+                    {initials}
+                  </div>
+                ))}
               </div>
-              <FreeLabTerminal
-                labId="nginx-port-conflict"
-                onConvert={() => { track("free_lab_convert", { variant }); onRegister?.(); }}
-              />
+              <div style={{ fontSize:12, color:"#888", fontWeight:300 }}>
+                Joined by <strong style={{ color:"#f0f0f0", fontWeight:500 }}>12,000+</strong> engineers from{" "}
+                <strong style={{ color:"#f0f0f0", fontWeight:500 }}>120+</strong> countries
+              </div>
             </div>
-          )}
+          </div>
+
+          {/* Right — terminal interattivo */}
+          <div className="terminal-live-zone fade-right">
+            {variant === "C" && !heroReady ? (
+              <div style={{ height:"100%", display:"flex", alignItems:"center", justifyItems:"center", fontFamily:"'IBM Plex Mono',monospace", color:"#555", fontSize:12 }}>
+                connecting to prod-eu-west-1…
+              </div>
+            ) : (
+              <div style={{ position:"relative", height:"100%", display:"flex", flexDirection:"column" }} className={isGlitching ? "glitch-container" : ""}>
+                <style>
+                  {`
+                    @keyframes glitch-anim {
+                      0% { transform: translate(0) }
+                      20% { transform: translate(-2px, 2px) }
+                      40% { transform: translate(-2px, -2px) }
+                      60% { transform: translate(2px, 2px) }
+                      80% { transform: translate(2px, -2px) }
+                      100% { transform: translate(0) }
+                    }
+                    .glitch-container {
+                      animation: glitch-anim 0.2s linear infinite;
+                      filter: contrast(150%) brightness(120%) hue-rotate(90deg);
+                    }
+                    .glitch-overlay {
+                      position: absolute;
+                      inset: 0;
+                      background: rgba(255,0,0,0.2);
+                      z-index: 10;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-family: 'IBM Plex Mono', monospace;
+                      color: #fff;
+                      text-align: center;
+                      padding: 20px;
+                      backdrop-filter: blur(2px);
+                    }
+                  `}
+                </style>
+
+                <div style={{ position:"absolute", top:0, right:24, background:"#ff4c00", color:"#000", fontFamily:"'IBM Plex Mono',monospace", fontSize:9, fontWeight:600, letterSpacing:"0.2em", textTransform:"uppercase", padding:"5px 14px", zIndex:1 }}>
+                  ⚡ Live Incident
+                </div>
+
+                {isGlitching && (
+                  <div className="glitch-overlay">
+                    <div>
+                      <div style={{ fontSize: 24, color: "#ff4c00", fontWeight: "bold", marginBottom: 10 }}>[ALERT] Incident 01 stabilized.</div>
+                      <div style={{ fontSize: 16 }}>Detecting secondary failure in /var/log...</div>
+                      <div style={{ fontSize: 12, color: "#aaa", marginTop: 20 }}>Rerouting session to new container...</div>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+                  <FreeLabTerminal
+                    key={currentDemoLab} // Force re-mount when lab changes
+                    labId={currentDemoLab}
+                    onConvert={() => { track("free_lab_convert", { variant }); onRegister?.(); }}
+                    onSuccess={handleLabComplete}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 

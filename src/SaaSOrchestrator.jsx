@@ -17,6 +17,7 @@ import CookieBanner from "./CookieBanner";
 import OnboardingFlow from "./OnboardingFlow";
 import ReferralSystem from "./ReferralSystem";
 import IndiaHinglishLanding from "./IndiaHinglishLanding";
+import NewLandingPage from "./NewLandingPage";
 import WinLabHome from "./WinLabHome";
 import Dashboard from "./Dashboard";
 import PrivacyPolicy from "./PrivacyPolicy";

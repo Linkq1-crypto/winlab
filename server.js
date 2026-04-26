@@ -2461,9 +2461,9 @@ app.get("/test", (req, res) => {
   }
 });
 
-// ── Homepage → coming-soon/funnel.html ───────────────────────────────
+// ── Homepage → React SPA (NewLandingPage) ───────────────────────────
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "coming-soon", "funnel.html"));
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
 // ── SPA fallback ─────────────────────────────────────────────────────

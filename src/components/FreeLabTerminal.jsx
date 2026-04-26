@@ -10,7 +10,7 @@ const LINE_COLORS = {
   error:   "text-red-400",
 };
 
-export default function FreeLabTerminal({ labId = "nginx-port-conflict", onConvert }) {
+export default function FreeLabTerminal({ labId = "nginx-port-conflict", onConvert, onSuccess }) {
   const { started, booting, lines, commandCount, addLine, sendCommand, verify } = useFreeLab(labId);
 
   const [input, setInput]               = useState("");
@@ -26,14 +26,21 @@ export default function FreeLabTerminal({ labId = "nginx-port-conflict", onConve
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [lines]);
 
-  // Show conversion modal at engagement peak
+  // Show conversion modal at engagement peak, or call onSuccess
   useEffect(() => {
     if (modalShownRef.current) return;
+    
+    if (verifyResult?.ok && onSuccess) {
+      modalShownRef.current = true;
+      onSuccess();
+      return;
+    }
+
     if (commandCount >= CONVERSION_TRIGGER_COMMANDS || verifyResult?.ok) {
       modalShownRef.current = true;
       setShowModal(true);
     }
-  }, [commandCount, verifyResult]);
+  }, [commandCount, verifyResult, onSuccess]);
 
   const handleSubmit = useCallback(async (e) => {
     e?.preventDefault();
