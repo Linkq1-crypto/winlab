@@ -2524,7 +2524,7 @@ async function _loadSavedSession(sid) {
   try {
     const r = await fetch('/api/replay/' + sid);
     if (!r.ok) return [];
-    const d = await r.json();
+    const d = await parseApiJson(r, 'Failed to load session history.');
     return Array.isArray(d) ? d : [];
   } catch { return []; }
 }
