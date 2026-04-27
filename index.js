@@ -4759,11 +4759,21 @@ const wss = new WebSocketServer({ noServer: true });
 const labWss = new WebSocketServer({ noServer: true });
 
 labWss.on("connection", (ws, req) => {
+  ws.isAlive = true;
+  ws.on("pong", () => { ws.isAlive = true; });
+
   const params = new URL(req.url, "http://x").searchParams;
   const containerName = params.get("container");
 
   if (!containerName || !/^[a-z0-9-]+$/.test(containerName)) {
     ws.send(JSON.stringify({ type: "error", data: "Invalid container name" }));
+    ws.close();
+    return;
+  }
+
+  const isAuthorized = [...activeSessions.values()].includes(containerName);
+  if (!isAuthorized) {
+    ws.send(JSON.stringify({ type: "error", data: "Session not found" }));
     ws.close();
     return;
   }
@@ -4803,6 +4813,13 @@ labWss.on("connection", (ws, req) => {
   });
 
   ws.on("close", () => shell.kill());
+
+  shell.on("error", (err) => {
+    if (ws.readyState === 1) {
+      ws.send(JSON.stringify({ type: "error", data: err.message }));
+      ws.close();
+    }
+  });
 });
 
 server.on("upgrade", (req, socket, head) => {
@@ -4825,6 +4842,11 @@ wss.on("connection", (ws, req) => {
 // Heartbeat to drop dead connections
 setInterval(() => {
   wss.clients.forEach((ws) => {
+    if (!ws.isAlive) return ws.terminate();
+    ws.isAlive = false;
+    ws.ping();
+  });
+  labWss.clients.forEach((ws) => {
     if (!ws.isAlive) return ws.terminate();
     ws.isAlive = false;
     ws.ping();
