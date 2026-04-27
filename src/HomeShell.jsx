@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import LabTerminal from './components/LabTerminal';
 import RegisterModal from './components/RegisterModal';
+import CookieBanner from './CookieBanner';
 
 const STARTER_IDS = new Set(['linux-terminal','enhanced-terminal','disk-full','nginx-port-conflict']);
 
@@ -224,6 +225,7 @@ export default function HomeShell() {
   if (view === 'terminal') {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 font-mono">
+        <CookieBanner />
         <div className="w-full max-w-4xl h-[85vh] bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           <div className="bg-zinc-900 px-4 py-2 border-b border-white/5 flex items-center justify-between shrink-0">
             <div className="flex gap-1.5">
@@ -281,6 +283,7 @@ export default function HomeShell() {
   // ── Dashboard view ─────────────────────────────────────────────────────────
   return (
     <div className="flex h-screen bg-[#050505] text-gray-300 font-sans overflow-hidden">
+      <CookieBanner />
       {showRegister && <RegisterModal onSuccess={handleAuthSuccess} onClose={() => setShowRegister(false)} />}
       {showPaywall && <PaywallModal onUpgrade={handleUpgrade} onClose={() => setShowPaywall(false)} />}
 
