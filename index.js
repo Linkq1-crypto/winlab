@@ -18,6 +18,7 @@ import { v4 as uuidv4 } from "uuid";
 import path from "path";
 import { fileURLToPath } from "url";
 import { existsSync } from "fs";
+import { spawn } from "child_process";
 
 // ── Email & Alert Flow Imports ──
 import { sendPasswordResetEmail, sendVerifyEmail, verifyResetToken, verifyEmailToken, sendNewDeviceLoginEmail, sendAccountDeletedEmail } from "./src/services/userLifecycleEmailFlow.js";
@@ -4754,9 +4755,61 @@ server.on("error", (err) => {
 // WebSocket server (same port, path /ws/leaderboard)
 const wss = new WebSocketServer({ noServer: true });
 
+// ── Lab terminal WebSocket (Docker exec) ─────────────────────────────────────
+const labWss = new WebSocketServer({ noServer: true });
+
+labWss.on("connection", (ws, req) => {
+  const params = new URL(req.url, "http://x").searchParams;
+  const containerName = params.get("container");
+
+  if (!containerName || !/^[a-z0-9-]+$/.test(containerName)) {
+    ws.send(JSON.stringify({ type: "error", data: "Invalid container name" }));
+    ws.close();
+    return;
+  }
+
+  const shell = spawn("docker", ["exec", "-i", containerName, "bash"], {
+    env: { ...process.env, TERM: "xterm-256color" },
+  });
+
+  ws.send(JSON.stringify({ type: "ready" }));
+
+  shell.stdout.on("data", (chunk) => {
+    if (ws.readyState === 1) {
+      ws.send(JSON.stringify({ type: "output", data: chunk.toString("utf8") }));
+    }
+  });
+
+  shell.stderr.on("data", (chunk) => {
+    if (ws.readyState === 1) {
+      ws.send(JSON.stringify({ type: "output", data: chunk.toString("utf8") }));
+    }
+  });
+
+  shell.on("close", (code) => {
+    if (ws.readyState === 1) {
+      ws.send(JSON.stringify({ type: "exit", code: code ?? 0 }));
+      ws.close();
+    }
+  });
+
+  ws.on("message", (raw) => {
+    try {
+      const msg = JSON.parse(raw.toString());
+      if (msg.type === "input" && shell.stdin.writable) {
+        shell.stdin.write(msg.data);
+      }
+    } catch {}
+  });
+
+  ws.on("close", () => shell.kill());
+});
+
 server.on("upgrade", (req, socket, head) => {
   if (req.url.startsWith("/ws/leaderboard")) {
     wss.handleUpgrade(req, socket, head, (ws) => wss.emit("connection", ws, req));
+  } else if (req.url.startsWith("/ws/lab")) {
+    labWss.handleUpgrade(req, socket, head, (ws) => labWss.emit("connection", ws, req));
   } else {
     socket.destroy();
   }
