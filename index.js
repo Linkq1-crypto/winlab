@@ -44,6 +44,7 @@ import prisma from "./src/api/db/prisma.js";
 import { encryptUserData, decryptUser } from "./src/api/middleware/encryptPrisma.js";
 import { executeWithOutbox, processPendingEvents } from "./src/api/eventSourcing.js";
 import { isEventProcessed, markEventProcessed } from "./src/services/webhookIdempotency.js";
+import { startDockerLabSession, stopDockerLabSession } from "./src/services/dockerLabRunner.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -575,6 +576,56 @@ app.get("/api/progress/:userId", auth, async (req, res) => {
   const map = {};
   rows.forEach(r => { map[r.labId] = { completed: r.completed, score: r.score, updatedAt: r.updatedAt }; });
   res.json(map);
+});
+
+// ─────────────────────────────────────────────
+// LAB SESSION — Docker container lifecycle
+// ─────────────────────────────────────────────
+
+const STARTER_LABS = new Set([
+  "linux-terminal", "enhanced-terminal", "disk-full", "nginx-port-conflict"
+]);
+
+const activeSessions = new Map();
+
+app.post("/api/lab/start", async (req, res) => {
+  const { labId } = req.body;
+  if (!labId || typeof labId !== "string") {
+    return res.status(400).json({ error: "labId required" });
+  }
+
+  const isStarter = STARTER_LABS.has(labId);
+  if (!isStarter) {
+    const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Login required for this lab" });
+    try {
+      jwt.verify(token, JWT_SECRET);
+    } catch {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+  }
+
+  const sessionId = crypto.randomUUID();
+  try {
+    const session = await startDockerLabSession({ labId, sessionId });
+    activeSessions.set(sessionId, session.containerName);
+    setTimeout(async () => {
+      activeSessions.delete(sessionId);
+      await stopDockerLabSession({ sessionId }).catch(() => {});
+    }, 30 * 60 * 1000);
+    res.json({ sessionId, containerName: session.containerName, labId });
+  } catch (err) {
+    console.error("Lab start error:", err);
+    res.status(500).json({ error: "Failed to start lab container" });
+  }
+});
+
+app.post("/api/lab/stop", async (req, res) => {
+  const { sessionId } = req.body;
+  if (!sessionId) return res.status(400).json({ error: "sessionId required" });
+  activeSessions.delete(sessionId);
+  await stopDockerLabSession({ sessionId }).catch(() => {});
+  res.json({ ok: true });
 });
 
 // ─────────────────────────────────────────────
