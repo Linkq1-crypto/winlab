@@ -15,10 +15,11 @@ export default function RegisterModal({ onSuccess, onClose }) {
     setError('');
     setLoading(true);
 
+    const trimmedEmail = email.trim();
     const endpoint = mode === 'register' ? '/api/auth/register' : '/api/auth/login';
     const body = mode === 'register'
-      ? { email, password, name }
-      : { email, password };
+      ? { email: trimmedEmail, password, name }
+      : { email: trimmedEmail, password };
 
     try {
       const res = await fetch(endpoint, {
@@ -30,12 +31,13 @@ export default function RegisterModal({ onSuccess, onClose }) {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Errore. Riprova.');
+        setLoading(false);
         return;
       }
+      setLoading(false);
       onSuccess(data.user);
     } catch {
       setError('Connessione fallita. Riprova.');
-    } finally {
       setLoading(false);
     }
   }
@@ -82,6 +84,7 @@ export default function RegisterModal({ onSuccess, onClose }) {
             type="password"
             placeholder="Password (min. 8 caratteri)"
             required
+            minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full bg-zinc-800 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/40 placeholder-gray-600"
