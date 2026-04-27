@@ -5,6 +5,10 @@
 
 import express from "express";
 import { rateLimit } from "express-rate-limit";
+
+// Normalize IPv6-mapped IPv4 addresses (::ffff:1.2.3.4 → 1.2.3.4)
+// Required by express-rate-limit v7 when using a custom keyGenerator with req.ip
+const normalizeIp = (ip = "") => ip.startsWith("::ffff:") ? ip.slice(7) : ip;
 import Stripe from "stripe";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -223,19 +227,19 @@ const authLimiter    = rateLimit({
   max: 10, 
   standardHeaders: true, 
   legacyHeaders: false,
-  keyGenerator: (req) => req.headers["cf-connecting-ip"] || req.ip 
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || normalizeIp(req.ip) 
 });
 
 const aiLimiter      = rateLimit({ 
   windowMs: 60_000, 
   max: 30,
-  keyGenerator: (req) => req.headers["cf-connecting-ip"] || req.ip
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || normalizeIp(req.ip)
 });
 
 const freeLabLimiter = rateLimit({
   windowMs: 60_000,
   max: 10,
-  keyGenerator: (req) => req.headers["cf-connecting-ip"] || req.ip,
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || normalizeIp(req.ip),
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: false, error: "Too many lab sessions — please wait a moment." },
@@ -248,7 +252,7 @@ const codexLimiter   = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     const userPart = req.user?.id || "anonymous";
-    const ipPart   = req.headers["cf-connecting-ip"] || req.ip;
+    const ipPart   = req.headers["cf-connecting-ip"] || normalizeIp(req.ip);
     return `${userPart}:${ipPart}`;
   },
 });
@@ -256,13 +260,13 @@ const codexLimiter   = rateLimit({
 const paymentLimiter = rateLimit({ 
   windowMs: 60_000, 
   max: 5,
-  keyGenerator: (req) => req.headers["cf-connecting-ip"] || req.ip
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || normalizeIp(req.ip)
 });
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  keyGenerator: (req) => req.headers["cf-connecting-ip"] || req.ip,
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || normalizeIp(req.ip),
   validate: { 
     xForwardedForHeader: false, 
     default: false 
