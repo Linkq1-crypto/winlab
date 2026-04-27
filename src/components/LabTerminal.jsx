@@ -9,6 +9,11 @@ export default function LabTerminal({ containerName, onClose, onComplete }) {
   const termRef = useRef(null);
   const wsRef = useRef(null);
 
+  const onCloseRef = useRef(onClose);
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+
   useEffect(() => {
     const term = new Terminal({
       cursorBlink: true,
@@ -44,13 +49,19 @@ export default function LabTerminal({ containerName, onClose, onComplete }) {
         if (msg.type === 'ready') term.write('\r\n\x1b[32m[WINLAB]\x1b[0m Lab ready. Type commands below.\r\n\r\n');
         if (msg.type === 'exit') {
           term.write('\r\n\x1b[33m[WINLAB]\x1b[0m Session ended.\r\n');
-          onComplete?.();
+          onCompleteRef.current?.();
         }
         if (msg.type === 'error') term.write(`\r\n\x1b[31m[ERROR]\x1b[0m ${msg.data}\r\n`);
       } catch {}
     };
 
     ws.onerror = () => term.write('\r\n\x1b[31m[WINLAB]\x1b[0m Connection error.\r\n');
+
+    ws.onclose = (e) => {
+      if (!e.wasClean) {
+        term.write('\r\n\x1b[31m[WINLAB]\x1b[0m Connection lost.\r\n');
+      }
+    };
 
     term.onData((data) => {
       if (ws.readyState === WebSocket.OPEN) {
