@@ -223,6 +223,13 @@ app.use((req, res, next) => {
 const authLimiter = rateLimit({ windowMs: 60_000, max: 5, message: { error: "Too many attempts. Try again in 1 minute." }, standardHeaders: true, legacyHeaders: false });
 const aiLimiter = rateLimit({ windowMs: 60_000, max: 10, message: { error: "Too many AI requests. Try again in 1 minute." }, standardHeaders: true, legacyHeaders: false });
 const billingLimiter = rateLimit({ windowMs: 60_000, max: 3, message: { error: "Too many billing requests. Try again in 1 minute." }, standardHeaders: true, legacyHeaders: false });
+const labLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 3,
+  message: { error: "Too many lab start requests. Try again in 1 minute." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ─────────────────────────────────────────────
 // REQUEST-ID MIDDLEWARE
@@ -588,7 +595,7 @@ const STARTER_LABS = new Set([
 
 const activeSessions = new Map();
 
-app.post("/api/lab/start", async (req, res) => {
+app.post("/api/lab/start", labLimiter, async (req, res) => {
   const { labId } = req.body;
   if (!labId || typeof labId !== "string") {
     return res.status(400).json({ error: "labId required" });
