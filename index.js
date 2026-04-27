@@ -226,7 +226,7 @@ const aiLimiter = rateLimit({ windowMs: 60_000, max: 10, message: { error: "Too 
 const billingLimiter = rateLimit({ windowMs: 60_000, max: 3, message: { error: "Too many billing requests. Try again in 1 minute." }, standardHeaders: true, legacyHeaders: false });
 const labLimiter = rateLimit({
   windowMs: 60_000,
-  max: 3,
+  max: 10,
   message: { error: "Too many lab start requests. Try again in 1 minute." },
   standardHeaders: true,
   legacyHeaders: false,

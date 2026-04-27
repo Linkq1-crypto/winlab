@@ -234,7 +234,7 @@ const aiLimiter      = rateLimit({
 
 const freeLabLimiter = rateLimit({
   windowMs: 60_000,
-  max: 2,
+  max: 10,
   keyGenerator: (req) => req.headers["cf-connecting-ip"] || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
