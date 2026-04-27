@@ -121,7 +121,7 @@ export default function HomeShell() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ labId: lab.id }),
+        body: JSON.stringify({ labId: lab.id, sessionId: crypto.randomUUID() }),
       });
       const data = await res.json();
       if (!res.ok) {
