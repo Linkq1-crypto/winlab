@@ -47,24 +47,24 @@ const FOOTER_LINKS = [
   {
     heading: 'Product',
     links: [
-      { label: 'How it works', href: '#' },
-      { label: 'Labs', href: '#' },
-      { label: 'Pricing', href: '#' },
+      { label: 'How it works', href: '/how-it-works' },
+      { label: 'Labs',         href: '/'             },
+      { label: 'Pricing',      href: '/pricing'      },
     ],
   },
   {
     heading: 'Legal',
     links: [
-      { label: 'Privacy', href: '#' },
-      { label: 'Terms', href: '#' },
-      { label: 'Security', href: '#' },
+      { label: 'Privacy',  href: '/privacy'  },
+      { label: 'Terms',    href: '/terms'    },
+      { label: 'Security', href: '/security' },
     ],
   },
   {
     heading: 'Support',
     links: [
-      { label: 'Contact', href: '#' },
-      { label: 'Status', href: '#' },
+      { label: 'Contact', href: '/contact' },
+      { label: 'Status',  href: '/status'  },
     ],
   },
 ];
