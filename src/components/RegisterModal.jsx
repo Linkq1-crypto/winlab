@@ -1,4 +1,3 @@
-// src/components/RegisterModal.jsx
 import { useState } from 'react';
 import { X } from 'lucide-react';
 
@@ -30,14 +29,14 @@ export default function RegisterModal({ onSuccess, onClose }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Errore. Riprova.');
+        setError(data.error || 'An error occurred. Please try again.');
         setLoading(false);
         return;
       }
       setLoading(false);
       onSuccess(data.user);
     } catch {
-      setError('Connessione fallita. Riprova.');
+      setError('Connection failed. Please try again.');
       setLoading(false);
     }
   }
@@ -54,19 +53,19 @@ export default function RegisterModal({ onSuccess, onClose }) {
         </button>
 
         <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter mb-2">
-          {mode === 'register' ? 'Crea Account' : 'Accedi'}
+          {mode === 'register' ? 'Create Account' : 'Sign In'}
         </h2>
         <p className="text-gray-500 text-sm mb-6">
           {mode === 'register'
-            ? 'Registrati per salvare il tuo progresso.'
-            : 'Bentornato Operator.'}
+            ? 'Register to save your progress.'
+            : 'Welcome back, Operator.'}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'register' && (
             <input
               type="text"
-              placeholder="Nome (opzionale)"
+              placeholder="Name (optional)"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-zinc-800 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/40 placeholder-gray-600"
@@ -82,7 +81,7 @@ export default function RegisterModal({ onSuccess, onClose }) {
           />
           <input
             type="password"
-            placeholder="Password (min. 8 caratteri)"
+            placeholder="Password (min. 8 characters)"
             required
             minLength={8}
             value={password}
@@ -99,7 +98,7 @@ export default function RegisterModal({ onSuccess, onClose }) {
             disabled={loading}
             className="w-full py-4 bg-red-600 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-red-700 transition-all disabled:opacity-50"
           >
-            {loading ? 'Caricamento...' : mode === 'register' ? 'REGISTRATI' : 'ACCEDI'}
+            {loading ? 'Loading...' : mode === 'register' ? 'REGISTER' : 'SIGN IN'}
           </button>
         </form>
 
@@ -107,7 +106,7 @@ export default function RegisterModal({ onSuccess, onClose }) {
           onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError(''); }}
           className="mt-4 w-full text-center text-xs text-gray-600 hover:text-gray-400 transition-colors"
         >
-          {mode === 'register' ? 'Ho già un account → Accedi' : 'Nessun account → Registrati'}
+          {mode === 'register' ? 'Already have an account → Sign In' : 'No account → Register'}
         </button>
       </div>
     </div>

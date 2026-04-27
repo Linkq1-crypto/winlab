@@ -1,4 +1,3 @@
-// src/HomeShell.jsx
 import { useState, useEffect, useRef } from 'react';
 import {
   Server, LayoutDashboard, User, LogOut,
@@ -11,25 +10,25 @@ const STARTER_IDS = new Set(['linux-terminal','enhanced-terminal','disk-full','n
 
 const labDatabase = [
   { id:'linux-terminal',          tier:'Starter', title:'Linux Terminal Basics',         difficulty:'Easy',   duration:'15m', xp:150,  tags:['linux','bash'],       category:'Starter' },
-  { id:'enhanced-terminal',       tier:'Starter', title:'Lab Guidato: 3 Incidenti',      difficulty:'Easy',   duration:'20m', xp:200,  tags:['apache','disk'],      category:'Starter' },
-  { id:'disk-full',               tier:'Starter', title:'Disco Pieno - Emergenza',        difficulty:'Easy',   duration:'8m',  xp:100,  tags:['disk','storage'],     category:'Starter' },
-  { id:'nginx-port-conflict',     tier:'Starter', title:'Conflitto Porte Nginx',          difficulty:'Easy',   duration:'6m',  xp:100,  tags:['nginx','port'],       category:'Starter' },
-  { id:'permission-denied',       tier:'Pro',     title:'Permission Denied - ACL',        difficulty:'Medium', duration:'10m', xp:300,  tags:['chmod','selinux'],    category:'Pro'     },
-  { id:'raid-simulator',          tier:'Pro',     title:'Configurazione RAID',            difficulty:'Medium', duration:'20m', xp:500,  tags:['raid','mdadm'],       category:'Pro'     },
-  { id:'memory-leak',             tier:'Pro',     title:'Memory Leak: NodeJS',            difficulty:'Hard',   duration:'15m', xp:800,  tags:['memory','nodejs'],    category:'Pro'     },
-  { id:'db-dead',                 tier:'Pro',     title:'Database Irraggiungibile',       difficulty:'Hard',   duration:'20m', xp:850,  tags:['mysql','recovery'],   category:'Pro'     },
-  { id:'sssd-ldap',               tier:'Pro',     title:'SSSD / LDAP Failure',            difficulty:'Hard',   duration:'25m', xp:1200, tags:['ldap','auth'],        category:'Pro'     },
-  { id:'advanced-scenarios',      tier:'Pro',     title:'Advanced Production Scenarios',  difficulty:'Hard',   duration:'20m', xp:1500, tags:['ssl','oom','java'],   category:'Pro'     },
-  { id:'real-server',             tier:'Pro',     title:'Real Server: 12 Scenari',        difficulty:'Hard',   duration:'25m', xp:2000, tags:['iostat','tcpdump'],   category:'Pro'     },
-  { id:'api-timeout-n-plus-one',  tier:'Codex',   title:'API Timeout: N+1 Query',         difficulty:'Hard',   duration:'15m', xp:700,  tags:['sql','api'],          category:'Codex'   },
-  { id:'auth-bypass-jwt-trust',   tier:'Codex',   title:'Auth Bypass: JWT Trust',         difficulty:'Hard',   duration:'12m', xp:600,  tags:['security','jwt'],     category:'Codex'   },
-  { id:'stripe-webhook-forgery',  tier:'Codex',   title:'Stripe Webhook Forgery',         difficulty:'Hard',   duration:'18m', xp:750,  tags:['security','webhook'], category:'Codex'   },
-  { id:'deploy-new-version',      tier:'Ops',     title:'Deploy New Version',             difficulty:'Medium', duration:'5m',  xp:200,  tags:['production'],         category:'Ops'     },
-  { id:'rollback-failed-deploy',  tier:'Ops',     title:'Rollback Strategy',              difficulty:'Medium', duration:'8m',  xp:250,  tags:['git','cicd'],         category:'Ops'     },
-  { id:'ghost-asset-incident',    tier:'Ops',     title:'The 70-Hour Bug',                difficulty:'Hard',   duration:'40m', xp:1500, tags:['debugging'],          category:'Ops'     },
-  { id:'k8s-crashloop',           tier:'Ops',     title:'Kubernetes CrashLoop',           difficulty:'Hard',   duration:'15m', xp:900,  tags:['k8s','docker'],       category:'Ops'     },
-  { id:'redis-oom',               tier:'Ops',     title:'Redis OOM Storm',                difficulty:'Hard',   duration:'12m', xp:700,  tags:['redis','cache'],      category:'Ops'     },
-  { id:'network-lab',             tier:'Business',title:'Network Simulator',              difficulty:'Medium', duration:'30m', xp:0,    tags:['network'],            category:'Business', status:'placeholder' },
+  { id:'enhanced-terminal',       tier:'Starter', title:'Guided Lab: 3 Incidents',       difficulty:'Easy',   duration:'20m', xp:200,  tags:['apache','disk'],      category:'Starter' },
+  { id:'disk-full',               tier:'Starter', title:'Disk Full — Emergency',         difficulty:'Easy',   duration:'8m',  xp:100,  tags:['disk','storage'],     category:'Starter' },
+  { id:'nginx-port-conflict',     tier:'Starter', title:'Nginx Port Conflict',           difficulty:'Easy',   duration:'6m',  xp:100,  tags:['nginx','port'],       category:'Starter' },
+  { id:'permission-denied',       tier:'Pro',     title:'Permission Denied — ACL',       difficulty:'Medium', duration:'10m', xp:300,  tags:['chmod','selinux'],    category:'Pro'     },
+  { id:'raid-simulator',          tier:'Pro',     title:'RAID Configuration',            difficulty:'Medium', duration:'20m', xp:500,  tags:['raid','mdadm'],       category:'Pro'     },
+  { id:'memory-leak',             tier:'Pro',     title:'Memory Leak: NodeJS',           difficulty:'Hard',   duration:'15m', xp:800,  tags:['memory','nodejs'],    category:'Pro'     },
+  { id:'db-dead',                 tier:'Pro',     title:'Unreachable Database',          difficulty:'Hard',   duration:'20m', xp:850,  tags:['mysql','recovery'],   category:'Pro'     },
+  { id:'sssd-ldap',               tier:'Pro',     title:'SSSD / LDAP Failure',           difficulty:'Hard',   duration:'25m', xp:1200, tags:['ldap','auth'],        category:'Pro'     },
+  { id:'advanced-scenarios',      tier:'Pro',     title:'Advanced Production Scenarios', difficulty:'Hard',   duration:'20m', xp:1500, tags:['ssl','oom','java'],   category:'Pro'     },
+  { id:'real-server',             tier:'Pro',     title:'Real Server: 12 Scenarios',     difficulty:'Hard',   duration:'25m', xp:2000, tags:['iostat','tcpdump'],   category:'Pro'     },
+  { id:'api-timeout-n-plus-one',  tier:'Codex',   title:'API Timeout: N+1 Query',        difficulty:'Hard',   duration:'15m', xp:700,  tags:['sql','api'],          category:'Codex'   },
+  { id:'auth-bypass-jwt-trust',   tier:'Codex',   title:'Auth Bypass: JWT Trust',        difficulty:'Hard',   duration:'12m', xp:600,  tags:['security','jwt'],     category:'Codex'   },
+  { id:'stripe-webhook-forgery',  tier:'Codex',   title:'Stripe Webhook Forgery',        difficulty:'Hard',   duration:'18m', xp:750,  tags:['security','webhook'], category:'Codex'   },
+  { id:'deploy-new-version',      tier:'Ops',     title:'Deploy New Version',            difficulty:'Medium', duration:'5m',  xp:200,  tags:['production'],         category:'Ops'     },
+  { id:'rollback-failed-deploy',  tier:'Ops',     title:'Rollback Strategy',             difficulty:'Medium', duration:'8m',  xp:250,  tags:['git','cicd'],         category:'Ops'     },
+  { id:'ghost-asset-incident',    tier:'Ops',     title:'The 70-Hour Bug',               difficulty:'Hard',   duration:'40m', xp:1500, tags:['debugging'],          category:'Ops'     },
+  { id:'k8s-crashloop',           tier:'Ops',     title:'Kubernetes CrashLoop',          difficulty:'Hard',   duration:'15m', xp:900,  tags:['k8s','docker'],       category:'Ops'     },
+  { id:'redis-oom',               tier:'Ops',     title:'Redis OOM Storm',               difficulty:'Hard',   duration:'12m', xp:700,  tags:['redis','cache'],      category:'Ops'     },
+  { id:'network-lab',             tier:'Business',title:'Network Simulator',             difficulty:'Medium', duration:'30m', xp:0,    tags:['network'],            category:'Business', status:'placeholder' },
 ];
 
 const CATEGORIES = ['All','Starter','Pro','Codex','Ops','Business'];
@@ -41,7 +40,33 @@ const INITIAL_LOGS = [
   { type:'success', text:'Link established. Latency: 14ms' },
   { type:'warning', text:'SCAN COMPLETE: 34 critical incidents detected.' },
   { type:'info',    text:'Waiting for Operator authorization...' },
-  { type:'prompt',  text:'Digitare "login" o "1" per iniziare:' },
+  { type:'prompt',  text:'Type "login" or "1" to continue:' },
+];
+
+const FOOTER_LINKS = [
+  {
+    heading: 'Product',
+    links: [
+      { label: 'How it works', href: '#' },
+      { label: 'Labs', href: '#' },
+      { label: 'Pricing', href: '#' },
+    ],
+  },
+  {
+    heading: 'Legal',
+    links: [
+      { label: 'Privacy', href: '#' },
+      { label: 'Terms', href: '#' },
+      { label: 'Security', href: '#' },
+    ],
+  },
+  {
+    heading: 'Support',
+    links: [
+      { label: 'Contact', href: '#' },
+      { label: 'Status', href: '#' },
+    ],
+  },
 ];
 
 export default function HomeShell() {
@@ -93,14 +118,14 @@ export default function HomeShell() {
     setInputValue('');
     setTimeout(() => {
       if (cmd === 'login' || cmd === 'start' || cmd === '1') {
-        setTerminalLogs(prev => [...prev, { type:'info', text:'Accesso autorizzato. Reindirizzamento...' }]);
+        setTerminalLogs(prev => [...prev, { type:'info', text:'Access authorized. Redirecting...' }]);
         setTimeout(() => setView('dashboard'), 600);
       } else if (cmd === 'help') {
-        setTerminalLogs(prev => [...prev, { type:'system', text:'Comandi: login, help, clear' }]);
+        setTerminalLogs(prev => [...prev, { type:'system', text:'Commands: login, help, clear' }]);
       } else if (cmd === 'clear') {
-        setTerminalLogs([{ type:'prompt', text:'Digitare "login" o "1" per iniziare:' }]);
+        setTerminalLogs([{ type:'prompt', text:'Type "login" or "1" to continue:' }]);
       } else {
-        setTerminalLogs(prev => [...prev, { type:'error', text:`Comando non riconosciuto: ${cmd}` }]);
+        setTerminalLogs(prev => [...prev, { type:'error', text:`Unrecognized command: ${cmd}` }]);
       }
     }, 150);
   }
@@ -126,13 +151,13 @@ export default function HomeShell() {
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 401) { setShowRegister(true); return; }
-        setLabError(data.error || 'Impossibile avviare il lab.');
+        setLabError(data.error || 'Unable to start the lab.');
         return;
       }
       setActiveSession({ sessionId: data.sessionId, containerName: data.containerName, labId: lab.id });
       setView('lab');
     } catch {
-      setLabError('Connessione al server fallita.');
+      setLabError('Server connection failed.');
     } finally {
       setLabLoading(false);
     }
@@ -228,7 +253,7 @@ export default function HomeShell() {
               className="flex-1 bg-transparent border-none outline-none text-white text-sm"
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
-              placeholder="Esegui comando..."
+              placeholder="Run command..."
             />
           </form>
         </div>
@@ -278,7 +303,7 @@ export default function HomeShell() {
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab==='profile' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'hover:bg-white/5 text-gray-500'}`}
           >
             <User className="w-5 h-5" />
-            {auth ? (auth.name || auth.email) : 'Accedi'}
+            {auth ? (auth.name || auth.email) : 'Sign In'}
           </button>
         </nav>
         <div className="p-4 border-t border-white/5 shrink-0">
@@ -288,14 +313,14 @@ export default function HomeShell() {
             </button>
           ) : (
             <button onClick={() => setShowRegister(true)} className="w-full flex items-center gap-3 px-4 py-2 text-[10px] uppercase font-black tracking-widest text-gray-600 hover:text-red-500 transition-colors">
-              Registrati / Accedi
+              Sign Up / Sign In
             </button>
           )}
         </div>
       </aside>
 
       <main className="flex-1 h-screen overflow-y-auto p-4 md:p-10">
-        <div className="max-w-6xl mx-auto pb-20">
+        <div className="max-w-6xl mx-auto">
           <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
               <h1 className="text-4xl font-black text-white uppercase tracking-tighter italic">Operational Hub</h1>
@@ -326,7 +351,7 @@ export default function HomeShell() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
               <input
                 type="text"
-                placeholder="Ricerca lab..."
+                placeholder="Search labs..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full bg-zinc-900 border border-white/5 rounded-2xl py-3 pl-12 pr-4 text-xs text-white outline-none focus:border-red-500/30"
@@ -340,7 +365,7 @@ export default function HomeShell() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-20">
             {filteredLabs.map(lab => (
               <div
                 key={lab.id}
@@ -368,6 +393,45 @@ export default function HomeShell() {
               </div>
             ))}
           </div>
+
+          {/* Footer */}
+          <footer className="border-t border-white/5 pt-12 pb-10">
+            <div className="flex flex-col md:flex-row justify-between gap-10">
+              <div className="shrink-0">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 bg-red-600 flex items-center justify-center rounded">
+                    <Server className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <span className="font-black tracking-tighter text-white italic">WINLAB</span>
+                </div>
+                <p className="text-[11px] text-gray-600 max-w-[180px] leading-relaxed">
+                  Real-world IT incident labs. Learn by breaking things.
+                </p>
+              </div>
+              <div className="flex gap-16">
+                {FOOTER_LINKS.map(col => (
+                  <div key={col.heading}>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-3">{col.heading}</p>
+                    <ul className="space-y-2">
+                      {col.links.map(link => (
+                        <li key={link.label}>
+                          <a
+                            href={link.href}
+                            className="text-xs text-gray-600 hover:text-white transition-colors"
+                          >
+                            {link.label}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <p className="text-[10px] text-gray-700 mt-10">
+              © {new Date().getFullYear()} WinLab. All rights reserved.
+            </p>
+          </footer>
         </div>
       </main>
 
@@ -381,7 +445,7 @@ export default function HomeShell() {
               </div>
               <h2 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter mb-4 leading-tight">{selectedLab.title}</h2>
               <p className="text-gray-500 mb-10 max-w-md mx-auto italic">
-                Inizializzazione ambiente Docker isolato. Confermare l'avvio?
+                Initializing isolated Docker environment. Confirm launch?
               </p>
               <div className="grid grid-cols-2 gap-4 md:gap-8 mb-10">
                 <div className="bg-white/5 p-4 rounded-2xl border border-white/5 text-center">
@@ -400,10 +464,10 @@ export default function HomeShell() {
                   disabled={labLoading}
                   className="flex-1 py-5 bg-red-600 text-white font-black rounded-3xl uppercase tracking-widest italic hover:bg-red-700 transition-all shadow-xl shadow-red-600/20 active:scale-95 disabled:opacity-50"
                 >
-                  {labLoading ? 'AVVIO...' : 'AVVIA SESSIONE'}
+                  {labLoading ? 'LAUNCHING...' : 'LAUNCH SESSION'}
                 </button>
                 <button onClick={() => { setSelectedLab(null); setLabError(''); }} className="flex-1 py-5 border border-white/10 text-gray-500 font-black rounded-3xl uppercase tracking-widest hover:bg-white/5 transition-all">
-                  ANNULLA
+                  CANCEL
                 </button>
               </div>
             </div>
@@ -421,20 +485,20 @@ function PaywallModal({ onUpgrade, onClose }) {
       <div className="relative bg-zinc-900 border border-white/10 rounded-[32px] w-full max-w-md p-8 text-center shadow-2xl">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-600 hover:text-white"><X className="w-5 h-5" /></button>
         <div className="text-5xl mb-4">🏆</div>
-        <h2 className="text-2xl font-black text-white italic uppercase mb-2">Lab completato!</h2>
-        <p className="text-gray-500 text-sm mb-8">Sblocca tutti i 34 lab, AI Mentor illimitato e certificati.</p>
+        <h2 className="text-2xl font-black text-white italic uppercase mb-2">Lab Complete!</h2>
+        <p className="text-gray-500 text-sm mb-8">Unlock all 34 labs, unlimited AI Mentor, and certificates.</p>
         <div className="bg-white/5 rounded-2xl p-4 mb-8 border border-white/5">
           <p className="text-[10px] text-gray-600 uppercase font-black mb-1">Pro Plan</p>
-          <p className="text-3xl font-black text-white">$19<span className="text-gray-500 text-sm font-normal">/mese</span></p>
+          <p className="text-3xl font-black text-white">$19<span className="text-gray-500 text-sm font-normal">/mo</span></p>
         </div>
         <button
           onClick={onUpgrade}
           className="w-full py-4 bg-red-600 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-red-700 transition-all shadow-xl shadow-red-600/20"
         >
-          SBLOCCA TUTTO →
+          UNLOCK EVERYTHING →
         </button>
         <button onClick={onClose} className="mt-3 w-full text-xs text-gray-600 hover:text-gray-400 transition-colors">
-          Continua gratis
+          Continue for free
         </button>
       </div>
     </div>
