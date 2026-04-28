@@ -228,14 +228,14 @@ const authLimiter    = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => req.headers["cf-connecting-ip"] || ipKeyGenerator(req),
-  validate: { ipKeyGenerator: false },
+  validate: false,
 });
 
 const aiLimiter      = rateLimit({
   windowMs: 60_000,
   max: 30,
   keyGenerator: (req) => req.headers["cf-connecting-ip"] || ipKeyGenerator(req),
-  validate: { ipKeyGenerator: false },
+  validate: false,
 });
 
 const freeLabLimiter = rateLimit({
@@ -245,7 +245,7 @@ const freeLabLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: false, error: "Too many lab sessions — please wait a moment." },
-  validate: { ipKeyGenerator: false },
+  validate: false,
 });
 
 const codexLimiter   = rateLimit({
@@ -258,14 +258,14 @@ const codexLimiter   = rateLimit({
     const ipPart   = req.headers["cf-connecting-ip"] || ipKeyGenerator(req);
     return `${userPart}:${ipPart}`;
   },
-  validate: { ipKeyGenerator: false },
+  validate: false,
 });
 
 const paymentLimiter = rateLimit({
   windowMs: 60_000,
   max: 5,
   keyGenerator: (req) => req.headers["cf-connecting-ip"] || ipKeyGenerator(req),
-  validate: { ipKeyGenerator: false },
+  validate: false,
 });
 
 const generalLimiter = rateLimit({
