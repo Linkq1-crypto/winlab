@@ -1,0 +1,18 @@
+[
+  {
+    "type": "system",
+    "text": "NGINX PORT CONFLICT [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  nginx.service in FAILED state"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Port conflict detected on eth0"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

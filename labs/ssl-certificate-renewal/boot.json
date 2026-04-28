@@ -1,0 +1,14 @@
+[
+  {
+    "type": "system",
+    "text": "SSL CERTIFICATE RENEWAL [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  SSL certificate validation failed"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

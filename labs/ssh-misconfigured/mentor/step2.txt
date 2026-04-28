@@ -1,3 +1,3 @@
-Two problems found in sshd_config: Port 2222 and PasswordAuthentication no.
+Two problems found.
 
-→ fix the port: sed -i 's/^Port 2222/Port 22/' /etc/ssh/sshd_config
+→ fix port: sed -i 's/^Port 2222/Port 22/' /etc/ssh/sshd_config.

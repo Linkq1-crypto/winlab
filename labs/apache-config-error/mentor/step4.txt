@@ -1,4 +1,3 @@
-Config is now valid.
+Fix.
 
-→ start apache2: apache2ctl start
-→ confirm: apache2ctl configtest && pgrep apache2
+→ validate and start: apache2ctl configtest && apache2ctl start.

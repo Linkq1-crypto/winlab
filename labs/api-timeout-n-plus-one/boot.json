@@ -1,0 +1,14 @@
+[
+  {
+    "type": "system",
+    "text": "API TIMEOUT N PLUS ONE [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  API response time critically degraded"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

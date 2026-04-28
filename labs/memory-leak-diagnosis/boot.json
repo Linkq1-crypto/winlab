@@ -1,0 +1,14 @@
+[
+  {
+    "type": "system",
+    "text": "MEMORY LEAK DIAGNOSIS [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Memory usage critical — OOM imminent"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

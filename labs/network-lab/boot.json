@@ -1,0 +1,14 @@
+[
+  {
+    "type": "system",
+    "text": "NETWORK LAB SIMULATOR [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Network packet loss detected"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

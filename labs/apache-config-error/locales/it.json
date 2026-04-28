@@ -1,11 +1,11 @@
 {
-  "title": "Errore configurazione Apache",
-  "description": "Apache2 è offline dopo un cambio di configurazione. Un errore di battitura in un file di config incluso impedisce il riavvio del server.",
-  "lesson": "Esegui sempre apachectl configtest prima di riavviare Apache in produzione.",
-  "hint_1": "testa la configurazione: apache2ctl configtest",
-  "hint_2": "leggi il file indicato nell'errore",
-  "hint_3": "trova il typo — ServerNaame non è una direttiva valida",
-  "hint_4": "correggi e avvia: sed -i + apache2ctl start",
-  "success": "Apache2 è in esecuzione. Incidente risolto.",
-  "fail": "apache2 è ancora offline o la config è ancora invalida."
+  "title": "TODO: titolo breve",
+  "description": "TODO: descrizione una riga",
+  "lesson": "TODO: lezione",
+  "hint_1": "TODO: test the config: apache2ctl configtest",
+  "hint_2": "TODO: read the broken file: cat /etc/apache2/conf-enabled/winlab.conf",
+  "hint_3": "TODO: fix it: sed -i 's/ServerNaame/ServerName/' /etc/apache2/conf-enabled/winlab.conf",
+  "hint_4": "TODO: validate and start: apache2ctl configtest && apache2ctl start",
+  "success": "TODO: messaggio successo",
+  "fail": "TODO: messaggio fallimento"
 }

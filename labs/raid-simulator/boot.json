@@ -1,0 +1,18 @@
+[
+  {
+    "type": "system",
+    "text": "RAID SIMULATOR [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  RAID array degraded — disk failure detected"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Storage I/O errors detected"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

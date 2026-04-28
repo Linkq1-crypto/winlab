@@ -1,0 +1,14 @@
+[
+  {
+    "type": "system",
+    "text": "SSSD LDAP [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  LDAP bind failure — auth service down"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

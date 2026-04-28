@@ -1,0 +1,18 @@
+[
+  {
+    "type": "system",
+    "text": "STRIPE WEBHOOK FORGERY [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Webhook signature forgery detected"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Security misconfiguration detected"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

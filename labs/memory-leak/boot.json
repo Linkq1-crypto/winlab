@@ -1,0 +1,18 @@
+[
+  {
+    "type": "system",
+    "text": "MEMORY LEAK [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Memory usage critical — OOM imminent"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Node.js process memory leak detected"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

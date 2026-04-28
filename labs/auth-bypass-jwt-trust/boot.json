@@ -1,0 +1,22 @@
+[
+  {
+    "type": "system",
+    "text": "AUTH BYPASS JWT TRUST [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Authentication service unreachable"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  JWT validation bypass detected"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Security misconfiguration detected"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

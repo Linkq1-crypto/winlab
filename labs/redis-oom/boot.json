@@ -1,0 +1,14 @@
+[
+  {
+    "type": "system",
+    "text": "REDIS OOM [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Redis OOM — eviction storm in progress"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

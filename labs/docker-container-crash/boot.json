@@ -1,0 +1,14 @@
+[
+  {
+    "type": "system",
+    "text": "DOCKER CONTAINER CRASH [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Container health check failing"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

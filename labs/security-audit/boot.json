@@ -1,0 +1,14 @@
+[
+  {
+    "type": "system",
+    "text": "SECURITY AUDIT SIMULATOR [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Security misconfiguration detected"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

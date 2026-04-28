@@ -1,0 +1,22 @@
+[
+  {
+    "type": "system",
+    "text": "ENHANCED TERMINAL [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Apache service misconfiguration detected"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Filesystem at 100% — writes blocked"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Security misconfiguration detected"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

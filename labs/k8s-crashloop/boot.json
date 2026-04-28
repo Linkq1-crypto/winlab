@@ -1,0 +1,10 @@
+[
+  {
+    "type": "system",
+    "text": "KUBERNETES CRASHLOOPBACKOFF [v4.2.0]"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

@@ -1,11 +1,11 @@
 {
-  "title": "Apache Config Error",
-  "description": "Apache2 is down after a config change. A typo in an included config file prevents the server from starting.",
+  "title": "TODO: short title",
+  "description": "seed.sh drops /etc/apache2/conf-enabled/winlab.conf with a typo on line 2:.",
   "lesson": "Always run apachectl configtest before restarting Apache in production.",
   "hint_1": "test the config: apache2ctl configtest",
-  "hint_2": "read the broken file pointed to in the error",
-  "hint_3": "find the typo — ServerNaame is not a valid directive",
-  "hint_4": "fix and restart: sed -i + apache2ctl start",
-  "success": "Apache2 is running. Incident resolved.",
-  "fail": "apache2 is still down or config is still invalid."
+  "hint_2": "read the broken file: cat /etc/apache2/conf-enabled/winlab.conf",
+  "hint_3": "fix it: sed -i 's/ServerNaame/ServerName/' /etc/apache2/conf-enabled/winlab.conf",
+  "hint_4": "validate and start: apache2ctl configtest && apache2ctl start",
+  "success": "Incident resolved.",
+  "fail": "Still failing. Check the logs."
 }

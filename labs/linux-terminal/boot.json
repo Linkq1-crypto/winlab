@@ -1,0 +1,14 @@
+[
+  {
+    "type": "system",
+    "text": "LINUX TERMINAL [v4.2.0]"
+  },
+  {
+    "type": "info",
+    "text": "ℹ  Check the permissions on incident.log."
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

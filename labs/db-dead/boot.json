@@ -1,0 +1,14 @@
+[
+  {
+    "type": "system",
+    "text": "DATABASE DEAD [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  MySQL connection refused"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

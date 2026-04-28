@@ -1,0 +1,18 @@
+[
+  {
+    "type": "system",
+    "text": "APACHE SSL [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Apache service misconfiguration detected"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  SSL certificate validation failed"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

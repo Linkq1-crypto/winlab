@@ -1,0 +1,14 @@
+[
+  {
+    "type": "system",
+    "text": "NGINX RELOAD [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  nginx.service in FAILED state"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "type": "system",
+    "text": "PM2 CRASH RECOVERY [v4.2.0]"
+  },
+  {
+    "type": "warning",
+    "text": "⚠  Node.js process memory leak detected"
+  },
+  {
+    "type": "prompt",
+    "text": "Press any key to begin..."
+  }
+]

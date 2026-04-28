@@ -1,4 +1,1 @@
-Config is fixed. sshd is still not running.
-
-→ start it: /usr/sbin/sshd
-→ confirm: ss -tlnp | grep ':22 '
+Start sshd: /usr/sbin/sshd — confirm: ss -tlnp | grep ':22 '
