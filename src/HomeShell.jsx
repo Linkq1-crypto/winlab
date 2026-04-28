@@ -4,6 +4,7 @@ import {
   Search, Clock, AlertCircle, X
 } from 'lucide-react';
 import LabTerminal from './components/LabTerminal';
+import LabBootSplash from './components/LabBootSplash';
 import RegisterModal from './components/RegisterModal';
 import CookieBanner from './CookieBanner';
 import AIMentor from './AIMentor';
@@ -84,6 +85,7 @@ export default function HomeShell() {
   const [labError, setLabError] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSplash, setShowSplash] = useState(false);
   const [terminalLogs, setTerminalLogs] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const terminalEndRef = useRef(null);
@@ -163,7 +165,13 @@ export default function HomeShell() {
         setLabError(data.error || `Error ${res.status}`);
         return;
       }
-      setActiveSession({ sessionId: data.sessionId, containerName: data.containerName, labId: lab.id });
+      setActiveSession({
+        sessionId: data.sessionId,
+        containerName: data.containerName,
+        labId: lab.id,
+        bootSequence: data.bootSequence ?? [],
+      });
+      setShowSplash((data.bootSequence?.length ?? 0) > 0);
       setView('lab');
     } catch (err) {
       setLabError(`Network error: ${err?.message || 'check console'}`);
@@ -181,6 +189,7 @@ export default function HomeShell() {
         body: JSON.stringify({ sessionId: activeSession.sessionId }),
       }).catch(() => {});
     }
+    setShowSplash(false);
     setActiveSession(null);
     setSelectedLab(null);
     setView('dashboard');
@@ -268,6 +277,15 @@ export default function HomeShell() {
           </form>
         </div>
       </div>
+    );
+  }
+
+  if (view === 'lab' && showSplash && activeSession?.bootSequence?.length > 0) {
+    return (
+      <LabBootSplash
+        bootSequence={activeSession.bootSequence}
+        onReady={() => setShowSplash(false)}
+      />
     );
   }
 
