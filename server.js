@@ -2522,7 +2522,6 @@ server.on("upgrade", (req, socket, head) => {
 labWss.on("connection", (ws, req) => {
   const url = new URL(req.url, "http://x");
   const containerName = url.searchParams.get("container");
-  console.log(`[WS/lab] connection: container=${containerName}`);
 
   if (!containerName) {
     ws.send(JSON.stringify({ type: "error", data: "Missing container parameter" }));
@@ -2538,15 +2537,12 @@ labWss.on("connection", (ws, req) => {
     return;
   }
 
-  console.log(`[WS/lab] spawning docker exec for ${safeContainer}`);
-  // python3 pty.spawn allocates a real PTY so bash runs fully interactive
   const child = spawn(
     "python3",
     ["-c", "import pty,sys; pty.spawn(sys.argv[1:])",
      "docker", "exec", "-it", safeContainer, "/bin/bash"],
     { env: process.env }
   );
-  console.log(`[WS/lab] child pid=${child.pid}`);
 
   ws.send(JSON.stringify({ type: "ready" }));
 
@@ -2563,13 +2559,11 @@ labWss.on("connection", (ws, req) => {
   });
 
   child.on("close", (code, signal) => {
-    console.log(`[WS/lab] child closed code=${code} signal=${signal}`);
     if (ws.readyState === 1) ws.send(JSON.stringify({ type: "exit" }));
     ws.close();
   });
 
   child.on("error", (err) => {
-    console.log(`[WS/lab] child error: ${err.message}`);
     if (ws.readyState === 1) ws.send(JSON.stringify({ type: "error", data: err.message }));
     ws.close();
   });
@@ -2583,8 +2577,7 @@ labWss.on("connection", (ws, req) => {
     } catch {}
   });
 
-  ws.on("close", (code) => {
-    console.log(`[WS/lab] ws closed code=${code}`);
+  ws.on("close", () => {
     try { child.kill(); } catch {}
   });
 });
