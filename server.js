@@ -2558,12 +2558,14 @@ labWss.on("connection", (ws, req) => {
     }
   });
 
-  child.on("close", () => {
+  child.on("close", (code, signal) => {
+    console.log(`[WS/lab] child closed code=${code} signal=${signal}`);
     if (ws.readyState === 1) ws.send(JSON.stringify({ type: "exit" }));
     ws.close();
   });
 
   child.on("error", (err) => {
+    console.log(`[WS/lab] child error: ${err.message}`);
     if (ws.readyState === 1) ws.send(JSON.stringify({ type: "error", data: err.message }));
     ws.close();
   });
@@ -2577,7 +2579,8 @@ labWss.on("connection", (ws, req) => {
     } catch {}
   });
 
-  ws.on("close", () => {
+  ws.on("close", (code) => {
+    console.log(`[WS/lab] ws closed code=${code}`);
     try { child.kill(); } catch {}
   });
 });
