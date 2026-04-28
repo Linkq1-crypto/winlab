@@ -1,0 +1,50 @@
+<h2>Design — Sezione 3: LabBootSplash</h2>
+<p class="subtitle">Appare subito dopo il click sul lab. Il Docker si avvia in background mentre l'utente legge. Press any key → LabTerminal.</p>
+
+<div class="mockup">
+  <div class="mockup-header">LabBootSplash — full screen overlay su sfondo nero</div>
+  <div class="mockup-body" style="background:#0a0e14; padding:40px 48px; font-family:'Courier New',monospace; min-height:320px; display:flex; flex-direction:column; justify-content:center; border-radius:0 0 8px 8px;">
+
+    <div style="color:#8b949e; font-size:11px; letter-spacing:2px; text-transform:uppercase; margin-bottom:24px;">
+      WINLAB · INCIDENT ROUTER · v4.2.0
+    </div>
+
+    <!-- Typed lines, one at a time with cursor -->
+    <div style="margin-bottom:6px; color:#ff4444; font-size:14px; font-weight:bold;">
+      ★ &nbsp;NGINX PORT CONFLICT
+    </div>
+    <div style="margin-bottom:4px; color:#ff9f43; font-size:13px;">
+      ⚠ &nbsp;Port 80 collision detected on eth0
+    </div>
+    <div style="margin-bottom:4px; color:#ff9f43; font-size:13px;">
+      ⚠ &nbsp;nginx.service → FAILED (exit-code)
+    </div>
+    <div style="margin-bottom:4px; color:#58a6ff; font-size:13px;">
+      ℹ &nbsp;Apache already listening on :80
+    </div>
+    <div style="margin-bottom:24px; color:#cdd9e5; font-size:13px;">
+      ℹ &nbsp;Resolve the port conflict and restart nginx.
+    </div>
+
+    <div style="border-top:1px solid #30363d; padding-top:20px; display:flex; align-items:center; gap:12px;">
+      <div style="color:#2ecc71; font-size:13px; animation: none;">
+        ▶ &nbsp;Container ready
+      </div>
+      <div style="color:#8b949e; font-size:11px; margin-left:auto;">
+        [ press any key to enter ]
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" style="margin-top:20px;">
+  <h3>Flusso temporale</h3>
+  <div style="font-family:monospace; font-size:12px; background:#161b22; border-radius:8px; padding:16px; border:1px solid #30363d; color:#cdd9e5; line-height:1.9;">
+    <span style="color:#8b949e;">t=0ms </span> &nbsp;Utente clicca lab → <code>POST /api/lab/start</code> parte in background<br>
+    <span style="color:#8b949e;">t=0ms </span> &nbsp;LabBootSplash appare, le righe si stampano una per una (~150ms gap)<br>
+    <span style="color:#8b949e;">t=~1s </span> &nbsp;Tutte le righe visibili + "press any key to enter"<br>
+    <span style="color:#8b949e;">t=?   </span> &nbsp;Docker risponde con containerName (nel frattempo)<br>
+    <span style="color:#8b949e;">keypress</span> &nbsp;Se Docker è pronto → apre LabTerminal. Se non ancora → spinner breve<br>
+  </div>
+</div>

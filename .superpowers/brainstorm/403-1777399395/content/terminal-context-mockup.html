@@ -1,0 +1,58 @@
+<h2>Conferma: il boot sequence appare in due posti</h2>
+<p class="subtitle">Splash screen prima, poi gli stessi errori stampati nel terminale — così restano nella storia dello scroll</p>
+
+<div class="split">
+
+  <div class="mockup">
+    <div class="mockup-header">① Splash screen (auto-dismiss ~2s)</div>
+    <div class="mockup-body" style="background:#0d1117; padding:24px; font-family:monospace; font-size:12px; min-height:200px; display:flex; flex-direction:column; justify-content:center;">
+      <div style="color:#ff6b6b; font-size:15px; margin-bottom:6px;">★ NGINX PORT CONFLICT [v4.2.0]</div>
+      <div style="color:#8b949e; font-size:11px; margin-bottom:14px;">Difficulty: Easy · 6 min · 100 XP</div>
+      <div style="color:#ff9f43;">⚠  Port 80 collision detected on eth0</div>
+      <div style="color:#ff9f43;">⚠  nginx.service → FAILED (exit-code)</div>
+      <div style="color:#cdd9e5; margin-top:6px;">Apache già in ascolto sulla 80.</div>
+      <div style="color:#cdd9e5;">Risolvi il conflitto e riavvia nginx.</div>
+      <div style="color:#2ecc71; margin-top:14px;">Connessione in corso...</div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">② Terminale — stessi errori stampati all'apertura</div>
+    <div class="mockup-body" style="background:#0d1117; padding:16px; font-family:monospace; font-size:11px; min-height:200px;">
+      <div style="color:#ff6b6b;">★ NGINX PORT CONFLICT [v4.2.0]</div>
+      <div style="color:#ff9f43;">⚠  Port 80 collision detected on eth0</div>
+      <div style="color:#ff9f43;">⚠  nginx.service → FAILED (exit-code)</div>
+      <div style="color:#cdd9e5; margin-top:4px;">Apache già in ascolto sulla 80.</div>
+      <div style="color:#cdd9e5;">Risolvi il conflitto e riavvia nginx.</div>
+      <div style="color:#8b949e; margin-top:8px; font-size:10px;">─────────────────────────────────</div>
+      <div style="color:#cdd9e5; margin-top:4px;">Type <span style="color:#58a6ff;">verify</span> to check · <span style="color:#58a6ff;">hint</span> for hints</div>
+      <div style="color:#8b949e; margin-top:8px;">─────────────────────────────────</div>
+      <div style="color:#cdd9e5; margin-top:6px;">root@container:/workspace# <span style="animation:blink 1s infinite">█</span></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>Dove si definisce la boot sequence di ogni lab?</h3>
+  <p class="subtitle">Scegli come e dove scrivere la sequenza unica per ogni lab</p>
+  <div class="options">
+
+    <div class="option" data-choice="json" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Nel <code>scenario.json</code> del lab</h3>
+        <p>Aggiungi un campo <code>"bootSequence": [...]</code> — usato sia dal frontend (splash) sia dall'entrypoint.sh (stampa nel terminale). Un'unica fonte di verità.</p>
+      </div>
+    </div>
+
+    <div class="option" data-choice="js" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>In <code>HomeShell.jsx</code> come mappa per lab-id</h3>
+        <p>Un oggetto <code>LAB_BOOT_SEQUENCES</code> in frontend. Più semplice da iterare, ma non disponibile nell'entrypoint.sh Docker — servirebbe duplicazione.</p>
+      </div>
+    </div>
+
+  </div>
+</div>

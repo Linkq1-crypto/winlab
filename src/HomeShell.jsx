@@ -9,42 +9,23 @@ import RegisterModal from './components/RegisterModal';
 import CookieBanner from './CookieBanner';
 import AIMentor from './AIMentor';
 
-const STARTER_IDS = new Set(['linux-terminal','enhanced-terminal','disk-full','nginx-port-conflict']);
 
-const labDatabase = [
-  { id:'linux-terminal',          tier:'Starter', title:'Linux Terminal Basics',         difficulty:'Easy',   duration:'15m', xp:150,  tags:['linux','bash'],       category:'Starter' },
-  { id:'enhanced-terminal',       tier:'Starter', title:'Guided Lab: 3 Incidents',       difficulty:'Easy',   duration:'20m', xp:200,  tags:['apache','disk'],      category:'Starter' },
-  { id:'disk-full',               tier:'Starter', title:'Disk Full — Emergency',         difficulty:'Easy',   duration:'8m',  xp:100,  tags:['disk','storage'],     category:'Starter' },
-  { id:'nginx-port-conflict',     tier:'Starter', title:'Nginx Port Conflict',           difficulty:'Easy',   duration:'6m',  xp:100,  tags:['nginx','port'],       category:'Starter' },
-  { id:'permission-denied',       tier:'Pro',     title:'Permission Denied — ACL',       difficulty:'Medium', duration:'10m', xp:300,  tags:['chmod','selinux'],    category:'Pro'     },
-  { id:'raid-simulator',          tier:'Pro',     title:'RAID Configuration',            difficulty:'Medium', duration:'20m', xp:500,  tags:['raid','mdadm'],       category:'Pro'     },
-  { id:'memory-leak',             tier:'Pro',     title:'Memory Leak: NodeJS',           difficulty:'Hard',   duration:'15m', xp:800,  tags:['memory','nodejs'],    category:'Pro'     },
-  { id:'db-dead',                 tier:'Pro',     title:'Unreachable Database',          difficulty:'Hard',   duration:'20m', xp:850,  tags:['mysql','recovery'],   category:'Pro'     },
-  { id:'sssd-ldap',               tier:'Pro',     title:'SSSD / LDAP Failure',           difficulty:'Hard',   duration:'25m', xp:1200, tags:['ldap','auth'],        category:'Pro'     },
-  { id:'advanced-scenarios',      tier:'Pro',     title:'Advanced Production Scenarios', difficulty:'Hard',   duration:'20m', xp:1500, tags:['ssl','oom','java'],   category:'Pro'     },
-  { id:'real-server',             tier:'Pro',     title:'Real Server: 12 Scenarios',     difficulty:'Hard',   duration:'25m', xp:2000, tags:['iostat','tcpdump'],   category:'Pro'     },
-  { id:'api-timeout-n-plus-one',  tier:'Codex',   title:'API Timeout: N+1 Query',        difficulty:'Hard',   duration:'15m', xp:700,  tags:['sql','api'],          category:'Codex'   },
-  { id:'auth-bypass-jwt-trust',   tier:'Codex',   title:'Auth Bypass: JWT Trust',        difficulty:'Hard',   duration:'12m', xp:600,  tags:['security','jwt'],     category:'Codex'   },
-  { id:'stripe-webhook-forgery',  tier:'Codex',   title:'Stripe Webhook Forgery',        difficulty:'Hard',   duration:'18m', xp:750,  tags:['security','webhook'], category:'Codex'   },
-  { id:'deploy-new-version',      tier:'Ops',     title:'Deploy New Version',            difficulty:'Medium', duration:'5m',  xp:200,  tags:['production'],         category:'Ops'     },
-  { id:'rollback-failed-deploy',  tier:'Ops',     title:'Rollback Strategy',             difficulty:'Medium', duration:'8m',  xp:250,  tags:['git','cicd'],         category:'Ops'     },
-  { id:'ghost-asset-incident',    tier:'Ops',     title:'The 70-Hour Bug',               difficulty:'Hard',   duration:'40m', xp:1500, tags:['debugging'],          category:'Ops'     },
-  { id:'k8s-crashloop',           tier:'Ops',     title:'Kubernetes CrashLoop',          difficulty:'Hard',   duration:'15m', xp:900,  tags:['k8s','docker'],       category:'Ops'     },
-  { id:'redis-oom',               tier:'Ops',     title:'Redis OOM Storm',               difficulty:'Hard',   duration:'12m', xp:700,  tags:['redis','cache'],      category:'Ops'     },
-  { id:'network-lab',             tier:'Business',title:'Network Simulator',             difficulty:'Medium', duration:'30m', xp:0,    tags:['network'],            category:'Business', status:'placeholder' },
-];
+
 
 const CATEGORIES = ['All','Starter','Pro','Codex','Ops','Business'];
 
-const INITIAL_LOGS = [
-  { type:'system',  text:'WINLAB INCIDENT ROUTER [v4.2.0]' },
-  { type:'info',    text:'Booting secure environment...' },
-  { type:'info',    text:'Initializing neural link to edge nodes...' },
-  { type:'success', text:'Link established. Latency: 14ms' },
-  { type:'warning', text:'SCAN COMPLETE: 34 critical incidents detected.' },
-  { type:'info',    text:'Waiting for Operator authorization...' },
-  { type:'prompt',  text:'Type "login" or "1" to continue:' },
-];
+function buildInitialLogs(totalLabs = null) {
+  const label = Number.isFinite(totalLabs) ? totalLabs : '...';
+  return [
+    { type:'system',  text:'WINLAB INCIDENT ROUTER [v4.2.0]' },
+    { type:'info',    text:'Booting secure environment...' },
+    { type:'info',    text:'Initializing neural link to edge nodes...' },
+    { type:'success', text:'Link established. Latency: 14ms' },
+    { type:'warning', text:`SCAN COMPLETE: ${label} runnable incidents detected.` },
+    { type:'info',    text:'Waiting for Operator authorization...' },
+    { type:'prompt',  text:'Type "login" or "1" to continue:' },
+  ];
+}
 
 const FOOTER_LINKS = [
   {
@@ -88,20 +69,23 @@ export default function HomeShell() {
   const [showSplash, setShowSplash] = useState(false);
   const [terminalLogs, setTerminalLogs] = useState([]);
   const [inputValue, setInputValue] = useState('');
+  const [labCatalog, setLabCatalog] = useState([]);
+  const [starterIds, setStarterIds] = useState(new Set());
   const terminalEndRef = useRef(null);
 
   useEffect(() => {
     if (view !== 'terminal') return;
+    const initialLogs = buildInitialLogs(labCatalog.length || null);
     let i = 0;
     const iv = setInterval(() => {
-      if (i < INITIAL_LOGS.length) {
-        setTerminalLogs(prev => [...prev, INITIAL_LOGS[i++]]);
+      if (i < initialLogs.length) {
+        setTerminalLogs(prev => [...prev, initialLogs[i++]]);
       } else {
         clearInterval(iv);
       }
     }, 300);
     return () => clearInterval(iv);
-  }, [view]);
+  }, [view, labCatalog.length]);
 
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -112,6 +96,27 @@ export default function HomeShell() {
     if (stored) {
       try { setAuth(JSON.parse(stored)); } catch {}
     }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCatalog() {
+      try {
+        const res = await fetch('/api/labs/catalog', { credentials: 'include' });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.ok || !Array.isArray(data.labs)) return;
+        if (cancelled) return;
+        setLabCatalog(data.labs);
+        setStarterIds(new Set(Array.isArray(data.starterIds) ? data.starterIds : []));
+      } catch {
+        setLabCatalog([]);
+        setStarterIds(new Set());
+      }
+    }
+
+    loadCatalog();
+    return () => { cancelled = true; };
   }, []);
 
   function handleCommand(e) {
@@ -136,7 +141,7 @@ export default function HomeShell() {
 
   async function startLab(lab) {
     if (lab.status === 'placeholder') return;
-    const needsAuth = !STARTER_IDS.has(lab.id);
+    const needsAuth = !starterIds.has(lab.id);
     if (needsAuth && !auth) {
       setSelectedLab(lab);
       setShowRegister(true);
@@ -196,7 +201,7 @@ export default function HomeShell() {
   }
 
   function handleLabComplete() {
-    if (selectedLab && !STARTER_IDS.has(selectedLab.id)) {
+    if (selectedLab && !starterIds.has(selectedLab.id)) {
       setShowPaywall(true);
     } else {
       stopLab();
@@ -231,7 +236,7 @@ export default function HomeShell() {
     } catch {}
   }
 
-  const filteredLabs = labDatabase.filter(lab => {
+  const filteredLabs = labCatalog.filter(lab => {
     const matchCat = selectedCategory === 'All' || lab.category === selectedCategory;
     const matchSearch = lab.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lab.tags?.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -361,7 +366,7 @@ export default function HomeShell() {
             </div>
             <div className="bg-zinc-900 border border-white/5 px-6 py-3 rounded-2xl">
               <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1">Catalog Integrity</p>
-              <p className="text-xl font-black text-white">{filteredLabs.length} / {labDatabase.length} MODULES</p>
+              <p className="text-xl font-black text-white">{filteredLabs.length} / {labCatalog.length} MODULES</p>
             </div>
           </header>
 

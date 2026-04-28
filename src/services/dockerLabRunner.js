@@ -6,8 +6,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, "../..");
 
-const LAB_IMAGE       = process.env.LAB_IMAGE       || "winlab-lab-runner:latest";
-const EXEC_TIMEOUT_MS = process.env.EXEC_TIMEOUT_MS  ? Number(process.env.EXEC_TIMEOUT_MS) : 10_000;
+const DEFAULT_LAB_IMAGE = "winlab-lab-runner:latest";
+const LAB_IMAGE = process.env.LAB_IMAGE || DEFAULT_LAB_IMAGE;
+const EXEC_TIMEOUT_MS = process.env.EXEC_TIMEOUT_MS ? Number(process.env.EXEC_TIMEOUT_MS) : 10_000;
+const AUTO_BUILD_LOCAL_IMAGE = process.env.LAB_IMAGE_AUTO_BUILD !== "false";
+
+let imageReadyPromise = null;
 
 function sanitizeToken(value, fallback) {
   const safe = String(value || fallback)
@@ -20,6 +24,41 @@ function sanitizeToken(value, fallback) {
 
 function getContainerName(sessionId) {
   return `winlab-lab-${sanitizeToken(sessionId, "default")}`;
+}
+
+function normalizeDockerMessage(error) {
+  return String(error?.stderr || error?.stdout || error?.message || "").trim();
+}
+
+function isDockerUnavailableError(error) {
+  const message = normalizeDockerMessage(error).toLowerCase();
+  return (
+    message.includes("failed to connect to the docker api") ||
+    message.includes("docker daemon") ||
+    message.includes("open //./pipe/docker_engine") ||
+    message.includes("cannot find the file specified") ||
+    message.includes("impossibile trovare il file specificato")
+  );
+}
+
+function isMissingImageError(error, imageName = LAB_IMAGE) {
+  const message = normalizeDockerMessage(error).toLowerCase();
+  return (
+    message.includes(`unable to find image '${String(imageName).toLowerCase()}' locally`) ||
+    message.includes("no such image") ||
+    message.includes("no such object") ||
+    message.includes("pull access denied")
+  );
+}
+
+function shouldAutoBuildLabImage(imageName = LAB_IMAGE) {
+  return AUTO_BUILD_LOCAL_IMAGE && imageName === DEFAULT_LAB_IMAGE;
+}
+
+function buildDockerSetupError(message) {
+  const error = new Error(message);
+  error.name = "DockerLabSetupError";
+  return error;
 }
 
 function runProcess(command, args, options = {}) {
@@ -56,6 +95,55 @@ function runProcess(command, args, options = {}) {
       reject(error);
     });
   });
+}
+
+async function ensureLabImageReady({ run = runProcess, imageName = LAB_IMAGE } = {}) {
+  try {
+    await run("docker", ["image", "inspect", imageName]);
+    return { ready: true, built: false, imageName };
+  } catch (error) {
+    if (isDockerUnavailableError(error)) {
+      throw buildDockerSetupError(
+        "Docker is not available. Start Docker Desktop (or the Docker daemon) and try again."
+      );
+    }
+
+    if (!shouldAutoBuildLabImage(imageName) || !isMissingImageError(error, imageName)) {
+      throw error;
+    }
+  }
+
+  try {
+    await run("docker", [
+      "build",
+      "-t",
+      imageName,
+      "-f",
+      "docker/lab-runner/Dockerfile",
+      ".",
+    ]);
+    return { ready: true, built: true, imageName };
+  } catch (error) {
+    if (isDockerUnavailableError(error)) {
+      throw buildDockerSetupError(
+        "Docker is not available. Start Docker Desktop (or the Docker daemon) and try again."
+      );
+    }
+
+    throw buildDockerSetupError(
+      `Lab runner image ${imageName} is missing and automatic build failed. Run \`npm run lab:build-image\` from the repo root, then retry.`
+    );
+  }
+}
+
+async function ensureLabRuntimeReady() {
+  if (!imageReadyPromise) {
+    imageReadyPromise = ensureLabImageReady().finally(() => {
+      imageReadyPromise = null;
+    });
+  }
+
+  return imageReadyPromise;
 }
 
 export async function isContainerRunning(containerName) {
@@ -113,18 +201,36 @@ export async function startDockerLabSession({ labId, sessionId, variantId }) {
     await runProcess("docker", ["rm", "-f", containerName]);
   } catch { /* no-op if it doesn't exist */ }
 
-  await runProcess("docker", [
-    "run",
-    "--name",    containerName,
-    "--rm",
-    "-d",
-    "--network", "none",
-    "--memory",  "256m",
-    "--cpus",    "0.5",
-    "-e", `LAB_ID=${safeLabId}`,
-    "-e", `LAB_VARIANT=${safeVariantId}`,
-    LAB_IMAGE,
-  ]);
+  await ensureLabRuntimeReady();
+
+  try {
+    await runProcess("docker", [
+      "run",
+      "--name", containerName,
+      "--rm",
+      "-d",
+      "--network", "none",
+      "--memory", "256m",
+      "--cpus", "0.5",
+      "-e", `LAB_ID=${safeLabId}`,
+      "-e", `LAB_VARIANT=${safeVariantId}`,
+      LAB_IMAGE,
+    ]);
+  } catch (error) {
+    if (isDockerUnavailableError(error)) {
+      throw buildDockerSetupError(
+        "Docker is not available. Start Docker Desktop (or the Docker daemon) and try again."
+      );
+    }
+
+    if (isMissingImageError(error, LAB_IMAGE)) {
+      throw buildDockerSetupError(
+        `Lab runner image ${LAB_IMAGE} is missing. Run \`npm run lab:build-image\` from the repo root, then retry.`
+      );
+    }
+
+    throw error;
+  }
 
   return {
     labId:      safeLabId,
@@ -193,4 +299,14 @@ export default {
   isContainerRunning,
   getDockerLabShellCommand,
   getDockerShellCommand,
+};
+
+export const _test = {
+  sanitizeToken,
+  getContainerName,
+  normalizeDockerMessage,
+  isDockerUnavailableError,
+  isMissingImageError,
+  shouldAutoBuildLabImage,
+  ensureLabImageReady,
 };

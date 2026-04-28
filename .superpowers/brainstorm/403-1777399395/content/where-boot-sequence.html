@@ -1,0 +1,53 @@
+<h2>Dove appare il boot sequence del lab?</h2>
+<p class="subtitle">Ogni lab ha la sua sequenza unica. La domanda è: quando e dove la vede l'utente?</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Nel fake terminal della HomeShell</h3>
+      <p>Quando l'utente clicca "Start Lab", il terminal della home mostra il boot sequence del lab specifico, poi fa transition al LabTerminal reale.</p>
+      <div style="margin-top:12px; background:#0d1117; border-radius:8px; padding:12px; font-family:monospace; font-size:12px; color:#58a6ff; border:1px solid #30363d;">
+        <div style="color:#ff6b6b;">★ NGINX PORT CONFLICT [v4.2.0]</div>
+        <div style="color:#cdd9e5;">Booting incident environment...</div>
+        <div style="color:#ff9f43;">⚠ Port 80 collision detected on eth0</div>
+        <div style="color:#ff9f43;">⚠ Service nginx.service in FAILED state</div>
+        <div style="color:#cdd9e5;">Operator required. Connecting...</div>
+        <div style="color:#2ecc71;">▶ Terminal ready</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Nel LabTerminal reale (overlay prima del PTY)</h3>
+      <p>Il LabTerminal mostra il boot sequence come animazione sovrapposta prima che il WebSocket PTY sia pronto. Poi scompare e compare la bash.</p>
+      <div style="margin-top:12px; background:#0d1117; border-radius:8px; padding:12px; font-family:monospace; font-size:12px; color:#58a6ff; border:1px solid #30363d;">
+        <div style="color:#8b949e; margin-bottom:8px;">[LabTerminal – overlay durante connecting...]</div>
+        <div style="color:#ff6b6b;">★ NGINX PORT CONFLICT [v4.2.0]</div>
+        <div style="color:#cdd9e5;">Booting incident environment...</div>
+        <div style="color:#ff9f43;">⚠ Port 80 collision detected</div>
+        <div style="color:#2ecc71;">▶ Shell ready →</div>
+        <div style="color:#cdd9e5; margin-top:6px;">root@container:/workspace# <span style="opacity:0.5">_</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Splash screen full-page tra selezione e terminal</h3>
+      <p>Dopo il click sul lab, una schermata full-page mostra il boot sequence con animazione drammatica. Poi l'utente clicca o aspetta e viene portato al terminal.</p>
+      <div style="margin-top:12px; background:#0d1117; border-radius:8px; padding:16px; font-family:monospace; font-size:12px; border:1px solid #30363d; text-align:center;">
+        <div style="color:#ff6b6b; font-size:16px; margin-bottom:8px;">★ NGINX PORT CONFLICT</div>
+        <div style="color:#8b949e; font-size:11px; margin-bottom:12px;">Difficulty: Easy · Duration: 6m · XP: 100</div>
+        <div style="color:#ff9f43;">⚠ Port 80 collision detected on eth0</div>
+        <div style="color:#ff9f43;">⚠ nginx.service in FAILED state</div>
+        <div style="color:#cdd9e5; margin-top:12px; font-size:11px;">[press any key to begin]</div>
+      </div>
+    </div>
+  </div>
+
+</div>

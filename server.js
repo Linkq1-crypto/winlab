@@ -56,6 +56,7 @@ import {
   execCommandInContainer,
   isContainerRunning,
 } from "./src/services/dockerLabRunner.js";
+import { getSiteLabCatalog } from "./src/services/siteLabCatalog.js";
 import labAiRoutes from "./server/routes/labAi.js";
 import labProgressRouter from "./server/routes/labProgress.js";
 
@@ -471,6 +472,16 @@ app.use("/api/helpdesk", helpdeskRouter);
 
 // ── Health check ─────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => res.json({ ok: true, ts: Date.now() }));
+
+app.get("/api/labs/catalog", (req, res) => {
+  try {
+    const catalog = getSiteLabCatalog();
+    res.json({ ok: true, ...catalog });
+  } catch (error) {
+    console.error("GET /api/labs/catalog error:", error);
+    res.status(500).json({ ok: false, error: "Failed to load lab catalog" });
+  }
+});
 
 // ── Free-lab session TTL (15 min inactivity → auto-remove container) ──
 const labSessionActivity = new Map(); // sessionId → lastActivityMs
