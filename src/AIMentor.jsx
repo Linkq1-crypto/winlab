@@ -116,10 +116,11 @@ export default function AIMentor({ labId, labState = {} }) {
           const res = await fetch("/api/ai/help", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ question, labState: { labId, ...labState }, mlPrompt: prompt }),
+            credentials: "include",
+            body: JSON.stringify({ cmd: question, context: { labId, ...labState }, labId }),
           });
           const data = await res.json();
-          return data.reply;
+          return data.hint;
         }
       );
 
