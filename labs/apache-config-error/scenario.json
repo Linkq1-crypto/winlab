@@ -1,0 +1,17 @@
+{
+  "id": "apache-config-error",
+  "title": "Apache Config Error",
+  "tier": "starter",
+  "difficulty": "easy",
+  "duration": 10,
+  "tags": ["apache", "linux", "config", "web-server", "systemd"],
+  "type": "ubuntu",
+  "status": "runnable",
+  "hints": [
+    "Test the apache2 config: apache2ctl configtest — read the error carefully",
+    "The error points to a specific file. Read it: cat /etc/apache2/conf-enabled/winlab.conf",
+    "There is a typo in the directive name on line 2. 'ServerNaame' is not a valid Apache directive",
+    "Fix the typo: sed -i 's/ServerNaame/ServerName/' /etc/apache2/conf-enabled/winlab.conf",
+    "Validate and start: apache2ctl configtest && apache2ctl start"
+  ]
+}

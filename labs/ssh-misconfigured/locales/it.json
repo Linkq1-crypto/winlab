@@ -1,0 +1,11 @@
+{
+  "title": "SSH mal configurato",
+  "description": "sshd è offline dopo una modifica di configurazione. Due problemi: porta errata (2222) e autenticazione con password disabilitata.",
+  "lesson": "Esegui sempre sshd -t prima di riavviare sshd. Un server irraggiungibile via SSH è un incidente P1.",
+  "hint_1": "verifica se sshd è in esecuzione e testa la config",
+  "hint_2": "leggi /etc/ssh/sshd_config — Port e PasswordAuthentication sono errati",
+  "hint_3": "correggi la porta a 22",
+  "hint_4": "abilita PasswordAuthentication e avvia sshd",
+  "success": "sshd è in esecuzione sulla porta 22 con password auth abilitata. Incidente risolto.",
+  "fail": "sshd non è ancora in esecuzione correttamente sulla porta 22."
+}

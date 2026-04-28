@@ -1,0 +1,3 @@
+Config test failed with an invalid command error.
+
+→ read the file it points to: cat /etc/apache2/conf-enabled/winlab.conf

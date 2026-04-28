@@ -1,0 +1,3 @@
+sshd is not running and users cannot connect.
+
+→ test the config and read it: /usr/sbin/sshd -t && cat /etc/ssh/sshd_config

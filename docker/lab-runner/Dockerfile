@@ -20,6 +20,7 @@ RUN apt-get update \
       lsof \
       net-tools \
       nginx \
+      openssh-server \
       procps \
       psmisc \
       python3 \

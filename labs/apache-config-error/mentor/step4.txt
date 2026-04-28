@@ -1,0 +1,4 @@
+Config is now valid.
+
+→ start apache2: apache2ctl start
+→ confirm: apache2ctl configtest && pgrep apache2

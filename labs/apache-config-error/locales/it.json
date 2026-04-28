@@ -1,0 +1,11 @@
+{
+  "title": "Errore configurazione Apache",
+  "description": "Apache2 è offline dopo un cambio di configurazione. Un errore di battitura in un file di config incluso impedisce il riavvio del server.",
+  "lesson": "Esegui sempre apachectl configtest prima di riavviare Apache in produzione.",
+  "hint_1": "testa la configurazione: apache2ctl configtest",
+  "hint_2": "leggi il file indicato nell'errore",
+  "hint_3": "trova il typo — ServerNaame non è una direttiva valida",
+  "hint_4": "correggi e avvia: sed -i + apache2ctl start",
+  "success": "Apache2 è in esecuzione. Incidente risolto.",
+  "fail": "apache2 è ancora offline o la config è ancora invalida."
+}

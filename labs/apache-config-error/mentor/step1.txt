@@ -1,0 +1,3 @@
+Apache2 is not running.
+
+→ test the config to see the exact error: apache2ctl configtest

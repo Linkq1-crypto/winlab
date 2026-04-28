@@ -1,0 +1,11 @@
+{
+  "title": "SSH Misconfigured",
+  "description": "sshd is down after a maintenance config change. Two faults: wrong port (2222) and password authentication disabled.",
+  "lesson": "Always run sshd -t before restarting sshd. A locked-out server is a P1 incident.",
+  "hint_1": "check if sshd is running and test the config",
+  "hint_2": "read /etc/ssh/sshd_config — Port and PasswordAuthentication are wrong",
+  "hint_3": "fix the port back to 22",
+  "hint_4": "enable PasswordAuthentication and start sshd",
+  "success": "sshd is running on port 22 with password auth enabled. Incident resolved.",
+  "fail": "sshd is still not running correctly on port 22."
+}

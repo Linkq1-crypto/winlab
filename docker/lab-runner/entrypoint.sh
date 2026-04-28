@@ -39,6 +39,23 @@ echo "[entrypoint] seeding…"
 "${LAB_DIR}/seed.sh"
 echo "[entrypoint] ready"
 
+# ── Write hint script (once, at boot) ─────────────────────────────────────────
+python3 - <<'PY'
+import json, os
+f = "/labs/" + os.environ.get("LAB_ID", "") + "/scenario.json"
+d = json.load(open(f)) if os.path.exists(f) else {}
+hints = d.get("hints", [])
+lines = ["hints = " + repr(hints),
+         "[print('['+str(i+1)+'] '+h) for i,h in enumerate(hints)] if hints else print('No hints available.')"]
+open("/tmp/_hint.py", "w").write("\n".join(lines) + "\n")
+PY
+
+# ── Shell aliases — loaded silently on every bash session ─────────────────────
+cat >> /root/.bashrc <<'BASHRC'
+alias verify='bash /labs/$LAB_ID/verify.sh'
+alias hint='python3 /tmp/_hint.py'
+BASHRC
+
 # Keep PID 1 alive so docker exec works.
 # tail -f /dev/null is used instead of sleep infinity for broader compatibility.
 exec tail -f /dev/null

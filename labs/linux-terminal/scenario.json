@@ -6,5 +6,12 @@
   "duration": 15,
   "tags": ["linux", "bash", "terminal", "basics", "filesystem"],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "hints": [
+    "Start with: ls -la /opt/winlab/linux-terminal/incoming/ — check the permissions on incident.log",
+    "incident.log is locked (chmod 000). Fix it: chmod 644 /opt/winlab/linux-terminal/incoming/incident.log",
+    "archive/ does not exist. Create it: mkdir /opt/winlab/linux-terminal/archive/",
+    "Move the log: mv /opt/winlab/linux-terminal/incoming/incident.log /opt/winlab/linux-terminal/archive/",
+    "Create the recovery flag: echo 'linux-terminal-ok' > /opt/winlab/linux-terminal/archive/recovered.flag"
+  ]
 }
