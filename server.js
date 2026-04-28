@@ -2501,12 +2501,77 @@ server.on("error", (err) => {
 // WebSocket server — same port, path /ws/leaderboard
 const wss = new WebSocketServer({ noServer: true });
 
+// WebSocket server — lab PTY terminal, path /ws/lab
+const labWss = new WebSocketServer({ noServer: true });
+
 server.on("upgrade", (req, socket, head) => {
   if (req.url?.startsWith("/ws/leaderboard")) {
     wss.handleUpgrade(req, socket, head, (ws) => wss.emit("connection", ws, req));
+  } else if (req.url?.startsWith("/ws/lab")) {
+    labWss.handleUpgrade(req, socket, head, (ws) => labWss.emit("connection", ws, req));
   } else {
     socket.destroy();
   }
+});
+
+labWss.on("connection", (ws, req) => {
+  const url = new URL(req.url, "http://x");
+  const containerName = url.searchParams.get("container");
+
+  if (!containerName) {
+    ws.send(JSON.stringify({ type: "error", data: "Missing container parameter" }));
+    ws.close();
+    return;
+  }
+
+  // Sanitize: only allow alphanumeric and hyphens
+  const safeContainer = containerName.replace(/[^a-z0-9-]/g, "");
+  if (!safeContainer) {
+    ws.send(JSON.stringify({ type: "error", data: "Invalid container name" }));
+    ws.close();
+    return;
+  }
+
+  const child = spawn("docker", ["exec", "-i", safeContainer, "/bin/bash"], {
+    env: process.env,
+  });
+
+  ws.send(JSON.stringify({ type: "ready" }));
+
+  child.stdout.on("data", (data) => {
+    if (ws.readyState === 1) {
+      ws.send(JSON.stringify({ type: "output", data: data.toString("utf8") }));
+    }
+  });
+
+  child.stderr.on("data", (data) => {
+    if (ws.readyState === 1) {
+      ws.send(JSON.stringify({ type: "output", data: data.toString("utf8") }));
+    }
+  });
+
+  child.on("close", () => {
+    if (ws.readyState === 1) ws.send(JSON.stringify({ type: "exit" }));
+    ws.close();
+  });
+
+  child.on("error", (err) => {
+    if (ws.readyState === 1) ws.send(JSON.stringify({ type: "error", data: err.message }));
+    ws.close();
+  });
+
+  ws.on("message", (raw) => {
+    try {
+      const msg = JSON.parse(raw.toString());
+      if (msg.type === "input" && child.stdin.writable) {
+        child.stdin.write(msg.data);
+      }
+    } catch {}
+  });
+
+  ws.on("close", () => {
+    try { child.kill(); } catch {}
+  });
 });
 
 wss.on("connection", (ws, req) => {
