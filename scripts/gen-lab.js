@@ -2,17 +2,15 @@
 /**
  * gen-lab.js — WinLab lab artifact generator
  *
- * Reads labs/<id>/solution.md and generates:
+ * Reads labs/<id>/solution.md and scenario.json and generates:
  *   mentor/step*.txt   — progressive AI mentor hints
  *   locales/en.json    — English UX microcopy
  *   locales/it.json    — Italian skeleton (TODO markers)
+ *   boot.json          — per-lab boot sequence (typed lines)
  *
  * Usage:
  *   node scripts/gen-lab.js <lab-id> [--force] [--dry-run]
- *
- * Flags:
- *   --force    overwrite existing files
- *   --dry-run  print output, write nothing
+ *   node scripts/gen-lab.js --all    [--force] [--dry-run]
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
@@ -115,7 +113,7 @@ const TAG_WARNINGS = {
 function generateBootSequence(scenario) {
   const lines = [];
 
-  lines.push({ type: 'system', text: `${scenario.title.toUpperCase()} [v4.2.0]` });
+  lines.push({ type: 'system', text: `${(scenario.title ?? scenario.id ?? 'UNKNOWN').toUpperCase()} [v4.2.0]` });
 
   const seen = new Set();
   for (const tag of (scenario.tags ?? [])) {
@@ -239,7 +237,13 @@ function runForLab(id) {
   }
 
   const hints    = parseMentorHints(hintsRaw);
-  const scenario = JSON.parse(readFileSync(scenarioPath, 'utf8'));
+  let scenario;
+  try {
+    scenario = JSON.parse(readFileSync(scenarioPath, 'utf8'));
+  } catch {
+    console.error(`skip ${id}: scenario.json is not valid JSON`);
+    return false;
+  }
   const steps    = genMentorSteps(hints);
   const enJson   = genEnJson(sections, hints);
   const itJson   = genItJson(enJson);
