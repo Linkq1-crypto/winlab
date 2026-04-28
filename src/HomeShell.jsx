@@ -6,6 +6,7 @@ import {
 import LabTerminal from './components/LabTerminal';
 import RegisterModal from './components/RegisterModal';
 import CookieBanner from './CookieBanner';
+import AIMentor from './AIMentor';
 
 const STARTER_IDS = new Set(['linux-terminal','enhanced-terminal','disk-full','nginx-port-conflict']);
 
@@ -276,6 +277,7 @@ export default function HomeShell() {
             onComplete={handleLabComplete}
           />
         </div>
+        <AIMentor labId={activeSession.labId} labState={{}} />
       </div>
     );
   }
