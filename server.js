@@ -2539,9 +2539,13 @@ labWss.on("connection", (ws, req) => {
   }
 
   console.log(`[WS/lab] spawning docker exec for ${safeContainer}`);
-  const child = spawn("docker", ["exec", "-i", safeContainer, "/bin/bash"], {
-    env: process.env,
-  });
+  // python3 pty.spawn allocates a real PTY so bash runs fully interactive
+  const child = spawn(
+    "python3",
+    ["-c", "import pty,sys; pty.spawn(sys.argv[1:])",
+     "docker", "exec", "-it", safeContainer, "/bin/bash"],
+    { env: process.env }
+  );
   console.log(`[WS/lab] child pid=${child.pid}`);
 
   ws.send(JSON.stringify({ type: "ready" }));
