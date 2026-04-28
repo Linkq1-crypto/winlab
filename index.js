@@ -17,7 +17,7 @@ import cookieParser from "cookie-parser";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
 import { fileURLToPath } from "url";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { spawn } from "child_process";
 
 // ── Email & Alert Flow Imports ──
@@ -621,7 +621,11 @@ app.post("/api/lab/start", labLimiter, async (req, res) => {
       activeSessions.delete(sessionId);
       await stopDockerLabSession({ sessionId }).catch(() => {});
     }, 30 * 60 * 1000);
-    res.json({ sessionId, containerName: session.containerName, labId });
+    const bootPath = path.join(__dirname, 'labs', labId, 'boot.json');
+    const bootSequence = existsSync(bootPath)
+      ? JSON.parse(readFileSync(bootPath, 'utf8'))
+      : [];
+    res.json({ sessionId, containerName: session.containerName, labId, bootSequence });
   } catch (err) {
     console.error("Lab start error:", err);
     res.status(500).json({ error: "Failed to start lab container" });
