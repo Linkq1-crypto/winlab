@@ -23,7 +23,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { WebSocketServer } from "ws";
-import { spawnSync } from "child_process";
+import { spawn, spawnSync } from "child_process";
 
 import {
   sendPasswordResetEmail,
