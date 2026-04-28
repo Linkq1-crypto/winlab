@@ -51,7 +51,7 @@ const FOOTER_LINKS = [
     links: [
       { label: 'How it works', href: '/how-it-works' },
       { label: 'Labs',         href: '/'             },
-      { label: 'Pricing',      href: '/pricing'      },
+      { label: 'Pricing',      href: '#pricing'      },
     ],
   },
   {
@@ -369,6 +369,65 @@ export default function HomeShell() {
               {labError}
             </div>
           )}
+
+          {/* Pricing */}
+          <div id="pricing" className="mb-16">
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">Pricing</h2>
+            <p className="text-gray-500 text-sm mb-8">Start free. Upgrade when you're ready.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              {/* Early Access */}
+              <div className="relative bg-red-600 rounded-[28px] p-7 flex flex-col">
+                <div className="absolute top-4 right-4 bg-white/20 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full">Best entry</div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-red-200 mb-3">Early Access</p>
+                <p className="text-4xl font-black text-white italic mb-1">€5<span className="text-lg font-normal text-red-200">/mo</span></p>
+                <p className="text-red-200 text-xs mb-6">Locked launch price</p>
+                <ul className="space-y-2 mb-8 flex-grow">
+                  {['All Starter labs','Save progress','Founder badge','Early supporter status','Price locked forever'].map(f => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-red-100">
+                      <span className="text-white font-black">✓</span> {f}
+                    </li>
+                  ))}
+                </ul>
+                <button onClick={() => setShowRegister(true)} className="w-full py-3 bg-white text-red-600 font-black uppercase tracking-widest italic rounded-2xl hover:bg-red-50 transition-all text-sm">
+                  Get Early Access →
+                </button>
+              </div>
+
+              {/* Pro */}
+              <div className="bg-zinc-950 border border-white/10 rounded-[28px] p-7 flex flex-col hover:border-white/20 transition-colors">
+                <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-3">Pro</p>
+                <p className="text-4xl font-black text-white italic mb-1">€19<span className="text-lg font-normal text-gray-500">/mo</span></p>
+                <p className="text-gray-600 text-xs mb-6">Full platform access</p>
+                <ul className="space-y-2 mb-8 flex-grow">
+                  {['All 34+ labs','Unlimited AI Mentor','Certificates','Advanced incident chains','Priority support'].map(f => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-gray-400">
+                      <span className="text-red-500 font-black">✓</span> {f}
+                    </li>
+                  ))}
+                </ul>
+                <button onClick={handleUpgrade} className="w-full py-3 border border-white/10 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-white/5 transition-all text-sm">
+                  Go Pro →
+                </button>
+              </div>
+
+              {/* Lifetime */}
+              <div className="bg-zinc-950 border border-white/10 rounded-[28px] p-7 flex flex-col hover:border-white/20 transition-colors">
+                <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-3">Lifetime</p>
+                <p className="text-4xl font-black text-white italic mb-1">€199<span className="text-lg font-normal text-gray-500"> once</span></p>
+                <p className="text-gray-600 text-xs mb-6">Pay once, own forever</p>
+                <ul className="space-y-2 mb-8 flex-grow">
+                  {['Everything in Pro','All future labs included','Lifetime updates','No recurring fees','Early access to new features'].map(f => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-gray-400">
+                      <span className="text-red-500 font-black">✓</span> {f}
+                    </li>
+                  ))}
+                </ul>
+                <button onClick={handleUpgrade} className="w-full py-3 border border-white/10 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-white/5 transition-all text-sm">
+                  Get Lifetime →
+                </button>
+              </div>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-20">
             {filteredLabs.map(lab => (
