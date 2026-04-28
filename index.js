@@ -4790,7 +4790,7 @@ labWss.on("connection", (ws, req) => {
     return;
   }
 
-  const shell = spawn("docker", ["exec", "-i", containerName, "bash"], {
+  const shell = spawn("docker", ["exec", "-i", containerName, "bash", "-i"], {
     env: { ...process.env, TERM: "xterm-256color" },
   });
 
