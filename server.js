@@ -2522,6 +2522,7 @@ server.on("upgrade", (req, socket, head) => {
 labWss.on("connection", (ws, req) => {
   const url = new URL(req.url, "http://x");
   const containerName = url.searchParams.get("container");
+  console.log(`[WS/lab] connection: container=${containerName}`);
 
   if (!containerName) {
     ws.send(JSON.stringify({ type: "error", data: "Missing container parameter" }));
@@ -2537,9 +2538,11 @@ labWss.on("connection", (ws, req) => {
     return;
   }
 
+  console.log(`[WS/lab] spawning docker exec for ${safeContainer}`);
   const child = spawn("docker", ["exec", "-i", safeContainer, "/bin/bash"], {
     env: process.env,
   });
+  console.log(`[WS/lab] child pid=${child.pid}`);
 
   ws.send(JSON.stringify({ type: "ready" }));
 
