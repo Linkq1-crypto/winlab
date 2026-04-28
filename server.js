@@ -4,7 +4,7 @@
 // ====================================================================
 
 import express from "express";
-import { rateLimit } from "express-rate-limit";
+import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 
 // Normalize IPv6-mapped IPv4 addresses (::ffff:1.2.3.4 → 1.2.3.4)
 // Required by express-rate-limit v7 when using a custom keyGenerator with req.ip
@@ -222,24 +222,24 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, "dist")));
 
 // ── Rate limiters ────────────────────────────────────────────────────
-const authLimiter    = rateLimit({ 
-  windowMs: 60_000, 
-  max: 10, 
-  standardHeaders: true, 
+const authLimiter    = rateLimit({
+  windowMs: 60_000,
+  max: 10,
+  standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.headers["cf-connecting-ip"] || normalizeIp(req.ip) 
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || ipKeyGenerator(req),
 });
 
-const aiLimiter      = rateLimit({ 
-  windowMs: 60_000, 
+const aiLimiter      = rateLimit({
+  windowMs: 60_000,
   max: 30,
-  keyGenerator: (req) => req.headers["cf-connecting-ip"] || normalizeIp(req.ip)
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || ipKeyGenerator(req),
 });
 
 const freeLabLimiter = rateLimit({
   windowMs: 60_000,
   max: 10,
-  keyGenerator: (req) => req.headers["cf-connecting-ip"] || normalizeIp(req.ip),
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || ipKeyGenerator(req),
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: false, error: "Too many lab sessions — please wait a moment." },
@@ -252,25 +252,25 @@ const codexLimiter   = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     const userPart = req.user?.id || "anonymous";
-    const ipPart   = req.headers["cf-connecting-ip"] || normalizeIp(req.ip);
+    const ipPart   = req.headers["cf-connecting-ip"] || ipKeyGenerator(req);
     return `${userPart}:${ipPart}`;
   },
 });
 
-const paymentLimiter = rateLimit({ 
-  windowMs: 60_000, 
+const paymentLimiter = rateLimit({
+  windowMs: 60_000,
   max: 5,
-  keyGenerator: (req) => req.headers["cf-connecting-ip"] || normalizeIp(req.ip)
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || ipKeyGenerator(req),
 });
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  keyGenerator: (req) => req.headers["cf-connecting-ip"] || normalizeIp(req.ip),
-  validate: { 
-    xForwardedForHeader: false, 
-    default: false 
-  }
+  keyGenerator: (req) => req.headers["cf-connecting-ip"] || ipKeyGenerator(req),
+  validate: {
+    xForwardedForHeader: false,
+    default: false,
+  },
 });
 app.use("/api/", generalLimiter);
 

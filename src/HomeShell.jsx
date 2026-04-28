@@ -148,18 +148,25 @@ export default function HomeShell() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ labId: lab.id, sessionId: crypto.randomUUID() }),
+        body: JSON.stringify({ labId: lab.id, sessionId: (crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`) }),
       });
-      const data = await res.json();
+      if (res.status === 401) { setShowRegister(true); return; }
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text().catch(() => '');
+        setLabError(`Server error ${res.status}: ${text.slice(0, 120) || 'unexpected response'}`);
+        return;
+      }
       if (!res.ok) {
-        if (res.status === 401) { setShowRegister(true); return; }
-        setLabError(data.error || 'Unable to start the lab.');
+        setLabError(data.error || `Error ${res.status}`);
         return;
       }
       setActiveSession({ sessionId: data.sessionId, containerName: data.containerName, labId: lab.id });
       setView('lab');
-    } catch {
-      setLabError('Server connection failed.');
+    } catch (err) {
+      setLabError(`Network error: ${err?.message || 'check console'}`);
     } finally {
       setLabLoading(false);
     }
