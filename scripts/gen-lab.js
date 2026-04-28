@@ -15,7 +15,7 @@
  *   --dry-run  print output, write nothing
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -24,21 +24,15 @@ const LABS_DIR  = join(__dirname, '..', 'labs');
 
 // ─── CLI ─────────────────────────────────────────────────────────────────────
 
-const args    = process.argv.slice(2);
-const labId   = args.find(a => !a.startsWith('--'));
-const force   = args.includes('--force');
-const dryRun  = args.includes('--dry-run');
+const args   = process.argv.slice(2);
+const labId  = args.find(a => !a.startsWith('--'));
+const force  = args.includes('--force');
+const dryRun = args.includes('--dry-run');
+const all    = args.includes('--all');
 
-if (!labId) {
+if (!labId && !all) {
   console.error('Usage: node scripts/gen-lab.js <lab-id> [--force] [--dry-run]');
-  process.exit(1);
-}
-
-const labDir      = join(LABS_DIR, labId);
-const solutionPath = join(labDir, 'solution.md');
-
-if (!existsSync(solutionPath)) {
-  console.error(`solution.md not found: ${solutionPath}`);
+  console.error('       node scripts/gen-lab.js --all   [--force] [--dry-run]');
   process.exit(1);
 }
 
@@ -87,6 +81,65 @@ function firstSentence(text) {
 }
 
 // ─── GENERATORS ──────────────────────────────────────────────────────────────
+
+const TAG_WARNINGS = {
+  nginx:      '⚠  nginx.service in FAILED state',
+  port:       '⚠  Port conflict detected on eth0',
+  disk:       '⚠  Filesystem at 100% — writes blocked',
+  storage:    '⚠  Storage I/O errors detected',
+  apache:     '⚠  Apache service misconfiguration detected',
+  ssl:        '⚠  SSL certificate validation failed',
+  ldap:       '⚠  LDAP bind failure — auth service down',
+  auth:       '⚠  Authentication service unreachable',
+  mysql:      '⚠  MySQL connection refused',
+  memory:     '⚠  Memory usage critical — OOM imminent',
+  redis:      '⚠  Redis OOM — eviction storm in progress',
+  k8s:        '⚠  Kubernetes pod in CrashLoopBackOff',
+  docker:     '⚠  Container health check failing',
+  security:   '⚠  Security misconfiguration detected',
+  jwt:        '⚠  JWT validation bypass detected',
+  webhook:    '⚠  Webhook signature forgery detected',
+  sql:        '⚠  Database query timeout — N+1 detected',
+  api:        '⚠  API response time critically degraded',
+  git:        '⚠  Repository state inconsistent',
+  cicd:       '⚠  CI/CD pipeline failure — deploy blocked',
+  raid:       '⚠  RAID array degraded — disk failure detected',
+  network:    '⚠  Network packet loss detected',
+  chmod:      '⚠  Permission denied — ACL misconfiguration',
+  selinux:    '⚠  SELinux policy blocking critical access',
+  nodejs:     '⚠  Node.js process memory leak detected',
+  debugging:  '⚠  Unknown regression — root cause unclear',
+  production: '⚠  Production service degraded',
+};
+
+function generateBootSequence(scenario) {
+  const lines = [];
+
+  lines.push({ type: 'system', text: `${scenario.title.toUpperCase()} [v4.2.0]` });
+
+  const seen = new Set();
+  for (const tag of (scenario.tags ?? [])) {
+    const msg = TAG_WARNINGS[tag];
+    if (msg && !seen.has(msg)) {
+      seen.add(msg);
+      lines.push({ type: 'warning', text: msg });
+    }
+  }
+
+  const hint0 = scenario.hints?.[0] ?? '';
+  if (hint0) {
+    const afterDash = hint0.split('—')[1]?.trim();
+    const raw = afterDash ?? hint0.replace(/^[^:]+:\s*`?[^\s`]+`?\s*/i, '').trim();
+    const infoText = raw.charAt(0).toUpperCase() + raw.slice(1).replace(/\.$/, '') + '.';
+    if (infoText.length > 2) {
+      lines.push({ type: 'info', text: 'ℹ  ' + infoText });
+    }
+  }
+
+  lines.push({ type: 'prompt', text: 'Press any key to begin...' });
+
+  return lines;
+}
 
 function genMentorSteps(hints) {
   return hints.map((hint, i) => {
@@ -162,33 +215,65 @@ function ensureDir(dir) {
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 
-const md       = readFileSync(solutionPath, 'utf8');
-const sections = parseSections(md);
-const hintsRaw = sections['MENTOR_HINTS'];
+function runForLab(id) {
+  const labDir       = join(LABS_DIR, id);
+  const solutionPath = join(labDir, 'solution.md');
+  const scenarioPath = join(labDir, 'scenario.json');
 
-if (!hintsRaw) {
-  console.error('solution.md is missing a ## MENTOR_HINTS section');
-  process.exit(1);
+  if (!existsSync(solutionPath)) {
+    console.error(`skip ${id}: solution.md not found`);
+    return false;
+  }
+  if (!existsSync(scenarioPath)) {
+    console.error(`skip ${id}: scenario.json not found`);
+    return false;
+  }
+
+  const md       = readFileSync(solutionPath, 'utf8');
+  const sections = parseSections(md);
+  const hintsRaw = sections['MENTOR_HINTS'];
+
+  if (!hintsRaw) {
+    console.error(`skip ${id}: solution.md missing ## MENTOR_HINTS`);
+    return false;
+  }
+
+  const hints    = parseMentorHints(hintsRaw);
+  const scenario = JSON.parse(readFileSync(scenarioPath, 'utf8'));
+  const steps    = genMentorSteps(hints);
+  const enJson   = genEnJson(sections, hints);
+  const itJson   = genItJson(enJson);
+  const boot     = generateBootSequence(scenario);
+
+  console.log(`\ngen-lab: ${id} (${hints.length} hints found)\n`);
+
+  const mentorDir = join(labDir, 'mentor');
+  ensureDir(mentorDir);
+  for (const { filename, content } of steps) {
+    writeFile(join(mentorDir, filename), content);
+  }
+
+  const localesDir = join(labDir, 'locales');
+  ensureDir(localesDir);
+  writeFile(join(localesDir, 'en.json'), JSON.stringify(enJson, null, 2) + '\n');
+  writeFile(join(localesDir, 'it.json'), JSON.stringify(itJson, null, 2) + '\n');
+
+  writeFile(join(labDir, 'boot.json'), JSON.stringify(boot, null, 2) + '\n');
+
+  return true;
 }
 
-const hints       = parseMentorHints(hintsRaw);
-const steps       = genMentorSteps(hints);
-const enJson      = genEnJson(sections, hints);
-const itJson      = genItJson(enJson);
-
-console.log(`\ngen-lab: ${labId} (${hints.length} hints found)\n`);
-
-// mentor/
-const mentorDir = join(labDir, 'mentor');
-ensureDir(mentorDir);
-for (const { filename, content } of steps) {
-  writeFile(join(mentorDir, filename), content);
+if (all) {
+  const labs = readdirSync(LABS_DIR, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+    .map(d => d.name)
+    .sort();
+  let ok = 0, fail = 0;
+  for (const id of labs) {
+    if (runForLab(id)) ok++; else fail++;
+  }
+  console.log(`\ndone: ${ok} ok, ${fail} skipped.`);
+} else {
+  if (!runForLab(labId)) process.exit(1);
+  console.log('\ndone.');
 }
-
-// locales/
-const localesDir = join(labDir, 'locales');
-ensureDir(localesDir);
-writeFile(join(localesDir, 'en.json'), JSON.stringify(enJson, null, 2) + '\n');
-writeFile(join(localesDir, 'it.json'), JSON.stringify(itJson, null, 2) + '\n');
-
-console.log('\ndone.');
