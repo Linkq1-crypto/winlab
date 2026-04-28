@@ -2546,10 +2546,17 @@ labWss.on("connection", (ws, req) => {
 
   ws.send(JSON.stringify({ type: "ready" }));
 
-  // Auto-show lab instructions when terminal starts
+  // Auto-show lab instructions and set up verify alias
   setTimeout(() => {
     if (child.stdin.writable) {
-      child.stdin.write("cat /opt/winlab/*/README.txt 2>/dev/null && echo\n");
+      child.stdin.write(
+        "alias verify='bash /labs/$LAB_ID/verify.sh';" +
+        "echo 'import json,os;f=\"/labs/\"+os.environ.get(\"LAB_ID\",\"\")+\"/scenario.json\";d=json.load(open(f)) if os.path.exists(f) else {};hints=d.get(\"hints\",[]);[print(\"[\"+str(i+1)+\"] \"+h) for i,h in enumerate(hints)] if hints else print(\"No hints available.\")' > /tmp/_hint.py;" +
+        "alias hint='python3 /tmp/_hint.py';" +
+        "cat /opt/winlab/*/README.txt 2>/dev/null;" +
+        "echo;" +
+        "echo '  > Type verify | hint'\n"
+      );
     }
   }, 700);
 
