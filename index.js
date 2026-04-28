@@ -601,6 +601,9 @@ app.post("/api/lab/start", labLimiter, async (req, res) => {
   if (!labId || typeof labId !== "string") {
     return res.status(400).json({ error: "labId required" });
   }
+  if (!/^[a-z0-9-]+$/.test(labId)) {
+    return res.status(400).json({ error: "Invalid labId" });
+  }
 
   const isStarter = STARTER_LABS.has(labId);
   if (!isStarter) {
@@ -622,9 +625,14 @@ app.post("/api/lab/start", labLimiter, async (req, res) => {
       await stopDockerLabSession({ sessionId }).catch(() => {});
     }, 30 * 60 * 1000);
     const bootPath = path.join(__dirname, 'labs', labId, 'boot.json');
-    const bootSequence = existsSync(bootPath)
-      ? JSON.parse(readFileSync(bootPath, 'utf8'))
-      : [];
+    let bootSequence = [];
+    if (existsSync(bootPath)) {
+      try {
+        bootSequence = JSON.parse(readFileSync(bootPath, 'utf8'));
+      } catch {
+        // boot.json malformed — degrade gracefully, lab still starts
+      }
+    }
     res.json({ sessionId, containerName: session.containerName, labId, bootSequence });
   } catch (err) {
     console.error("Lab start error:", err);
