@@ -39,6 +39,40 @@ echo "[entrypoint] seeding…"
 "${LAB_DIR}/seed.sh"
 echo "[entrypoint] ready"
 
+# ── Write boot sequence to .bashrc MOTD ───────────────────────────────────────
+python3 - <<'PY'
+import json, os
+
+LAB_ID = os.environ.get("LAB_ID", "")
+boot_path = f"/labs/{LAB_ID}/boot.json"
+boot = json.load(open(boot_path)) if os.path.exists(boot_path) else []
+
+COLORS = {
+    "system":  "\033[1;31m",
+    "warning": "\033[33m",
+    "info":    "\033[36m",
+    "success": "\033[32m",
+    "error":   "\033[31m",
+    "prompt":  "\033[37m",
+}
+RESET = "\033[0m"
+DIM   = "\033[90m"
+
+lines = []
+for item in boot:
+    color = COLORS.get(item.get("type", "info"), "")
+    text  = item.get("text", "").replace("\\", "\\\\").replace('"', '\\"')
+    lines.append(f'echo -e "{color}{text}{RESET}"')
+
+lines.append(f'echo -e "{DIM}────────────────────────────────{RESET}"')
+lines.append(f'echo -e "Type \\033[36mverify\\033[0m to check · \\033[36mhint\\033[0m for hints"')
+lines.append(f'echo -e "{DIM}────────────────────────────────{RESET}"')
+
+with open("/root/.bashrc", "a") as f:
+    f.write("\n# Boot sequence\n")
+    f.write("\n".join(lines) + "\n")
+PY
+
 # ── Write hint script (once, at boot) ─────────────────────────────────────────
 python3 - <<'PY'
 import json, os
