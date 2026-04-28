@@ -2546,6 +2546,13 @@ labWss.on("connection", (ws, req) => {
 
   ws.send(JSON.stringify({ type: "ready" }));
 
+  // Auto-show lab instructions when terminal starts
+  setTimeout(() => {
+    if (child.stdin.writable) {
+      child.stdin.write("cat /opt/winlab/*/README.txt 2>/dev/null && echo\n");
+    }
+  }, 700);
+
   child.stdout.on("data", (data) => {
     if (ws.readyState === 1) {
       ws.send(JSON.stringify({ type: "output", data: data.toString("utf8") }));
