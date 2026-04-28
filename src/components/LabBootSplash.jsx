@@ -34,7 +34,7 @@ export default function LabBootSplash({ bootSequence, onReady }) {
       className="fixed inset-0 bg-black z-50 flex flex-col justify-center px-12 py-16 font-mono cursor-pointer"
       onClick={allVisible ? onReady : undefined}
     >
-      <div className="text-gray-700 text-[10px] tracking-[0.3em] uppercase mb-10">
+      <div className="text-gray-700 text-[10px] tracking-[0.3em] small-caps mb-10">
         WINLAB · INCIDENT ROUTER · v4.2.0
       </div>
       <div className="space-y-2 max-w-2xl">
