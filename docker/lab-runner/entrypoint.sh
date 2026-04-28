@@ -39,8 +39,24 @@ echo "[entrypoint] seeding…"
 "${LAB_DIR}/seed.sh"
 echo "[entrypoint] ready"
 
-# ── Write boot sequence to .bashrc MOTD ───────────────────────────────────────
+# ── Write hint script (once, at boot) ─────────────────────────────────────────
 python3 - <<'PY'
+import json, os
+f = "/labs/" + os.environ.get("LAB_ID", "") + "/scenario.json"
+d = json.load(open(f)) if os.path.exists(f) else {}
+hints = d.get("hints", [])
+lines = ["hints = " + repr(hints),
+         "[print('['+str(i+1)+'] '+h) for i,h in enumerate(hints)] if hints else print('No hints available.')"]
+open("/tmp/_hint.py", "w").write("\n".join(lines) + "\n")
+PY
+
+# ── verify / hint as real scripts in PATH (work in any shell, not just interactive) ──
+printf '#!/bin/bash\nbash /labs/$LAB_ID/verify.sh\n' > /usr/local/bin/verify
+printf '#!/bin/bash\npython3 /tmp/_hint.py\n'        > /usr/local/bin/hint
+chmod +x /usr/local/bin/verify /usr/local/bin/hint
+
+# ── Write boot sequence to .bashrc MOTD (shown when bash is interactive) ──────
+python3 - <<'PY' || true
 import json, os
 
 LAB_ID = os.environ.get("LAB_ID", "")
@@ -72,23 +88,6 @@ with open("/root/.bashrc", "a") as f:
     f.write("\n# Boot sequence\n")
     f.write("\n".join(lines) + "\n")
 PY
-
-# ── Write hint script (once, at boot) ─────────────────────────────────────────
-python3 - <<'PY'
-import json, os
-f = "/labs/" + os.environ.get("LAB_ID", "") + "/scenario.json"
-d = json.load(open(f)) if os.path.exists(f) else {}
-hints = d.get("hints", [])
-lines = ["hints = " + repr(hints),
-         "[print('['+str(i+1)+'] '+h) for i,h in enumerate(hints)] if hints else print('No hints available.')"]
-open("/tmp/_hint.py", "w").write("\n".join(lines) + "\n")
-PY
-
-# ── Shell aliases — loaded silently on every bash session ─────────────────────
-cat >> /root/.bashrc <<'BASHRC'
-alias verify='bash /labs/$LAB_ID/verify.sh'
-alias hint='python3 /tmp/_hint.py'
-BASHRC
 
 # Keep PID 1 alive so docker exec works.
 # tail -f /dev/null is used instead of sleep infinity for broader compatibility.
