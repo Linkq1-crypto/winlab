@@ -1,6 +1,5 @@
 import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
-import { LabProvider } from './LabContext';
 import HomeShell from './HomeShell';
 import './index.css';
 
@@ -70,9 +69,7 @@ function App() {
     return <Suspense fallback={<RouteShell />}><AISettings /></Suspense>;
   }
   return (
-    <LabProvider>
-      <HomeShell />
-    </LabProvider>
+    <HomeShell />
   );
 }
 

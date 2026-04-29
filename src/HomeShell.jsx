@@ -324,7 +324,7 @@ export default function HomeShell() {
             <div className="w-10" />
           </div>
           <div className="flex-1 p-6 overflow-y-auto space-y-1">
-            <div className="mb-4 flex items-center gap-3 rounded-xl border border-cyan-400/10 bg-cyan-400/5 px-3 py-2 text-[10px] uppercase tracking-[0.24em] text-cyan-200/80">
+            <div className="skeleton mb-4 flex items-center gap-3 rounded-xl border border-cyan-400/10 bg-cyan-400/5 px-3 py-2 text-[10px] uppercase tracking-[0.24em] text-cyan-200/80">
               <div className="h-2 w-2 rounded-full bg-cyan-300 animate-pulse" />
               {catalogLoading ? 'syncing lab catalog' : `${starterLabs.length} starter labs primed`}
             </div>
