@@ -4,6 +4,7 @@
 // ====================================================================
 
 import express from "express";
+import compression from "compression";
 import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 
 // Normalize IPv6-mapped IPv4 addresses (::ffff:1.2.3.4 → 1.2.3.4)
@@ -267,6 +268,7 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), handl
 
 app.set("trust proxy", 1);
 app.use(helmet({ contentSecurityPolicy: false }));
+app.use(compression());
 app.use(cookieParser());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -298,7 +300,25 @@ app.use((req, res, next) => {
 });
 
 // ── Static files (React build) ───────────────────────────────────────
-app.use(express.static(path.join(__dirname, "dist")));
+const distDir = path.join(__dirname, "dist");
+app.use(express.static(distDir, {
+  etag: true,
+  lastModified: true,
+  setHeaders(res, filePath) {
+    const normalized = filePath.replace(/\\/g, "/");
+    if (normalized.includes("/dist/assets/")) {
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      return;
+    }
+    if (normalized.endsWith("/sw.js") || normalized.endsWith("/registerSW.js") || normalized.endsWith("/manifest.json")) {
+      res.setHeader("Cache-Control", "no-cache");
+      return;
+    }
+    if (normalized.endsWith(".html")) {
+      res.setHeader("Cache-Control", "no-cache");
+    }
+  },
+}));
 
 // ── Rate limiters ────────────────────────────────────────────────────
 const authLimiter    = rateLimit({
@@ -2545,13 +2565,15 @@ app.get("/test", (req, res) => {
 
 // ── Homepage → React SPA (NewLandingPage) ───────────────────────────
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
+  res.setHeader("Cache-Control", "no-cache");
+  res.sendFile(path.join(distDir, "index.html"));
 });
 
 // ── SPA fallback ─────────────────────────────────────────────────────
 app.get("*", (req, res) => {
   if (!req.path.startsWith("/api/")) {
-    res.sendFile(path.join(__dirname, "dist", "index.html"));
+    res.setHeader("Cache-Control", "no-cache");
+    res.sendFile(path.join(distDir, "index.html"));
   } else {
     res.status(404).json({ error: "Not found" });
   }
