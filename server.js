@@ -2624,16 +2624,34 @@ labWss.on("connection", (ws, req) => {
 
   ws.send(JSON.stringify({ type: "ready" }));
 
-  // Auto-show lab instructions (aliases/hint script pre-loaded via .bashrc)
+  // Auto-show lab instructions without injecting a visible shell command into the live session.
   setTimeout(() => {
-    if (child.stdin.writable) {
-      child.stdin.write("\n");
-      child.stdin.write(
+    const helper = spawn(
+      "docker",
+      [
+        "exec",
+        safeContainer,
+        "/bin/bash",
+        "-lc",
         hintEnabled
-          ? "cat /opt/winlab/*/README.txt 2>/dev/null; echo; echo '  > Type verify | hint'\n"
-          : "cat /opt/winlab/*/README.txt 2>/dev/null; echo; echo '  > Type verify'\n"
-      );
-    }
+          ? "cat /opt/winlab/*/README.txt 2>/dev/null; echo; echo '  > Type verify | hint'"
+          : "cat /opt/winlab/*/README.txt 2>/dev/null; echo; echo '  > Type verify'",
+      ],
+      { windowsHide: true }
+    );
+
+    let helperOutput = "";
+    helper.stdout.on("data", (data) => {
+      helperOutput += data.toString("utf8");
+    });
+    helper.stderr.on("data", (data) => {
+      helperOutput += data.toString("utf8");
+    });
+    helper.on("close", () => {
+      if (ws.readyState === 1 && helperOutput.trim()) {
+        ws.send(JSON.stringify({ type: "output", data: `\r\n${helperOutput}\r\n` }));
+      }
+    });
   }, 700);
 
   child.stdout.on("data", (data) => {
