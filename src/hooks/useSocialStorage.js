@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react';
 
 const ENV_DEFAULTS = {
-  tiktok:   import.meta.env.VITE_SOCIAL_TIKTOK    || '',
-  youtube:  import.meta.env.VITE_SOCIAL_YOUTUBE   || '',
-  linkedin: import.meta.env.VITE_SOCIAL_LINKEDIN  || '',
-  ig:       import.meta.env.VITE_SOCIAL_INSTAGRAM || '',
+  tiktok:   import.meta.env.VITE_SOCIAL_TIKTOK    || 'https://www.tiktok.com/@winlabcore',
+  youtube:  import.meta.env.VITE_SOCIAL_YOUTUBE   || 'https://www.youtube.com/@WinLAb-q5n',
+  linkedin: import.meta.env.VITE_SOCIAL_LINKEDIN  || 'https://it.linkedin.com/in/johnny-spata-52a016100',
+  ig:       import.meta.env.VITE_SOCIAL_INSTAGRAM || 'https://www.instagram.com/winlab.cloud/',
   fb:       import.meta.env.VITE_SOCIAL_FACEBOOK  || '',
   x:        import.meta.env.VITE_SOCIAL_X         || '',
   reddit:   import.meta.env.VITE_SOCIAL_REDDIT    || '',

@@ -46,7 +46,7 @@ export default function AIMentor({ labId, labState = {} }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ aiMentorConsent: consented, timestamp: new Date().toISOString() }),
+        body: JSON.stringify({ consent: consented, timestamp: new Date().toISOString() }),
       });
       if (!res.ok) throw new Error("Failed");
       setAiConsent(consented);
