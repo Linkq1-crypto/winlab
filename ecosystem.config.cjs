@@ -10,8 +10,8 @@ module.exports = {
       script: 'server.js',
       interpreter: 'node',
       interpreter_args: '--experimental-vm-modules',
-      instances: 'max', // All CPU cores on this node
-      exec_mode: 'cluster',
+      instances: 1, // SQLite write path is not safe under PM2 cluster contention
+      exec_mode: 'fork',
       max_memory_restart: '1G',
 
       // Environment
