@@ -15,7 +15,20 @@
  *   - Click response time
  */
 
-const puppeteer = require('puppeteer');
+import fs from "node:fs";
+import puppeteer from "puppeteer";
+
+function resolveBrowserExecutable() {
+  const candidates = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+  ].filter(Boolean);
+
+  return candidates.find((candidate) => fs.existsSync(candidate));
+}
 
 const NETWORK_PROFILES = {
   '2g': {
@@ -59,6 +72,7 @@ async function runTest() {
   const browser = await puppeteer.launch({
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    executablePath: resolveBrowserExecutable(),
   });
 
   const page = await browser.newPage();

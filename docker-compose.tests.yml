@@ -1,0 +1,44 @@
+services:
+  perf-ci:
+    build:
+      context: .
+      dockerfile: docker/perf-tests.Dockerfile
+    environment:
+      BASE_URL: ${BASE_URL:-http://app:3001}
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
+    command: >
+      npm run test:perf:ci -- --url ${BASE_URL:-http://app:3001}
+    networks:
+      - winlab-test
+
+  perf-speed:
+    build:
+      context: .
+      dockerfile: docker/perf-tests.Dockerfile
+    environment:
+      BASE_URL: ${BASE_URL:-http://app:3001}
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
+    command: >
+      npm run test:perf:speed -- --url ${BASE_URL:-http://app:3001} --network ${PERF_NETWORK_PROFILE:-fast-3g}
+    networks:
+      - winlab-test
+
+  k6:
+    image: grafana/k6:latest
+    environment:
+      BASE_URL: ${BASE_URL:-http://app:3001}
+    command:
+      - run
+      - -e
+      - BASE_URL=${BASE_URL:-http://app:3001}
+      - /workspace/stress-test.js
+    volumes:
+      - ./:/workspace:ro
+    working_dir: /workspace
+    networks:
+      - winlab-test
+
+networks:
+  winlab-test:
+    name: ${WINLAB_TEST_NETWORK:-winlab-test}
+    external: true

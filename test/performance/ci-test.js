@@ -13,8 +13,21 @@
  *   - Layout shift score > 0.1
  */
 
-const puppeteer = require('puppeteer');
-const assert = require('assert');
+import assert from "node:assert";
+import fs from "node:fs";
+import puppeteer from "puppeteer";
+
+function resolveBrowserExecutable() {
+  const candidates = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+  ].filter(Boolean);
+
+  return candidates.find((candidate) => fs.existsSync(candidate));
+}
 
 // ──── Config ────
 const TEST_URL = process.argv.includes('--url')
@@ -65,6 +78,7 @@ async function runTests() {
   const browser = await puppeteer.launch({
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    executablePath: resolveBrowserExecutable(),
   });
 
   const page = await browser.newPage();
