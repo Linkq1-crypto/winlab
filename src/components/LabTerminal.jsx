@@ -1,25 +1,64 @@
-// src/components/LabTerminal.jsx
 import { useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import 'xterm/css/xterm.css';
+import './LabTerminal.css';
 
-export default function LabTerminal({ containerName, levelId = "JUNIOR", hintEnabled = true, onClose, onComplete }) {
-  const containerRef = useRef(null);
+function createSocketUrl(containerName, levelId, hintEnabled) {
+  const search = new URLSearchParams({
+    container: containerName,
+    level: levelId,
+    hintEnabled: hintEnabled ? 'true' : 'false',
+  });
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${window.location.host}/ws/lab?${search.toString()}`;
+}
+
+export default function LabTerminal({
+  containerName,
+  levelId = 'JUNIOR',
+  hintEnabled = true,
+  onClose,
+  onComplete,
+}) {
+  const wrapperRef = useRef(null);
+  const viewportRef = useRef(null);
   const termRef = useRef(null);
-  const wsRef = useRef(null);
-  const fallbackRef = useRef(null);
-  const [rawOutput, setRawOutput] = useState('');
+  const fitAddonRef = useRef(null);
+  const socketRef = useRef(null);
+  const pendingOutputRef = useRef([]);
+  const readyRef = useRef(false);
+  const resizeObserverRef = useRef(null);
+  const [hasOutput, setHasOutput] = useState(false);
 
   const onCloseRef = useRef(onClose);
   const onCompleteRef = useRef(onComplete);
-  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
-  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
   useEffect(() => {
-    setRawOutput('');
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return undefined;
+
+    setHasOutput(false);
+    readyRef.current = false;
+    pendingOutputRef.current = [];
+
     const term = new Terminal({
+      allowTransparency: true,
+      convertEol: true,
       cursorBlink: true,
+      fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+      fontSize: 14,
+      letterSpacing: 0,
+      lineHeight: 1.35,
+      scrollback: 1500,
       theme: {
         background: '#07111a',
         foreground: '#d7e3f1',
@@ -43,128 +82,181 @@ export default function LabTerminal({ containerName, levelId = "JUNIOR", hintEna
         brightCyan: '#67e8f9',
         brightWhite: '#f8fafc',
       },
-      fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-      fontSize: 14,
-      lineHeight: 1.5,
-      letterSpacing: 0.2,
-      scrollback: 1500,
     });
-
-    function appendOutput(chunk) {
-      const text = String(chunk || '');
-      term.write(text);
-      setRawOutput((prev) => {
-        const next = (prev + text).slice(-12000);
-        return next;
-      });
-    }
 
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
-    term.open(containerRef.current);
-    term.element?.style.setProperty('height', '100%');
-    term.element?.style.setProperty('padding', '0');
-    fitAddon.fit();
-    term.focus();
+    term.open(viewport);
+
     termRef.current = term;
-    appendOutput('\r\n\x1b[36m[WINLAB]\x1b[0m Connecting to lab shell...\r\n');
+    fitAddonRef.current = fitAddon;
 
-    const wsUrl = `/ws/lab?container=${encodeURIComponent(containerName)}&level=${encodeURIComponent(levelId)}&hintEnabled=${hintEnabled ? "true" : "false"}`;
-    const ws = new WebSocket(
-      window.location.protocol === 'https:'
-        ? `wss://${window.location.host}${wsUrl}`
-        : `ws://${window.location.host}${wsUrl}`
-    );
-    wsRef.current = ws;
-
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.type === 'output') appendOutput(msg.data);
-        if (msg.type === 'ready') appendOutput('\r\n\x1b[32m[WINLAB]\x1b[0m Lab ready. Type commands below.\r\n\r\n');
-        if (msg.type === 'exit') {
-          appendOutput('\r\n\x1b[33m[WINLAB]\x1b[0m Session ended.\r\n');
-          onCompleteRef.current?.();
-        }
-        if (msg.type === 'error') appendOutput(`\r\n\x1b[31m[ERROR]\x1b[0m ${msg.data}\r\n`);
-      } catch {}
+    const fitTerminal = () => {
+      const currentViewport = viewportRef.current;
+      const currentTerm = termRef.current;
+      const currentFit = fitAddonRef.current;
+      if (!currentViewport || !currentTerm || !currentFit) return;
+      const { width, height } = currentViewport.getBoundingClientRect();
+      if (width <= 0 || height <= 0) return;
+      currentFit.fit();
+      currentTerm.focus();
     };
 
-    ws.onerror = () => appendOutput('\r\n\x1b[31m[WINLAB]\x1b[0m Connection error.\r\n');
-
-    ws.onclose = (e) => {
-      if (!e.wasClean) {
-        appendOutput('\r\n\x1b[31m[WINLAB]\x1b[0m Connection lost.\r\n');
+    const writeChunk = (chunk) => {
+      const text = String(chunk || '');
+      if (!text) return;
+      setHasOutput(true);
+      if (!readyRef.current || !termRef.current) {
+        pendingOutputRef.current.push(text);
+        return;
       }
+      termRef.current.write(text);
     };
 
-    term.onData((data) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'input', data }));
-      }
+    const flushPending = () => {
+      if (!readyRef.current || !termRef.current || pendingOutputRef.current.length === 0) return;
+      termRef.current.write(pendingOutputRef.current.join(''));
+      pendingOutputRef.current = [];
+    };
+
+    requestAnimationFrame(() => {
+      fitTerminal();
+      readyRef.current = true;
+      flushPending();
+      writeChunk('\r\n\x1b[36m[WINLAB]\x1b[0m Connecting to lab shell...\r\n');
     });
+
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(() => {
+        requestAnimationFrame(() => {
+          fitTerminal();
+          flushPending();
+        });
+      }).catch(() => {});
+    }
+
+    const handleResize = () => {
+      requestAnimationFrame(() => {
+        fitTerminal();
+        flushPending();
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
 
     const observer = new ResizeObserver(() => {
-      fitAddon.fit();
-      term.focus();
+      requestAnimationFrame(() => {
+        fitTerminal();
+        flushPending();
+      });
     });
-    observer.observe(containerRef.current);
+    observer.observe(viewport);
+    if (wrapperRef.current) observer.observe(wrapperRef.current);
+    resizeObserverRef.current = observer;
+
+    const ws = new WebSocket(createSocketUrl(containerName, levelId, hintEnabled));
+    socketRef.current = ws;
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === 'ready') {
+          writeChunk('\r\n\x1b[32m[WINLAB]\x1b[0m Lab ready. Type commands below.\r\n\r\n');
+          return;
+        }
+        if (message.type === 'output') {
+          writeChunk(message.data);
+          return;
+        }
+        if (message.type === 'exit') {
+          writeChunk('\r\n\x1b[33m[WINLAB]\x1b[0m Session ended.\r\n');
+          onCompleteRef.current?.();
+          return;
+        }
+        if (message.type === 'error') {
+          writeChunk(`\r\n\x1b[31m[ERROR]\x1b[0m ${message.data}\r\n`);
+        }
+      } catch {
+        writeChunk(String(event.data || ''));
+      }
+    };
+
+    ws.onerror = () => {
+      writeChunk('\r\n\x1b[31m[WINLAB]\x1b[0m Connection error.\r\n');
+    };
+
+    ws.onclose = (event) => {
+      if (!event.wasClean) {
+        writeChunk('\r\n\x1b[31m[WINLAB]\x1b[0m Connection lost.\r\n');
+      }
+    };
+
+    const inputDisposable = term.onData((data) => {
+      if (socketRef.current?.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({ type: 'input', data }));
+      }
+    });
 
     return () => {
-      observer.disconnect();
-      ws.close();
-      term.dispose();
+      inputDisposable.dispose();
+      window.removeEventListener('resize', handleResize);
+      resizeObserverRef.current?.disconnect();
+      resizeObserverRef.current = null;
+      socketRef.current?.close();
+      socketRef.current = null;
+      termRef.current?.dispose();
+      termRef.current = null;
+      fitAddonRef.current = null;
+      readyRef.current = false;
+      pendingOutputRef.current = [];
     };
   }, [containerName, hintEnabled, levelId]);
 
   return (
-    <div className="flex h-full flex-col bg-[linear-gradient(180deg,#081019_0%,#05070c_100%)] text-slate-200">
-      <div className="flex items-center justify-between border-b border-cyan-400/10 bg-black/20 px-5 py-3 shrink-0 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1.5">
-            <div className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
-            <div className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />
-            <div className="h-2.5 w-2.5 rounded-full bg-emerald-400/80 animate-pulse" />
-          </div>
-          <div>
-            <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-cyan-200/80">
-              Live Incident Terminal
+    <div className="flex h-full min-h-0 flex-col bg-[linear-gradient(180deg,#081019_0%,#05070c_100%)] text-slate-200">
+      <div className="shrink-0 border-b border-cyan-400/10 bg-black/20 px-5 py-3 backdrop-blur-sm">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
+              <div className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />
+              <div className="h-2.5 w-2.5 rounded-full bg-emerald-400/80 animate-pulse" />
             </div>
-            <div className="mt-1 text-xs font-mono text-slate-400">
-              {containerName}
+            <div>
+              <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-cyan-200/80">
+                Live Incident Terminal
+              </div>
+              <div className="mt-1 text-xs font-mono text-slate-400">
+                {containerName}
+              </div>
             </div>
           </div>
+          <button
+            onClick={() => {
+              socketRef.current?.close();
+              onCloseRef.current?.();
+            }}
+            className="rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.25em] text-rose-200 transition-colors hover:bg-rose-400/20"
+          >
+            Termina sessione
+          </button>
         </div>
-        <button
-          onClick={() => {
-            wsRef.current?.close();
-            onClose?.();
-          }}
-          className="rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.25em] text-rose-200 transition-colors hover:bg-rose-400/20"
-        >
-          Termina sessione
-        </button>
       </div>
-      <div className="flex-1 overflow-hidden p-3 md:p-5">
-        <div className="h-full rounded-[24px] border border-cyan-400/12 bg-[#07111a] shadow-[0_0_60px_rgba(14,165,233,0.08)]">
+
+      <div className="flex-1 min-h-0 overflow-hidden p-3 md:p-5">
+        <div className="h-full min-h-0 rounded-[24px] border border-cyan-400/12 bg-[#07111a] shadow-[0_0_60px_rgba(14,165,233,0.08)]">
           <div className="flex items-center justify-between border-b border-white/6 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.24em] text-slate-500">
             <span>shell attached</span>
             <span>network isolated</span>
           </div>
-          <div className="relative h-[calc(100%-37px)]">
-            <div ref={containerRef} className="absolute inset-0 overflow-hidden p-3" style={{ minHeight: 320 }} />
-            {!rawOutput && (
-              <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-xs font-mono uppercase tracking-[0.24em] text-slate-500">
+
+          <div ref={wrapperRef} className="relative h-[calc(100%-37px)] min-h-0 overflow-hidden">
+            <div ref={viewportRef} className="winlab-xterm-shell absolute inset-0 h-full w-full min-h-0 overflow-hidden px-3 py-3" />
+            {!hasOutput && (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 text-center text-xs font-mono uppercase tracking-[0.24em] text-slate-500">
                 awaiting terminal stream
               </div>
             )}
-            <pre
-              ref={fallbackRef}
-              aria-hidden="true"
-              className="pointer-events-none absolute bottom-0 left-0 right-0 max-h-28 overflow-hidden border-t border-white/6 bg-black/35 px-4 py-3 text-[10px] leading-relaxed text-cyan-100/75 opacity-90"
-            >
-              {rawOutput.slice(-800) || 'stream idle'}
-            </pre>
           </div>
         </div>
       </div>

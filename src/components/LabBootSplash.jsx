@@ -49,6 +49,12 @@ function buildWarmupSequence({ lab, levelId, hintEnabled }) {
   ];
 }
 
+function formatBootLine(line) {
+  const prefix = TYPE_PREFIX[line?.type] ?? '[log]';
+  const text = String(line?.text || '');
+  return `${prefix.padEnd(8, ' ')} ${text}`;
+}
+
 export default function LabBootSplash({ bootSequence, onReady, lab = null, levelId = 'JUNIOR', hintEnabled = true }) {
   const [visibleCount, setVisibleCount] = useState(0);
   const [allVisible, setAllVisible] = useState(false);
@@ -103,18 +109,13 @@ export default function LabBootSplash({ bootSequence, onReady, lab = null, level
           </div>
 
           <div className="rounded-[24px] border border-white/8 bg-[#050b11] px-4 py-4 md:px-5">
-            <div className="flex flex-col gap-2">
+            <div className="max-h-[52vh] overflow-y-auto overflow-x-hidden font-mono text-sm leading-7 text-zinc-200">
               {fullSequence.slice(0, visibleCount).map((line, i) => (
                 <div
                   key={i}
-                  className={`flex items-start gap-3 text-sm leading-relaxed transition-opacity duration-300 ${TYPE_COLOR[line.type] ?? 'text-zinc-300'}`}
+                  className={`whitespace-pre-wrap break-words ${TYPE_COLOR[line.type] ?? 'text-zinc-300'}`}
                 >
-                  <span className="block w-[72px] shrink-0 pt-[1px] text-[11px] uppercase tracking-[0.25em] text-zinc-500">
-                    {TYPE_PREFIX[line.type] ?? '[log]'}
-                  </span>
-                  <span className="block min-w-0 flex-1 whitespace-pre-wrap break-words">
-                    {line.text}
-                  </span>
+                  {formatBootLine(line)}
                 </div>
               ))}
             </div>

@@ -85,6 +85,8 @@ export default function HomeShell() {
   const [labCatalog, setLabCatalog] = useState([]);
   const [starterIds, setStarterIds] = useState(new Set());
   const [selectedLevelId, setSelectedLevelId] = useState('JUNIOR');
+  const [pendingCheckoutPlan, setPendingCheckoutPlan] = useState(null);
+  const [earlyAccessRemaining, setEarlyAccessRemaining] = useState(null);
   const terminalEndRef = useRef(null);
 
   useEffect(() => {
@@ -130,6 +132,24 @@ export default function HomeShell() {
     }
 
     loadCatalog();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadEarlyAccessSeats() {
+      try {
+        const res = await fetch('/api/early-access/seats', { credentials: 'include' });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || cancelled) return;
+        setEarlyAccessRemaining(
+          Number.isFinite(data.remaining) ? data.remaining : null
+        );
+      } catch {}
+    }
+
+    loadEarlyAccessSeats();
     return () => { cancelled = true; };
   }, []);
 
@@ -233,6 +253,12 @@ export default function HomeShell() {
     setAuth(user);
     sessionStorage.setItem('winlab_auth', JSON.stringify(user));
     setShowRegister(false);
+    if (pendingCheckoutPlan) {
+      const plan = pendingCheckoutPlan;
+      setPendingCheckoutPlan(null);
+      startCheckout(plan);
+      return;
+    }
     if (selectedLab) startLab(selectedLab);
   }
 
@@ -244,17 +270,33 @@ export default function HomeShell() {
     setTerminalLogs([]);
   }
 
-  async function handleUpgrade() {
+  async function startCheckout(plan) {
+    if (!plan) return;
+    if (!auth) {
+      setPendingCheckoutPlan(plan);
+      setShowRegister(true);
+      return;
+    }
     try {
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ plan: 'pro' }),
+        body: JSON.stringify({ plan }),
       });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } catch {}
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setLabError(data?.error || `Checkout error ${res.status}`);
+        return;
+      }
+      if (data?.url) window.location.href = data.url;
+    } catch (err) {
+      setLabError(`Checkout error: ${err?.message || 'unable to start Stripe checkout'}`);
+    }
+  }
+
+  async function handleUpgrade(plan = 'pro') {
+    await startCheckout(plan);
   }
 
   const filteredLabs = labCatalog.filter(lab => {
@@ -516,8 +558,11 @@ export default function HomeShell() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div className="rounded-[28px] border border-emerald-500/15 bg-emerald-500/5 p-7 flex flex-col">
                 <p className="text-[9px] font-black uppercase tracking-widest text-emerald-300 mb-3">Early Access</p>
-                <p className="text-4xl font-black text-white italic mb-1">EUR 5<span className="text-lg font-normal text-emerald-100/65">/mo</span></p>
-                <p className="text-emerald-100/70 text-xs mb-6">Locked launch price for the paid starter tier.</p>
+                <p className="text-4xl font-black text-white italic mb-1">EUR 5<span className="text-lg font-normal text-emerald-100/65"> forever</span></p>
+                <p className="text-emerald-100/70 text-xs mb-2">Locked launch price for life.</p>
+                <p className="text-[10px] uppercase tracking-[0.26em] text-emerald-200/80 mb-6">
+                  {Number.isFinite(earlyAccessRemaining) ? `${earlyAccessRemaining} seats left` : 'limited founder seats'}
+                </p>
                 <ul className="space-y-2 mb-8 flex-grow">
                   {['All Starter labs','Save progress','Founder badge','Early supporter status','Price locked forever'].map(f => (
                     <li key={f} className="flex items-center gap-2 text-xs text-emerald-50/80">
@@ -525,7 +570,7 @@ export default function HomeShell() {
                     </li>
                   ))}
                 </ul>
-                <button onClick={() => setShowRegister(true)} className="w-full py-3 border border-emerald-400/20 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-emerald-400/10 transition-all text-sm">
+                <button onClick={() => handleUpgrade('early')} className="w-full py-3 border border-emerald-400/20 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-emerald-400/10 transition-all text-sm">
                   Get Early Access
                 </button>
               </div>
@@ -541,7 +586,7 @@ export default function HomeShell() {
                     </li>
                   ))}
                 </ul>
-                <button onClick={handleUpgrade} className="w-full py-3 bg-red-600 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-red-500 transition-all text-sm">
+                <button onClick={() => handleUpgrade('pro')} className="w-full py-3 bg-red-600 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-red-500 transition-all text-sm">
                   Go Pro
                 </button>
               </div>
@@ -557,7 +602,7 @@ export default function HomeShell() {
                     </li>
                   ))}
                 </ul>
-                <button onClick={handleUpgrade} className="w-full py-3 border border-white/10 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-white/5 transition-all text-sm">
+                <button onClick={() => handleUpgrade('lifetime')} className="w-full py-3 border border-white/10 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-white/5 transition-all text-sm">
                   Get Lifetime
                 </button>
               </div>

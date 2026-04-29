@@ -1760,21 +1760,62 @@ app.post("/api/billing/checkout", authLimiter, async (req, res) => {
   try {
     if (!stripe) return res.status(503).json({ error: "Payments not configured" });
     const { plan } = req.body;
-    const priceMap = {
-      early:    process.env.STRIPE_PRICE_EARLY    || process.env.STRIPE_EARLY_PRICE_ID,
-      pro:      process.env.STRIPE_PRICE_PRO      || process.env.STRIPE_PRO_PRICE_ID,
-      business: process.env.STRIPE_PRICE_BUSINESS || process.env.STRIPE_BUSINESS_PRICE_ID,
-    };
-    const priceId = priceMap[plan];
-    if (!priceId) return res.status(400).json({ error: `No Stripe price configured for plan: ${plan}` });
-
     const sessionParams = {
-      mode: "subscription",
       payment_method_types: ["card"],
-      line_items: [{ price: priceId, quantity: 1 }],
       success_url: checkoutRedirect("/?checkout=success&session_id={CHECKOUT_SESSION_ID}"),
       cancel_url:  checkoutRedirect("/?checkout=cancel"),
+      metadata: { plan },
     };
+
+    if (plan === "pro" || plan === "business") {
+      const recurringPriceMap = {
+        pro: process.env.STRIPE_PRICE_PRO || process.env.STRIPE_PRO_PRICE_ID,
+        business: process.env.STRIPE_PRICE_BUSINESS || process.env.STRIPE_BUSINESS_PRICE_ID,
+      };
+      const priceId = recurringPriceMap[plan];
+      if (!priceId) return res.status(400).json({ error: `No Stripe price configured for plan: ${plan}` });
+      sessionParams.mode = "subscription";
+      sessionParams.line_items = [{ price: priceId, quantity: 1 }];
+    } else if (plan === "early" || plan === "lifetime") {
+      const oneTimePriceMap = {
+        early: process.env.STRIPE_PRICE_EARLY_ONCE || process.env.STRIPE_PRICE_EARLY_LIFETIME || process.env.STRIPE_EARLY_ONCE_PRICE_ID,
+        lifetime: process.env.STRIPE_PRICE_LIFETIME || process.env.STRIPE_LIFETIME_PRICE_ID,
+      };
+      const inlinePriceMap = {
+        early: {
+          unit_amount: 500,
+          name: "WinLab Early Access",
+          description: "Founder launch price locked forever",
+        },
+        lifetime: {
+          unit_amount: 19900,
+          name: "WinLab Lifetime Access",
+          description: "One-time payment for lifetime access",
+        },
+      };
+
+      sessionParams.mode = "payment";
+      const priceId = oneTimePriceMap[plan];
+      if (priceId) {
+        sessionParams.line_items = [{ price: priceId, quantity: 1 }];
+      } else {
+        const inline = inlinePriceMap[plan];
+        if (!inline) return res.status(400).json({ error: `Unsupported billing plan: ${plan}` });
+        sessionParams.line_items = [{
+          price_data: {
+            currency: "eur",
+            unit_amount: inline.unit_amount,
+            product_data: {
+              name: inline.name,
+              description: inline.description,
+            },
+          },
+          quantity: 1,
+        }];
+      }
+    } else {
+      return res.status(400).json({ error: `Unsupported billing plan: ${plan}` });
+    }
 
     // Attach customer if user is logged in
     const token = req.cookies?.winlab_token || req.headers.authorization?.replace("Bearer ", "");
@@ -2006,6 +2047,7 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
     if (event.type === "checkout.session.completed") {
       const customerId = obj.customer;
       const subId      = obj.subscription;
+      const checkoutPlan = obj.metadata?.plan;
       if (customerId) {
         const user = await prisma.user.findFirst({ where: { stripeCustomerId: customerId } });
         if (user && subId) {
@@ -2015,9 +2057,28 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
             data: {
               stripeSubscriptionId: subId,
               subscriptionStatus: sub.status,
-              subscriptionPlan: "pro",
+              subscriptionPlan: checkoutPlan || "pro",
               subscriptionPeriodEnd: new Date(sub.current_period_end * 1000),
-              plan: JSON.stringify({ tier: "pro" }),
+              plan: checkoutPlan || "pro",
+            },
+          });
+        } else if (user && checkoutPlan === "early") {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              plan: "earlyAccess",
+              subscriptionStatus: "none",
+              subscriptionPlan: "early",
+            },
+          });
+        } else if (user && checkoutPlan === "lifetime") {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              plan: "lifetime",
+              subscriptionStatus: "lifetime",
+              subscriptionPlan: "lifetime",
+              cancelAtPeriodEnd: false,
             },
           });
         }
