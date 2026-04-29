@@ -1,5 +1,5 @@
 // src/components/LabTerminal.jsx
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import 'xterm/css/xterm.css';
@@ -8,6 +8,8 @@ export default function LabTerminal({ containerName, levelId = "JUNIOR", hintEna
   const containerRef = useRef(null);
   const termRef = useRef(null);
   const wsRef = useRef(null);
+  const fallbackRef = useRef(null);
+  const [rawOutput, setRawOutput] = useState('');
 
   const onCloseRef = useRef(onClose);
   const onCompleteRef = useRef(onComplete);
@@ -15,6 +17,7 @@ export default function LabTerminal({ containerName, levelId = "JUNIOR", hintEna
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
   useEffect(() => {
+    setRawOutput('');
     const term = new Terminal({
       cursorBlink: true,
       theme: {
@@ -47,11 +50,24 @@ export default function LabTerminal({ containerName, levelId = "JUNIOR", hintEna
       scrollback: 1500,
     });
 
+    function appendOutput(chunk) {
+      const text = String(chunk || '');
+      term.write(text);
+      setRawOutput((prev) => {
+        const next = (prev + text).slice(-12000);
+        return next;
+      });
+    }
+
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
     term.open(containerRef.current);
+    term.element?.style.setProperty('height', '100%');
+    term.element?.style.setProperty('padding', '0');
     fitAddon.fit();
+    term.focus();
     termRef.current = term;
+    appendOutput('\r\n\x1b[36m[WINLAB]\x1b[0m Connecting to lab shell...\r\n');
 
     const wsUrl = `/ws/lab?container=${encodeURIComponent(containerName)}&level=${encodeURIComponent(levelId)}&hintEnabled=${hintEnabled ? "true" : "false"}`;
     const ws = new WebSocket(
@@ -64,21 +80,21 @@ export default function LabTerminal({ containerName, levelId = "JUNIOR", hintEna
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
-        if (msg.type === 'output') term.write(msg.data);
-        if (msg.type === 'ready') term.write('\r\n\x1b[32m[WINLAB]\x1b[0m Lab ready. Type commands below.\r\n\r\n');
+        if (msg.type === 'output') appendOutput(msg.data);
+        if (msg.type === 'ready') appendOutput('\r\n\x1b[32m[WINLAB]\x1b[0m Lab ready. Type commands below.\r\n\r\n');
         if (msg.type === 'exit') {
-          term.write('\r\n\x1b[33m[WINLAB]\x1b[0m Session ended.\r\n');
+          appendOutput('\r\n\x1b[33m[WINLAB]\x1b[0m Session ended.\r\n');
           onCompleteRef.current?.();
         }
-        if (msg.type === 'error') term.write(`\r\n\x1b[31m[ERROR]\x1b[0m ${msg.data}\r\n`);
+        if (msg.type === 'error') appendOutput(`\r\n\x1b[31m[ERROR]\x1b[0m ${msg.data}\r\n`);
       } catch {}
     };
 
-    ws.onerror = () => term.write('\r\n\x1b[31m[WINLAB]\x1b[0m Connection error.\r\n');
+    ws.onerror = () => appendOutput('\r\n\x1b[31m[WINLAB]\x1b[0m Connection error.\r\n');
 
     ws.onclose = (e) => {
       if (!e.wasClean) {
-        term.write('\r\n\x1b[31m[WINLAB]\x1b[0m Connection lost.\r\n');
+        appendOutput('\r\n\x1b[31m[WINLAB]\x1b[0m Connection lost.\r\n');
       }
     };
 
@@ -88,7 +104,10 @@ export default function LabTerminal({ containerName, levelId = "JUNIOR", hintEna
       }
     });
 
-    const observer = new ResizeObserver(() => fitAddon.fit());
+    const observer = new ResizeObserver(() => {
+      fitAddon.fit();
+      term.focus();
+    });
     observer.observe(containerRef.current);
 
     return () => {
@@ -132,7 +151,21 @@ export default function LabTerminal({ containerName, levelId = "JUNIOR", hintEna
             <span>shell attached</span>
             <span>network isolated</span>
           </div>
-          <div ref={containerRef} className="h-[calc(100%-37px)] overflow-hidden p-3" />
+          <div className="relative h-[calc(100%-37px)]">
+            <div ref={containerRef} className="absolute inset-0 overflow-hidden p-3" style={{ minHeight: 320 }} />
+            {!rawOutput && (
+              <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-xs font-mono uppercase tracking-[0.24em] text-slate-500">
+                awaiting terminal stream
+              </div>
+            )}
+            <pre
+              ref={fallbackRef}
+              aria-hidden="true"
+              className="pointer-events-none absolute bottom-0 left-0 right-0 max-h-28 overflow-hidden border-t border-white/6 bg-black/35 px-4 py-3 text-[10px] leading-relaxed text-cyan-100/75 opacity-90"
+            >
+              {rawOutput.slice(-800) || 'stream idle'}
+            </pre>
+          </div>
         </div>
       </div>
     </div>
