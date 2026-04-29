@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { Eye, EyeOff, X } from 'lucide-react';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
 export default function RegisterModal({ onSuccess, onClose }) {
   const [mode, setMode] = useState('register');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,9 +18,15 @@ export default function RegisterModal({ onSuccess, onClose }) {
     setLoading(true);
 
     const trimmedEmail = email.trim();
+    if (!EMAIL_REGEX.test(trimmedEmail)) {
+      setError('Enter a valid email address.');
+      setLoading(false);
+      return;
+    }
+
     const endpoint = mode === 'register' ? '/api/auth/register' : '/api/auth/login';
     const body = mode === 'register'
-      ? { email: trimmedEmail, password, name }
+      ? { email: trimmedEmail, password, name: name.trim() }
       : { email: trimmedEmail, password };
 
     try {
@@ -75,19 +84,31 @@ export default function RegisterModal({ onSuccess, onClose }) {
             type="email"
             placeholder="Email"
             required
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full bg-zinc-800 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/40 placeholder-gray-600"
           />
-          <input
-            type="password"
-            placeholder="Password (min. 8 characters)"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-zinc-800 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/40 placeholder-gray-600"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Password (min. 8 characters)"
+              required
+              minLength={8}
+              autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-zinc-800 border border-white/5 rounded-2xl px-4 py-3 pr-12 text-sm text-white outline-none focus:border-red-500/40 placeholder-gray-600"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-gray-500 transition-colors hover:text-white"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
 
           {error && (
             <p className="text-red-500 text-xs font-mono">{error}</p>
@@ -103,7 +124,7 @@ export default function RegisterModal({ onSuccess, onClose }) {
         </form>
 
         <button
-          onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError(''); }}
+          onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError(''); setShowPassword(false); }}
           className="mt-4 w-full text-center text-xs text-gray-600 hover:text-gray-400 transition-colors"
         >
           {mode === 'register' ? 'Already have an account → Sign In' : 'No account → Register'}

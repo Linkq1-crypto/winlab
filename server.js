@@ -75,6 +75,15 @@ const ENC_KEY    = (process.env.ENCRYPTION_KEY || "00000000000000000000000000000
 const EARLY_ACCESS_FILE = path.join(__dirname, "data", "early-access-seats.json");
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isValidEmail(value) {
+  return EMAIL_REGEX.test(normalizeEmail(value));
+}
 
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is required in production");
@@ -681,9 +690,15 @@ app.use("/api/i18n", i18nRouter);
 app.post("/api/auth/register", authLimiter, async (req, res) => {
   try {
     const { email, password, name, referralCode } = req.body;
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedName = typeof name === "string" ? name.trim() : "";
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return res.status(400).json({ error: "Email and password required" });
+    }
+
+    if (!isValidEmail(normalizedEmail)) {
+      return res.status(400).json({ error: "Enter a valid email address" });
     }
 
     if (password.length < 8) {
@@ -691,7 +706,7 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
     }
 
     const existing = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() }
+      where: { email: normalizedEmail }
     });
 
     if (existing) {
@@ -702,9 +717,9 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
 
     const user = await prisma.user.create({
       data: {
-        email: email.toLowerCase(),
+        email: normalizedEmail,
         passwordHash,
-        name: name || null,
+        name: normalizedName || null,
         plan: "starter",
       },
     });
@@ -755,8 +770,10 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
 app.post("/api/auth/login", authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: "Email and password required" });
-    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail || !password) return res.status(400).json({ error: "Email and password required" });
+    if (!isValidEmail(normalizedEmail)) return res.status(400).json({ error: "Enter a valid email address" });
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user || user.accountStatus === "deleted") return res.status(401).json({ error: "Invalid credentials" });
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ error: "Invalid credentials" });
