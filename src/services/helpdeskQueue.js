@@ -134,6 +134,10 @@ class HelpdeskQueue {
       failed: this._failed.length,
     };
   }
+
+  async getFailed(limit = 50) {
+    return this._failed.slice(-limit).reverse();
+  }
 }
 
 // Singleton export

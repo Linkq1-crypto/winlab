@@ -5,7 +5,7 @@
 
 import express from "express";
 import compression from "compression";
-import { rateLimit, ipKeyGenerator } from "express-rate-limit";
+import { rateLimit, ipKeyGenerator, MemoryStore } from "express-rate-limit";
 
 // Normalize IPv6-mapped IPv4 addresses (::ffff:1.2.3.4 → 1.2.3.4)
 // Required by express-rate-limit v7 when using a custom keyGenerator with req.ip
@@ -165,6 +165,84 @@ const labAiRouter = createAIRouter({
 });
 const aiService = createAIService({ repoRoot: __dirname, aiRouter });
 
+async function getRedis() {
+  if (!redis) return null;
+  if (redis.status === "wait") await redis.connect();
+  return redis;
+}
+
+class HybridRateLimitStore {
+  constructor(prefix, windowMs) {
+    this.prefix = prefix;
+    this.windowMs = windowMs;
+    this.localKeys = false;
+    this.fallback = new MemoryStore();
+  }
+
+  init(options) {
+    this.windowMs = options.windowMs;
+    this.fallback.init?.(options);
+  }
+
+  async increment(key) {
+    const client = await getRedis().catch(() => null);
+    if (!client) return this.fallback.increment(key);
+
+    const redisKey = `${this.prefix}${key}`;
+    const now = Date.now();
+    const results = await client.multi().incr(redisKey).pttl(redisKey).exec();
+    if (!results) return this.fallback.increment(key);
+
+    const totalHits = Number(results[0]?.[1] || 0);
+    let ttlMs = Number(results[1]?.[1] || -1);
+
+    if (ttlMs <= 0) {
+      await client.pexpire(redisKey, this.windowMs);
+      ttlMs = this.windowMs;
+    }
+
+    return {
+      totalHits,
+      resetTime: new Date(now + ttlMs),
+    };
+  }
+
+  async decrement(key) {
+    const client = await getRedis().catch(() => null);
+    if (!client) return this.fallback.decrement?.(key);
+
+    const redisKey = `${this.prefix}${key}`;
+    const remaining = Number(await client.decr(redisKey));
+    if (remaining <= 0) await client.del(redisKey);
+  }
+
+  async resetKey(key) {
+    const client = await getRedis().catch(() => null);
+    if (!client) return this.fallback.resetKey(key);
+    await client.del(`${this.prefix}${key}`);
+  }
+
+  async resetAll() {
+    const client = await getRedis().catch(() => null);
+    if (!client) return this.fallback.resetAll?.();
+
+    let cursor = "0";
+    do {
+      const [nextCursor, keys] = await client.scan(cursor, "MATCH", `${this.prefix}*`, "COUNT", 200);
+      cursor = nextCursor;
+      if (keys.length) await client.del(...keys);
+    } while (cursor !== "0");
+  }
+
+  shutdown() {
+    return this.fallback.shutdown?.();
+  }
+}
+
+function createRateLimitStore(prefix, windowMs) {
+  return new HybridRateLimitStore(prefix, windowMs);
+}
+
 // ── Encryption helpers ───────────────────────────────────────────────
 function encryptField(text) {
   if (!text) return text;
@@ -276,7 +354,32 @@ async function handleStripeWebhook(req, res) {
 app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
 
 app.set("trust proxy", 1);
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      "default-src": ["'self'"],
+      "base-uri": ["'self'"],
+      "connect-src": ["'self'", "https:", "ws:", "wss:"],
+      "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
+      "form-action": ["'self'"],
+      "frame-ancestors": ["'none'"],
+      "img-src": ["'self'", "data:", "blob:", "https:"],
+      "manifest-src": ["'self'"],
+      "object-src": ["'none'"],
+      "script-src": ["'self'", "'unsafe-inline'"],
+      "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      "worker-src": ["'self'", "blob:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  frameguard: { action: "deny" },
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+}));
+app.use((req, res, next) => {
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), browsing-topics=()");
+  next();
+});
 app.use(compression());
 app.use(cookieParser());
 app.use(express.json({ limit: "2mb" }));
@@ -291,8 +394,23 @@ app.use((req, res, next) => {
 });
 
 // ── Health / Readiness probes (no rate limit, no auth) ───────────────
-app.get("/health", (req, res) => res.json({ status: "ok", ts: Date.now() }));
-app.get("/ready",  (req, res) => res.json({ status: "ok", ts: Date.now() }));
+function sendProbeJson(res, extra = {}) {
+  const now = new Date();
+  res.setHeader("Cache-Control", "no-store");
+  return res.json({
+    status: "ok",
+    timestamp: now.toISOString(),
+    ts: now.getTime(),
+    ...extra,
+  });
+}
+
+app.get("/health", (req, res) => sendProbeJson(res));
+app.get("/ready", (req, res) => sendProbeJson(res));
+app.get("/healthz/ping.txt", (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.type("text/plain").send(`OK ${new Date().toISOString()}`);
+});
 
 // CORS
 app.use((req, res, next) => {
@@ -332,7 +450,8 @@ app.use(express.static(distDir, {
 // ── Rate limiters ────────────────────────────────────────────────────
 const authLimiter    = rateLimit({
   windowMs: 60_000,
-  max: 10,
+  max: 5,
+  store: createRateLimitStore("rl:auth:", 60_000),
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => req.headers["cf-connecting-ip"] || ipKeyGenerator(req),
@@ -342,6 +461,9 @@ const authLimiter    = rateLimit({
 const aiLimiter      = rateLimit({
   windowMs: 60_000,
   max: 30,
+  store: createRateLimitStore("rl:ai:", 60_000),
+  standardHeaders: true,
+  legacyHeaders: false,
   keyGenerator: (req) => req.headers["cf-connecting-ip"] || ipKeyGenerator(req),
   validate: { keyGeneratorIpFallback: false },
 });
@@ -349,6 +471,7 @@ const aiLimiter      = rateLimit({
 const freeLabLimiter = rateLimit({
   windowMs: 60_000,
   max: 10,
+  store: createRateLimitStore("rl:free-lab:", 60_000),
   keyGenerator: (req) => req.headers["cf-connecting-ip"] || ipKeyGenerator(req),
   standardHeaders: true,
   legacyHeaders: false,
@@ -359,6 +482,7 @@ const freeLabLimiter = rateLimit({
 const codexLimiter   = rateLimit({
   windowMs: 60_000,
   max: 8,
+  store: createRateLimitStore("rl:codex:", 60_000),
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
@@ -372,6 +496,9 @@ const codexLimiter   = rateLimit({
 const paymentLimiter = rateLimit({
   windowMs: 60_000,
   max: 5,
+  store: createRateLimitStore("rl:payment:", 60_000),
+  standardHeaders: true,
+  legacyHeaders: false,
   keyGenerator: (req) => req.headers["cf-connecting-ip"] || ipKeyGenerator(req),
   validate: { keyGeneratorIpFallback: false },
 });
@@ -379,6 +506,9 @@ const paymentLimiter = rateLimit({
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
+  store: createRateLimitStore("rl:general:", 15 * 60 * 1000),
+  standardHeaders: true,
+  legacyHeaders: false,
   keyGenerator: (req) => req.headers["cf-connecting-ip"] || ipKeyGenerator(req),
   validate: {
     xForwardedForHeader: false,
@@ -394,12 +524,6 @@ function tokenHash(token) {
 
 function authCookieOptions(maxAge) {
   return { httpOnly: true, secure: IS_PROD, sameSite: "strict", maxAge };
-}
-
-async function getRedis() {
-  if (!redis) return null;
-  if (redis.status === "wait") await redis.connect();
-  return redis;
 }
 
 function pruneMemoryTokenStores() {
@@ -578,7 +702,17 @@ function normalizeCheckoutRedirect(input, fallbackPathAndQuery) {
 app.use("/api/helpdesk", helpdeskRouter);
 
 // ── Health check ─────────────────────────────────────────────────────
-app.get("/api/health", (req, res) => res.json({ ok: true, ts: Date.now() }));
+app.get("/api/health", (req, res) => sendProbeJson(res, { ok: true }));
+app.get("/api/v1/health", (req, res) => sendProbeJson(res, { ok: true }));
+app.get("/api/logs/status", (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.json({
+    status: "ok",
+    logger: "pino",
+    uptime: Number(process.uptime().toFixed(3)),
+    level: process.env.LOG_LEVEL || "info",
+  });
+});
 
 app.get("/api/labs/catalog", (req, res) => {
   try {
@@ -694,15 +828,15 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
     const normalizedName = typeof name === "string" ? name.trim() : "";
 
     if (!normalizedEmail || !password) {
-      return res.status(400).json({ error: "Email and password required" });
+      return res.status(400).json({ error: "Email and password required", code: "VALIDATION_ERROR", request_id: req.requestId });
     }
 
     if (!isValidEmail(normalizedEmail)) {
-      return res.status(400).json({ error: "Enter a valid email address" });
+      return res.status(400).json({ error: "Enter a valid email address", code: "VALIDATION_ERROR", request_id: req.requestId });
     }
 
     if (password.length < 8) {
-      return res.status(400).json({ error: "Password must be at least 8 characters" });
+      return res.status(400).json({ error: "Password must be at least 8 characters", code: "VALIDATION_ERROR", request_id: req.requestId });
     }
 
     const existing = await prisma.user.findUnique({

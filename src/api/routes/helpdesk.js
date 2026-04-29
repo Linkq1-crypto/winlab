@@ -53,8 +53,24 @@ import {
   updateChurn,
   getAISummary,
 } from '../../services/helpdeskService.js';
+import { helpdeskQueue } from '../../services/helpdeskQueue.js';
 
 const router = express.Router();
+
+function validateSyncEvent(event) {
+  const eid = event?.event_id ?? event?.id;
+  if (!eid) return { ok: false, status: 400, error: 'event_id required' };
+  if (!event?.type && !event?.event_type) return { ok: false, status: 400, error: 'type required' };
+  if (event.payload == null || typeof event.payload !== 'object' || Array.isArray(event.payload)) {
+    return {
+      ok: false,
+      status: 422,
+      error: 'dead letter: invalid payload',
+      code: 'DEAD_LETTER',
+    };
+  }
+  return { ok: true, eid };
+}
 
 // ──── Email Processing ────
 router.post('/ingest', ingestEmails);
@@ -66,6 +82,10 @@ router.get('/inbox', getInbox);
 router.get('/verify', verifyEmail);
 router.get('/sla', getSLA);
 router.get('/metrics', getMetrics);
+router.get('/dlq', async (req, res) => {
+  const messages = await helpdeskQueue.getFailed(50);
+  res.json({ count: messages.length, messages });
+});
 
 // ──── Intelligence ────
 router.get('/insights', getInsights);
@@ -225,8 +245,14 @@ router.post('/sync/batch', async (req, res) => {
 // POST /api/helpdesk/sync  — single-event fallback (used when batch endpoint rejects)
 router.post('/sync', async (req, res) => {
   const event = req.body;
-  const eid   = event.event_id ?? event.id;
-  if (!eid) return res.status(400).json({ error: 'event_id required' });
+  const validation = validateSyncEvent(event);
+  if (!validation.ok) {
+    return res.status(validation.status).json({
+      error: validation.error,
+      code: validation.code,
+    });
+  }
+  const eid = validation.eid;
 
   try {
     const { isEventProcessed, markEventProcessed } = await import('../../services/webhookIdempotency.js');
