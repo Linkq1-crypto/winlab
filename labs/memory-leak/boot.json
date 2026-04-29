@@ -1,15 +1,27 @@
 [
   {
     "type": "system",
-    "text": "MEMORY LEAK [v4.2.0]"
+    "text": "MEMORY LEAK [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: standard response pressure"
+  },
+  {
+    "type": "info",
+    "text": "Mounting production-like service map."
   },
   {
     "type": "warning",
-    "text": "⚠  Memory usage critical — OOM imminent"
+    "text": "Root cause visibility partially degraded."
   },
   {
     "type": "warning",
-    "text": "⚠  Node.js process memory leak detected"
+    "text": "Memory usage critical - OOM imminent"
+  },
+  {
+    "type": "warning",
+    "text": "Node.js process memory leak detected"
   },
   {
     "type": "prompt",

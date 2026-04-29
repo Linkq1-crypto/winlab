@@ -1,15 +1,31 @@
 [
   {
     "type": "system",
-    "text": "SSH MISCONFIGURED [v4.2.0]"
+    "text": "SSH MISCONFIGURED [UBUNTU]"
   },
   {
-    "type": "warning",
-    "text": "⚠  Security misconfiguration detected"
+    "type": "system",
+    "text": "Operator lane: guided sandbox"
   },
   {
     "type": "info",
-    "text": "ℹ  And test the config: /usr/sbin/sshd -t."
+    "text": "Mounting beginner-safe telemetry overlays."
+  },
+  {
+    "type": "success",
+    "text": "Recovery hints staged in low-pressure mode."
+  },
+  {
+    "type": "warning",
+    "text": "Security misconfiguration detected"
+  },
+  {
+    "type": "info",
+    "text": "And test the config: /usr/sbin/sshd -t."
+  },
+  {
+    "type": "warning",
+    "text": "Security-sensitive evidence path enabled - preserve state before broad changes."
   },
   {
     "type": "prompt",

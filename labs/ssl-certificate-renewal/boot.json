@@ -1,11 +1,23 @@
 [
   {
     "type": "system",
-    "text": "SSL CERTIFICATE RENEWAL [v4.2.0]"
+    "text": "SSL CERTIFICATE RENEWAL [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: operations escalation"
+  },
+  {
+    "type": "info",
+    "text": "Replaying production incident timeline."
   },
   {
     "type": "warning",
-    "text": "⚠  SSL certificate validation failed"
+    "text": "Customer-facing blast radius expanding."
+  },
+  {
+    "type": "warning",
+    "text": "SSL certificate validation failed"
   },
   {
     "type": "prompt",

@@ -1,11 +1,23 @@
 [
   {
     "type": "system",
-    "text": "PM2 CRASH RECOVERY [v4.2.0]"
+    "text": "PM2 CRASH RECOVERY [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: operations escalation"
+  },
+  {
+    "type": "info",
+    "text": "Replaying production incident timeline."
   },
   {
     "type": "warning",
-    "text": "⚠  Node.js process memory leak detected"
+    "text": "Customer-facing blast radius expanding."
+  },
+  {
+    "type": "warning",
+    "text": "Node.js process memory leak detected"
   },
   {
     "type": "prompt",

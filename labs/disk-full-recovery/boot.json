@@ -1,15 +1,27 @@
 [
   {
     "type": "system",
-    "text": "DISK FULL RECOVERY [v4.2.0]"
+    "text": "DISK FULL RECOVERY [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: operations escalation"
+  },
+  {
+    "type": "info",
+    "text": "Replaying production incident timeline."
   },
   {
     "type": "warning",
-    "text": "⚠  Filesystem at 100% — writes blocked"
+    "text": "Customer-facing blast radius expanding."
   },
   {
     "type": "warning",
-    "text": "⚠  Storage I/O errors detected"
+    "text": "Filesystem at 100 percent - writes blocked"
+  },
+  {
+    "type": "warning",
+    "text": "Storage I/O errors detected"
   },
   {
     "type": "prompt",

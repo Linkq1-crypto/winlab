@@ -1,11 +1,27 @@
 [
   {
     "type": "system",
-    "text": "DATABASE DEAD [v4.2.0]"
+    "text": "DATABASE DEAD [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: standard response pressure"
+  },
+  {
+    "type": "info",
+    "text": "Mounting production-like service map."
   },
   {
     "type": "warning",
-    "text": "⚠  MySQL connection refused"
+    "text": "Root cause visibility partially degraded."
+  },
+  {
+    "type": "warning",
+    "text": "MySQL connection refused"
+  },
+  {
+    "type": "warning",
+    "text": "Extended response window detected - multiple corrective actions may be required."
   },
   {
     "type": "prompt",

@@ -1,15 +1,27 @@
 [
   {
     "type": "system",
-    "text": "NGINX PORT CONFLICT [v4.2.0]"
+    "text": "NGINX PORT CONFLICT [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: guided sandbox"
+  },
+  {
+    "type": "info",
+    "text": "Mounting beginner-safe telemetry overlays."
+  },
+  {
+    "type": "success",
+    "text": "Recovery hints staged in low-pressure mode."
   },
   {
     "type": "warning",
-    "text": "⚠  nginx.service in FAILED state"
+    "text": "nginx.service in FAILED state"
   },
   {
     "type": "warning",
-    "text": "⚠  Port conflict detected on eth0"
+    "text": "Port conflict detected on primary interface"
   },
   {
     "type": "prompt",

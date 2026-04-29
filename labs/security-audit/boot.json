@@ -1,11 +1,31 @@
 [
   {
     "type": "system",
-    "text": "SECURITY AUDIT SIMULATOR [v4.2.0]"
+    "text": "SECURITY AUDIT SIMULATOR [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: systems simulation"
+  },
+  {
+    "type": "info",
+    "text": "Calibrating network and service topology."
   },
   {
     "type": "warning",
-    "text": "⚠  Security misconfiguration detected"
+    "text": "Scenario complexity elevated for cross-domain triage."
+  },
+  {
+    "type": "warning",
+    "text": "Security misconfiguration detected"
+  },
+  {
+    "type": "warning",
+    "text": "Extended response window detected - multiple corrective actions may be required."
+  },
+  {
+    "type": "warning",
+    "text": "Security-sensitive evidence path enabled - preserve state before broad changes."
   },
   {
     "type": "prompt",

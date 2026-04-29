@@ -1,11 +1,23 @@
 [
   {
     "type": "system",
-    "text": "DOCKER CONTAINER CRASH [v4.2.0]"
+    "text": "DOCKER CONTAINER CRASH [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: operations escalation"
+  },
+  {
+    "type": "info",
+    "text": "Replaying production incident timeline."
   },
   {
     "type": "warning",
-    "text": "⚠  Container health check failing"
+    "text": "Customer-facing blast radius expanding."
+  },
+  {
+    "type": "warning",
+    "text": "Container health check failing"
   },
   {
     "type": "prompt",

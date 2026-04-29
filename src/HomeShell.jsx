@@ -8,6 +8,7 @@ import LabBootSplash from './components/LabBootSplash';
 import RegisterModal from './components/RegisterModal';
 import CookieBanner from './CookieBanner';
 import AIMentor from './AIMentor';
+import { LEVEL_OPTIONS, getLevelConfig } from './config/levels';
 
 
 
@@ -33,6 +34,7 @@ const FOOTER_LINKS = [
     links: [
       { label: 'How it works', href: '/how-it-works' },
       { label: 'Labs',         href: '/'             },
+      { label: 'Blog',         href: '/blog'         },
       { label: 'Pricing',      href: '#pricing'      },
     ],
   },
@@ -47,8 +49,10 @@ const FOOTER_LINKS = [
   {
     heading: 'Support',
     links: [
-      { label: 'Contact', href: '/contact' },
-      { label: 'Status',  href: '/status'  },
+      { label: 'Contact',  href: '/contact'  },
+      { label: 'Feedback', href: '/feedback' },
+      { label: 'Profile',  href: '/profile'  },
+      { label: 'Status',   href: '/status'   },
     ],
   },
 ];
@@ -71,6 +75,7 @@ export default function HomeShell() {
   const [inputValue, setInputValue] = useState('');
   const [labCatalog, setLabCatalog] = useState([]);
   const [starterIds, setStarterIds] = useState(new Set());
+  const [selectedLevelId, setSelectedLevelId] = useState('JUNIOR');
   const terminalEndRef = useRef(null);
 
   useEffect(() => {
@@ -155,7 +160,11 @@ export default function HomeShell() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ labId: lab.id, sessionId: (crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`) }),
+        body: JSON.stringify({
+          labId: lab.id,
+          level: selectedLevelId,
+          sessionId: (crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`),
+        }),
       });
       if (res.status === 401) { setShowRegister(true); return; }
       let data;
@@ -174,6 +183,9 @@ export default function HomeShell() {
         sessionId: data.sessionId,
         containerName: data.containerName,
         labId: lab.id,
+        levelId: data.level || selectedLevelId,
+        hintEnabled: data.hintEnabled !== false,
+        lab: selectedLab || lab,
         bootSequence: data.bootSequence ?? [],
       });
       setShowSplash((data.bootSequence?.length ?? 0) > 0);
@@ -242,6 +254,8 @@ export default function HomeShell() {
       lab.tags?.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchCat && matchSearch;
   });
+  const starterLabs = labCatalog.filter(lab => starterIds.has(lab.id));
+  const featuredStarterLabs = starterLabs.slice(0, 5);
 
   // ── Terminal landing view ──────────────────────────────────────────────────
   if (view === 'terminal') {
@@ -288,6 +302,9 @@ export default function HomeShell() {
   if (view === 'lab' && showSplash && activeSession?.bootSequence?.length > 0) {
     return (
       <LabBootSplash
+        lab={activeSession.lab}
+        levelId={activeSession.levelId}
+        hintEnabled={activeSession.hintEnabled}
         bootSequence={activeSession.bootSequence}
         onReady={() => setShowSplash(false)}
       />
@@ -303,6 +320,8 @@ export default function HomeShell() {
         <div className="flex-1 flex flex-col">
           <LabTerminal
             containerName={activeSession.containerName}
+            levelId={activeSession.levelId}
+            hintEnabled={activeSession.hintEnabled}
             onClose={stopLab}
             onComplete={handleLabComplete}
           />
@@ -400,66 +419,38 @@ export default function HomeShell() {
             </div>
           )}
 
-          {/* Pricing */}
-          <div id="pricing" className="mb-16">
-            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">Pricing</h2>
-            <p className="text-gray-500 text-sm mb-8">Start free. Upgrade when you're ready.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {/* Early Access */}
-              <div className="relative bg-red-600 rounded-[28px] p-7 flex flex-col">
-                <div className="absolute top-4 right-4 bg-white/20 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full">Best entry</div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-red-200 mb-3">Early Access</p>
-                <p className="text-4xl font-black text-white italic mb-1">€5<span className="text-lg font-normal text-red-200">/mo</span></p>
-                <p className="text-red-200 text-xs mb-6">Locked launch price</p>
-                <ul className="space-y-2 mb-8 flex-grow">
-                  {['All Starter labs','Save progress','Founder badge','Early supporter status','Price locked forever'].map(f => (
-                    <li key={f} className="flex items-center gap-2 text-xs text-red-100">
-                      <span className="text-white font-black">✓</span> {f}
-                    </li>
-                  ))}
-                </ul>
-                <button onClick={() => setShowRegister(true)} className="w-full py-3 bg-white text-red-600 font-black uppercase tracking-widest italic rounded-2xl hover:bg-red-50 transition-all text-sm">
-                  Get Early Access →
-                </button>
-              </div>
 
-              {/* Pro */}
-              <div className="bg-zinc-950 border border-white/10 rounded-[28px] p-7 flex flex-col hover:border-white/20 transition-colors">
-                <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-3">Pro</p>
-                <p className="text-4xl font-black text-white italic mb-1">€19<span className="text-lg font-normal text-gray-500">/mo</span></p>
-                <p className="text-gray-600 text-xs mb-6">Full platform access</p>
-                <ul className="space-y-2 mb-8 flex-grow">
-                  {['All 34+ labs','Unlimited AI Mentor','Certificates','Advanced incident chains','Priority support'].map(f => (
-                    <li key={f} className="flex items-center gap-2 text-xs text-gray-400">
-                      <span className="text-red-500 font-black">✓</span> {f}
-                    </li>
-                  ))}
-                </ul>
-                <button onClick={handleUpgrade} className="w-full py-3 border border-white/10 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-white/5 transition-all text-sm">
-                  Go Pro →
-                </button>
+          <section className="mb-10 rounded-[32px] border border-emerald-500/15 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_42%),linear-gradient(180deg,rgba(10,18,16,0.96),rgba(5,5,5,0.98))] p-6 md:p-8">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+              <div className="max-w-2xl">
+                <p className="text-[10px] font-black uppercase tracking-[0.35em] text-emerald-300/80 mb-3">Start In The Free Zone</p>
+                <h2 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter leading-none mb-3">
+                  I primi 5 lab starter devono guidare la home
+                </h2>
+                <p className="text-sm text-gray-300 leading-relaxed">
+                  Entra dai lab gratuiti, prova subito gli incidenti reali e lascia il pricing come step successivo.
+                  Il catalogo resta il centro della pagina, non il listino.
+                </p>
               </div>
-
-              {/* Lifetime */}
-              <div className="bg-zinc-950 border border-white/10 rounded-[28px] p-7 flex flex-col hover:border-white/20 transition-colors">
-                <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-3">Lifetime</p>
-                <p className="text-4xl font-black text-white italic mb-1">€199<span className="text-lg font-normal text-gray-500"> once</span></p>
-                <p className="text-gray-600 text-xs mb-6">Pay once, own forever</p>
-                <ul className="space-y-2 mb-8 flex-grow">
-                  {['Everything in Pro','All future labs included','Lifetime updates','No recurring fees','Early access to new features'].map(f => (
-                    <li key={f} className="flex items-center gap-2 text-xs text-gray-400">
-                      <span className="text-red-500 font-black">✓</span> {f}
-                    </li>
-                  ))}
-                </ul>
-                <button onClick={handleUpgrade} className="w-full py-3 border border-white/10 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-white/5 transition-all text-sm">
-                  Get Lifetime →
-                </button>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 shrink-0">
+                {featuredStarterLabs.map(lab => (
+                  <button
+                    key={lab.id}
+                    onClick={() => !labLoading && setSelectedLab(lab)}
+                    className="min-w-[150px] rounded-2xl border border-emerald-400/15 bg-black/35 px-4 py-4 text-left transition-all hover:border-emerald-300/40 hover:bg-black/50"
+                  >
+                    <p className="text-[9px] font-black uppercase tracking-widest text-emerald-300 mb-2">Free Starter</p>
+                    <p className="text-sm font-black text-white leading-tight mb-2">{lab.title}</p>
+                    <p className="text-[10px] text-gray-500">{lab.difficulty} / {lab.duration}</p>
+                  </button>
+                ))}
               </div>
             </div>
-          </div>
+          </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-20">
+
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-14">
             {filteredLabs.map(lab => (
               <div
                 key={lab.id}
@@ -488,7 +479,69 @@ export default function HomeShell() {
             ))}
           </div>
 
-          {/* Footer */}
+
+          <div id="pricing" className="mb-16">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+              <div>
+                <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">Pricing</h2>
+                <p className="text-gray-500 text-sm">Start free. Upgrade when you're ready.</p>
+              </div>
+              <p className="text-[11px] uppercase tracking-[0.3em] text-gray-600">
+                Free first. Upgrade for AI, chains and certificates.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div className="rounded-[28px] border border-emerald-500/15 bg-emerald-500/5 p-7 flex flex-col">
+                <p className="text-[9px] font-black uppercase tracking-widest text-emerald-300 mb-3">Early Access</p>
+                <p className="text-4xl font-black text-white italic mb-1">EUR 5<span className="text-lg font-normal text-emerald-100/65">/mo</span></p>
+                <p className="text-emerald-100/70 text-xs mb-6">Locked launch price for the paid starter tier.</p>
+                <ul className="space-y-2 mb-8 flex-grow">
+                  {['All Starter labs','Save progress','Founder badge','Early supporter status','Price locked forever'].map(f => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-emerald-50/80">
+                      <span className="text-emerald-300 font-black">+</span> {f}
+                    </li>
+                  ))}
+                </ul>
+                <button onClick={() => setShowRegister(true)} className="w-full py-3 border border-emerald-400/20 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-emerald-400/10 transition-all text-sm">
+                  Get Early Access
+                </button>
+              </div>
+
+              <div className="rounded-[28px] border border-red-500/25 bg-[linear-gradient(180deg,rgba(52,11,11,0.82),rgba(14,14,14,0.96))] p-7 flex flex-col shadow-[0_18px_60px_rgba(127,29,29,0.18)]">
+                <p className="text-[9px] font-black uppercase tracking-widest text-red-300 mb-3">Pro</p>
+                <p className="text-4xl font-black text-white italic mb-1">EUR 19<span className="text-lg font-normal text-red-100/60">/mo</span></p>
+                <p className="text-red-100/65 text-xs mb-6">Full platform access.</p>
+                <ul className="space-y-2 mb-8 flex-grow">
+                  {['All labs unlocked','Unlimited AI Mentor','Certificates','Advanced incident chains','Priority support'].map(f => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-red-50/80">
+                      <span className="text-red-400 font-black">+</span> {f}
+                    </li>
+                  ))}
+                </ul>
+                <button onClick={handleUpgrade} className="w-full py-3 bg-red-600 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-red-500 transition-all text-sm">
+                  Go Pro
+                </button>
+              </div>
+
+              <div className="bg-zinc-950 border border-white/10 rounded-[28px] p-7 flex flex-col hover:border-white/20 transition-colors">
+                <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-3">Lifetime</p>
+                <p className="text-4xl font-black text-white italic mb-1">EUR 199<span className="text-lg font-normal text-gray-500"> once</span></p>
+                <p className="text-gray-600 text-xs mb-6">Pay once, own forever.</p>
+                <ul className="space-y-2 mb-8 flex-grow">
+                  {['Everything in Pro','All future labs included','Lifetime updates','No recurring fees','Early access to new features'].map(f => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-gray-400">
+                      <span className="text-gray-300 font-black">+</span> {f}
+                    </li>
+                  ))}
+                </ul>
+                <button onClick={handleUpgrade} className="w-full py-3 border border-white/10 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-white/5 transition-all text-sm">
+                  Get Lifetime
+                </button>
+              </div>
+            </div>
+          </div>
+
+{/* Footer */}
           <footer className="border-t border-white/5 pt-12 pb-10">
             <div className="flex flex-col md:flex-row justify-between gap-10">
               <div className="shrink-0">
@@ -549,6 +602,37 @@ export default function HomeShell() {
                 <div className="bg-white/5 p-4 rounded-2xl border border-white/5 text-center">
                   <p className="text-[10px] font-black text-gray-600 uppercase mb-1">Time Limit</p>
                   <p className="text-xl font-black text-white italic">{selectedLab.duration}</p>
+                </div>
+              </div>
+              <div className="mb-10 rounded-3xl border border-white/8 bg-white/[0.03] p-5 text-left">
+                <div className="mb-3 text-[10px] font-black uppercase tracking-[0.28em] text-gray-500">
+                  Operator level
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                  {LEVEL_OPTIONS.map((levelId) => {
+                    const level = getLevelConfig(levelId);
+                    const active = selectedLevelId === level.id;
+                    return (
+                      <button
+                        key={level.id}
+                        type="button"
+                        onClick={() => setSelectedLevelId(level.id)}
+                        className={`rounded-2xl border px-4 py-3 text-left transition-all ${
+                          active
+                            ? 'border-red-500/40 bg-red-600/10 text-white shadow-lg shadow-red-600/10'
+                            : 'border-white/8 bg-black/20 text-gray-400 hover:border-white/15 hover:text-white'
+                        }`}
+                      >
+                        <div className="text-xs font-black uppercase tracking-widest">{level.label}</div>
+                        <div className="mt-2 text-[11px] leading-relaxed text-gray-500">
+                          {level.description}
+                        </div>
+                        <div className="mt-3 text-[10px] uppercase tracking-[0.24em] text-gray-600">
+                          {level.hintsEnabled ? 'hint available' : 'hint disabled'}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               {labError && <p className="mb-4 text-red-400 text-sm font-mono">{labError}</p>}

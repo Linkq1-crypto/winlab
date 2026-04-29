@@ -1,15 +1,27 @@
 [
   {
     "type": "system",
-    "text": "DISK FULL [v4.2.0]"
+    "text": "DISK FULL [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: guided sandbox"
+  },
+  {
+    "type": "info",
+    "text": "Mounting beginner-safe telemetry overlays."
+  },
+  {
+    "type": "success",
+    "text": "Recovery hints staged in low-pressure mode."
   },
   {
     "type": "warning",
-    "text": "⚠  Filesystem at 100% — writes blocked"
+    "text": "Filesystem at 100 percent - writes blocked"
   },
   {
     "type": "warning",
-    "text": "⚠  Storage I/O errors detected"
+    "text": "Storage I/O errors detected"
   },
   {
     "type": "prompt",

@@ -1,11 +1,23 @@
 [
   {
     "type": "system",
-    "text": "LINUX TERMINAL [v4.2.0]"
+    "text": "LINUX TERMINAL [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: guided sandbox"
   },
   {
     "type": "info",
-    "text": "ℹ  Check the permissions on incident.log."
+    "text": "Mounting beginner-safe telemetry overlays."
+  },
+  {
+    "type": "success",
+    "text": "Recovery hints staged in low-pressure mode."
+  },
+  {
+    "type": "info",
+    "text": "Check the permissions on incident.log."
   },
   {
     "type": "prompt",

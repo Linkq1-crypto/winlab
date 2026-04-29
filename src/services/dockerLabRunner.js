@@ -190,10 +190,11 @@ export async function execCommandInContainer({ sessionId, command }) {
   });
 }
 
-export async function startDockerLabSession({ labId, sessionId, variantId }) {
+export async function startDockerLabSession({ labId, sessionId, variantId, levelId }) {
   const safeLabId     = sanitizeToken(labId,      "disk-full");
   const safeSessionId = sanitizeToken(sessionId,  "default");
   const safeVariantId = variantId ? sanitizeToken(variantId, "default") : "";
+  const safeLevelId = sanitizeToken(levelId || "junior", "junior").toUpperCase();
   const containerName = getContainerName(safeSessionId);
 
   // Remove a stale container with the same name before starting a fresh one
@@ -214,6 +215,7 @@ export async function startDockerLabSession({ labId, sessionId, variantId }) {
       "--cpus", "0.5",
       "-e", `LAB_ID=${safeLabId}`,
       "-e", `LAB_VARIANT=${safeVariantId}`,
+      "-e", `LAB_LEVEL=${safeLevelId}`,
       LAB_IMAGE,
     ]);
   } catch (error) {
@@ -235,6 +237,7 @@ export async function startDockerLabSession({ labId, sessionId, variantId }) {
   return {
     labId:      safeLabId,
     variantId:  safeVariantId || null,
+    levelId:    safeLevelId,
     sessionId:  safeSessionId,
     containerName,
     shellCommand: getDockerLabShellCommand({ sessionId: safeSessionId }),

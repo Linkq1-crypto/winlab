@@ -57,6 +57,7 @@ import {
   isContainerRunning,
 } from "./src/services/dockerLabRunner.js";
 import { getSiteLabCatalog } from "./src/services/siteLabCatalog.js";
+import { getLevelConfig, isKnownLevel } from "./src/config/levels.js";
 import labAiRoutes from "./server/routes/labAi.js";
 import labProgressRouter from "./server/routes/labProgress.js";
 
@@ -498,14 +499,20 @@ setInterval(async () => {
 
 app.post("/api/lab/start", freeLabLimiter, async (req, res) => {
   try {
-    const { labId, sessionId, variantId } = req.body || {};
+    const { labId, sessionId, variantId, level: levelInput } = req.body || {};
     if (!labId || !sessionId) {
       return res.status(400).json({ error: "labId and sessionId are required" });
     }
 
-    const result = await startDockerLabSession({ labId, sessionId, variantId });
+    const levelId = typeof levelInput === "string" ? levelInput.trim().toUpperCase() : "JUNIOR";
+    if (!isKnownLevel(levelId)) {
+      return res.status(400).json({ error: "level must be NOVICE, JUNIOR, MID, SENIOR, or SRE" });
+    }
+    const level = getLevelConfig(levelId);
+
+    const result = await startDockerLabSession({ labId, sessionId, variantId, levelId });
     labSessionActivity.set(result.sessionId, Date.now());
-    res.json({ ok: true, ...result });
+    res.json({ ok: true, level: level.id, hintEnabled: level.hintsEnabled, ...result });
   } catch (error) {
     console.error("POST /api/lab/start error:", error);
     res.status(500).json({ ok: false, error: String(error?.message || error) });
@@ -2533,6 +2540,7 @@ server.on("upgrade", (req, socket, head) => {
 labWss.on("connection", (ws, req) => {
   const url = new URL(req.url, "http://x");
   const containerName = url.searchParams.get("container");
+  const hintEnabled = url.searchParams.get("hintEnabled") !== "false";
 
   if (!containerName) {
     ws.send(JSON.stringify({ type: "error", data: "Missing container parameter" }));
@@ -2561,7 +2569,9 @@ labWss.on("connection", (ws, req) => {
   setTimeout(() => {
     if (child.stdin.writable) {
       child.stdin.write(
-        "cat /opt/winlab/*/README.txt 2>/dev/null; echo; echo '  > Type verify | hint'\n"
+        hintEnabled
+          ? "cat /opt/winlab/*/README.txt 2>/dev/null; echo; echo '  > Type verify | hint'\n"
+          : "cat /opt/winlab/*/README.txt 2>/dev/null; echo; echo '  > Type verify'\n"
       );
     }
   }, 700);

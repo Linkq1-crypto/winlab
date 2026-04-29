@@ -1,15 +1,27 @@
 [
   {
     "type": "system",
-    "text": "APACHE CONFIG ERROR [v4.2.0]"
+    "text": "APACHE CONFIG ERROR [UBUNTU]"
   },
   {
-    "type": "warning",
-    "text": "⚠  Apache service misconfiguration detected"
+    "type": "system",
+    "text": "Operator lane: guided sandbox"
   },
   {
     "type": "info",
-    "text": "ℹ  Read the error carefully."
+    "text": "Mounting beginner-safe telemetry overlays."
+  },
+  {
+    "type": "success",
+    "text": "Recovery hints staged in low-pressure mode."
+  },
+  {
+    "type": "warning",
+    "text": "Apache service misconfiguration detected"
+  },
+  {
+    "type": "info",
+    "text": "Read the error carefully."
   },
   {
     "type": "prompt",

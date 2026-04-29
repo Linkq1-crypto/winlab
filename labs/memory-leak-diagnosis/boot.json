@@ -1,11 +1,23 @@
 [
   {
     "type": "system",
-    "text": "MEMORY LEAK DIAGNOSIS [v4.2.0]"
+    "text": "MEMORY LEAK DIAGNOSIS [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: operations escalation"
+  },
+  {
+    "type": "info",
+    "text": "Replaying production incident timeline."
   },
   {
     "type": "warning",
-    "text": "⚠  Memory usage critical — OOM imminent"
+    "text": "Customer-facing blast radius expanding."
+  },
+  {
+    "type": "warning",
+    "text": "Memory usage critical - OOM imminent"
   },
   {
     "type": "prompt",

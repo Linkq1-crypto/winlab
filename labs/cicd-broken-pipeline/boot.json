@@ -1,7 +1,19 @@
 [
   {
     "type": "system",
-    "text": "CI CD BROKEN PIPELINE [v4.2.0]"
+    "text": "CI CD BROKEN PIPELINE [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: operations escalation"
+  },
+  {
+    "type": "info",
+    "text": "Replaying production incident timeline."
+  },
+  {
+    "type": "warning",
+    "text": "Customer-facing blast radius expanding."
   },
   {
     "type": "prompt",

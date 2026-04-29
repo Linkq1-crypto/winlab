@@ -1,7 +1,19 @@
 [
   {
     "type": "system",
-    "text": "ENVIRONMENT VARIABLE UPDATE [v4.2.0]"
+    "text": "ENVIRONMENT VARIABLE UPDATE [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: operations escalation"
+  },
+  {
+    "type": "info",
+    "text": "Replaying production incident timeline."
+  },
+  {
+    "type": "warning",
+    "text": "Customer-facing blast radius expanding."
   },
   {
     "type": "prompt",

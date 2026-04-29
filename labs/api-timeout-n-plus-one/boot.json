@@ -1,11 +1,27 @@
 [
   {
     "type": "system",
-    "text": "API TIMEOUT N PLUS ONE [v4.2.0]"
+    "text": "API TIMEOUT N PLUS ONE [CODEX]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: code-path containment"
+  },
+  {
+    "type": "info",
+    "text": "Mounting application workspace and failing revision."
   },
   {
     "type": "warning",
-    "text": "⚠  API response time critically degraded"
+    "text": "Regression injected into live request flow."
+  },
+  {
+    "type": "warning",
+    "text": "API response time critically degraded"
+  },
+  {
+    "type": "warning",
+    "text": "Extended response window detected - multiple corrective actions may be required."
   },
   {
     "type": "prompt",

@@ -1,15 +1,27 @@
 [
   {
     "type": "system",
-    "text": "APACHE SSL [v4.2.0]"
+    "text": "APACHE SSL [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: systems simulation"
+  },
+  {
+    "type": "info",
+    "text": "Calibrating network and service topology."
   },
   {
     "type": "warning",
-    "text": "⚠  Apache service misconfiguration detected"
+    "text": "Scenario complexity elevated for cross-domain triage."
   },
   {
     "type": "warning",
-    "text": "⚠  SSL certificate validation failed"
+    "text": "Apache service misconfiguration detected"
+  },
+  {
+    "type": "warning",
+    "text": "SSL certificate validation failed"
   },
   {
     "type": "prompt",

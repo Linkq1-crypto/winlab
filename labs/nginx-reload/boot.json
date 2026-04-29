@@ -1,11 +1,23 @@
 [
   {
     "type": "system",
-    "text": "NGINX RELOAD [v4.2.0]"
+    "text": "NGINX RELOAD [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: operations escalation"
+  },
+  {
+    "type": "info",
+    "text": "Replaying production incident timeline."
   },
   {
     "type": "warning",
-    "text": "⚠  nginx.service in FAILED state"
+    "text": "Customer-facing blast radius expanding."
+  },
+  {
+    "type": "warning",
+    "text": "nginx.service in FAILED state"
   },
   {
     "type": "prompt",

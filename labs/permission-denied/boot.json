@@ -1,15 +1,27 @@
 [
   {
     "type": "system",
-    "text": "PERMISSION DENIED [v4.2.0]"
+    "text": "PERMISSION DENIED [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: standard response pressure"
+  },
+  {
+    "type": "info",
+    "text": "Mounting production-like service map."
   },
   {
     "type": "warning",
-    "text": "⚠  Permission denied — ACL misconfiguration"
+    "text": "Root cause visibility partially degraded."
   },
   {
     "type": "warning",
-    "text": "⚠  SELinux policy blocking critical access"
+    "text": "Permission denied - ACL misconfiguration"
+  },
+  {
+    "type": "warning",
+    "text": "SELinux policy blocking critical access"
   },
   {
     "type": "prompt",

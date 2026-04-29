@@ -1,19 +1,39 @@
 [
   {
     "type": "system",
-    "text": "ENHANCED TERMINAL [v4.2.0]"
+    "text": "ENHANCED TERMINAL [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: guided sandbox"
+  },
+  {
+    "type": "info",
+    "text": "Mounting beginner-safe telemetry overlays."
+  },
+  {
+    "type": "success",
+    "text": "Recovery hints staged in low-pressure mode."
   },
   {
     "type": "warning",
-    "text": "⚠  Apache service misconfiguration detected"
+    "text": "Apache service misconfiguration detected"
   },
   {
     "type": "warning",
-    "text": "⚠  Filesystem at 100% — writes blocked"
+    "text": "Filesystem at 100 percent - writes blocked"
   },
   {
     "type": "warning",
-    "text": "⚠  Security misconfiguration detected"
+    "text": "Security misconfiguration detected"
+  },
+  {
+    "type": "warning",
+    "text": "Extended response window detected - multiple corrective actions may be required."
+  },
+  {
+    "type": "warning",
+    "text": "Security-sensitive evidence path enabled - preserve state before broad changes."
   },
   {
     "type": "prompt",

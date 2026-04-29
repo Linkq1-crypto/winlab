@@ -1,19 +1,39 @@
 [
   {
     "type": "system",
-    "text": "AUTH BYPASS JWT TRUST [v4.2.0]"
+    "text": "AUTH BYPASS JWT TRUST [CODEX]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: code-path containment"
+  },
+  {
+    "type": "info",
+    "text": "Mounting application workspace and failing revision."
   },
   {
     "type": "warning",
-    "text": "⚠  Authentication service unreachable"
+    "text": "Regression injected into live request flow."
   },
   {
     "type": "warning",
-    "text": "⚠  JWT validation bypass detected"
+    "text": "Authentication service unreachable"
   },
   {
     "type": "warning",
-    "text": "⚠  Security misconfiguration detected"
+    "text": "JWT validation bypass detected"
+  },
+  {
+    "type": "warning",
+    "text": "Security misconfiguration detected"
+  },
+  {
+    "type": "warning",
+    "text": "Extended response window detected - multiple corrective actions may be required."
+  },
+  {
+    "type": "warning",
+    "text": "Security-sensitive evidence path enabled - preserve state before broad changes."
   },
   {
     "type": "prompt",

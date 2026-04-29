@@ -1,11 +1,23 @@
 [
   {
     "type": "system",
-    "text": "REDIS OOM [v4.2.0]"
+    "text": "REDIS OOM [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: operations escalation"
+  },
+  {
+    "type": "info",
+    "text": "Replaying production incident timeline."
   },
   {
     "type": "warning",
-    "text": "⚠  Redis OOM — eviction storm in progress"
+    "text": "Customer-facing blast radius expanding."
+  },
+  {
+    "type": "warning",
+    "text": "Redis OOM - eviction storm in progress"
   },
   {
     "type": "prompt",

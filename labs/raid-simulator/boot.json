@@ -1,15 +1,31 @@
 [
   {
     "type": "system",
-    "text": "RAID SIMULATOR [v4.2.0]"
+    "text": "RAID SIMULATOR [UBUNTU]"
+  },
+  {
+    "type": "system",
+    "text": "Operator lane: standard response pressure"
+  },
+  {
+    "type": "info",
+    "text": "Mounting production-like service map."
   },
   {
     "type": "warning",
-    "text": "⚠  RAID array degraded — disk failure detected"
+    "text": "Root cause visibility partially degraded."
   },
   {
     "type": "warning",
-    "text": "⚠  Storage I/O errors detected"
+    "text": "RAID array degraded - disk failure detected"
+  },
+  {
+    "type": "warning",
+    "text": "Storage I/O errors detected"
+  },
+  {
+    "type": "warning",
+    "text": "Extended response window detected - multiple corrective actions may be required."
   },
   {
     "type": "prompt",
