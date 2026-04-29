@@ -19,12 +19,12 @@ const TYPE_PREFIX = {
 };
 
 const DELAY_BY_TYPE = {
-  system: 380,
-  warning: 520,
-  info: 240,
-  success: 260,
-  error: 560,
-  prompt: 320,
+  system: 620,
+  warning: 760,
+  info: 420,
+  success: 440,
+  error: 860,
+  prompt: 520,
 };
 
 function buildWarmupSequence({ lab, levelId, hintEnabled }) {
@@ -68,14 +68,19 @@ export default function LabBootSplash({ bootSequence, onReady, lab = null, level
   useEffect(() => {
     if (visibleCount < fullSequence.length) {
       const current = fullSequence[visibleCount];
+      const delay = visibleCount === 0
+        ? 950
+        : current?.synthetic
+          ? 900
+          : (DELAY_BY_TYPE[current?.type] ?? 420);
       const t = setTimeout(
         () => setVisibleCount((v) => v + 1),
-        current?.synthetic ? 650 : (DELAY_BY_TYPE[current?.type] ?? 260)
+        delay
       );
       return () => clearTimeout(t);
     }
 
-    const finalPause = setTimeout(() => setAllVisible(true), 700);
+    const finalPause = setTimeout(() => setAllVisible(true), 1400);
     return () => clearTimeout(finalPause);
   }, [fullSequence, visibleCount]);
 

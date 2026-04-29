@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, CalendarDays, Server, Tag } from 'lucide-react';
+import SocialSidebar from '../SocialSidebar';
+import { useSocialStorage } from '../hooks/useSocialStorage';
 
 function PageNav() {
   return (
@@ -37,6 +39,7 @@ function renderContent(content) {
 }
 
 export default function BlogPage() {
+  const [socialLinks] = useSocialStorage();
   const path = window.location.pathname;
   const slug = useMemo(() => {
     const parts = path.split('/').filter(Boolean);
@@ -55,7 +58,7 @@ export default function BlogPage() {
       setLoading(true);
       setError('');
       try {
-        const endpoint = slug ? `/api/blog/${slug}` : '/api/blog';
+        const endpoint = slug ? `/api/blog/${slug}` : '/api/blog/all';
         const res = await fetch(endpoint, { credentials: 'include' });
         const data = await res.json().catch(() => null);
         if (!res.ok || !data) {
@@ -84,6 +87,7 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-gray-300 font-sans">
+      <SocialSidebar links={socialLinks} />
       <PageNav />
       <div className="max-w-4xl mx-auto px-6 py-20">
         {!slug && (

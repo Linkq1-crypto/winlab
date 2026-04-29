@@ -8,7 +8,9 @@ import LabBootSplash from './components/LabBootSplash';
 import RegisterModal from './components/RegisterModal';
 import CookieBanner from './CookieBanner';
 import AIMentor from './AIMentor';
+import SocialSidebar from './SocialSidebar';
 import { LEVEL_OPTIONS, getLevelConfig } from './config/levels';
+import { useSocialStorage } from './hooks/useSocialStorage';
 
 
 
@@ -87,6 +89,7 @@ export default function HomeShell() {
   const [selectedLevelId, setSelectedLevelId] = useState('JUNIOR');
   const [pendingCheckoutPlan, setPendingCheckoutPlan] = useState(null);
   const [earlyAccessRemaining, setEarlyAccessRemaining] = useState(null);
+  const [socialLinks] = useSocialStorage();
   const terminalEndRef = useRef(null);
 
   useEffect(() => {
@@ -313,6 +316,7 @@ export default function HomeShell() {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 font-mono">
         <CookieBanner />
+        <SocialSidebar links={socialLinks} />
         <div className="w-full max-w-4xl h-[85vh] bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           <div className="bg-zinc-900 px-4 py-2 border-b border-white/5 flex items-center justify-between shrink-0">
             <div className="flex gap-1.5">
@@ -368,6 +372,7 @@ export default function HomeShell() {
       <div className="flex h-screen bg-[#050505] text-gray-300 font-sans overflow-hidden">
         {showRegister && <RegisterModal onSuccess={handleAuthSuccess} onClose={() => setShowRegister(false)} />}
         {showPaywall && <PaywallModal onUpgrade={handleUpgrade} onClose={() => { setShowPaywall(false); stopLab(); }} />}
+        <SocialSidebar links={socialLinks} />
         <div className="flex-1 flex flex-col">
           <LabTerminal
             containerName={activeSession.containerName}
@@ -386,6 +391,7 @@ export default function HomeShell() {
   return (
     <div className="flex h-screen bg-[#050505] text-gray-300 font-sans overflow-hidden">
       <CookieBanner />
+      <SocialSidebar links={socialLinks} />
       {showRegister && <RegisterModal onSuccess={handleAuthSuccess} onClose={() => setShowRegister(false)} />}
       {showPaywall && <PaywallModal onUpgrade={handleUpgrade} onClose={() => setShowPaywall(false)} />}
 

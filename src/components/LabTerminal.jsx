@@ -238,7 +238,7 @@ export default function LabTerminal({
             }}
             className="rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.25em] text-rose-200 transition-colors hover:bg-rose-400/20"
           >
-            Termina sessione
+            End Session
           </button>
         </div>
       </div>

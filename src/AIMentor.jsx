@@ -146,7 +146,7 @@ export default function AIMentor({ labId, labState = {} }) {
   const hintsLeft = maxHints === Infinity ? "∞" : Math.max(0, maxHints - hintCount);
 
   // ── Nudge bubble (shown after inactivity) ─────────────────────────────────
-  if (!open && nudge) {
+  if (!open && !showConsent && nudge) {
     return (
       <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
         <div className="bg-slate-800 border border-slate-700 rounded-2xl rounded-br-sm px-4 py-3 max-w-[220px] shadow-xl">
@@ -172,7 +172,7 @@ export default function AIMentor({ labId, labState = {} }) {
   }
 
   // ── Collapsed button ──────────────────────────────────────────────────────
-  if (!open) {
+  if (!open && !showConsent) {
     return (
       <button
         onClick={openWithConsentCheck}
