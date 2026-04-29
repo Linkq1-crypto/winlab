@@ -181,17 +181,94 @@ function decryptField(stored) {
 // ── Express setup ────────────────────────────────────────────────────
 const app = express();
 
+async function handleStripeWebhook(req, res) {
+  try {
+    if (!stripe) return res.sendStatus(200);
+    const sig    = req.headers["stripe-signature"];
+    const secret = process.env.STRIPE_WEBHOOK_SECRET;
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, secret);
+    } catch (err) {
+      console.error("Webhook signature failed:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Deduplication
+    const existing = await prisma.processedWebhookEvent.findUnique({ where: { eventId: event.id } });
+    if (existing) return res.sendStatus(200);
+    await prisma.processedWebhookEvent.create({ data: { eventId: event.id, eventType: event.type } });
+
+    const obj = event.data.object;
+
+    if (event.type === "checkout.session.completed") {
+      const customerId = obj.customer;
+      const subId      = obj.subscription;
+      const checkoutPlan = obj.metadata?.plan;
+      if (customerId) {
+        const user = await prisma.user.findFirst({ where: { stripeCustomerId: customerId } });
+        if (user && subId) {
+          const sub = await stripe.subscriptions.retrieve(subId);
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              stripeSubscriptionId: subId,
+              subscriptionStatus: sub.status,
+              subscriptionPlan: checkoutPlan || "pro",
+              subscriptionPeriodEnd: new Date(sub.current_period_end * 1000),
+              plan: checkoutPlan || "pro",
+            },
+          });
+        } else if (user && checkoutPlan === "early") {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              plan: "earlyAccess",
+              subscriptionStatus: "none",
+              subscriptionPlan: "early",
+            },
+          });
+        } else if (user && checkoutPlan === "lifetime") {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              plan: "lifetime",
+              subscriptionStatus: "lifetime",
+              subscriptionPlan: "lifetime",
+              cancelAtPeriodEnd: false,
+            },
+          });
+        }
+      }
+    }
+
+    if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+      const user = await prisma.user.findFirst({ where: { stripeSubscriptionId: obj.id } });
+      if (user) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            subscriptionStatus: obj.status,
+            subscriptionPeriodEnd: new Date(obj.current_period_end * 1000),
+            cancelAtPeriodEnd: obj.cancel_at_period_end,
+          },
+        });
+      }
+    }
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("POST /api/stripe/webhook error:", err);
+    res.sendStatus(200);
+  }
+}
+
+app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
+
 app.set("trust proxy", 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cookieParser());
-app.use(express.json({
-  limit: "2mb",
-  verify: (req, _res, buf) => {
-    if (req.originalUrl === "/api/stripe/webhook") {
-      req.rawBody = Buffer.from(buf);
-    }
-  },
-}));
+app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // ── Request ID (must be before all routes) ───────────────────────────
@@ -2020,89 +2097,6 @@ app.post("/api/stripe/pay-per-incident", requireAuth, paymentLimiter, async (req
   } catch (err) {
     console.error("POST /api/stripe/pay-per-incident error:", err);
     res.status(500).json({ error: "Failed" });
-  }
-});
-
-// POST /api/stripe/webhook
-app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
-  try {
-    if (!stripe) return res.sendStatus(200);
-    const sig    = req.headers["stripe-signature"];
-    const secret = process.env.STRIPE_WEBHOOK_SECRET;
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(req.rawBody || req.body, sig, secret);
-    } catch (err) {
-      console.error("Webhook signature failed:", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    // Deduplication
-    const existing = await prisma.processedWebhookEvent.findUnique({ where: { eventId: event.id } });
-    if (existing) return res.sendStatus(200);
-    await prisma.processedWebhookEvent.create({ data: { eventId: event.id, eventType: event.type } });
-
-    const obj = event.data.object;
-
-    if (event.type === "checkout.session.completed") {
-      const customerId = obj.customer;
-      const subId      = obj.subscription;
-      const checkoutPlan = obj.metadata?.plan;
-      if (customerId) {
-        const user = await prisma.user.findFirst({ where: { stripeCustomerId: customerId } });
-        if (user && subId) {
-          const sub = await stripe.subscriptions.retrieve(subId);
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              stripeSubscriptionId: subId,
-              subscriptionStatus: sub.status,
-              subscriptionPlan: checkoutPlan || "pro",
-              subscriptionPeriodEnd: new Date(sub.current_period_end * 1000),
-              plan: checkoutPlan || "pro",
-            },
-          });
-        } else if (user && checkoutPlan === "early") {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              plan: "earlyAccess",
-              subscriptionStatus: "none",
-              subscriptionPlan: "early",
-            },
-          });
-        } else if (user && checkoutPlan === "lifetime") {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              plan: "lifetime",
-              subscriptionStatus: "lifetime",
-              subscriptionPlan: "lifetime",
-              cancelAtPeriodEnd: false,
-            },
-          });
-        }
-      }
-    }
-
-    if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
-      const user = await prisma.user.findFirst({ where: { stripeSubscriptionId: obj.id } });
-      if (user) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            subscriptionStatus: obj.status,
-            subscriptionPeriodEnd: new Date(obj.current_period_end * 1000),
-            cancelAtPeriodEnd: obj.cancel_at_period_end,
-          },
-        });
-      }
-    }
-
-    res.sendStatus(200);
-  } catch (err) {
-    console.error("POST /api/stripe/webhook error:", err);
-    res.sendStatus(200);
   }
 });
 
