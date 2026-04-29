@@ -57,6 +57,18 @@ const NETWORK_PROFILES = {
   },
 };
 
+async function applyNetworkProfile(page, profile) {
+  const client = await page.createCDPSession();
+  await client.send("Network.enable");
+  await client.send("Network.emulateNetworkConditions", {
+    offline: Boolean(profile.offline),
+    latency: Number(profile.latency),
+    downloadThroughput: Number(profile.downloadThroughput),
+    uploadThroughput: Number(profile.uploadThroughput),
+  });
+  return client;
+}
+
 const TEST_URL = process.argv.includes('--url')
   ? process.argv[process.argv.indexOf('--url') + 1]
   : 'http://localhost:3001';
@@ -84,7 +96,7 @@ async function runTest() {
 
   // Apply network conditions
   const profile = NETWORK_PROFILES[NETWORK] || NETWORK_PROFILES['2g'];
-  await page.emulateNetworkConditions(profile);
+  await applyNetworkProfile(page, profile);
 
   // Simulate low-end device CPU (4x slowdown)
   const client = await page.createCDPSession();

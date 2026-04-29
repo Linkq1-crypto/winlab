@@ -44,6 +44,18 @@ const NETWORK_PROFILES = {
   '4g': { offline: false, downloadThroughput: (4 * 1024 * 1024) / 8, uploadThroughput: (3 * 1024 * 1024) / 8, latency: 75 },
 };
 
+async function applyNetworkProfile(page, profile) {
+  const client = await page.createCDPSession();
+  await client.send("Network.enable");
+  await client.send("Network.emulateNetworkConditions", {
+    offline: Boolean(profile.offline),
+    latency: Number(profile.latency),
+    downloadThroughput: Number(profile.downloadThroughput),
+    uploadThroughput: Number(profile.uploadThroughput),
+  });
+  return client;
+}
+
 // ──── Performance Thresholds ────
 const THRESHOLDS = {
   '2g':     { firstPaint: 4000, interactive: 8000, maxResource: 2 * 1024 * 1024, maxHeap: 200 * 1024 * 1024 },
@@ -83,7 +95,7 @@ async function runTests() {
 
   const page = await browser.newPage();
   const profile = NETWORK_PROFILES[NETWORK] || NETWORK_PROFILES['fast-3g'];
-  await page.emulateNetworkConditions(profile);
+  await applyNetworkProfile(page, profile);
 
   // Test 1: Page loads without errors
   await test('Page loads without console errors', async () => {
