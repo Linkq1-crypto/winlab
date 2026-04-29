@@ -1,17 +1,18 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
 import { LabProvider } from './LabContext';
 import HomeShell from './HomeShell';
-import LegalLayout from './LegalLayout';
-import SecurityPage from './pages/SecurityPage';
-import ContactPage from './pages/ContactPage';
-import StatusPage from './pages/StatusPage';
-import HowItWorksPage from './pages/HowItWorksPage';
-import BlogPage from './pages/BlogPage';
-import FeedbackPage from './pages/FeedbackPage';
-import ProfilePublicPage from './pages/ProfilePublicPage';
-import AISettings from './AISettings';
 import './index.css';
+
+const LegalLayout = lazy(() => import('./LegalLayout'));
+const SecurityPage = lazy(() => import('./pages/SecurityPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const StatusPage = lazy(() => import('./pages/StatusPage'));
+const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
+const BlogPage = lazy(() => import('./pages/BlogPage'));
+const FeedbackPage = lazy(() => import('./pages/FeedbackPage'));
+const ProfilePublicPage = lazy(() => import('./pages/ProfilePublicPage'));
+const AISettings = lazy(() => import('./AISettings'));
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -21,17 +22,53 @@ if ('serviceWorker' in navigator) {
 
 const path = window.location.pathname;
 
+function RouteShell() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-black px-6 text-center text-xs font-mono uppercase tracking-[0.28em] text-zinc-500">
+      <div className="animate-pulse">loading route shell</div>
+    </div>
+  );
+}
+
 function App() {
-  if (path === '/privacy')       return <LegalLayout initialTab="privacy" onBack={() => { window.location.href = '/'; }} />;
-  if (path === '/terms')         return <LegalLayout initialTab="terms"   onBack={() => { window.location.href = '/'; }} />;
-  if (path === '/security')      return <SecurityPage />;
-  if (path === '/contact')       return <ContactPage />;
-  if (path === '/status')        return <StatusPage />;
-  if (path === '/how-it-works')  return <HowItWorksPage />;
-  if (path === '/profile')       return <ProfilePublicPage />;
-  if (path === '/feedback')      return <FeedbackPage />;
-  if (path === '/blog' || path.startsWith('/blog/')) return <BlogPage />;
-  if (path === '/settings/ai')   return <AISettings />;
+  if (path === '/privacy') {
+    return (
+      <Suspense fallback={<RouteShell />}>
+        <LegalLayout initialTab="privacy" onBack={() => { window.location.href = '/'; }} />
+      </Suspense>
+    );
+  }
+  if (path === '/terms') {
+    return (
+      <Suspense fallback={<RouteShell />}>
+        <LegalLayout initialTab="terms" onBack={() => { window.location.href = '/'; }} />
+      </Suspense>
+    );
+  }
+  if (path === '/security') {
+    return <Suspense fallback={<RouteShell />}><SecurityPage /></Suspense>;
+  }
+  if (path === '/contact') {
+    return <Suspense fallback={<RouteShell />}><ContactPage /></Suspense>;
+  }
+  if (path === '/status') {
+    return <Suspense fallback={<RouteShell />}><StatusPage /></Suspense>;
+  }
+  if (path === '/how-it-works') {
+    return <Suspense fallback={<RouteShell />}><HowItWorksPage /></Suspense>;
+  }
+  if (path === '/profile') {
+    return <Suspense fallback={<RouteShell />}><ProfilePublicPage /></Suspense>;
+  }
+  if (path === '/feedback') {
+    return <Suspense fallback={<RouteShell />}><FeedbackPage /></Suspense>;
+  }
+  if (path === '/blog' || path.startsWith('/blog/')) {
+    return <Suspense fallback={<RouteShell />}><BlogPage /></Suspense>;
+  }
+  if (path === '/settings/ai') {
+    return <Suspense fallback={<RouteShell />}><AISettings /></Suspense>;
+  }
   return (
     <LabProvider>
       <HomeShell />

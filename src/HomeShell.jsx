@@ -1,30 +1,29 @@
-import { useState, useEffect, useRef } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import {
   Server, LayoutDashboard, User, LogOut,
   Search, Clock, AlertCircle, X
 } from 'lucide-react';
-import LabTerminal from './components/LabTerminal';
-import LabBootSplash from './components/LabBootSplash';
-import RegisterModal from './components/RegisterModal';
-import CookieBanner from './CookieBanner';
-import AIMentor from './AIMentor';
 import SocialSidebar from './SocialSidebar';
 import { LEVEL_OPTIONS, getLevelConfig } from './config/levels';
 import { useSocialStorage } from './hooks/useSocialStorage';
 
+const LabTerminal = lazy(() => import('./components/LabTerminal'));
+const LabBootSplash = lazy(() => import('./components/LabBootSplash'));
+const RegisterModal = lazy(() => import('./components/RegisterModal'));
+const CookieBanner = lazy(() => import('./CookieBanner'));
+const AIMentor = lazy(() => import('./AIMentor'));
 
 
 
 const CATEGORIES = ['All','Starter','Pro','Codex','Ops','Business'];
 
-function buildInitialLogs(totalLabs = null) {
-  const label = Number.isFinite(totalLabs) ? totalLabs : '...';
+function buildInitialLogs() {
   return [
     { type:'system',  text:'WINLAB INCIDENT ROUTER [v4.2.0]' },
     { type:'info',    text:'Booting secure environment...' },
     { type:'info',    text:'Initializing neural link to edge nodes...' },
     { type:'success', text:'Link established. Latency: 14ms' },
-    { type:'warning', text:`SCAN COMPLETE: ${label} runnable incidents detected.` },
+    { type:'warning', text:'SCAN COMPLETE: runnable incidents detected.' },
     { type:'info',    text:'Waiting for Operator authorization...' },
     { type:'prompt',  text:'Type "login" or "1" to continue:' },
   ];
@@ -89,22 +88,15 @@ export default function HomeShell() {
   const [selectedLevelId, setSelectedLevelId] = useState('JUNIOR');
   const [pendingCheckoutPlan, setPendingCheckoutPlan] = useState(null);
   const [earlyAccessRemaining, setEarlyAccessRemaining] = useState(null);
+  const [catalogLoading, setCatalogLoading] = useState(true);
   const [socialLinks] = useSocialStorage();
   const terminalEndRef = useRef(null);
 
   useEffect(() => {
-    if (view !== 'terminal') return;
-    const initialLogs = buildInitialLogs(labCatalog.length || null);
-    let i = 0;
-    const iv = setInterval(() => {
-      if (i < initialLogs.length) {
-        setTerminalLogs(prev => [...prev, initialLogs[i++]]);
-      } else {
-        clearInterval(iv);
-      }
-    }, 300);
-    return () => clearInterval(iv);
-  }, [view, labCatalog.length]);
+    if (terminalLogs.length === 0) {
+      setTerminalLogs(buildInitialLogs());
+    }
+  }, [terminalLogs.length]);
 
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -131,6 +123,8 @@ export default function HomeShell() {
       } catch {
         setLabCatalog([]);
         setStarterIds(new Set());
+      } finally {
+        if (!cancelled) setCatalogLoading(false);
       }
     }
 
@@ -270,7 +264,7 @@ export default function HomeShell() {
     setAuth(null);
     sessionStorage.removeItem('winlab_auth');
     setView('terminal');
-    setTerminalLogs([]);
+    setTerminalLogs(buildInitialLogs());
   }
 
   async function startCheckout(plan) {
@@ -315,7 +309,9 @@ export default function HomeShell() {
   if (view === 'terminal') {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 font-mono">
-        <CookieBanner />
+        <Suspense fallback={null}>
+          <CookieBanner />
+        </Suspense>
         <SocialSidebar links={socialLinks} />
         <div className="w-full max-w-4xl h-[85vh] bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           <div className="bg-zinc-900 px-4 py-2 border-b border-white/5 flex items-center justify-between shrink-0">
@@ -328,6 +324,10 @@ export default function HomeShell() {
             <div className="w-10" />
           </div>
           <div className="flex-1 p-6 overflow-y-auto space-y-1">
+            <div className="mb-4 flex items-center gap-3 rounded-xl border border-cyan-400/10 bg-cyan-400/5 px-3 py-2 text-[10px] uppercase tracking-[0.24em] text-cyan-200/80">
+              <div className="h-2 w-2 rounded-full bg-cyan-300 animate-pulse" />
+              {catalogLoading ? 'syncing lab catalog' : `${starterLabs.length} starter labs primed`}
+            </div>
             {terminalLogs.map((log, i) => log && (
               <div key={i} className={`text-sm leading-relaxed break-all ${
                 log.type==='system'  ? 'text-blue-400 font-bold' :
@@ -356,13 +356,15 @@ export default function HomeShell() {
 
   if (view === 'lab' && showSplash && activeSession?.bootSequence?.length > 0) {
     return (
-      <LabBootSplash
-        lab={activeSession.lab}
-        levelId={activeSession.levelId}
-        hintEnabled={activeSession.hintEnabled}
-        bootSequence={activeSession.bootSequence}
-        onReady={() => setShowSplash(false)}
-      />
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#050505] text-xs font-mono uppercase tracking-[0.28em] text-slate-500"><div className="animate-pulse">booting lab shell</div></div>}>
+        <LabBootSplash
+          lab={activeSession.lab}
+          levelId={activeSession.levelId}
+          hintEnabled={activeSession.hintEnabled}
+          bootSequence={activeSession.bootSequence}
+          onReady={() => setShowSplash(false)}
+        />
+      </Suspense>
     );
   }
 
@@ -370,19 +372,23 @@ export default function HomeShell() {
   if (view === 'lab' && activeSession) {
     return (
       <div className="flex h-screen bg-[#050505] text-gray-300 font-sans overflow-hidden">
-        {showRegister && <RegisterModal onSuccess={handleAuthSuccess} onClose={() => setShowRegister(false)} />}
+        {showRegister && <Suspense fallback={null}><RegisterModal onSuccess={handleAuthSuccess} onClose={() => setShowRegister(false)} /></Suspense>}
         {showPaywall && <PaywallModal onUpgrade={handleUpgrade} onClose={() => { setShowPaywall(false); stopLab(); }} />}
         <SocialSidebar links={socialLinks} />
         <div className="flex-1 flex flex-col">
-          <LabTerminal
-            containerName={activeSession.containerName}
-            levelId={activeSession.levelId}
-            hintEnabled={activeSession.hintEnabled}
-            onClose={stopLab}
-            onComplete={handleLabComplete}
-          />
+          <Suspense fallback={<div className="flex h-full items-center justify-center text-xs font-mono uppercase tracking-[0.28em] text-slate-500"><div className="animate-pulse">attaching live terminal</div></div>}>
+            <LabTerminal
+              containerName={activeSession.containerName}
+              levelId={activeSession.levelId}
+              hintEnabled={activeSession.hintEnabled}
+              onClose={stopLab}
+              onComplete={handleLabComplete}
+            />
+          </Suspense>
         </div>
-        <AIMentor labId={activeSession.labId} labState={{}} />
+        <Suspense fallback={null}>
+          <AIMentor labId={activeSession.labId} labState={{}} />
+        </Suspense>
       </div>
     );
   }
@@ -390,9 +396,11 @@ export default function HomeShell() {
   // ── Dashboard view ─────────────────────────────────────────────────────────
   return (
     <div className="flex h-screen bg-[#050505] text-gray-300 font-sans overflow-hidden">
-      <CookieBanner />
+      <Suspense fallback={null}>
+        <CookieBanner />
+      </Suspense>
       <SocialSidebar links={socialLinks} />
-      {showRegister && <RegisterModal onSuccess={handleAuthSuccess} onClose={() => setShowRegister(false)} />}
+      {showRegister && <Suspense fallback={null}><RegisterModal onSuccess={handleAuthSuccess} onClose={() => setShowRegister(false)} /></Suspense>}
       {showPaywall && <PaywallModal onUpgrade={handleUpgrade} onClose={() => setShowPaywall(false)} />}
 
       <aside className={`fixed lg:relative z-50 w-64 h-full border-r border-white/5 bg-black flex flex-col transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>

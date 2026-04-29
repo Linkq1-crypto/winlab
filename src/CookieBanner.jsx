@@ -20,7 +20,8 @@ export default function CookieBanner({ onConsent }) {
   useEffect(() => {
     const saved = localStorage.getItem(KEY);
     if (!saved) {
-      const t = setTimeout(() => setVisible(true), 800);
+      // Delay the banner until after the critical first render settles.
+      const t = setTimeout(() => setVisible(true), 6000);
       return () => clearTimeout(t);
     }
   }, []);
