@@ -57,6 +57,15 @@ const FOOTER_LINKS = [
   },
 ];
 
+const QUICK_PAGE_LINKS = [
+  { label: 'Blog', href: '/blog' },
+  { label: 'Feedback', href: '/feedback' },
+  { label: 'Profile', href: '/profile' },
+  { label: 'Contact', href: '/contact' },
+  { label: 'Status', href: '/status' },
+  { label: 'How It Works', href: '/how-it-works' },
+];
+
 export default function HomeShell() {
   const [view, setView] = useState('terminal');
   const [auth, setAuth] = useState(null);
@@ -389,6 +398,18 @@ export default function HomeShell() {
             </div>
           </header>
 
+          <div className="mb-8 flex flex-wrap gap-2">
+            {QUICK_PAGE_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="rounded-full border border-white/8 bg-white/[0.03] px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-gray-400 transition-colors hover:border-red-500/30 hover:text-white"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
             <div className="flex gap-1 bg-zinc-900 p-1.5 rounded-2xl border border-white/5 overflow-x-auto w-full md:w-auto no-scrollbar">
               {CATEGORIES.map(cat => (
@@ -425,11 +446,11 @@ export default function HomeShell() {
               <div className="max-w-2xl">
                 <p className="text-[10px] font-black uppercase tracking-[0.35em] text-emerald-300/80 mb-3">Start In The Free Zone</p>
                 <h2 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter leading-none mb-3">
-                  I primi 5 lab starter devono guidare la home
+                  Let The First 5 Free Labs Drive The Homepage
                 </h2>
                 <p className="text-sm text-gray-300 leading-relaxed">
-                  Entra dai lab gratuiti, prova subito gli incidenti reali e lascia il pricing come step successivo.
-                  Il catalogo resta il centro della pagina, non il listino.
+                  Get people into real incidents immediately with the free starter labs, then introduce pricing as the next step.
+                  Keep the catalog at the center of the homepage, not the paywall.
                 </p>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 shrink-0">

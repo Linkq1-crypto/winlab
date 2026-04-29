@@ -56,7 +56,7 @@ export default function CookieBanner({ onConsent }) {
 
   return (
     <div style={{
-      position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
+      position: "fixed", bottom: 24, right: 24,
       zIndex: 9999, width: "min(620px, calc(100vw - 32px))",
       background: "#060d12", border: "1px solid #1a2e1a",
       borderRadius: 10, fontFamily: "monospace", fontSize: 12,
