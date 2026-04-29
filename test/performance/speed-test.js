@@ -18,6 +18,10 @@
 import fs from "node:fs";
 import puppeteer from "puppeteer";
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function resolveBrowserExecutable() {
   const candidates = [
     process.env.PUPPETEER_EXECUTABLE_PATH,
@@ -114,7 +118,7 @@ async function runTest() {
   console.log(`  ⚡ DOM Content Loaded: ${domLoaded}ms`);
 
   // Wait for first paint
-  await page.waitForTimeout(500);
+  await sleep(500);
   const metrics = await page.metrics();
   console.log(`  📏 JS Heap Used: ${(metrics.JSHeapUsedSize / 1024 / 1024).toFixed(1)}MB`);
 
@@ -146,7 +150,7 @@ async function runTest() {
   if (firstButton) {
     const clickStart = Date.now();
     await firstButton.click();
-    await page.waitForTimeout(100);
+    await sleep(100);
     const clickResponse = Date.now() - clickStart;
     console.log(`  ✅ Button click response: ${clickResponse}ms`);
     console.log(`  ${clickResponse < 100 ? '✅' : '⚠️'} ${clickResponse < 100 ? 'Fast' : 'Could be faster'}`);
@@ -162,7 +166,7 @@ async function runTest() {
   if (canScroll) {
     const scrollStart = Date.now();
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
-    await page.waitForTimeout(200);
+    await sleep(200);
     const scrollTime = Date.now() - scrollStart;
     console.log(`  ✅ Scroll executed: ${scrollTime}ms`);
   } else {

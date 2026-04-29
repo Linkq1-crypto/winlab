@@ -17,6 +17,10 @@ import assert from "node:assert";
 import fs from "node:fs";
 import puppeteer from "puppeteer";
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function resolveBrowserExecutable() {
   const candidates = [
     process.env.PUPPETEER_EXECUTABLE_PATH,
@@ -155,7 +159,7 @@ async function runTests() {
   // Test 5: Heap memory usage
   await test('Heap memory < 150MB', async () => {
     await page.goto(TEST_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForTimeout(2000); // Let JS settle
+    await sleep(2000); // Let JS settle
 
     const metrics = await page.metrics();
     const heapUsed = metrics.JSHeapUsedSize;
