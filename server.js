@@ -2556,12 +2556,7 @@ labWss.on("connection", (ws, req) => {
     return;
   }
 
-  const isWindowsHost = process.platform === "win32";
-  const dockerArgs = isWindowsHost
-    ? ["exec", "-i", safeContainer, "/bin/bash", "-i"]
-    : ["-c", "import pty,sys; pty.spawn(sys.argv[1:])", "docker", "exec", "-it", safeContainer, "/bin/bash"];
-  const dockerCmd = isWindowsHost ? "docker" : "python3";
-  const child = spawn(dockerCmd, dockerArgs, {
+  const child = spawn("docker", ["exec", "-i", safeContainer, "/bin/bash", "-i"], {
     env: { ...process.env, TERM: "xterm-256color" },
     windowsHide: true,
   });
@@ -2571,9 +2566,7 @@ labWss.on("connection", (ws, req) => {
   // Auto-show lab instructions (aliases/hint script pre-loaded via .bashrc)
   setTimeout(() => {
     if (child.stdin.writable) {
-      if (isWindowsHost) {
-        child.stdin.write("\n");
-      }
+      child.stdin.write("\n");
       child.stdin.write(
         hintEnabled
           ? "cat /opt/winlab/*/README.txt 2>/dev/null; echo; echo '  > Type verify | hint'\n"
