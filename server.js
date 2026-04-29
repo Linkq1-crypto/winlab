@@ -240,7 +240,7 @@ class HybridRateLimitStore {
 }
 
 function createRateLimitStore(prefix, windowMs) {
-  return new HybridRateLimitStore(prefix, windowMs);
+  return redis ? new HybridRateLimitStore(prefix, windowMs) : undefined;
 }
 
 // ── Encryption helpers ───────────────────────────────────────────────

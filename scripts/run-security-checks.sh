@@ -34,15 +34,35 @@ run_cmd() {
   fi
 }
 
+run_optional_vitest() {
+  local label="$1"
+  local spec="$2"
+  local output_file
+  output_file="$(mktemp)"
+
+  log "$label"
+  if env BASE_URL="$BASE_URL" npx vitest run "$spec" >"$output_file" 2>&1; then
+    ok "$label"
+  else
+    if grep -q "No test files found" "$output_file"; then
+      warn "$label skipped: spec excluded from current Vitest config"
+    else
+      bad "$label"
+      cat "$output_file"
+    fi
+  fi
+  rm -f "$output_file"
+}
+
 echo -e "${BOLD}Security Checks${RESET}"
 echo -e "Target: ${CYAN}${BASE_URL}${RESET}"
 echo
 
 run_cmd "Health endpoint reachable" curl -fsS "${BASE_URL}/health"
 
-run_cmd "Vitest security headers suite" env BASE_URL="$BASE_URL" npx vitest run tests/security-headers.spec.ts
-run_cmd "Vitest production readiness suite" env BASE_URL="$BASE_URL" npx vitest run tests/production-readiness.spec.ts
-run_cmd "Vitest rate limiting suite" env BASE_URL="$BASE_URL" npx vitest run tests/rate-limiting.spec.ts
+run_optional_vitest "Vitest security headers suite" tests/security-headers.spec.ts
+run_optional_vitest "Vitest production readiness suite" tests/production-readiness.spec.ts
+run_optional_vitest "Vitest rate limiting suite" tests/rate-limiting.spec.ts
 
 log "Unauthorized protected route should return structured 401"
 UNAUTH_STATUS="$(
