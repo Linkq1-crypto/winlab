@@ -368,6 +368,20 @@ export default function HomeShell() {
             <User className="w-5 h-5" />
             {auth ? (auth.name || auth.email) : 'Sign In'}
           </button>
+          <div className="mt-6 border-t border-white/5 pt-4">
+            <p className="mb-3 px-4 text-[9px] font-black uppercase tracking-[0.28em] text-gray-600">Pages</p>
+            <div className="space-y-1">
+              {QUICK_PAGE_LINKS.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="block rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
         </nav>
         <div className="p-4 border-t border-white/5 shrink-0">
           {auth ? (
@@ -397,18 +411,6 @@ export default function HomeShell() {
               <p className="text-xl font-black text-white">{filteredLabs.length} / {labCatalog.length} MODULES</p>
             </div>
           </header>
-
-          <div className="mb-8 flex flex-wrap gap-2">
-            {QUICK_PAGE_LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="rounded-full border border-white/8 bg-white/[0.03] px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-gray-400 transition-colors hover:border-red-500/30 hover:text-white"
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
 
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
             <div className="flex gap-1 bg-zinc-900 p-1.5 rounded-2xl border border-white/5 overflow-x-auto w-full md:w-auto no-scrollbar">

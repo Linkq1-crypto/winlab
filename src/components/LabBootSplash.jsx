@@ -103,18 +103,20 @@ export default function LabBootSplash({ bootSequence, onReady, lab = null, level
           </div>
 
           <div className="rounded-[24px] border border-white/8 bg-[#050b11] px-4 py-4 md:px-5">
-            <div className="space-y-2">
-            {fullSequence.slice(0, visibleCount).map((line, i) => (
-              <div
-                key={i}
-                className={`grid grid-cols-[72px_minmax(0,1fr)] items-start gap-3 text-sm leading-relaxed transition-opacity duration-300 ${TYPE_COLOR[line.type] ?? 'text-zinc-300'}`}
-              >
-                <span className="pt-[1px] text-[11px] uppercase tracking-[0.25em] text-zinc-500">
-                  {TYPE_PREFIX[line.type] ?? '[log]'}
-                </span>
-                <span className="min-w-0 whitespace-pre-wrap break-words">{line.text}</span>
-              </div>
-            ))}
+            <div className="flex flex-col gap-2">
+              {fullSequence.slice(0, visibleCount).map((line, i) => (
+                <div
+                  key={i}
+                  className={`flex items-start gap-3 text-sm leading-relaxed transition-opacity duration-300 ${TYPE_COLOR[line.type] ?? 'text-zinc-300'}`}
+                >
+                  <span className="block w-[72px] shrink-0 pt-[1px] text-[11px] uppercase tracking-[0.25em] text-zinc-500">
+                    {TYPE_PREFIX[line.type] ?? '[log]'}
+                  </span>
+                  <span className="block min-w-0 flex-1 whitespace-pre-wrap break-words">
+                    {line.text}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
