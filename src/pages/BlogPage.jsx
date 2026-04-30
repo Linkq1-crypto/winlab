@@ -5,16 +5,16 @@ import { useSocialStorage } from '../hooks/useSocialStorage';
 
 function PageNav() {
   return (
-    <nav className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+    <nav className="winlab-public-nav">
       <a href="/" className="flex items-center gap-2">
         <div className="w-6 h-6 bg-red-600 flex items-center justify-center rounded">
           <Server className="w-3.5 h-3.5 text-white" />
         </div>
         <span className="font-black tracking-tighter text-white italic text-lg">WINLAB</span>
       </a>
-      <div className="flex items-center gap-4">
-        <a href="/blog" className="text-xs text-gray-500 hover:text-white transition-colors">Blog Index</a>
-        <a href="/" className="text-xs text-gray-500 hover:text-white transition-colors">Back to Dashboard</a>
+      <div className="winlab-public-nav-links">
+        <a href="/blog" className="text-xs text-gray-500 hover:text-white transition-colors">Index</a>
+        <a href="/" className="text-xs text-gray-500 hover:text-white transition-colors">Back</a>
       </div>
     </nav>
   );
@@ -86,28 +86,28 @@ export default function BlogPage() {
   }, [slug]);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-gray-300 font-sans">
+    <div className="winlab-public-page font-sans">
       <SocialSidebar links={socialLinks} />
       <PageNav />
-      <div className="max-w-4xl mx-auto px-6 py-20">
+      <div className="winlab-public-main max-w-4xl">
         {!slug && (
-          <>
-            <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Editorial</p>
-            <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter mb-4">Blog</h1>
-            <p className="text-gray-500 mb-16 max-w-2xl leading-relaxed">
+          <div className="winlab-public-hero">
+            <p className="winlab-public-eyebrow">Editorial</p>
+            <h1 className="winlab-public-title">Blog</h1>
+            <p className="winlab-public-copy mb-8">
               Product notes, incident design decisions, platform updates and real operational lessons from WinLab.
             </p>
-          </>
+          </div>
         )}
 
         {slug && post && (
           <div className="mb-14">
-            <a href="/blog" className="inline-flex items-center gap-2 text-xs text-gray-500 hover:text-white transition-colors mb-6">
+            <a href="/blog" className="mb-4 inline-flex items-center gap-2 text-xs text-gray-500 hover:text-white transition-colors">
               <ArrowLeft className="w-4 h-4" />
               Back to all posts
             </a>
-            <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Blog Post</p>
-            <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter mb-4">{post.title}</h1>
+            <p className="winlab-public-eyebrow">Blog Post</p>
+            <h1 className="winlab-public-title max-w-3xl">{post.title}</h1>
             <div className="flex flex-wrap gap-4 text-xs text-gray-500">
               <span className="inline-flex items-center gap-2">
                 <CalendarDays className="w-4 h-4" />
@@ -124,13 +124,13 @@ export default function BlogPage() {
         )}
 
         {loading && (
-          <div className="rounded-3xl border border-white/5 bg-zinc-950 p-8 text-sm text-gray-500">
+            <div className="winlab-public-card text-sm text-gray-500">
             Loading...
           </div>
         )}
 
         {!loading && error && (
-          <div className="rounded-3xl border border-red-500/15 bg-red-500/5 p-8 text-sm text-red-300">
+            <div className="winlab-public-card border-red-500/15 bg-red-500/5 text-sm text-red-300">
             {error}
           </div>
         )}
@@ -138,7 +138,7 @@ export default function BlogPage() {
         {!loading && !error && !slug && (
           <div className="grid grid-cols-1 gap-5">
             {posts.length === 0 && (
-              <div className="rounded-3xl border border-white/5 bg-zinc-950 p-8 text-sm text-gray-500">
+              <div className="winlab-public-card text-sm text-gray-500">
                 No published posts yet.
               </div>
             )}
@@ -149,11 +149,11 @@ export default function BlogPage() {
                 <a
                   key={entry.id}
                   href={`/blog/${entry.slug}`}
-                  className="block rounded-[32px] border border-white/5 bg-zinc-950 p-8 hover:border-red-600/30 transition-colors"
+                  className="block rounded-[18px] border border-white/5 bg-zinc-950 p-5 hover:border-red-600/30 transition-colors sm:rounded-[32px] sm:p-8"
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div className="max-w-2xl">
-                      <h2 className="text-2xl font-black text-white uppercase italic tracking-tight mb-3">{entry.title}</h2>
+                      <h2 className="mb-3 text-xl font-black text-white tracking-tight sm:text-2xl">{entry.title}</h2>
                       <p className="text-sm text-gray-500 leading-relaxed mb-4">
                         {entry.excerpt || 'Read the full WinLab update.'}
                       </p>
@@ -181,7 +181,7 @@ export default function BlogPage() {
         )}
 
         {!loading && !error && slug && post && (
-          <article className="rounded-[32px] border border-white/5 bg-zinc-950 p-8 md:p-10">
+          <article className="winlab-public-card md:p-10">
             {post.excerpt && (
               <p className="text-lg text-gray-300 leading-relaxed mb-8">
                 {post.excerpt}

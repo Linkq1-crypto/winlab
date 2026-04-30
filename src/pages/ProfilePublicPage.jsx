@@ -1,23 +1,25 @@
+import { Download, KeyRound, Server, ShieldAlert, User } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Server, Download, KeyRound, User, ShieldAlert } from 'lucide-react';
 
 function PageNav() {
   return (
-    <nav className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+    <nav className="winlab-public-nav">
       <a href="/" className="flex items-center gap-2">
-        <div className="w-6 h-6 bg-red-600 flex items-center justify-center rounded">
-          <Server className="w-3.5 h-3.5 text-white" />
+        <div className="flex h-6 w-6 items-center justify-center rounded bg-red-600">
+          <Server className="h-3.5 w-3.5 text-white" />
         </div>
-        <span className="font-black tracking-tighter text-white italic text-lg">WINLAB</span>
+        <span className="text-lg font-black italic tracking-tighter text-white">WINLAB</span>
       </a>
-      <a href="/" className="text-xs text-gray-500 hover:text-white transition-colors">Back to Dashboard</a>
+      <div className="winlab-public-nav-links">
+        <a href="/" className="text-xs text-gray-500 transition-colors hover:text-white">Back</a>
+      </div>
     </nav>
   );
 }
 
 function formatPlan(plan) {
   if (!plan) return 'Starter';
-  return String(plan).replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
+  return String(plan).replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (char) => char.toUpperCase());
 }
 
 export default function ProfilePublicPage() {
@@ -71,8 +73,8 @@ export default function ProfilePublicPage() {
     return new Date(user.createdAt).toLocaleDateString();
   }, [user]);
 
-  async function saveProfile(e) {
-    e.preventDefault();
+  async function saveProfile(event) {
+    event.preventDefault();
     setProfileSaving(true);
     setSaveState('');
     try {
@@ -87,7 +89,7 @@ export default function ProfilePublicPage() {
         setSaveState(data?.error || 'Unable to update profile.');
         return;
       }
-      setUser((current) => current ? { ...current, ...data } : current);
+      setUser((current) => (current ? { ...current, ...data } : current));
       setSaveState('Profile updated.');
     } catch {
       setSaveState('Network error while saving profile.');
@@ -96,8 +98,8 @@ export default function ProfilePublicPage() {
     }
   }
 
-  async function updatePassword(e) {
-    e.preventDefault();
+  async function updatePassword(event) {
+    event.preventDefault();
     setPasswordSaving(true);
     setPasswordState('');
     try {
@@ -138,30 +140,28 @@ export default function ProfilePublicPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-gray-300 font-sans">
+    <div className="winlab-public-page font-sans">
       <PageNav />
-      <div className="max-w-4xl mx-auto px-6 py-20">
-        <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Account</p>
-        <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter mb-4">Profile</h1>
-        <p className="text-gray-500 mb-16 max-w-2xl leading-relaxed">
-          Manage your operator identity, security settings, and data export from one place.
-        </p>
+      <div className="winlab-public-main max-w-4xl">
+        <div className="winlab-public-hero">
+          <p className="winlab-public-eyebrow">Account</p>
+          <h1 className="winlab-public-title">Profile</h1>
+          <p className="winlab-public-copy mb-8">
+            Manage identity, security, and exports without forcing a crowded desktop dashboard onto a phone screen.
+          </p>
+        </div>
 
-        {loading && (
-          <div className="rounded-3xl border border-white/5 bg-zinc-950 p-8 text-sm text-gray-500">
-            Loading profile...
-          </div>
-        )}
+        {loading && <div className="winlab-public-card text-sm text-gray-500">Loading profile...</div>}
 
         {!loading && authError && (
-          <div className="rounded-3xl border border-red-500/15 bg-red-500/5 p-8 max-w-2xl">
+          <div className="winlab-public-card max-w-2xl border-red-500/15 bg-red-500/5">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-red-600/10 border border-red-600/20 flex items-center justify-center shrink-0">
-                <ShieldAlert className="w-5 h-5 text-red-500" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-600/10 text-red-500">
+                <ShieldAlert className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-white uppercase italic tracking-tight mb-2">Sign in required</h2>
-                <p className="text-sm text-gray-400 leading-relaxed">
+                <h2 className="mb-2 text-xl font-black text-white">Sign in required</h2>
+                <p className="text-sm leading-relaxed text-gray-400">
                   This page uses your active WinLab session. Sign in from the dashboard, then open `/profile` again.
                 </p>
               </div>
@@ -170,145 +170,101 @@ export default function ProfilePublicPage() {
         )}
 
         {!loading && user && (
-          <div className="space-y-8">
-            <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="rounded-[28px] border border-white/5 bg-zinc-950 p-6">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">Plan</p>
-                <p className="text-2xl font-black text-white italic">{formatPlan(user.plan)}</p>
-              </div>
-              <div className="rounded-[28px] border border-white/5 bg-zinc-950 p-6">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">Total XP</p>
-                <p className="text-2xl font-black text-white italic">{user.totalXp ?? 0}</p>
-              </div>
-              <div className="rounded-[28px] border border-white/5 bg-zinc-950 p-6">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">Current Streak</p>
-                <p className="text-2xl font-black text-white italic">{user.currentStreak ?? 0}</p>
-              </div>
-              <div className="rounded-[28px] border border-white/5 bg-zinc-950 p-6">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">Joined</p>
-                <p className="text-lg font-black text-white italic">{joinedDate}</p>
-              </div>
+          <div className="space-y-6">
+            <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ['Plan', formatPlan(user.plan)],
+                ['Total XP', user.totalXp ?? 0],
+                ['Current streak', user.currentStreak ?? 0],
+                ['Joined', joinedDate],
+              ].map(([label, value]) => (
+                <div key={label} className="winlab-public-card">
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-gray-600">{label}</p>
+                  <p className="text-xl font-black text-white">{value}</p>
+                </div>
+              ))}
             </section>
 
-            <section className="rounded-[32px] border border-white/5 bg-zinc-950 p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-2xl bg-red-600/10 border border-red-600/20 flex items-center justify-center">
-                  <User className="w-5 h-5 text-red-500" />
+            <section className="winlab-public-card">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-red-600/10 text-red-500">
+                  <User className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-white uppercase italic tracking-tight">Identity</h2>
+                  <h2 className="text-lg font-black text-white">Identity</h2>
                   <p className="text-xs text-gray-500">Public name, nickname and account metadata.</p>
                 </div>
               </div>
 
-              <form onSubmit={saveProfile} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form onSubmit={saveProfile} className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">Name</label>
-                  <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-black border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/30"
-                    placeholder="Your name"
-                  />
+                  <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-600">Name</label>
+                  <input value={name} onChange={(e) => setName(e.target.value)} className="min-h-[44px] w-full rounded-2xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-red-500/30" placeholder="Your name" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">Nickname</label>
-                  <input
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    className="w-full bg-black border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/30"
-                    placeholder="Display nickname"
-                  />
+                  <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-600">Nickname</label>
+                  <input value={nickname} onChange={(e) => setNickname(e.target.value)} className="min-h-[44px] w-full rounded-2xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-red-500/30" placeholder="Display nickname" />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">Email</label>
-                  <input
-                    value={user.email || ''}
-                    readOnly
-                    className="w-full bg-black/60 border border-white/5 rounded-2xl px-4 py-3 text-sm text-gray-500"
-                  />
+                  <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-600">Email</label>
+                  <input value={user.email || ''} readOnly className="min-h-[44px] w-full rounded-2xl border border-white/5 bg-black/60 px-4 py-3 text-sm text-gray-500" />
                 </div>
                 <div className="md:col-span-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <span className={`text-sm ${saveState === 'Profile updated.' ? 'text-emerald-400' : 'text-red-400'}`}>{saveState}</span>
-                  <button
-                    type="submit"
-                    disabled={profileSaving}
-                    className="px-6 py-3 rounded-2xl bg-red-600 text-white font-black uppercase tracking-widest italic hover:bg-red-700 transition-all disabled:opacity-50"
-                  >
-                    {profileSaving ? 'Saving...' : 'Save Changes'}
+                  <button type="submit" disabled={profileSaving} className="min-h-[48px] rounded-2xl bg-red-600 px-6 py-3 text-sm font-black text-white disabled:opacity-50">
+                    {profileSaving ? 'Saving...' : 'Save changes'}
                   </button>
                 </div>
               </form>
             </section>
 
-            <section className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-6">
-              <div className="rounded-[32px] border border-white/5 bg-zinc-950 p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-2xl bg-red-600/10 border border-red-600/20 flex items-center justify-center">
-                    <KeyRound className="w-5 h-5 text-red-500" />
+            <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="winlab-public-card">
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-red-600/10 text-red-500">
+                    <KeyRound className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-white uppercase italic tracking-tight">Password</h2>
-                    <p className="text-xs text-gray-500">Change your credentials without leaving the dashboard.</p>
+                    <h2 className="text-lg font-black text-white">Password</h2>
+                    <p className="text-xs text-gray-500">Change credentials without leaving the dashboard.</p>
                   </div>
                 </div>
 
                 <form onSubmit={updatePassword} className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">Current password</label>
-                    <input
-                      type="password"
-                      value={oldPassword}
-                      onChange={(e) => setOldPassword(e.target.value)}
-                      className="w-full bg-black border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/30"
-                    />
+                    <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-600">Current password</label>
+                    <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className="min-h-[44px] w-full rounded-2xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-red-500/30" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">New password</label>
-                    <input
-                      type="password"
-                      value={newPassword}
-                      minLength={8}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full bg-black border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/30"
-                    />
+                    <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-600">New password</label>
+                    <input type="password" value={newPassword} minLength={8} onChange={(e) => setNewPassword(e.target.value)} className="min-h-[44px] w-full rounded-2xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-red-500/30" />
                   </div>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <span className={`text-sm ${passwordState === 'Password updated.' ? 'text-emerald-400' : 'text-red-400'}`}>{passwordState}</span>
-                    <button
-                      type="submit"
-                      disabled={passwordSaving || !oldPassword || !newPassword}
-                      className="px-6 py-3 rounded-2xl border border-white/10 text-white font-black uppercase tracking-widest hover:bg-white/5 transition-all disabled:opacity-50"
-                    >
-                      {passwordSaving ? 'Updating...' : 'Update Password'}
+                    <button type="submit" disabled={passwordSaving || !oldPassword || !newPassword} className="min-h-[48px] rounded-2xl border border-white/10 px-6 py-3 text-sm font-black text-white disabled:opacity-50">
+                      {passwordSaving ? 'Updating...' : 'Update password'}
                     </button>
                   </div>
                 </form>
               </div>
 
-              <div className="rounded-[32px] border border-white/5 bg-zinc-950 p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-2xl bg-red-600/10 border border-red-600/20 flex items-center justify-center">
-                    <Download className="w-5 h-5 text-red-500" />
+              <div className="winlab-public-card">
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-red-600/10 text-red-500">
+                    <Download className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-white uppercase italic tracking-tight">Data Export</h2>
-                    <p className="text-xs text-gray-500">Download your stored profile, progress and certificates.</p>
+                    <h2 className="text-lg font-black text-white">Data export</h2>
+                    <p className="text-xs text-gray-500">Download profile, progress, and certificate data.</p>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-400 leading-relaxed">
-                    Exports are generated from the authenticated account in JSON format and include profile metadata, saved lab progress and issued certificates.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={exportData}
-                    className="w-full px-6 py-4 rounded-2xl bg-white text-black font-black uppercase tracking-widest hover:bg-zinc-200 transition-all"
-                  >
-                    Export My Data
-                  </button>
-                </div>
+                <p className="mb-4 text-sm leading-relaxed text-gray-400">
+                  Exports are generated from the authenticated account in JSON format and include profile metadata, saved lab progress, and issued certificates.
+                </p>
+                <button type="button" onClick={exportData} className="min-h-[48px] w-full rounded-2xl bg-white px-6 py-4 text-sm font-black text-black">
+                  Export my data
+                </button>
               </div>
             </section>
           </div>

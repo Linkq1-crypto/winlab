@@ -153,6 +153,76 @@ body.has-offline-bar {
   padding-bottom: 28px;
 }
 
+.winlab-public-page {
+  min-height: 100vh;
+  background: #050505;
+  color: #d1d5db;
+}
+
+.winlab-public-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.winlab-public-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.winlab-public-main {
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+}
+
+.winlab-public-hero {
+  margin-bottom: 2rem;
+}
+
+.winlab-public-eyebrow {
+  margin-bottom: 0.75rem;
+  font-size: 0.625rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.winlab-public-title {
+  margin: 0 0 0.75rem;
+  max-width: 18ch;
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  line-height: 0.96;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.winlab-public-copy {
+  max-width: 38rem;
+  color: #6b7280;
+  line-height: 1.65;
+}
+
+.winlab-public-card {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1.25rem;
+  background: #0f0f10;
+  padding: 1.25rem;
+}
+
+.winlab-mobile-title {
+  display: none;
+}
+
 @media (max-width: 640px) {
   html,
   body,
@@ -164,6 +234,55 @@ body.has-offline-bar {
 
   body {
     font-size: 15px;
+  }
+
+  .winlab-public-nav {
+    padding: 0.875rem 1rem;
+  }
+
+  .winlab-public-nav-links > :not(:last-child) {
+    display: none;
+  }
+
+  .winlab-public-main {
+    padding: 1.5rem 1rem 2rem;
+  }
+
+  .winlab-public-hero {
+    margin-bottom: 1.5rem;
+  }
+
+  .winlab-public-eyebrow {
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.16em;
+  }
+
+  .winlab-public-title {
+    max-width: 12ch;
+    font-size: 2rem;
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    text-transform: none;
+    font-style: normal;
+  }
+
+  .winlab-public-copy {
+    max-width: 30rem;
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .winlab-public-card {
+    border-radius: 1rem;
+    padding: 1rem;
+  }
+
+  .winlab-mobile-title {
+    display: inline;
+  }
+
+  .winlab-desktop-title {
+    display: none;
   }
 
   button,
@@ -180,6 +299,11 @@ body.has-offline-bar {
 
   body[data-pwa-prompt-visible='true'] .winlab-mobile-shell {
     padding-bottom: 8.5rem;
+  }
+
+  body[data-cookie-banner-visible='true'] .winlab-mobile-shell,
+  body[data-cookie-banner-visible='true'] .winlab-public-main {
+    padding-bottom: 10rem;
   }
 
   .winlab-mobile-shell [class*="tracking-"] {

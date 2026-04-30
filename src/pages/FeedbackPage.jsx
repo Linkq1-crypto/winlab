@@ -3,14 +3,16 @@ import { Bug, Lightbulb, Server, ShieldAlert, ThumbsUp } from 'lucide-react';
 
 function PageNav() {
   return (
-    <nav className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+    <nav className="winlab-public-nav">
       <a href="/" className="flex items-center gap-2">
         <div className="w-6 h-6 bg-red-600 flex items-center justify-center rounded">
           <Server className="w-3.5 h-3.5 text-white" />
         </div>
         <span className="font-black tracking-tighter text-white italic text-lg">WINLAB</span>
       </a>
-      <a href="/" className="text-xs text-gray-500 hover:text-white transition-colors">Back to Dashboard</a>
+      <div className="winlab-public-nav-links">
+        <a href="/" className="text-xs text-gray-500 transition-colors hover:text-white">Back</a>
+      </div>
     </nav>
   );
 }
@@ -129,17 +131,19 @@ export default function FeedbackPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-gray-300 font-sans">
+    <div className="winlab-public-page font-sans">
       <PageNav />
-      <div className="max-w-6xl mx-auto px-6 py-20">
-        <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Community</p>
-        <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter mb-4">Feedback</h1>
-        <p className="text-gray-500 mb-16 max-w-2xl leading-relaxed">
-          Report a bug, request a feature, or review what other operators are asking for across the platform.
-        </p>
+      <div className="winlab-public-main max-w-6xl">
+        <div className="winlab-public-hero">
+          <p className="winlab-public-eyebrow">Community</p>
+          <h1 className="winlab-public-title">Feedback</h1>
+          <p className="winlab-public-copy mb-8">
+            Report a bug, request a feature, or review what operators are asking for without forcing a dense forum layout onto mobile.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_0.95fr] gap-6">
-          <section className="rounded-[32px] border border-white/5 bg-zinc-950 p-8">
+          <section className="winlab-public-card sm:p-6">
             <div className="flex items-start justify-between gap-4 mb-8">
               <div>
                 <h2 className="text-2xl font-black text-white uppercase italic tracking-tight mb-2">Submit Feedback</h2>
@@ -154,7 +158,7 @@ export default function FeedbackPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {Object.entries(TYPE_META).map(([type, meta]) => {
                   const Icon = meta.icon;
                   const active = form.type === type;
@@ -163,7 +167,7 @@ export default function FeedbackPage() {
                       key={type}
                       type="button"
                       onClick={() => setForm((current) => ({ ...current, type }))}
-                      className={`rounded-2xl border px-4 py-4 text-left transition-all ${
+                      className={`min-h-[48px] rounded-2xl border px-4 py-4 text-left transition-all ${
                         active ? 'border-red-500/30 bg-red-600/10 text-white' : 'border-white/8 bg-black/30 text-gray-400 hover:border-white/15'
                       }`}
                     >
@@ -179,7 +183,7 @@ export default function FeedbackPage() {
                 <input
                   value={form.title}
                   onChange={(e) => setForm((current) => ({ ...current, title: e.target.value }))}
-                  className="w-full bg-black border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/30"
+                  className="min-h-[44px] w-full bg-black border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/30"
                   placeholder={form.type === 'bug' ? 'Short summary of the issue' : 'What should WinLab add or improve?'}
                 />
               </div>
@@ -190,7 +194,7 @@ export default function FeedbackPage() {
                   <input
                     value={form.labId}
                     onChange={(e) => setForm((current) => ({ ...current, labId: e.target.value }))}
-                    className="w-full bg-black border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/30"
+                    className="min-h-[44px] w-full bg-black border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/30"
                     placeholder="Optional: nginx-port-conflict"
                   />
                 </div>
@@ -199,7 +203,7 @@ export default function FeedbackPage() {
                   <select
                     value={form.severity}
                     onChange={(e) => setForm((current) => ({ ...current, severity: e.target.value }))}
-                    className="w-full bg-black border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/30"
+                    className="min-h-[44px] w-full bg-black border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-red-500/30"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -225,7 +229,7 @@ export default function FeedbackPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-3 rounded-2xl bg-red-600 text-white font-black uppercase tracking-widest italic hover:bg-red-700 transition-all disabled:opacity-50"
+                  className="min-h-[48px] rounded-2xl bg-red-600 px-6 py-3 text-sm font-black text-white hover:bg-red-700 transition-all disabled:opacity-50"
                 >
                   {submitting ? 'Submitting...' : 'Send Feedback'}
                 </button>
@@ -233,7 +237,7 @@ export default function FeedbackPage() {
             </form>
           </section>
 
-          <section className="rounded-[32px] border border-white/5 bg-zinc-950 p-8">
+          <section className="winlab-public-card sm:p-6">
             <div className="flex items-center justify-between gap-4 mb-8">
               <div>
                 <h2 className="text-2xl font-black text-white uppercase italic tracking-tight mb-2">Recent Posts</h2>
@@ -241,13 +245,13 @@ export default function FeedbackPage() {
               </div>
             </div>
 
-            <div className="flex gap-2 mb-6">
+            <div className="mb-6 flex gap-2 overflow-x-auto">
               {Object.entries(TYPE_META).map(([type, meta]) => (
                 <button
                   key={type}
                   type="button"
                   onClick={() => setActiveTab(type)}
-                  className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  className={`min-h-[44px] whitespace-nowrap px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
                     activeTab === type ? 'bg-red-600 text-white' : 'bg-black border border-white/8 text-gray-500 hover:text-white'
                   }`}
                 >
@@ -271,7 +275,7 @@ export default function FeedbackPage() {
                 const meta = TYPE_META[post.type] || TYPE_META.feature;
                 const Icon = meta.icon;
                 return (
-                  <div key={post.id} className="rounded-2xl border border-white/5 bg-black/30 p-5">
+                  <div key={post.id} className="rounded-2xl border border-white/5 bg-black/30 p-4">
                     <div className="flex items-start justify-between gap-4 mb-3">
                       <div className="flex items-start gap-3">
                         <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center shrink-0">

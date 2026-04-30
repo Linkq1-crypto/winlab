@@ -414,7 +414,8 @@ export default function HomeShell() {
                 <div className="min-w-0">
                   <p className="mb-2 text-[10px] uppercase tracking-[0.24em] text-cyan-200/80">Terminal-first incident training</p>
                   <h1 className="max-w-xl break-words text-[2rem] font-black uppercase leading-[0.95] tracking-tight text-white sm:text-4xl">
-                    Real Labs. Zero Mobile Friction.
+                    <span className="winlab-desktop-title">REAL LABS. ZERO FRICTION.</span>
+                    <span className="winlab-mobile-title">REAL LABS.<br />ZERO FRICTION.</span>
                   </h1>
                   <p className="mt-2 max-w-md text-[12px] uppercase tracking-[0.18em] text-cyan-100/70">
                     Launch a real incident in one tap.

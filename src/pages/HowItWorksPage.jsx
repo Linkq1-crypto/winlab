@@ -1,89 +1,74 @@
-import { Server, Terminal, CheckCircle, Zap, Shield, Brain } from 'lucide-react';
+import { Brain, CheckCircle, Server, Shield, Terminal, Zap } from 'lucide-react';
 
 function PageNav() {
   return (
-    <nav className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+    <nav className="winlab-public-nav">
       <a href="/" className="flex items-center gap-2">
-        <div className="w-6 h-6 bg-red-600 flex items-center justify-center rounded">
-          <Server className="w-3.5 h-3.5 text-white" />
+        <div className="flex h-6 w-6 items-center justify-center rounded bg-red-600">
+          <Server className="h-3.5 w-3.5 text-white" />
         </div>
-        <span className="font-black tracking-tighter text-white italic text-lg">WINLAB</span>
+        <span className="text-lg font-black italic tracking-tighter text-white">WINLAB</span>
       </a>
-      <a href="/" className="text-xs text-gray-500 hover:text-white transition-colors">← Back to Dashboard</a>
+      <div className="winlab-public-nav-links">
+        <a href="#start" className="rounded-xl bg-red-600 px-4 py-2 text-sm font-black text-white">Start</a>
+        <a href="/" className="text-xs text-gray-500 transition-colors hover:text-white">Back</a>
+      </div>
     </nav>
   );
 }
 
 const STEPS = [
-  {
-    number: '01',
-    title: 'Pick a Lab',
-    body: 'Browse 34+ real-world incident scenarios across Linux, Kubernetes, databases, and application code. Starter labs are free — no account required.',
-  },
-  {
-    number: '02',
-    title: 'Launch a Container',
-    body: 'Click Launch Session. We spin up an isolated Docker container pre-configured with the broken environment. Ready in seconds, no setup on your end.',
-  },
-  {
-    number: '03',
-    title: 'Fix the Incident',
-    body: 'You get a live terminal inside the container. Diagnose and fix the issue exactly as you would on a real server. The AI Mentor can give hints without spoiling the solution.',
-  },
+  { number: '01', title: 'Pick a lab', body: 'Choose a real incident. Starter labs open immediately.' },
+  { number: '02', title: 'Launch a session', body: 'WinLab starts an isolated environment with the failure already live.' },
+  { number: '03', title: 'Fix it for real', body: 'Use the terminal, verify the system state, and move to the next incident.' },
 ];
 
 const FEATURES = [
-  { icon: Terminal,     title: 'Real Terminal',    body: 'xterm.js connected directly to Docker via WebSocket. No simulated output — actual bash, actual commands.' },
-  { icon: Shield,       title: 'Fully Isolated',   body: 'Each session runs in its own container. Nothing you do can affect other users or the host system.' },
-  { icon: Zap,          title: 'Instant Start',    body: 'Containers are pre-built. Session ready in under 5 seconds from click to shell prompt.' },
-  { icon: Brain,        title: 'AI Mentor',        body: 'Stuck? The AI Mentor reads your session context and gives calibrated hints — not just the answer.' },
-  { icon: CheckCircle,  title: 'Auto-Verified',    body: 'When you think you\'ve fixed it, run the verify command. The scorer checks the actual system state.' },
-  { icon: Server,       title: 'Realistic Stack',  body: 'Labs run real services — nginx, PostgreSQL, Redis, Node.js, Python — not toy mocks.' },
+  { icon: Terminal, title: 'Real terminal', body: 'Actual shell access, not fake output.' },
+  { icon: Shield, title: 'Isolated by default', body: 'Each session stays contained.' },
+  { icon: Zap, title: 'Fast start', body: 'Get from click to prompt in seconds.' },
+  { icon: Brain, title: 'AI Mentor', body: 'Hints stay contextual instead of generic.' },
+  { icon: CheckCircle, title: 'Auto verification', body: 'The platform checks the real fix state.' },
+  { icon: Server, title: 'Realistic stack', body: 'Labs use real services and configs.' },
 ];
 
 export default function HowItWorksPage() {
   return (
-    <div className="min-h-screen bg-[#050505] text-gray-300 font-sans">
+    <div className="winlab-public-page font-sans">
       <PageNav />
-      <div className="max-w-4xl mx-auto px-6 py-20">
-        <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Platform</p>
-        <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter mb-4">How It Works</h1>
-        <p className="text-gray-500 mb-20 max-w-xl leading-relaxed">
-          WinLab puts you inside real broken systems. No multiple choice, no videos — just you, a terminal, and a production incident to solve.
-        </p>
-
-        {/* Steps */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24">
-          {STEPS.map(({ number, title, body }) => (
-            <div key={number} className="bg-zinc-950 border border-white/5 rounded-[28px] p-8">
-              <p className="text-5xl font-black text-white/5 italic mb-4">{number}</p>
-              <h3 className="font-black text-white uppercase italic tracking-tight text-xl mb-3">{title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{body}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Features */}
-        <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-8">Under the Hood</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-20">
-          {FEATURES.map(({ icon: Icon, title, body }) => (
-            <div key={title} className="bg-zinc-950 border border-white/5 rounded-2xl p-6">
-              <div className="w-8 h-8 bg-red-600/10 border border-red-600/20 rounded-lg flex items-center justify-center mb-4">
-                <Icon className="w-4 h-4 text-red-500" />
-              </div>
-              <h3 className="font-black text-white uppercase italic tracking-tight mb-2 text-sm">{title}</h3>
-              <p className="text-xs text-gray-500 leading-relaxed">{body}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="text-center">
-          <a
-            href="/"
-            className="inline-block px-10 py-4 bg-red-600 text-white font-black uppercase tracking-widest italic rounded-3xl hover:bg-red-700 transition-all shadow-xl shadow-red-600/20"
-          >
-            START A FREE LAB →
+      <div className="winlab-public-main max-w-4xl">
+        <div className="winlab-public-hero">
+          <p className="winlab-public-eyebrow">Platform</p>
+          <h1 className="winlab-public-title">How WinLab Works</h1>
+          <p className="winlab-public-copy mb-8">
+            No videos, no multiple choice, no toy shell. Just a broken system, a terminal, and a fix that must actually work.
+          </p>
+          <a id="start" href="/" className="inline-flex min-h-[48px] items-center justify-center rounded-2xl bg-red-600 px-5 py-3 text-sm font-black text-white">
+            Start a free lab
           </a>
+        </div>
+
+        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+          {STEPS.map(({ number, title, body }) => (
+            <div key={number} className="winlab-public-card">
+              <p className="mb-3 text-3xl font-black text-white/10">{number}</p>
+              <h2 className="mb-2 text-lg font-black text-white">{title}</h2>
+              <p className="text-sm leading-relaxed text-gray-500">{body}</p>
+            </div>
+          ))}
+        </div>
+
+        <h2 className="mb-4 text-xl font-black text-white">Under the hood</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map(({ icon: Icon, title, body }) => (
+            <div key={title} className="winlab-public-card">
+              <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-xl bg-red-600/10 text-red-500">
+                <Icon className="h-4 w-4" />
+              </div>
+              <h3 className="mb-2 text-sm font-black text-white">{title}</h3>
+              <p className="text-xs leading-relaxed text-gray-500">{body}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

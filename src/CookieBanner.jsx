@@ -1,158 +1,115 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { saveAiConsentPreference } from "./services/aiConsent";
 
 const KEY = "winlab_cookie_consent";
 
-const LINES = [
-  "$ sudo apt install privacy-policy",
-  "Reading package lists... Done",
-  "Building dependency tree... Done",
-  "> Found: cookies [essential, analytics, ai-training]",
-];
-
 export default function CookieBanner({ onConsent }) {
-  const [visible, setVisible]     = useState(false);
-  const [typed, setTyped]         = useState(0);
-  const [expanded, setExpanded]   = useState(false);
-  const [aiCheck, setAiCheck]     = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [aiCheck, setAiCheck] = useState(false);
   const [analyticsCheck, setAnalyticsCheck] = useState(false);
   const [accepting, setAccepting] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem(KEY);
     if (!saved) {
-      // Delay the banner until after the critical first render settles.
-      const t = setTimeout(() => setVisible(true), 6000);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => setVisible(true), 2200);
+      return () => clearTimeout(timer);
     }
+    return undefined;
   }, []);
 
   useEffect(() => {
-    if (!visible || typed >= LINES.length) return;
-    const t = setTimeout(() => setTyped(n => n + 1), 420);
-    return () => clearTimeout(t);
-  }, [visible, typed]);
+    if (visible) {
+      document.body.setAttribute("data-cookie-banner-visible", "true");
+      return;
+    }
+    document.body.removeAttribute("data-cookie-banner-visible");
+  }, [visible]);
 
   const accept = (all) => {
     setAccepting(true);
     const consent = {
       essential: true,
       analytics: all ? analyticsCheck : false,
-      ai:        all ? aiCheck        : false,
+      ai: all ? aiCheck : false,
     };
     localStorage.setItem(KEY, JSON.stringify(consent));
     void saveAiConsentPreference({ consent: consent.ai });
     onConsent?.(consent);
-    setTimeout(() => setVisible(false), 600);
+    setTimeout(() => setVisible(false), 220);
   };
 
   if (!visible) return null;
 
   return (
-    <div style={{
-      position: "fixed", bottom: 24, right: 24,
-      zIndex: 9999, width: "min(620px, calc(100vw - 32px))",
-      background: "#060d12", border: "1px solid #1a2e1a",
-      borderRadius: 10, fontFamily: "monospace", fontSize: 12,
-      boxShadow: "0 0 40px rgba(74,222,128,.08), 0 8px 32px rgba(0,0,0,.6)",
-      overflow: "hidden",
-      transition: accepting ? "opacity .5s, transform .5s" : "none",
-      opacity: accepting ? 0 : 1,
-    }}>
-      {/* Terminal title bar */}
-      <div style={{ background: "#0d1a12", padding: "8px 14px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid #1a2e1a" }}>
-        <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#e05252", display: "inline-block" }} />
-        <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#e0c052", display: "inline-block" }} />
-        <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#52e080", display: "inline-block" }} />
-        <span style={{ marginLeft: 8, color: "#3a6", fontSize: 10, letterSpacing: 2 }}>winlab@privacy:~$</span>
-        <span style={{ marginLeft: "auto", color: "#244", fontSize: 9 }}>GDPR v2.0</span>
-      </div>
-
-      {/* Terminal output */}
-      <div style={{ padding: "14px 18px 10px", minHeight: 80 }}>
-        {LINES.slice(0, typed).map((line, i) => (
-          <div key={i} style={{
-            color: i === 0 ? "#4ade80" : i === LINES.length - 1 ? "#facc15" : "#3a5a3a",
-            marginBottom: 3, fontSize: 11,
-          }}>
-            {line}{i === typed - 1 && typed < LINES.length && <span style={{ animation: "blink 1s step-end infinite" }}>▌</span>}
+    <div className="pointer-events-none fixed inset-x-0 bottom-2 z-[95] flex justify-center px-3 pb-[env(safe-area-inset-bottom)]">
+      <div className={`pointer-events-auto w-full max-w-xl rounded-[18px] border border-white/10 bg-[#0c0c0d] p-4 shadow-[0_14px_36px_rgba(0,0,0,0.28)] transition-all ${accepting ? "translate-y-4 opacity-0" : "translate-y-0 opacity-100"}`}>
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <p className="mb-1 text-[10px] font-black uppercase tracking-[0.16em] text-gray-500">Privacy</p>
+            <h2 className="text-base font-black text-white">Choose what WinLab can store</h2>
+            <p className="mt-2 text-sm leading-relaxed text-gray-400">
+              Essential cookies stay on. Analytics and AI training are optional.
+            </p>
           </div>
-        ))}
+        </div>
 
-        {typed >= LINES.length && (
-          <>
-            <div style={{ marginTop: 10, color: "#4ade80", fontSize: 11 }}>
-              This site uses cookies. Choose what to enable:
+        <div className="space-y-2">
+          <label className="flex items-start gap-3 rounded-2xl border border-white/5 bg-black/30 px-3 py-3 opacity-70">
+            <input type="checkbox" checked disabled className="mt-1 accent-emerald-500" />
+            <div>
+              <div className="text-sm font-black text-white">Essential</div>
+              <div className="text-xs leading-relaxed text-gray-500">Session, security, and core product functionality.</div>
             </div>
+          </label>
 
-            {/* Checkboxes */}
-            <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "not-allowed", opacity: .5 }}>
-                <input type="checkbox" checked disabled style={{ accentColor: "#4ade80" }} />
-                <span style={{ color: "#4a7" }}>[essential]</span>
-                <span style={{ color: "#556" }}>— session, security, core functionality</span>
-                <span style={{ marginLeft: "auto", color: "#244", fontSize: 9 }}>required</span>
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                <input type="checkbox" checked={analyticsCheck} onChange={e => setAnalyticsCheck(e.target.checked)}
-                  style={{ accentColor: "#4ade80", cursor: "pointer" }} />
-                <span style={{ color: analyticsCheck ? "#4ade80" : "#3a5a3a" }}>[analytics]</span>
-                <span style={{ color: "#556" }}>— pageview, UTM, scroll depth (anonymous)</span>
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                <input type="checkbox" checked={aiCheck} onChange={e => setAiCheck(e.target.checked)}
-                  style={{ accentColor: "#a78bfa", cursor: "pointer" }} />
-                <span style={{ color: aiCheck ? "#a78bfa" : "#3a3a5a" }}>[ai-training]</span>
-                <span style={{ color: "#556" }}>— lab sessions used to improve the AI Mentor</span>
-              </label>
+          <label className="flex items-start gap-3 rounded-2xl border border-white/5 bg-black/30 px-3 py-3">
+            <input type="checkbox" checked={analyticsCheck} onChange={(event) => setAnalyticsCheck(event.target.checked)} className="mt-1 accent-emerald-500" />
+            <div>
+              <div className="text-sm font-black text-white">Analytics</div>
+              <div className="text-xs leading-relaxed text-gray-500">Anonymous usage signals like pageview and scroll depth.</div>
             </div>
+          </label>
 
-            {/* Expand details */}
-            <button onClick={() => setExpanded(e => !e)}
-              style={{ background: "none", border: "none", color: "#246", cursor: "pointer", fontSize: 10, marginTop: 8, padding: 0 }}>
-              {expanded ? "▲ fewer details" : "▼ read more — privacy policy"}
-            </button>
-
-            {expanded && (
-              <div style={{ marginTop: 8, color: "#3a5a4a", fontSize: 10, lineHeight: 1.7, borderLeft: "2px solid #1a3a1a", paddingLeft: 10 }}>
-                <div>• <b>essential</b>: httpOnly JWT cookie (not readable by JS), 24h session.</div>
-                <div>• <b>analytics</b>: anonymous aggregated data — no personal data sold.</div>
-                <div>• <b>ai-training</b>: commands you run in labs (e.g. <code>ls -la</code>, <code>chmod</code>) are used to train our AI Mentor. No personal data included. Revoke anytime in Settings → AI Privacy.</div>
-                <div style={{ marginTop: 6 }}>
-                  <a href="/privacy" style={{ color: "#4ade80" }}>Privacy Policy</a>
-                  {" · "}
-                  <a href="/terms" style={{ color: "#4ade80" }}>Terms</a>
-                </div>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
-              <button onClick={() => accept(true)}
-                style={{ flex: 1, padding: "9px 16px", background: "#0d3a1a", border: "1px solid #4ade80", borderRadius: 6, color: "#4ade80", fontFamily: "monospace", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
-                $ ./accept-selected.sh
-              </button>
-              <button onClick={() => accept(false)}
-                style={{ flex: 1, padding: "9px 16px", background: "#0d0d0d", border: "1px solid #2a3a2a", borderRadius: 6, color: "#3a6a4a", fontFamily: "monospace", fontSize: 11, cursor: "pointer" }}>
-                $ ./essential-only.sh
-              </button>
+          <label className="flex items-start gap-3 rounded-2xl border border-white/5 bg-black/30 px-3 py-3">
+            <input type="checkbox" checked={aiCheck} onChange={(event) => setAiCheck(event.target.checked)} className="mt-1 accent-violet-400" />
+            <div>
+              <div className="text-sm font-black text-white">AI training</div>
+              <div className="text-xs leading-relaxed text-gray-500">Anonymized lab interactions used to improve AI Mentor quality.</div>
             </div>
-            <div style={{ marginTop: 8, color: "#1e3a2a", fontSize: 9, textAlign: "center" }}>
-              You can change your preferences at any time from Settings → Privacy
-            </div>
-          </>
-        )}
+          </label>
+        </div>
+
+        <button type="button" onClick={() => setExpanded((value) => !value)} className="mt-3 text-xs text-gray-500 transition-colors hover:text-white">
+          {expanded ? "Hide details" : "Read more"}
+        </button>
+
+        {expanded ? (
+          <div className="mt-3 rounded-2xl border border-white/5 bg-black/20 px-3 py-3 text-xs leading-relaxed text-gray-500">
+            You can update preferences later from Settings. Read the full <a href="/privacy" className="text-emerald-400">Privacy Policy</a> and <a href="/terms" className="text-emerald-400">Terms</a>.
+          </div>
+        ) : null}
+
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <button type="button" onClick={() => accept(true)} className="min-h-[48px] rounded-2xl bg-red-600 px-4 py-3 text-sm font-black text-white">
+            Accept selected
+          </button>
+          <button type="button" onClick={() => accept(false)} className="min-h-[48px] rounded-2xl border border-white/10 px-4 py-3 text-sm font-black text-gray-300">
+            Essential only
+          </button>
+        </div>
       </div>
-
-      <style>{`@keyframes blink { 50% { opacity: 0 } }`}</style>
     </div>
   );
 }
 
 export function hasConsent(type = "analytics") {
   try {
-    const s = localStorage.getItem(KEY);
-    if (!s) return false;
-    return JSON.parse(s)[type] === true;
-  } catch { return false; }
+    const stored = localStorage.getItem(KEY);
+    if (!stored) return false;
+    return JSON.parse(stored)[type] === true;
+  } catch {
+    return false;
+  }
 }

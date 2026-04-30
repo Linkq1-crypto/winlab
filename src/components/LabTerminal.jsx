@@ -16,7 +16,7 @@ function createSocketUrl(containerName, levelId, hintEnabled) {
 
 function getTerminalFontSize() {
   if (typeof window === 'undefined') return 14;
-  if (window.innerWidth <= 390) return 12;
+  if (window.innerWidth <= 430) return 11;
   if (window.innerWidth <= 768) return 13;
   return 14;
 }
@@ -92,11 +92,11 @@ export default function LabTerminal({
     const term = new Terminal({
       allowTransparency: true,
       convertEol: true,
-      cursorBlink: true,
+      cursorBlink: typeof window !== 'undefined' ? window.innerWidth > 640 : true,
       fontFamily: '"JetBrains Mono", "Fira Code", monospace',
       fontSize: getTerminalFontSize(),
       letterSpacing: 0,
-      lineHeight: 1.35,
+      lineHeight: typeof window !== 'undefined' && window.innerWidth <= 430 ? 1.5 : 1.35,
       scrollback: 1500,
       theme: {
         background: '#07111a',
