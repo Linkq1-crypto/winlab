@@ -1,17 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-
-const SESSION_KEY = "winlab_free_session";
-
-function getOrCreateSessionId() {
-  let id = localStorage.getItem(SESSION_KEY);
-  if (!id) {
-    id = typeof crypto !== 'undefined' && crypto.randomUUID 
-         ? crypto.randomUUID() 
-         : Math.random().toString(36).substring(2) + Date.now().toString(36);
-    localStorage.setItem(SESSION_KEY, id);
-  }
-  return id;
-}
+import { useLab } from "../LabContext.jsx";
+import { getOrCreateBrowserSessionId } from "../lib/browserSession.js";
 
 /**
  * Manages an anonymous Docker lab session for the free-lab homepage experience.
@@ -26,6 +15,7 @@ function getOrCreateSessionId() {
  *   verify()         – run the lab's verify.sh and return { ok, output }
  */
 export function useFreeLab(labId) {
+  const { sessionId: contextSessionId, ensureSessionId } = useLab();
   const [started, setStarted]           = useState(false);
   const [booting, setBooting]           = useState(false);
   const [lines, setLines]               = useState([]);
@@ -84,7 +74,12 @@ export function useFreeLab(labId) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ labId, sessionId: sid }),
       });
-    } catch {
+    } catch (error) {
+      console.error("POST /api/lab/start network error", {
+        error: error?.message || String(error),
+        labId,
+        sessionId: sid,
+      });
       clearInterval(logTimer);
       addLine("Failed to reach the server. Please refresh.", "error");
       setBooting(false);
@@ -98,8 +93,22 @@ export function useFreeLab(labId) {
     if (!mountedRef.current) return;
 
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      addLine(`Error: ${body.error || res.statusText}`, "error");
+      const responseText = await res.text().catch(() => "");
+      let body = {};
+      if (responseText) {
+        try {
+          body = JSON.parse(responseText);
+        } catch {
+          body = { error: responseText };
+        }
+      }
+      console.error("POST /api/lab/start failed", {
+        status: res.status,
+        body: responseText,
+        labId,
+        sessionId: sid,
+      });
+      addLine(body.error || "Unable to start the lab. Please retry.", "error");
       setBooting(false);
       return;
     }
@@ -112,7 +121,7 @@ export function useFreeLab(labId) {
   // Start on mount
   useEffect(() => {
     mountedRef.current = true;
-    sessionId.current = getOrCreateSessionId();
+    sessionId.current = sessionId.current || contextSessionId || ensureSessionId?.() || getOrCreateBrowserSessionId();
     bootSequence(sessionId.current);
 
     const handleUnload = () => {

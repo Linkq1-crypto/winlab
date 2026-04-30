@@ -4,12 +4,15 @@ import { FitAddon } from '@xterm/addon-fit';
 import 'xterm/css/xterm.css';
 import './LabTerminal.css';
 
-function createSocketUrl(containerName, levelId, hintEnabled) {
+function createSocketUrl(containerName, levelId, hintEnabled, sessionId) {
   const search = new URLSearchParams({
     container: containerName,
     level: levelId,
     hintEnabled: hintEnabled ? 'true' : 'false',
   });
+  if (sessionId) {
+    search.set('sessionId', sessionId);
+  }
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${protocol}//${window.location.host}/ws/lab?${search.toString()}`;
 }
@@ -42,6 +45,7 @@ export default function LabTerminal({
   containerName,
   levelId = 'JUNIOR',
   hintEnabled = true,
+  sessionId = null,
   onClose,
   onComplete,
 }) {
@@ -197,7 +201,7 @@ export default function LabTerminal({
     if (wrapperRef.current) observer.observe(wrapperRef.current);
     resizeObserverRef.current = observer;
 
-    const ws = new WebSocket(createSocketUrl(containerName, levelId, hintEnabled));
+    const ws = new WebSocket(createSocketUrl(containerName, levelId, hintEnabled, sessionId));
     socketRef.current = ws;
 
     ws.onmessage = (event) => {
@@ -254,7 +258,7 @@ export default function LabTerminal({
       readyRef.current = false;
       pendingOutputRef.current = [];
     };
-  }, [containerName, hintEnabled, levelId]);
+  }, [containerName, hintEnabled, levelId, sessionId]);
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col bg-[linear-gradient(180deg,#081019_0%,#05070c_100%)] text-slate-200">
