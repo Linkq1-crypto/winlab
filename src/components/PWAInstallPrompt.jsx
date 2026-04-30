@@ -111,6 +111,15 @@ export default function PWAInstallPrompt({ hidden = false }) {
   const visible = !hidden && !dismissed && !installed && (Boolean(deferredPrompt) || showManualFallback);
 
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (visible) {
+      document.body.setAttribute('data-pwa-prompt-visible', 'true');
+      return;
+    }
+    document.body.removeAttribute('data-pwa-prompt-visible');
+  }, [visible]);
+
+  useEffect(() => {
     if (!visible || shownTrackedRef.current) return;
     shownTrackedRef.current = true;
     track('pwa_install_prompt_shown');
@@ -146,9 +155,9 @@ export default function PWAInstallPrompt({ hidden = false }) {
   if (!visible) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[90] flex justify-center px-4 sm:px-6 lg:px-8">
+    <div className="pointer-events-none fixed inset-x-0 bottom-2 z-[90] flex justify-center px-3 pb-[env(safe-area-inset-bottom)] sm:bottom-4 sm:px-6 lg:px-8">
       <div
-        className="pointer-events-auto w-full max-w-md rounded-3xl border border-emerald-400/20 bg-[linear-gradient(180deg,rgba(10,18,16,0.96),rgba(5,5,5,0.98))] p-4 shadow-[0_18px_60px_rgba(5,5,5,0.55)] backdrop-blur-xl"
+        className="winlab-pwa-sheet pointer-events-auto w-full max-w-md rounded-[24px] border border-emerald-400/20 bg-[linear-gradient(180deg,rgba(10,18,16,0.96),rgba(5,5,5,0.98))] p-4 shadow-[0_18px_32px_rgba(5,5,5,0.35)] backdrop-blur-xl sm:rounded-3xl"
         data-testid="pwa-install-prompt"
       >
         <div className="flex items-start gap-3">

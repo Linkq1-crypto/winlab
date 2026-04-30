@@ -12,6 +12,8 @@
   width: 100%;
   height: 100%;
   max-width: 100%;
+  overflow: hidden;
+  contain: layout paint style;
 }
 
 .winlab-xterm-shell .xterm-viewport {
@@ -20,6 +22,13 @@
   overflow-y: auto;
   overflow-x: hidden !important;
   overscroll-behavior: contain;
+}
+
+.winlab-xterm-shell .xterm-screen,
+.winlab-xterm-shell .xterm-screen canvas,
+.winlab-xterm-shell .xterm-rows,
+.winlab-xterm-shell .xterm-scroll-area {
+  max-width: 100% !important;
 }
 
 .winlab-xterm-shell .xterm-screen,
@@ -39,4 +48,49 @@
   outline: 0 !important;
   background: transparent !important;
   color: transparent !important;
+}
+
+@media (max-width: 640px) {
+  .winlab-xterm-shell {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.75rem;
+  }
+
+  .winlab-xterm-shell .xterm {
+    width: 100% !important;
+    max-width: 100vw !important;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .winlab-xterm-shell .xterm-screen,
+  .winlab-xterm-shell .xterm-viewport,
+  .winlab-xterm-shell .xterm-rows,
+  .winlab-xterm-shell .xterm-helper-textarea {
+    max-width: 100% !important;
+  }
+
+  .winlab-xterm-shell .xterm-cursor-layer,
+  .winlab-xterm-shell .xterm-selection-layer,
+  .winlab-xterm-shell .xterm-link-layer {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .winlab-xterm-shell .xterm-viewport {
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+  }
+
+  .winlab-xterm-shell .xterm-helper-textarea {
+    left: 0 !important;
+    top: 0 !important;
+    max-width: 1px !important;
+    max-height: 1px !important;
+    transform: none !important;
+  }
 }

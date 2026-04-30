@@ -103,6 +103,8 @@ export default function HomeShell() {
   const [launchClockOffsetMs, setLaunchClockOffsetMs] = useState(0);
   const [countdownNowMs, setCountdownNowMs] = useState(() => Date.now());
   const [catalogLoading, setCatalogLoading] = useState(true);
+  const [isSmallScreen, setIsSmallScreen] = useState(() => (typeof window !== 'undefined' ? window.innerWidth <= 640 : false));
+  const [isPhoneWidth, setIsPhoneWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth <= 430 : false));
   const [socialLinks] = useSocialStorage();
   const terminalEndRef = useRef(null);
 
@@ -147,6 +149,22 @@ export default function HomeShell() {
     loadCatalog();
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const syncViewport = () => {
+      setIsSmallScreen(window.innerWidth <= 640);
+      setIsPhoneWidth(window.innerWidth <= 430);
+    };
+
+    syncViewport();
+    window.addEventListener('resize', syncViewport);
+    window.addEventListener('orientationchange', syncViewport);
+
+    return () => {
+      window.removeEventListener('resize', syncViewport);
+      window.removeEventListener('orientationchange', syncViewport);
     };
   }, []);
 
@@ -356,69 +374,78 @@ export default function HomeShell() {
   const featuredStarterLabs = starterLabs.slice(0, 5);
   const hideInstallPrompt = view === 'lab' || showRegister || showPaywall || Boolean(selectedLab);
   const launchCountdown = getLaunchCountdownState(launchPricing, countdownNowMs + launchClockOffsetMs);
+  const terminalPreviewLogs = isSmallScreen ? terminalLogs.slice(0, 2) : terminalLogs;
+  const earlyAccessFeatures = ['All Starter labs', 'Save progress', 'Founder badge', 'Early supporter status', 'Price locked forever'];
+  const proFeatures = ['All labs unlocked', 'Unlimited AI Mentor', 'Certificates', 'Advanced incident chains', 'Priority support'];
+  const lifetimeFeatures = ['Everything in Pro', 'All future labs included', 'Lifetime updates', 'No recurring fees', 'Early access to new features'];
+  const visibleEarlyAccessFeatures = isPhoneWidth ? earlyAccessFeatures.slice(0, 4) : earlyAccessFeatures;
+  const visibleProFeatures = isPhoneWidth ? proFeatures.slice(0, 4) : proFeatures;
+  const visibleLifetimeFeatures = isPhoneWidth ? lifetimeFeatures.slice(0, 4) : lifetimeFeatures;
 
   if (view === 'terminal') {
     return (
-      <div className="min-h-screen min-h-[100dvh] bg-black px-4 py-4 font-mono sm:px-6 lg:px-8">
+      <div className="winlab-mobile-shell min-h-screen min-h-[100dvh] bg-black px-3 py-3 font-mono sm:px-6 lg:px-8">
         <Suspense fallback={null}>
           <CookieBanner />
         </Suspense>
         <PWAInstallPrompt hidden={hideInstallPrompt} />
         <SocialSidebar links={socialLinks} />
-        <div className="mx-auto flex min-h-[calc(100dvh-2rem)] w-full max-w-5xl items-center justify-center">
-          <div className="flex max-h-[min(92dvh,820px)] min-h-[560px] w-full min-w-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 shadow-2xl">
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/5 bg-zinc-900 px-4 py-3">
+        <div className="mx-auto flex min-h-[calc(100dvh-1.5rem)] w-full max-w-5xl items-center justify-center">
+          <div className="flex max-h-[min(90dvh,820px)] min-h-[520px] w-full min-w-0 max-w-full flex-col overflow-hidden rounded-[24px] border border-white/10 bg-zinc-950 shadow-[0_18px_44px_rgba(0,0,0,0.32)] sm:rounded-2xl sm:shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/5 bg-zinc-900 px-3 py-3 sm:px-4">
               <div className="flex gap-1.5">
                 <div className="h-2.5 w-2.5 rounded-full border border-red-500/50 bg-red-500/40" />
                 <div className="h-2.5 w-2.5 rounded-full border border-yellow-500/50 bg-yellow-500/40" />
                 <div className="h-2.5 w-2.5 rounded-full border border-green-500/50 bg-green-500/40" />
               </div>
-              <span className="truncate text-center text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">
+              <span className="truncate text-center text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500 sm:text-[10px] sm:tracking-[0.28em]">
                 WinLab Operational Terminal
               </span>
               <button
                 type="button"
                 onClick={() => setView('dashboard')}
-                className="rounded-full border border-cyan-400/20 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-cyan-200 transition-colors hover:bg-cyan-400/10"
+                className="min-h-[44px] rounded-full border border-cyan-400/20 px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-cyan-200 transition-colors hover:bg-cyan-400/10 sm:min-h-0 sm:py-1 sm:tracking-[0.2em]"
               >
                 Open Hub
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-              <div className="mb-4 flex flex-col gap-4 rounded-2xl border border-cyan-400/10 bg-cyan-400/5 p-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-6">
+              <div className="mb-4 flex flex-col gap-3 rounded-[24px] border border-cyan-400/10 bg-cyan-400/5 p-4 sm:flex-row sm:items-end sm:justify-between">
                 <div className="min-w-0">
                   <p className="mb-2 text-[10px] uppercase tracking-[0.24em] text-cyan-200/80">Terminal-first incident training</p>
-                  <h1 className="max-w-2xl break-words text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
-                    Real labs. Small screen safe.
+                  <h1 className="max-w-xl break-words text-[2rem] font-black uppercase leading-[0.95] tracking-tight text-white sm:text-4xl">
+                    Real Labs. Zero Mobile Friction.
                   </h1>
-                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-gray-400">
-                    Move from onboarding into runnable incidents without clipping the terminal, burying the CTA, or forcing horizontal scroll.
+                  <p className="mt-2 max-w-md text-[12px] uppercase tracking-[0.18em] text-cyan-100/70">
+                    Launch a real incident in one tap.
                   </p>
                 </div>
-                <div className="grid w-full gap-3 sm:w-auto">
+                <div className="grid w-full max-w-full gap-3 sm:w-auto">
                   <button
                     type="button"
                     onClick={() => setView('dashboard')}
-                    className="w-full rounded-2xl bg-red-600 px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white transition-colors hover:bg-red-500 sm:min-w-[220px]"
+                    className="min-h-[48px] w-full max-w-full rounded-2xl bg-red-600 px-4 py-3 text-sm font-black uppercase tracking-[0.18em] text-white transition-colors hover:bg-red-500 sm:min-w-[220px]"
                   >
                     Launch Free Labs
                   </button>
-                  <a
-                    href="#pricing"
-                    onClick={() => setView('dashboard')}
-                    className="block w-full rounded-2xl border border-white/10 px-4 py-3 text-center text-sm font-black uppercase tracking-[0.2em] text-gray-300 transition-colors hover:bg-white/5 sm:min-w-[220px]"
-                  >
-                    View Pricing
-                  </a>
+                  {!isSmallScreen ? (
+                    <a
+                      href="#pricing"
+                      onClick={() => setView('dashboard')}
+                      className="block min-h-[48px] w-full max-w-full rounded-2xl border border-white/10 px-4 py-3 text-center text-sm font-black uppercase tracking-[0.18em] text-gray-300 transition-colors hover:bg-white/5 sm:min-w-[220px]"
+                    >
+                      View Pricing
+                    </a>
+                  ) : null}
                 </div>
               </div>
 
-              <div className="space-y-1 text-sm leading-relaxed">
+              <div className="space-y-1 rounded-[22px] border border-white/6 bg-[#07111a] px-3 py-3 text-[12px] leading-[1.5] sm:mt-2 sm:text-sm">
                 <div className="mb-4 flex items-center gap-3 rounded-xl border border-cyan-400/10 bg-cyan-400/5 px-3 py-2 text-[10px] uppercase tracking-[0.24em] text-cyan-200/80">
                   <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
                   {catalogLoading ? 'syncing lab catalog' : `${starterLabs.length} starter labs primed`}
                 </div>
-                {terminalLogs.map((log, index) =>
+                {terminalPreviewLogs.map((log, index) =>
                   log ? (
                     <div
                       key={index}
@@ -443,11 +470,11 @@ export default function HomeShell() {
                 <div ref={terminalEndRef} />
               </div>
             </div>
-            <form onSubmit={handleCommand} className="flex shrink-0 flex-col gap-3 border-t border-white/5 bg-zinc-900/50 p-4 sm:flex-row sm:items-center sm:p-6">
+            <form onSubmit={handleCommand} className="flex shrink-0 flex-col gap-3 border-t border-white/5 bg-zinc-900/50 p-3 sm:flex-row sm:items-center sm:p-6">
               <span className="text-sm font-bold text-red-500">OP@WINLAB:~$</span>
               <input
                 autoFocus
-                className="w-full min-w-0 flex-1 bg-transparent text-sm text-white outline-none"
+                className="min-h-[44px] w-full min-w-0 flex-1 rounded-2xl bg-black/20 px-3 text-sm text-white outline-none"
                 value={inputValue}
                 onChange={(event) => setInputValue(event.target.value)}
                 placeholder="Run command..."
@@ -481,7 +508,7 @@ export default function HomeShell() {
 
   if (view === 'lab' && activeSession) {
     return (
-      <div className="relative flex min-h-screen min-h-[100dvh] min-w-0 flex-col overflow-hidden bg-[#050505] text-gray-300">
+      <div className="winlab-mobile-shell relative flex min-h-screen min-h-[100dvh] min-w-0 flex-col overflow-hidden bg-[#050505] text-gray-300">
         {showRegister && (
           <Suspense fallback={null}>
             <RegisterModal onSuccess={handleAuthSuccess} onClose={() => setShowRegister(false)} />
@@ -520,7 +547,7 @@ export default function HomeShell() {
   }
 
   return (
-    <div className="flex min-h-screen min-h-[100dvh] min-w-0 overflow-hidden bg-[#050505] text-gray-300">
+    <div className="winlab-mobile-shell flex min-h-screen min-h-[100dvh] min-w-0 overflow-hidden bg-[#050505] text-gray-300">
       <Suspense fallback={null}>
         <CookieBanner />
       </Suspense>
@@ -620,15 +647,15 @@ export default function HomeShell() {
         </div>
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col overflow-y-auto px-4 py-4 sm:px-6 lg:px-8">
+      <main className="flex min-w-0 flex-1 flex-col overflow-y-auto px-3 py-3 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-6xl min-w-0">
-          <header className="sticky top-0 z-30 mb-8 rounded-3xl border border-white/5 bg-[#050505]/95 px-4 py-4 backdrop-blur md:static md:border-none md:bg-transparent md:px-0 md:py-0">
+          <header className="sticky top-0 z-30 mb-6 rounded-[24px] border border-white/5 bg-[#050505]/95 px-4 py-4 backdrop-blur md:static md:border-none md:bg-transparent md:px-0 md:py-0">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="mb-2 text-[10px] uppercase tracking-[0.28em] text-red-300/80">Operational command</p>
-                  <h1 className="break-words text-3xl font-black uppercase italic tracking-tighter text-white sm:text-4xl">
-                    Operational Hub
+                  <h1 className="break-words text-[2.1rem] font-black uppercase italic leading-[0.95] tracking-tighter text-white sm:text-4xl">
+                    {isSmallScreen ? 'WinLab Hub' : 'Operational Hub'}
                   </h1>
                   <p className="mt-2 text-sm font-medium text-gray-500">
                     Operator: <span className="text-white">{auth ? auth.name || auth.email : 'Guest'}</span>{' '}
@@ -636,15 +663,23 @@ export default function HomeShell() {
                     <span className="font-bold text-red-500">ACTIVE</span>
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsMobileMenuOpen(true)}
-                  className="shrink-0 rounded-2xl border border-white/10 p-3 text-gray-300 md:hidden"
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
+                <div className="flex shrink-0 items-center gap-2 md:hidden">
+                  <a
+                    href="#pricing"
+                    className="min-h-[44px] rounded-2xl bg-red-600 px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white"
+                  >
+                    Pricing
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    className="min-h-[44px] rounded-2xl border border-white/10 p-3 text-gray-300"
+                  >
+                    <Menu className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
-              <div className="w-full rounded-2xl border border-white/5 bg-zinc-900 px-5 py-4 md:w-auto">
+              <div className="hidden w-full rounded-2xl border border-white/5 bg-zinc-900 px-5 py-4 md:block md:w-auto">
                 <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-gray-600">Catalog Integrity</p>
                 <p className="text-lg font-black text-white sm:text-xl">{filteredLabs.length} / {labCatalog.length} MODULES</p>
               </div>
@@ -652,13 +687,13 @@ export default function HomeShell() {
           </header>
 
           <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex w-full gap-1 overflow-x-auto rounded-2xl border border-white/5 bg-zinc-900 p-1.5">
+            <div className="flex w-full max-w-full gap-1 overflow-x-auto rounded-2xl border border-white/5 bg-zinc-900 p-1.5">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`whitespace-nowrap rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${
+                  className={`min-h-[44px] whitespace-nowrap rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${
                     selectedCategory === cat ? 'bg-red-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'
                   }`}
                 >
@@ -673,7 +708,7 @@ export default function HomeShell() {
                 placeholder="Search labs..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="w-full rounded-2xl border border-white/5 bg-zinc-900 py-3 pl-12 pr-4 text-xs text-white outline-none focus:border-red-500/30"
+                className="min-h-[44px] w-full rounded-2xl border border-white/5 bg-zinc-900 py-3 pl-12 pr-4 text-xs text-white outline-none focus:border-red-500/30"
               />
             </div>
           </div>
@@ -684,24 +719,24 @@ export default function HomeShell() {
             </div>
           )}
 
-          <section className="mb-10 rounded-[32px] border border-emerald-500/15 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_42%),linear-gradient(180deg,rgba(10,18,16,0.96),rgba(5,5,5,0.98))] p-5 sm:p-6 md:p-8">
+          <section className="mb-8 rounded-[28px] border border-emerald-500/15 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_42%),linear-gradient(180deg,rgba(10,18,16,0.96),rgba(5,5,5,0.98))] p-4 sm:p-6 md:p-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-2xl">
                 <p className="mb-3 text-[10px] font-black uppercase tracking-[0.35em] text-emerald-300/80">Start In The Free Zone</p>
-                <h2 className="break-words text-3xl font-black uppercase italic tracking-tighter leading-tight text-white sm:text-4xl">
-                  Let The First 5 Free Labs Drive The Homepage
+                <h2 className="break-words text-[2.15rem] font-black uppercase italic tracking-tighter leading-[0.95] text-white sm:text-4xl">
+                  Start Free. Feel The Product Fast.
                 </h2>
                 <p className="mt-3 text-sm leading-relaxed text-gray-300">
-                  Get people into real incidents immediately with the free starter labs, then introduce pricing as the next step. Keep the catalog at the center of the homepage, not the paywall.
+                  Launch a real incident first, then introduce upgrade pressure only after the product has already proven itself.
                 </p>
               </div>
-              <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:w-auto xl:grid-cols-3">
+              <div className="grid w-full max-w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:w-auto xl:grid-cols-3">
                 {featuredStarterLabs.map((lab) => (
                   <button
                     key={lab.id}
                     type="button"
                     onClick={() => !labLoading && setSelectedLab(lab)}
-                    className="w-full min-w-0 rounded-2xl border border-emerald-400/15 bg-black/35 px-4 py-4 text-left transition-all hover:border-emerald-300/40 hover:bg-black/50"
+                    className="w-full min-w-0 max-w-full rounded-2xl border border-emerald-400/15 bg-black/35 px-4 py-4 text-left transition-all hover:border-emerald-300/40 hover:bg-black/50"
                   >
                     <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-emerald-300">Free Starter</p>
                     <p className="mb-2 text-sm font-black leading-tight text-white">{lab.title}</p>
@@ -765,58 +800,58 @@ export default function HomeShell() {
               </div>
               <p className="text-[11px] uppercase tracking-[0.3em] text-gray-600">Free first. Upgrade for AI, chains and certificates.</p>
             </div>
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {launchCountdown?.visible ? (
-                <div className="flex flex-col rounded-[28px] border border-emerald-500/15 bg-emerald-500/5 p-7">
+                <div className="flex min-w-0 max-w-full flex-col rounded-[28px] border border-emerald-500/15 bg-emerald-500/5 p-5 sm:p-7">
                   <p className="mb-3 text-[9px] font-black uppercase tracking-widest text-emerald-300">Early Access</p>
-                  <p className="mb-1 text-4xl font-black italic text-white">EUR 5<span className="text-lg font-normal text-emerald-100/65"> forever</span></p>
+                  <p className="mb-1 break-words text-[2.1rem] font-black italic text-white sm:text-4xl">EUR 5<span className="text-base font-normal text-emerald-100/65 sm:text-lg"> forever</span></p>
                   <p className="mb-2 text-xs text-emerald-100/70">Locked launch price for life.</p>
-                  <div className="mb-6 rounded-2xl border border-emerald-400/10 bg-black/20 px-4 py-3">
+                  <div className="mb-5 rounded-2xl border border-emerald-400/10 bg-black/20 px-4 py-3">
                     <p className="text-[10px] uppercase tracking-[0.26em] text-emerald-200/70">{launchCountdown.label}</p>
-                    <p className="mt-2 text-lg font-black uppercase tracking-[0.16em] text-white">{launchCountdown.countdown}</p>
+                    <p className="mt-2 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[15px] font-black uppercase tracking-[0.08em] text-white sm:text-lg sm:tracking-[0.16em]">{launchCountdown.countdown}</p>
                     <p className="mt-2 text-[10px] uppercase tracking-[0.26em] text-emerald-200/80">Only 500 seats</p>
                   </div>
-                  <ul className="mb-8 space-y-2">
-                    {['All Starter labs', 'Save progress', 'Founder badge', 'Early supporter status', 'Price locked forever'].map((feature) => (
+                  <ul className="mb-6 space-y-2">
+                    {visibleEarlyAccessFeatures.map((feature) => (
                       <li key={feature} className="flex items-center gap-2 text-xs text-emerald-50/80">
                         <span className="font-black text-emerald-300">+</span> {feature}
                       </li>
                     ))}
                   </ul>
-                  <button type="button" onClick={() => handleUpgrade('early')} className="w-full rounded-2xl border border-emerald-400/20 py-3 text-sm font-black uppercase tracking-widest italic text-white transition-all hover:bg-emerald-400/10">
+                  <button type="button" onClick={() => handleUpgrade('early')} className="min-h-[48px] w-full rounded-2xl border border-emerald-400/20 py-3 text-sm font-black uppercase tracking-[0.18em] italic text-white transition-all hover:bg-emerald-400/10">
                     Get Early Access
                   </button>
                 </div>
               ) : null}
 
-              <div className="flex flex-col rounded-[28px] border border-red-500/25 bg-[linear-gradient(180deg,rgba(52,11,11,0.82),rgba(14,14,14,0.96))] p-7 shadow-[0_18px_60px_rgba(127,29,29,0.18)]">
+              <div className="flex min-w-0 max-w-full flex-col rounded-[28px] border border-red-500/25 bg-[linear-gradient(180deg,rgba(52,11,11,0.82),rgba(14,14,14,0.96))] p-5 shadow-[0_18px_60px_rgba(127,29,29,0.18)] sm:p-7">
                 <p className="mb-3 text-[9px] font-black uppercase tracking-widest text-red-300">Pro</p>
-                <p className="mb-1 text-4xl font-black italic text-white">EUR 19<span className="text-lg font-normal text-red-100/60">/mo</span></p>
-                <p className="mb-6 text-xs text-red-100/65">Full platform access.</p>
-                <ul className="mb-8 space-y-2">
-                  {['All labs unlocked', 'Unlimited AI Mentor', 'Certificates', 'Advanced incident chains', 'Priority support'].map((feature) => (
+                <p className="mb-1 break-words text-[2.1rem] font-black italic text-white sm:text-4xl">EUR 19<span className="text-base font-normal text-red-100/60 sm:text-lg">/mo</span></p>
+                <p className="mb-5 text-xs text-red-100/65">Full platform access.</p>
+                <ul className="mb-6 space-y-2">
+                  {visibleProFeatures.map((feature) => (
                     <li key={feature} className="flex items-center gap-2 text-xs text-red-50/80">
                       <span className="font-black text-red-400">+</span> {feature}
                     </li>
                   ))}
                 </ul>
-                <button type="button" onClick={() => handleUpgrade('pro')} className="w-full rounded-2xl bg-red-600 py-3 text-sm font-black uppercase tracking-widest italic text-white transition-all hover:bg-red-500">
+                <button type="button" onClick={() => handleUpgrade('pro')} className="min-h-[48px] w-full rounded-2xl bg-red-600 py-3 text-sm font-black uppercase tracking-[0.18em] italic text-white transition-all hover:bg-red-500">
                   Go Pro
                 </button>
               </div>
 
-              <div className="flex flex-col rounded-[28px] border border-white/10 bg-zinc-950 p-7 transition-colors hover:border-white/20 md:col-span-2 xl:col-span-1">
+              <div className="flex min-w-0 max-w-full flex-col rounded-[28px] border border-white/10 bg-zinc-950 p-5 transition-colors hover:border-white/20 md:col-span-2 xl:col-span-1 sm:p-7">
                 <p className="mb-3 text-[9px] font-black uppercase tracking-widest text-gray-600">Lifetime</p>
-                <p className="mb-1 text-4xl font-black italic text-white">EUR 199<span className="text-lg font-normal text-gray-500"> once</span></p>
-                <p className="mb-6 text-xs text-gray-600">Pay once, own forever.</p>
-                <ul className="mb-8 space-y-2">
-                  {['Everything in Pro', 'All future labs included', 'Lifetime updates', 'No recurring fees', 'Early access to new features'].map((feature) => (
+                <p className="mb-1 break-words text-[2.1rem] font-black italic text-white sm:text-4xl">EUR 199<span className="text-base font-normal text-gray-500 sm:text-lg"> once</span></p>
+                <p className="mb-5 text-xs text-gray-600">Pay once, own forever.</p>
+                <ul className="mb-6 space-y-2">
+                  {visibleLifetimeFeatures.map((feature) => (
                     <li key={feature} className="flex items-center gap-2 text-xs text-gray-400">
                       <span className="font-black text-gray-300">+</span> {feature}
                     </li>
                   ))}
                 </ul>
-                <button type="button" onClick={() => handleUpgrade('lifetime')} className="w-full rounded-2xl border border-white/10 py-3 text-sm font-black uppercase tracking-widest italic text-white transition-all hover:bg-white/5">
+                <button type="button" onClick={() => handleUpgrade('lifetime')} className="min-h-[48px] w-full rounded-2xl border border-white/10 py-3 text-sm font-black uppercase tracking-[0.18em] italic text-white transition-all hover:bg-white/5">
                   Get Lifetime
                 </button>
               </div>
