@@ -5,6 +5,10 @@
 
 import prisma from '../api/db/prisma.js';
 
+export function isUniqueConstraintError(error) {
+  return error?.code === 'P2002';
+}
+
 /**
  * Check if a webhook event has already been processed
  * Returns true if event was already handled (idempotent)
@@ -21,13 +25,33 @@ export async function isEventProcessed(eventId) {
  * Should be called AFTER successful event handling
  */
 export async function markEventProcessed(eventId, eventType, metadata = {}) {
-  return await prisma.processedWebhookEvent.create({
-    data: {
+  return await prisma.processedWebhookEvent.upsert({
+    where: { eventId },
+    update: {
+      eventType,
+      metadata: metadata ? JSON.stringify(metadata) : null,
+    },
+    create: {
       eventId,
       eventType,
       metadata: metadata ? JSON.stringify(metadata) : null,
     },
   });
+}
+
+/**
+ * Persist an Event row once and treat duplicate IDs as idempotent success.
+ */
+export async function createEventIfAbsent(data) {
+  try {
+    const created = await prisma.event.create({ data });
+    return { created: true, duplicate: false, event: created };
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return { created: false, duplicate: true, event: null };
+    }
+    throw error;
+  }
 }
 
 /**
@@ -114,8 +138,10 @@ export async function getProcessedEventsStats() {
 }
 
 export default {
+  isUniqueConstraintError,
   isEventProcessed,
   markEventProcessed,
+  createEventIfAbsent,
   processWebhookEvent,
   cleanupOldProcessedEvents,
   getProcessedEventsStats,

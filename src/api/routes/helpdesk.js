@@ -183,7 +183,7 @@ router.post('/sync/batch', async (req, res) => {
     if (!eid) continue;
 
     try {
-      const { isEventProcessed, markEventProcessed } = await import('../../services/webhookIdempotency.js');
+      const { createEventIfAbsent, isEventProcessed, markEventProcessed } = await import('../../services/webhookIdempotency.js');
 
       if (await isEventProcessed(eid)) {
         // Already processed — acknowledge so client marks it synced
@@ -195,7 +195,7 @@ router.post('/sync/batch', async (req, res) => {
       const { default: prisma } = await import('../db/prisma.js');
       const { envelopeEvent } = await import('../../services/tenantManager.js');
       const enveloped = envelopeEvent(event, tenantId);
-      await prisma.event.create({
+      const eventWrite = await createEventIfAbsent({
         data: {
           id:      eid,
           type:    event.event_type ?? event.type ?? 'UNKNOWN',
@@ -203,7 +203,11 @@ router.post('/sync/batch', async (req, res) => {
           payload: enveloped.payload,
           status:  'pending',
         },
-      });
+      }.data);
+      if (eventWrite.duplicate) {
+        acknowledged.push(eid);
+        continue;
+      }
 
       await markEventProcessed(eid, event.event_type ?? event.type, {
         device_id: event.device_id,
@@ -255,12 +259,12 @@ router.post('/sync', async (req, res) => {
   const eid = validation.eid;
 
   try {
-    const { isEventProcessed, markEventProcessed } = await import('../../services/webhookIdempotency.js');
+    const { createEventIfAbsent, isEventProcessed, markEventProcessed } = await import('../../services/webhookIdempotency.js');
 
     if (await isEventProcessed(eid)) return res.json({ acknowledged: [eid] });
 
     const { default: prisma } = await import('../db/prisma.js');
-    await prisma.event.create({
+    const eventWrite = await createEventIfAbsent({
       data: {
         id:      eid,
         type:    event.event_type ?? event.type ?? 'UNKNOWN',
@@ -268,7 +272,8 @@ router.post('/sync', async (req, res) => {
         payload: JSON.stringify(event.payload ?? {}),
         status:  'pending',
       },
-    });
+    }.data);
+    if (eventWrite.duplicate) return res.json({ acknowledged: [eid] });
 
     await markEventProcessed(eid, event.event_type ?? event.type, {
       device_id: event.device_id,

@@ -17,7 +17,7 @@ import { loadPartitionRange }                     from '../../services/eventPart
 import { runIntelligence }                        from '../../services/intelligenceLayer.js';
 import { getSlaReport }                           from '../../services/qosLayer.js';
 import { getDailyUsage, getMonthlyUsage }         from '../../services/billingMetering.js';
-import { isEventProcessed, markEventProcessed }   from '../../services/webhookIdempotency.js';
+import { createEventIfAbsent, isEventProcessed, markEventProcessed } from '../../services/webhookIdempotency.js';
 import prisma from '../db/prisma.js';
 
 const router = express.Router();
@@ -38,7 +38,7 @@ router.post('/events/ingest', async (req, res) => {
       return res.json({ status: 'duplicate', event_id: eid });
     }
 
-    await prisma.event.create({
+    const eventWrite = await createEventIfAbsent({
       data: {
         id:      eid,
         type:    event.event_type ?? event.type ?? 'UNKNOWN',
@@ -46,7 +46,10 @@ router.post('/events/ingest', async (req, res) => {
         payload: JSON.stringify({ ...parsePayload(event.payload), tenant_id: tenantId }),
         status:  'pending',
       },
-    });
+    }.data);
+    if (eventWrite.duplicate) {
+      return res.json({ status: 'duplicate', event_id: eid });
+    }
 
     await markEventProcessed(eid, event.event_type ?? event.type, { tenant_id: tenantId, device_id: event.device_id });
     meter(tenantId, 'events_ingested');
@@ -84,7 +87,7 @@ router.post('/events/batch', async (req, res) => {
     try {
       if (await isEventProcessed(eid)) { accepted.push(eid); continue; } // idempotent
 
-      await prisma.event.create({
+      const eventWrite = await createEventIfAbsent({
         data: {
           id:      eid,
           type:    event.event_type ?? event.type ?? 'UNKNOWN',
@@ -92,7 +95,8 @@ router.post('/events/batch', async (req, res) => {
           payload: JSON.stringify({ ...parsePayload(event.payload), tenant_id: tenantId }),
           status:  'pending',
         },
-      });
+      }.data);
+      if (eventWrite.duplicate) { accepted.push(eid); continue; }
 
       await markEventProcessed(eid, event.event_type ?? event.type, { tenant_id: tenantId, device_id: event.device_id });
       accepted.push(eid);

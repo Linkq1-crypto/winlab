@@ -10,7 +10,7 @@ module.exports = {
       script: 'server.js',
       interpreter: 'node',
       interpreter_args: '--experimental-vm-modules',
-      instances: 1, // SQLite write path is not safe under PM2 cluster contention
+      instances: 1, // Production SQLite must run a single backend instance only.
       exec_mode: 'fork',
       max_memory_restart: '1G',
 
