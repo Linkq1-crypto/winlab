@@ -12,6 +12,7 @@ const StatusPage = lazy(() => import('./pages/StatusPage'));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
 const BlogPage = lazy(() => import('./pages/BlogPage'));
 const FeedbackPage = lazy(() => import('./pages/FeedbackPage'));
+const EnterprisePage = lazy(() => import('./pages/EnterprisePage'));
 const ProfilePublicPage = lazy(() => import('./pages/ProfilePublicPage'));
 const AISettings = lazy(() => import('./AISettings'));
 
@@ -59,6 +60,12 @@ function App() {
   }
   if (path === '/feedback') {
     return <Suspense fallback={<RouteShell />}><FeedbackPage /></Suspense>;
+  }
+  if (path === '/forum') {
+    return <Suspense fallback={<RouteShell />}><FeedbackPage /></Suspense>;
+  }
+  if (path === '/enterprise') {
+    return <Suspense fallback={<RouteShell />}><EnterprisePage /></Suspense>;
   }
   if (path === '/blog' || path.startsWith('/blog/')) {
     return <Suspense fallback={<RouteShell />}><BlogPage /></Suspense>;

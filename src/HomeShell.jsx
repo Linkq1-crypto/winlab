@@ -13,6 +13,7 @@ import {
 import SocialSidebar from './SocialSidebar';
 import { LEVEL_OPTIONS, getLevelConfig } from './config/levels';
 import { useSocialStorage } from './hooks/useSocialStorage';
+import { getLaunchCountdownState, normalizeLaunchPricingPayload } from './lib/launchWindow';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { syncStoredAiConsentPreference } from './services/aiConsent.js';
 
@@ -43,6 +44,7 @@ const FOOTER_LINKS = [
       { label: 'How it works', href: '/how-it-works' },
       { label: 'Labs', href: '/' },
       { label: 'Blog', href: '/blog' },
+      { label: 'Enterprise', href: '/enterprise' },
       { label: 'Pricing', href: '#pricing' },
     ],
   },
@@ -59,6 +61,7 @@ const FOOTER_LINKS = [
     links: [
       { label: 'Contact', href: '/contact' },
       { label: 'Feedback', href: '/feedback' },
+      { label: 'Forum', href: '/forum' },
       { label: 'Profile', href: '/profile' },
       { label: 'Status', href: '/status' },
     ],
@@ -67,6 +70,8 @@ const FOOTER_LINKS = [
 
 const QUICK_PAGE_LINKS = [
   { label: 'Blog', href: '/blog' },
+  { label: 'Forum', href: '/forum' },
+  { label: 'Enterprise', href: '/enterprise' },
   { label: 'Feedback', href: '/feedback' },
   { label: 'Profile', href: '/profile' },
   { label: 'Contact', href: '/contact' },
@@ -94,7 +99,9 @@ export default function HomeShell() {
   const [starterIds, setStarterIds] = useState(new Set());
   const [selectedLevelId, setSelectedLevelId] = useState('JUNIOR');
   const [pendingCheckoutPlan, setPendingCheckoutPlan] = useState(null);
-  const [earlyAccessRemaining, setEarlyAccessRemaining] = useState(null);
+  const [launchPricing, setLaunchPricing] = useState(null);
+  const [launchClockOffsetMs, setLaunchClockOffsetMs] = useState(0);
+  const [countdownNowMs, setCountdownNowMs] = useState(() => Date.now());
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [socialLinks] = useSocialStorage();
   const terminalEndRef = useRef(null);
@@ -144,18 +151,41 @@ export default function HomeShell() {
   }, []);
 
   useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCountdownNowMs(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
-    async function loadEarlyAccessSeats() {
+    async function loadPricingState() {
       try {
-        const res = await fetch('/api/early-access/seats', { credentials: 'include' });
+        const res = await fetch('/api/pricing', { credentials: 'include' });
         const data = await res.json().catch(() => null);
-        if (!res.ok || !data || cancelled) return;
-        setEarlyAccessRemaining(Number.isFinite(data.remaining) ? data.remaining : null);
-      } catch {}
+        const pricing = normalizeLaunchPricingPayload(data);
+
+        if (!res.ok || !pricing || cancelled) {
+          if (!cancelled) setLaunchPricing(null);
+          return;
+        }
+
+        const serverNowMs =
+          Date.parse(data?.serverNow || '') ||
+          Date.parse(res.headers.get('date') || '');
+
+        if (!cancelled) {
+          setLaunchPricing(pricing);
+          setLaunchClockOffsetMs(Number.isFinite(serverNowMs) ? serverNowMs - Date.now() : 0);
+        }
+      } catch {
+        if (!cancelled) setLaunchPricing(null);
+      }
     }
 
-    loadEarlyAccessSeats();
+    loadPricingState();
     return () => {
       cancelled = true;
     };
@@ -325,6 +355,7 @@ export default function HomeShell() {
   const starterLabs = labCatalog.filter((lab) => starterIds.has(lab.id));
   const featuredStarterLabs = starterLabs.slice(0, 5);
   const hideInstallPrompt = view === 'lab' || showRegister || showPaywall || Boolean(selectedLab);
+  const launchCountdown = getLaunchCountdownState(launchPricing, countdownNowMs + launchClockOffsetMs);
 
   if (view === 'terminal') {
     return (
@@ -735,24 +766,28 @@ export default function HomeShell() {
               <p className="text-[11px] uppercase tracking-[0.3em] text-gray-600">Free first. Upgrade for AI, chains and certificates.</p>
             </div>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-              <div className="flex flex-col rounded-[28px] border border-emerald-500/15 bg-emerald-500/5 p-7">
-                <p className="mb-3 text-[9px] font-black uppercase tracking-widest text-emerald-300">Early Access</p>
-                <p className="mb-1 text-4xl font-black italic text-white">EUR 5<span className="text-lg font-normal text-emerald-100/65"> forever</span></p>
-                <p className="mb-2 text-xs text-emerald-100/70">Locked launch price for life.</p>
-                <p className="mb-6 text-[10px] uppercase tracking-[0.26em] text-emerald-200/80">
-                  {Number.isFinite(earlyAccessRemaining) ? `${earlyAccessRemaining} seats left` : 'limited founder seats'}
-                </p>
-                <ul className="mb-8 space-y-2">
-                  {['All Starter labs', 'Save progress', 'Founder badge', 'Early supporter status', 'Price locked forever'].map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-xs text-emerald-50/80">
-                      <span className="font-black text-emerald-300">+</span> {feature}
-                    </li>
-                  ))}
-                </ul>
-                <button type="button" onClick={() => handleUpgrade('early')} className="w-full rounded-2xl border border-emerald-400/20 py-3 text-sm font-black uppercase tracking-widest italic text-white transition-all hover:bg-emerald-400/10">
-                  Get Early Access
-                </button>
-              </div>
+              {launchCountdown?.visible ? (
+                <div className="flex flex-col rounded-[28px] border border-emerald-500/15 bg-emerald-500/5 p-7">
+                  <p className="mb-3 text-[9px] font-black uppercase tracking-widest text-emerald-300">Early Access</p>
+                  <p className="mb-1 text-4xl font-black italic text-white">EUR 5<span className="text-lg font-normal text-emerald-100/65"> forever</span></p>
+                  <p className="mb-2 text-xs text-emerald-100/70">Locked launch price for life.</p>
+                  <div className="mb-6 rounded-2xl border border-emerald-400/10 bg-black/20 px-4 py-3">
+                    <p className="text-[10px] uppercase tracking-[0.26em] text-emerald-200/70">{launchCountdown.label}</p>
+                    <p className="mt-2 text-lg font-black uppercase tracking-[0.16em] text-white">{launchCountdown.countdown}</p>
+                    <p className="mt-2 text-[10px] uppercase tracking-[0.26em] text-emerald-200/80">Only 500 seats</p>
+                  </div>
+                  <ul className="mb-8 space-y-2">
+                    {['All Starter labs', 'Save progress', 'Founder badge', 'Early supporter status', 'Price locked forever'].map((feature) => (
+                      <li key={feature} className="flex items-center gap-2 text-xs text-emerald-50/80">
+                        <span className="font-black text-emerald-300">+</span> {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <button type="button" onClick={() => handleUpgrade('early')} className="w-full rounded-2xl border border-emerald-400/20 py-3 text-sm font-black uppercase tracking-widest italic text-white transition-all hover:bg-emerald-400/10">
+                    Get Early Access
+                  </button>
+                </div>
+              ) : null}
 
               <div className="flex flex-col rounded-[28px] border border-red-500/25 bg-[linear-gradient(180deg,rgba(52,11,11,0.82),rgba(14,14,14,0.96))] p-7 shadow-[0_18px_60px_rgba(127,29,29,0.18)]">
                 <p className="mb-3 text-[9px] font-black uppercase tracking-widest text-red-300">Pro</p>
@@ -786,6 +821,26 @@ export default function HomeShell() {
                 </button>
               </div>
             </div>
+          </section>
+
+          <section className="mb-16 grid gap-5 lg:grid-cols-2">
+            <a href="/forum" className="group rounded-[28px] border border-white/10 bg-zinc-950 p-7 transition-all hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-zinc-900/80">
+              <p className="mb-3 text-[9px] font-black uppercase tracking-widest text-cyan-300">Forum</p>
+              <h3 className="text-2xl font-black uppercase italic tracking-tight text-white">Public feedback and bug board</h3>
+              <p className="mt-3 max-w-xl text-sm text-gray-400">
+                Browse feature requests, upvote fixes, and post issues into the existing community workflow already backed by the API.
+              </p>
+              <p className="mt-6 text-[11px] font-black uppercase tracking-[0.28em] text-cyan-200/80">Open forum</p>
+            </a>
+
+            <a href="/enterprise" className="group rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(16,24,39,0.98),rgba(9,9,11,0.98))] p-7 transition-all hover:-translate-y-1 hover:border-emerald-400/30 hover:bg-zinc-900/80">
+              <p className="mb-3 text-[9px] font-black uppercase tracking-widest text-emerald-300">Enterprise</p>
+              <h3 className="text-2xl font-black uppercase italic tracking-tight text-white">Teams, SSO, and trust-center ready</h3>
+              <p className="mt-3 max-w-xl text-sm text-gray-400">
+                Reintroduced the enterprise entry point from the main product flow so teams can jump straight into security, onboarding, and procurement material.
+              </p>
+              <p className="mt-6 text-[11px] font-black uppercase tracking-[0.28em] text-emerald-200/80">See enterprise plans</p>
+            </a>
           </section>
 
           <footer className="border-t border-white/5 pb-10 pt-12">

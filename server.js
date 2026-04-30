@@ -61,6 +61,7 @@ import {
 } from "./src/services/dockerLabRunner.js";
 import { getSiteLabCatalog } from "./src/services/siteLabCatalog.js";
 import { getLevelConfig, isKnownLevel } from "./src/config/levels.js";
+import { DEFAULT_LAUNCH_START_AT, buildLaunchWindow, getLaunchState } from "./src/lib/launchWindow.js";
 import labAiRoutes from "./server/routes/labAi.js";
 import labProgressRouter from "./server/routes/labProgress.js";
 
@@ -75,9 +76,11 @@ const IS_PROD    = process.env.NODE_ENV === "production";
 const JWT_SECRET = process.env.JWT_SECRET || (IS_PROD ? "" : "dev_secret_change_me");
 const ENC_KEY    = (process.env.ENCRYPTION_KEY || "00000000000000000000000000000000").slice(0, 32);
 const EARLY_ACCESS_FILE = path.join(__dirname, "data", "early-access-seats.json");
+const LAUNCH_START_AT = process.env.LAUNCH_START_AT || DEFAULT_LAUNCH_START_AT;
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+const launchWindow = buildLaunchWindow(LAUNCH_START_AT);
 
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
@@ -1961,7 +1964,18 @@ app.post("/api/early-access/signup", authLimiter, async (req, res) => {
 
 // GET /api/pricing
 app.get("/api/pricing", (req, res) => {
+  const nowMs = Date.now();
+  const launchState = getLaunchState({
+    launchStartMs: launchWindow.launchStartMs,
+    launchEndMs: launchWindow.launchEndMs,
+    nowMs,
+  });
+
   res.json({
+    ...launchState,
+    launchStart: launchWindow.launchStart,
+    launchEnd: launchWindow.launchEnd,
+    serverNow: new Date(nowMs).toISOString(),
     launchTierActive: false,
     plans: [
       {
