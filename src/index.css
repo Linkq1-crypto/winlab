@@ -64,6 +64,10 @@ canvas {
   max-width: 100%;
 }
 
+body[data-pwa-installed='true'] {
+  overscroll-behavior-y: contain;
+}
+
 /* ── Print (certificate) ───────────────────────────────────────────────────── */
 @media print {
   body > *:not(#winlab-cert) { display: none !important; }

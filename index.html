@@ -1,57 +1,55 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
-  <!-- Character encoding - MUST be first -->
   <meta charset="UTF-8" />
-
-  <!-- Viewport and theme -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0a0a0b" />
+  <meta name="theme-color" content="#050505" />
 
-  <!-- SEO -->
-  <meta name="description" content="Train on real sysadmin incidents with AI guidance. Break servers, fix them, become job-ready. 100+ Linux labs, no videos, no theory." />
-  <meta name="keywords" content="sysadmin training, linux lab, devops, incident response, AI mentor, IT infrastructure" />
-  <meta name="author" content="WINLAB" />
+  <meta
+    name="description"
+    content="Train on real sysadmin incidents with AI guidance. Break servers, fix them, become job-ready. 100 plus Linux labs, no videos, no theory."
+  />
+  <meta
+    name="keywords"
+    content="sysadmin training, linux lab, devops, incident response, AI mentor, IT infrastructure"
+  />
+  <meta name="author" content="WinLab" />
 
-  <!-- Mobile/PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="WINLAB" />
+  <meta name="apple-mobile-web-app-title" content="WinLab" />
   <meta name="mobile-web-app-capable" content="yes" />
 
-  <!-- OG / Social -->
-  <meta property="og:title" content="WINLAB — Break Real Servers. Become Job-Ready." />
-  <meta property="og:description" content="100+ real sysadmin incidents with AI mentor. No videos. Just real problems." />
+  <meta property="og:title" content="WinLab - Break Real Servers. Become Job-Ready." />
+  <meta
+    property="og:description"
+    content="100 plus real sysadmin incidents with AI mentor. No videos. Just real problems."
+  />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://winlab.cloud" />
   <meta name="twitter:card" content="summary_large_image" />
 
-  <!-- PWA manifest -->
-  <link rel="manifest" href="/manifest.json" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/pwa-192x192.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/pwa-192x192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/pwa-512x512.png" />
 
-  <!-- Icons -->
-  <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
-  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96.png" />
-  <link rel="shortcut icon" href="/favicon.ico" />
-
-  <!-- Preconnect: resolve DNS early for external resources -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://winlab.cloud" />
   <link rel="dns-prefetch" href="https://api.anthropic.com" />
 
-  <!-- Fonts: display=swap prevents invisible text during load -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;600;800&display=swap"
+    rel="stylesheet"
+  />
 
-  <!-- LCP fix: static terminal skeleton visible before JS hydrates.
-       Google sees real content in <1s instead of a blank div. -->
   <style>
-    body { margin: 0; background: #0a0a0b; }
+    body { margin: 0; background: #050505; }
     #lcp-skeleton {
       font-family: 'Courier New', monospace;
       background: #050505;
-      border: 1px solid rgba(34,197,94,0.25);
+      border: 1px solid rgba(34, 197, 94, 0.25);
       border-radius: 12px;
       padding: 20px 24px;
       color: #4ade80;
@@ -64,42 +62,38 @@
     #lcp-skeleton .e { color: #f87171; }
     #lcp-skeleton .d { color: #475569; }
     #lcp-skeleton .b { color: #93c5fd; }
-    /* Hide skeleton once React mounts */
     #root:not(:empty) + * { display: none; }
   </style>
 
-  <title>WINLAB — Break Real Servers. Become Job-Ready.</title>
+  <title>WinLab - Break Real Servers. Become Job-Ready.</title>
 </head>
 <body>
-  <!-- Static LCP element: visible immediately, replaced by React on hydration -->
   <div id="lcp-skeleton" class="skeleton loading" aria-hidden="true">
     <div class="d">Last login: Mon Apr 20 21:00:02 2026 from 10.0.2.10</div>
-    <div class="d">─────────────────────────────────────────────</div>
+    <div class="d">---------------------------------------------</div>
     <div>&nbsp;</div>
-    <div class="e">🚨  ALERT  ─  Apache web server is DOWN</div>
-    <div class="e">    HTTP 502 · users affected · SLA breach in 4 min</div>
+    <div class="e">ALERT - Apache web server is DOWN</div>
+    <div class="e">HTTP 502 - users affected - SLA breach in 4 min</div>
     <div>&nbsp;</div>
     <div>root@prod-server:~# <span style="display:inline-block;width:8px;height:14px;background:#4ade80;vertical-align:middle;"></span></div>
     <div>&nbsp;</div>
-    <div class="b">🤖  AI Mentor: Check the service status first, then bring it back up.</div>
+    <div class="b">AI Mentor: Check the service status first, then bring it back up.</div>
   </div>
 
-  <!-- Skip to main content (accessibility) -->
   <a href="#main-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
     Skip to main content
   </a>
 
-  <div id="root" role="document" aria-label="WINLAB Application"></div>
+  <div id="root" role="document" aria-label="WinLab Application"></div>
 
   <script type="module" src="/src/main.jsx"></script>
 
-  <!-- Hide skeleton as soon as React renders anything -->
   <script>
-    new MutationObserver(function(m, o) {
+    new MutationObserver(function(mutations, observer) {
       if (document.getElementById('root').childNodes.length > 0) {
-        var s = document.getElementById('lcp-skeleton');
-        if (s) s.style.display = 'none';
-        o.disconnect();
+        var skeleton = document.getElementById('lcp-skeleton');
+        if (skeleton) skeleton.style.display = 'none';
+        observer.disconnect();
       }
     }).observe(document.getElementById('root'), { childList: true });
   </script>

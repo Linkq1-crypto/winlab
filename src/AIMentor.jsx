@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLab } from './LabContext';
 import { getMentorResponse } from './mentor/mentorResponse.js';
+import { buildMentorFeedbackPayload, createMentorMessage, submitMentorFeedback } from './services/mentorFeedback.js';
 
 const INACTIVITY_MS = 20_000;
 
-export default function AIMentor({ labId, labState = {} }) {
+export default function AIMentor({ labId, labState = {}, sessionId = null, userId = null }) {
   const { useHint, hintCount, maxHints, plan } = useLab();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -92,7 +93,7 @@ export default function AIMentor({ labId, labState = {} }) {
     if (!question.trim()) return;
     if (!useHint()) return;
 
-    setMessages((current) => [...current, { role: 'user', text: question }]);
+    setMessages((current) => [...current, createMentorMessage({ role: 'user', text: question })]);
     setInput('');
     setLoading(true);
 
@@ -114,7 +115,7 @@ export default function AIMentor({ labId, labState = {} }) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ cmd: question, context: { labId, ...labState }, labId }),
+            body: JSON.stringify({ cmd: question, context: { labId, sessionId, ...labState }, labId }),
           });
           const data = await res.json();
           return data.hint;
@@ -123,16 +124,69 @@ export default function AIMentor({ labId, labState = {} }) {
 
       setMessages((current) => [
         ...current,
-        {
+        createMentorMessage({
           role: 'ai',
           text: response.content,
           cached: response.type === 'hint',
-        },
+        }),
       ]);
     } catch {
-      setMessages((current) => [...current, { role: 'ai', text: 'What is the first service you would check in this situation?' }]);
+      setMessages((current) => [
+        ...current,
+        createMentorMessage({ role: 'ai', text: 'What is the first service you would check in this situation?' }),
+      ]);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleFeedback(messageId, feedback) {
+    const targetMessage = messages.find((message) => message.messageId === messageId);
+    if (!targetMessage || targetMessage.feedbackState === 'loading' || targetMessage.feedbackSavedValue) return;
+
+    setMessages((current) =>
+      current.map((message) =>
+        message.messageId === messageId
+          ? { ...message, feedbackState: 'loading', feedbackError: '' }
+          : message
+      )
+    );
+
+    try {
+      const payload = buildMentorFeedbackPayload({
+        labId,
+        sessionId,
+        userId,
+        message: targetMessage,
+        feedback,
+      });
+
+      await submitMentorFeedback(fetch, payload);
+
+      setMessages((current) =>
+        current.map((message) =>
+          message.messageId === messageId
+            ? {
+                ...message,
+                feedbackState: 'saved',
+                feedbackSavedValue: feedback,
+                feedbackError: '',
+              }
+            : message
+        )
+      );
+    } catch (error) {
+      setMessages((current) =>
+        current.map((message) =>
+          message.messageId === messageId
+            ? {
+                ...message,
+                feedbackState: 'error',
+                feedbackError: error.message || 'Unable to save feedback.',
+              }
+            : message
+        )
+      );
     }
   }
 
@@ -246,7 +300,13 @@ export default function AIMentor({ labId, labState = {} }) {
             {hintsLeft === 'inf' ? 'Unlimited hints' : `${hintsLeft} hint${hintsLeft !== 1 ? 's' : ''} left`}
           </p>
         </div>
-        <button type="button" onClick={() => setOpen(false)} className="text-lg text-slate-500 hover:text-white">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="text-lg text-slate-500 hover:text-white"
+          aria-label="Close AI Mentor"
+          title="Close AI Mentor"
+        >
           x
         </button>
       </div>
@@ -257,8 +317,8 @@ export default function AIMentor({ labId, labState = {} }) {
             Ask me anything about this lab.
           </p>
         )}
-        {messages.map((message, index) => (
-          <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+        {messages.map((message) => (
+          <div key={message.messageId} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
               className={`max-w-[85%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
                 message.role === 'user' ? 'rounded-br-sm bg-blue-600 text-white' : 'rounded-bl-sm bg-slate-800 text-slate-200'
@@ -266,6 +326,38 @@ export default function AIMentor({ labId, labState = {} }) {
             >
               {message.text}
               {message.cached && <span className="mt-1 block text-xs text-slate-500">instant</span>}
+              {message.role === 'ai' && (
+                <div className="mt-2 space-y-2" data-testid={`mentor-feedback-${message.messageId}`}>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleFeedback(message.messageId, 'confirm')}
+                      disabled={message.feedbackState === 'loading' || Boolean(message.feedbackSavedValue)}
+                      className="rounded-md border border-emerald-500/30 px-2 py-1 text-[11px] text-emerald-300 transition-colors hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label="Confirm mentor suggestion"
+                    >
+                      {message.feedbackState === 'loading' ? 'Saving...' : 'Confirm'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleFeedback(message.messageId, 'deny')}
+                      disabled={message.feedbackState === 'loading' || Boolean(message.feedbackSavedValue)}
+                      className="rounded-md border border-rose-500/30 px-2 py-1 text-[11px] text-rose-300 transition-colors hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label="Deny mentor suggestion"
+                    >
+                      {message.feedbackState === 'loading' ? 'Saving...' : 'Deny'}
+                    </button>
+                  </div>
+                  {message.feedbackState === 'saved' && (
+                    <p className="text-[11px] text-emerald-300">
+                      Feedback saved: {message.feedbackSavedValue === 'confirm' ? 'confirmed' : 'denied'}.
+                    </p>
+                  )}
+                  {message.feedbackState === 'error' && (
+                    <p className="text-[11px] text-amber-300">{message.feedbackError || 'Unable to save feedback.'}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ))}

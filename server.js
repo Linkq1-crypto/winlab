@@ -37,6 +37,7 @@ import {
 } from "./src/services/userLifecycleEmailFlow.js";
 // import { bootstrapAlertFlow } from "./src/core/alertDispatcher.js";
 import helpdeskRouter from "./src/api/routes/helpdesk.js";
+import { createMentorFeedbackRouter } from "./src/api/routes/mentorFeedback.js";
 import { startHelpdeskWorker } from "./src/services/helpdeskWorker.js";
 import publicApiRouter from "./src/api/routes/publicApi.js";
 import i18nRouter from "./src/api/routes/i18n.js";
@@ -700,6 +701,7 @@ function normalizeCheckoutRedirect(input, fallbackPathAndQuery) {
 
 // ── Helpdesk router ──────────────────────────────────────────────────
 app.use("/api/helpdesk", helpdeskRouter);
+app.use("/api/ai", createMentorFeedbackRouter({ prisma }));
 
 // ── Health check ─────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => sendProbeJson(res, { ok: true }));

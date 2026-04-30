@@ -49,6 +49,10 @@ async function mockApp(page) {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ aiMentorConsent: true }) });
   });
 
+  await page.route('**/api/user/ai-consent', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+  });
+
   await page.route('**/api/lab/start', async (route) => {
     await route.fulfill({
       status: 200,
@@ -65,6 +69,30 @@ async function mockApp(page) {
 
   await page.route('**/api/lab/stop', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+  });
+
+  await page.route('**/api/ai/help', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ hint: 'Check the nginx service status first.' }),
+    });
+  });
+
+  await page.route('**/api/ai/mentor-feedback', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, id: 'feedback-mobile-smoke' }),
+    });
+  });
+
+  await page.route('**/api/health*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true }),
+    });
   });
 }
 
@@ -123,4 +151,123 @@ test.describe('mobile responsiveness smoke', () => {
       expect(Math.ceil(bounds.x + bounds.width)).toBeLessThanOrEqual(viewport.width + 1);
     });
   }
+
+  test('install prompt stays non-blocking on mobile and pricing remains usable', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await mockApp(page);
+    await page.goto('/');
+
+    await page.evaluate(() => {
+      const event = new Event('beforeinstallprompt');
+      Object.defineProperty(event, 'prompt', {
+        value: () => Promise.resolve(),
+      });
+      Object.defineProperty(event, 'userChoice', {
+        value: Promise.resolve({ outcome: 'dismissed', platform: 'web' }),
+      });
+      window.dispatchEvent(event);
+    });
+
+    const prompt = page.getByTestId('pwa-install-prompt');
+    await expect(prompt).toBeVisible();
+
+    const cta = page.getByRole('button', { name: /Launch Free Labs/i });
+    const promptBox = await prompt.boundingBox();
+    const ctaBox = await cta.boundingBox();
+    expect(promptBox && ctaBox).toBeTruthy();
+    expect(ctaBox!.y + ctaBox!.height).toBeLessThanOrEqual(promptBox!.y + 1);
+
+    await page.getByRole('button', { name: /Dismiss install prompt/i }).click();
+    await expect(prompt).toBeHidden();
+
+    await page.getByRole('button', { name: /Launch Free Labs/i }).click();
+    await page.locator('#pricing').scrollIntoViewIfNeeded();
+    await expect(page.getByRole('button', { name: /Get Early Access/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Go Pro/i })).toBeVisible();
+  });
+
+  test('mobile lab keeps terminal and AI Mentor usable while service worker leaves api health uncached', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await mockApp(page);
+
+    await page.goto('/');
+    const serviceWorkerReady = await page.evaluate(async () => {
+      if (!('serviceWorker' in navigator)) return false;
+
+      return await Promise.race([
+        navigator.serviceWorker.ready.then(() => true).catch(() => false),
+        new Promise((resolve) => setTimeout(() => resolve(false), 3000)),
+      ]);
+    });
+    expect(typeof serviceWorkerReady).toBe('boolean');
+
+    const healthCacheStatus = await page.evaluate(async () => {
+      const urls = ['/api/health', '/api/health?probe=2'];
+      const statuses = [];
+
+      for (const url of urls) {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 2000);
+
+        try {
+          const response = await fetch(url, {
+            credentials: 'include',
+            signal: controller.signal,
+          });
+          statuses.push(response.status);
+        } catch {
+          statuses.push(null);
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
+      }
+
+      const cacheKeys = await caches.keys();
+      let cachedMatches = 0;
+
+      for (const cacheKey of cacheKeys) {
+        const cache = await caches.open(cacheKey);
+        for (const url of urls) {
+          if (await cache.match(url)) {
+            cachedMatches += 1;
+          }
+        }
+      }
+
+      return { statuses, cacheKeys, cachedMatches };
+    });
+
+    expect(healthCacheStatus.statuses.length).toBe(2);
+    expect(healthCacheStatus.cachedMatches).toBe(0);
+
+    await page.getByRole('button', { name: /Launch Free Labs/i }).click();
+    await page.getByRole('button', { name: /Nginx Port Conflict/i }).first().click();
+    await page.getByRole('button', { name: /Launch Session/i }).click();
+
+    await expect(page.getByText('Live Incident Terminal')).toBeVisible();
+
+    const helperFocused = await page.locator('.xterm-helper-textarea').evaluate((node) => {
+      node.focus();
+      return document.activeElement === node;
+    });
+    expect(helperFocused).toBe(true);
+
+    await page.locator('button[title="AI Mentor"]').click();
+    const enableMentorButton = page.getByRole('button', { name: /Enable AI Mentor/i });
+    if (await enableMentorButton.isVisible().catch(() => false)) {
+      await enableMentorButton.click();
+    }
+    await expect(page.getByPlaceholder('Ask a question...')).toBeVisible();
+    await page.getByPlaceholder('Ask a question...').fill('what should I check first?');
+    await page.getByRole('button', { name: /Send/i }).click();
+    await expect(page.getByText(/Check the nginx service status first\./i)).toBeVisible();
+
+    await page.locator('button[title="Close AI Mentor"]').click();
+    await expect(page.getByPlaceholder('Ask a question...')).toBeHidden();
+    const helperRefocused = await page.locator('.xterm-helper-textarea').evaluate((node) => {
+      node.focus();
+      return document.activeElement === node;
+    });
+    expect(helperRefocused).toBe(true);
+  });
 });

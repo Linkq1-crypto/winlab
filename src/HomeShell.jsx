@@ -13,6 +13,7 @@ import {
 import SocialSidebar from './SocialSidebar';
 import { LEVEL_OPTIONS, getLevelConfig } from './config/levels';
 import { useSocialStorage } from './hooks/useSocialStorage';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 const LabTerminal = lazy(() => import('./components/LabTerminal'));
 const LabBootSplash = lazy(() => import('./components/LabBootSplash'));
@@ -317,6 +318,7 @@ export default function HomeShell() {
   });
   const starterLabs = labCatalog.filter((lab) => starterIds.has(lab.id));
   const featuredStarterLabs = starterLabs.slice(0, 5);
+  const hideInstallPrompt = view === 'lab' || showRegister || showPaywall || Boolean(selectedLab);
 
   if (view === 'terminal') {
     return (
@@ -324,6 +326,7 @@ export default function HomeShell() {
         <Suspense fallback={null}>
           <CookieBanner />
         </Suspense>
+        <PWAInstallPrompt hidden={hideInstallPrompt} />
         <SocialSidebar links={socialLinks} />
         <div className="mx-auto flex min-h-[calc(100dvh-2rem)] w-full max-w-5xl items-center justify-center">
           <div className="flex max-h-[min(92dvh,820px)] min-h-[560px] w-full min-w-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 shadow-2xl">
@@ -448,6 +451,7 @@ export default function HomeShell() {
           </Suspense>
         )}
         {showPaywall && <PaywallModal onUpgrade={handleUpgrade} onClose={() => { setShowPaywall(false); stopLab(); }} />}
+        <PWAInstallPrompt hidden={hideInstallPrompt} />
         <SocialSidebar links={socialLinks} />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <Suspense
@@ -467,7 +471,12 @@ export default function HomeShell() {
           </Suspense>
         </div>
         <Suspense fallback={null}>
-          <AIMentor labId={activeSession.labId} labState={{}} />
+          <AIMentor
+            labId={activeSession.labId}
+            labState={{}}
+            sessionId={activeSession.sessionId}
+            userId={auth?.id ?? null}
+          />
         </Suspense>
       </div>
     );
@@ -478,6 +487,7 @@ export default function HomeShell() {
       <Suspense fallback={null}>
         <CookieBanner />
       </Suspense>
+      <PWAInstallPrompt hidden={hideInstallPrompt} />
       <SocialSidebar links={socialLinks} />
       {showRegister && (
         <Suspense fallback={null}>

@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
 import HomeShell from './HomeShell';
 import { LabProvider } from './LabContext';
+import { registerWinLabPWA } from './pwa/registerPWA';
 import './index.css';
 
 const LegalLayout = lazy(() => import('./LegalLayout'));
@@ -14,11 +15,7 @@ const FeedbackPage = lazy(() => import('./pages/FeedbackPage'));
 const ProfilePublicPage = lazy(() => import('./pages/ProfilePublicPage'));
 const AISettings = lazy(() => import('./AISettings'));
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  });
-}
+registerWinLabPWA();
 
 const path = window.location.pathname;
 

@@ -55,6 +55,7 @@ export default function LabTerminal({
   const resizeObserverRef = useRef(null);
   const debouncedFitRef = useRef(null);
   const [hasOutput, setHasOutput] = useState(false);
+  const [isOffline, setIsOffline] = useState(() => (typeof navigator !== 'undefined' ? !navigator.onLine : false));
 
   const onCloseRef = useRef(onClose);
   const onCompleteRef = useRef(onComplete);
@@ -66,6 +67,19 @@ export default function LabTerminal({
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
+
+  useEffect(() => {
+    const handleOffline = () => setIsOffline(true);
+    const handleOnline = () => setIsOffline(false);
+
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -280,6 +294,11 @@ export default function LabTerminal({
             <span>shell attached</span>
             <span>network isolated</span>
           </div>
+          {isOffline ? (
+            <div className="shrink-0 border-b border-amber-400/10 bg-amber-400/10 px-4 py-2 text-xs text-amber-100">
+              Connection lost. Reconnect to continue this incident.
+            </div>
+          ) : null}
 
           <div
             ref={wrapperRef}
