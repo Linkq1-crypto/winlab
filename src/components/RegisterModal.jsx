@@ -43,7 +43,7 @@ export default function RegisterModal({ onSuccess, onClose }) {
         return;
       }
       setLoading(false);
-      onSuccess(data.user);
+      onSuccess(data.user, data.token ?? null);
     } catch {
       setError('Connection failed. Please try again.');
       setLoading(false);

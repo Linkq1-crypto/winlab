@@ -1,6 +1,7 @@
 // LabContext.jsx – Global state: user plan, lab progress, paywall, hints
 // Fully DB-synced: progress, achievements, settings, lab state
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { readStoredAiConsentPreference, syncStoredAiConsentPreference, writeStoredAiConsentPreference } from "./services/aiConsent.js";
 
 // ── Lab registry ──────────────────────────────────────────────────────────────
 export const LABS = [
@@ -123,6 +124,11 @@ export function LabProvider({ children }) {
     const localAchievements = localStorage.getItem("winlab_achievements");
     if (localAchievements) setAchievements(JSON.parse(localAchievements));
 
+    const localAiConsent = readStoredAiConsentPreference();
+    if (typeof localAiConsent === "boolean") {
+      setAiConsent(localAiConsent);
+    }
+
     // Verify session via httpOnly cookie — if valid, hydrate user state
     fetch("/api/user/me", { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
@@ -141,7 +147,9 @@ export function LabProvider({ children }) {
           // Restore token from localStorage if present (set on login)
           const stored = localStorage.getItem("winlab_token");
           if (stored) setToken(stored);
-          setAiConsent(data.aiConsent || false);
+          const serverAiConsent = data.aiMentorConsent === true;
+          setAiConsent(serverAiConsent);
+          writeStoredAiConsentPreference(serverAiConsent);
           localStorage.setItem("winlab_logged_in", "1");
           if (data.unlockedBadges) {
             try {
@@ -163,6 +171,11 @@ export function LabProvider({ children }) {
         }
       }).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    void syncStoredAiConsentPreference({ token });
+  }, [token]);
 
   // ── Sync Plan ───────────────────────────────────────────────────────────────
   useEffect(() => { localStorage.setItem("winlab_plan", plan); }, [plan]);
@@ -313,7 +326,7 @@ export function LabProvider({ children }) {
   const updateSettings = useCallback(async (data) => {
     if (typeof data.aiConsent === "boolean") {
       setAiConsent(data.aiConsent);
-      localStorage.setItem("winlab_ai_consent", String(data.aiConsent));
+      writeStoredAiConsentPreference(data.aiConsent);
     }
     if (user?.id) {
       await fetch("/api/user/settings", {

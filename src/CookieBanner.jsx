@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { saveAiConsentPreference } from "./services/aiConsent";
 
 const KEY = "winlab_cookie_consent";
 
@@ -40,15 +41,7 @@ export default function CookieBanner({ onConsent }) {
       ai:        all ? aiCheck        : false,
     };
     localStorage.setItem(KEY, JSON.stringify(consent));
-    localStorage.setItem("winlab_ai_consent", String(consent.ai));
-    if (consent.ai) {
-      fetch("/api/user/ai-consent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ consent: true }),
-      }).catch(() => {});
-    }
+    void saveAiConsentPreference({ consent: consent.ai });
     onConsent?.(consent);
     setTimeout(() => setVisible(false), 600);
   };

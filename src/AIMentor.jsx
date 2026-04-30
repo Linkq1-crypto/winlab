@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLab } from './LabContext';
 import { getMentorResponse } from './mentor/mentorResponse.js';
 import { buildMentorFeedbackPayload, createMentorMessage, submitMentorFeedback } from './services/mentorFeedback.js';
+import { readStoredAiConsentPreference, saveAiConsentPreference } from './services/aiConsent.js';
 
 const INACTIVITY_MS = 20_000;
 
@@ -24,6 +25,11 @@ export default function AIMentor({ labId, labState = {}, sessionId = null, userI
   }, [messages]);
 
   useEffect(() => {
+    const cachedConsent = readStoredAiConsentPreference();
+    if (typeof cachedConsent === 'boolean') {
+      setAiConsent(cachedConsent);
+    }
+
     fetch('/api/user/profile', { credentials: 'include' })
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
@@ -47,17 +53,13 @@ export default function AIMentor({ labId, labState = {}, sessionId = null, userI
   async function saveAiConsent(consented) {
     setConsentSaving(true);
     try {
-      const res = await fetch('/api/user/ai-consent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ consent: consented, timestamp: new Date().toISOString() }),
+      await saveAiConsentPreference({
+        consent: consented,
+        timestamp: new Date().toISOString(),
       });
-      if (!res.ok) throw new Error('Failed');
       setAiConsent(consented);
       setShowConsent(false);
       if (consented) setOpen(true);
-    } catch {
     } finally {
       setConsentSaving(false);
     }

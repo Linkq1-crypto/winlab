@@ -14,6 +14,7 @@ import SocialSidebar from './SocialSidebar';
 import { LEVEL_OPTIONS, getLevelConfig } from './config/levels';
 import { useSocialStorage } from './hooks/useSocialStorage';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import { syncStoredAiConsentPreference } from './services/aiConsent.js';
 
 const LabTerminal = lazy(() => import('./components/LabTerminal'));
 const LabBootSplash = lazy(() => import('./components/LabBootSplash'));
@@ -259,9 +260,13 @@ export default function HomeShell() {
     }
   }
 
-  function handleAuthSuccess(user) {
+  function handleAuthSuccess(user, tokenValue) {
     setAuth(user);
     sessionStorage.setItem('winlab_auth', JSON.stringify(user));
+    if (tokenValue) {
+      localStorage.setItem('winlab_token', tokenValue);
+      void syncStoredAiConsentPreference({ token: tokenValue });
+    }
     setShowRegister(false);
     if (pendingCheckoutPlan) {
       const plan = pendingCheckoutPlan;
@@ -276,6 +281,7 @@ export default function HomeShell() {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
     setAuth(null);
     sessionStorage.removeItem('winlab_auth');
+    localStorage.removeItem('winlab_token');
     setView('terminal');
     setTerminalLogs(buildInitialLogs());
   }
