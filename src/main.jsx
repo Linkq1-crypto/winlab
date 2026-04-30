@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
 import HomeShell from './HomeShell';
+import { LabProvider } from './LabContext';
 import './index.css';
 
 const LegalLayout = lazy(() => import('./LegalLayout'));
@@ -75,6 +76,8 @@ function App() {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <LabProvider>
+      <App />
+    </LabProvider>
   </React.StrictMode>
 );

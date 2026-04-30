@@ -10,6 +10,9 @@
 
 html {
   scroll-behavior: smooth;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -17,6 +20,9 @@ body {
   color: white;
   font-family: "Inter", system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   /* NO overflow:hidden here – landing page needs to scroll.
      The app shell (SaaSOrchestrator) sets its own overflow-hidden internally. */
 }
@@ -24,6 +30,10 @@ body {
 #root {
   /* Let each top-level view control its own height/overflow */
   min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────────────── */
@@ -35,9 +45,23 @@ body {
 /* ── App shell (opt-in class, applied only inside SaaSOrchestrator) ─────────── */
 .app-shell {
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
 }
 
 /* ── Print (certificate) ───────────────────────────────────────────────────── */

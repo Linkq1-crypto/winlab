@@ -27,7 +27,8 @@ export default function SocialSidebar({ links }) {
 
   return (
     <div
-      className="fixed right-4 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-1 p-2 rounded-full
+      className="fixed right-4 top-1/2 z-40 hidden -translate-y-1/2 rounded-full p-2
+                 lg:flex lg:flex-col lg:gap-1
                  bg-slate-900/80 backdrop-blur-md border border-slate-700/50 shadow-2xl shadow-black/20"
       role="navigation"
       aria-label="Social media links"

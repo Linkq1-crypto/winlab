@@ -10,22 +10,22 @@ export default function PricingPage({
   const currentPlan = user?.plan || "FREE";
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen min-h-[100dvh] bg-black text-white">
       <header className="border-b border-zinc-900">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <div>
             <div className="text-sm text-zinc-400">WINLAB</div>
             <div className="text-xs text-zinc-600">pricing</div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex w-full items-center gap-3 sm:w-auto">
             <button type="button" className="text-sm text-zinc-400 hover:text-white">
               Sign in
             </button>
             <button
               type="button"
               onClick={onStartFree}
-              className="rounded-2xl bg-white px-4 py-2 text-black hover:bg-zinc-200"
+              className="w-full rounded-2xl bg-white px-4 py-2 text-black hover:bg-zinc-200 sm:w-auto"
             >
               Start Free
             </button>
@@ -33,7 +33,7 @@ export default function PricingPage({
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-6 py-10">
+      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <section className="max-w-4xl">
           <div className="mb-3 text-xs uppercase tracking-wide text-zinc-500">
             Access
@@ -49,7 +49,7 @@ export default function PricingPage({
           </p>
         </section>
 
-        <section className="mt-10 grid gap-5 xl:grid-cols-4">
+        <section className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           <PlanCard
             title="Starter"
             price="free"
@@ -194,18 +194,18 @@ export default function PricingPage({
               to go.
             </p>
 
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <button
                 type="button"
                 onClick={onStartFree}
-                className="rounded-2xl bg-white px-5 py-3 text-black hover:bg-zinc-200"
+                className="w-full rounded-2xl bg-white px-5 py-3 text-black hover:bg-zinc-200 sm:w-auto"
               >
                 Start Free
               </button>
               <button
                 type="button"
                 onClick={onBuyPro}
-                className="rounded-2xl border border-zinc-800 bg-zinc-950 px-5 py-3 hover:bg-black"
+                className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-5 py-3 hover:bg-black sm:w-auto"
               >
                 View Pro
               </button>

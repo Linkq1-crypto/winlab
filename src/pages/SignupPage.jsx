@@ -41,8 +41,8 @@ export default function SignupPage({
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="mx-auto max-w-6xl px-6 py-10">
+    <div className="min-h-screen min-h-[100dvh] bg-black text-white">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         <button
           type="button"
           onClick={onBack}
@@ -55,14 +55,14 @@ export default function SignupPage({
           <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6 md:p-8">
             <div className="mb-3 text-xs uppercase tracking-wide text-zinc-500">Continue</div>
 
-            <h1 className="text-4xl font-semibold leading-[0.95] tracking-tight md:text-6xl">
+            <h1 className="break-words text-4xl font-semibold leading-[0.95] tracking-tight md:text-6xl">
               {copy.title}
             </h1>
 
             <p className="mt-5 max-w-2xl text-lg text-zinc-400">{copy.description}</p>
 
             {(score != null || grade != null) && (
-              <div className="mt-6 grid max-w-sm grid-cols-2 gap-4">
+              <div className="mt-6 grid max-w-sm grid-cols-1 gap-4 sm:grid-cols-2">
                 <Metric label="Score" value={score ?? "-"} />
                 <Metric label="Grade" value={grade ?? "-"} />
               </div>

@@ -1,59 +1,62 @@
-// AIMentor.jsx – Floating AI Mentor that reads live lab state
-// Appears after 20s inactivity. Reads activeLabState from LabContext.
-// ML engine runs locally first; LLM called only when confidence is low.
-// Cost: ~$0 for repeated questions (DB cache), ~$0.0003 on cache miss.
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useLab } from "./LabContext";
-import { getMentorResponse } from "./mentor/mentorResponse.js";
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useLab } from './LabContext';
+import { getMentorResponse } from './mentor/mentorResponse.js';
 
-const INACTIVITY_MS = 20_000; // show after 20s of no user input
+const INACTIVITY_MS = 20_000;
 
 export default function AIMentor({ labId, labState = {} }) {
   const { useHint, hintCount, maxHints, plan } = useLab();
-
-  const [open, setOpen]               = useState(false);
-  const [messages, setMessages]       = useState([]);
-  const [input, setInput]             = useState("");
-  const [loading, setLoading]         = useState(false);
-  const [nudge, setNudge]             = useState(false);
-  // null = not yet fetched, true = consented, false = declined
-  const [aiConsent, setAiConsent]     = useState(null);
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [nudge, setNudge] = useState(false);
+  const [aiConsent, setAiConsent] = useState(null);
   const [showConsent, setShowConsent] = useState(false);
   const [consentSaving, setConsentSaving] = useState(false);
-
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 768 : false));
   const inactivityRef = useRef(null);
-  const bottomRef     = useRef(null);
+  const bottomRef = useRef(null);
 
-  // ── Auto-scroll to bottom on new messages ────────────────────────────────
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // ── Fetch AI Mentor consent status on mount ──────────────────────────────
   useEffect(() => {
-    fetch("/api/user/profile", { credentials: "include" })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
+    fetch('/api/user/profile', { credentials: 'include' })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
         if (data) setAiConsent(data.aiMentorConsent === true);
       })
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
   async function saveAiConsent(consented) {
     setConsentSaving(true);
     try {
-      const res = await fetch("/api/user/ai-consent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+      const res = await fetch('/api/user/ai-consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ consent: consented, timestamp: new Date().toISOString() }),
       });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) throw new Error('Failed');
       setAiConsent(consented);
       setShowConsent(false);
       if (consented) setOpen(true);
     } catch {
-      // Keep modal open on failure so user can retry
     } finally {
       setConsentSaving(false);
     }
@@ -63,60 +66,54 @@ export default function AIMentor({ labId, labState = {} }) {
     if (aiConsent === true) {
       setOpen(true);
     } else {
-      // null (not fetched yet) or false (declined previously) → show modal
       setShowConsent(true);
     }
   }
 
-  // ── Inactivity timer: show nudge after 20s ───────────────────────────────
   const resetTimer = useCallback(() => {
-    clearTimeout(inactivityRef.current);
-    inactivityRef.current = setTimeout(() => {
+    window.clearTimeout(inactivityRef.current);
+    inactivityRef.current = window.setTimeout(() => {
       if (!open) setNudge(true);
     }, INACTIVITY_MS);
   }, [open]);
 
   useEffect(() => {
-    window.addEventListener("keydown", resetTimer);
-    window.addEventListener("click",   resetTimer);
+    window.addEventListener('keydown', resetTimer);
+    window.addEventListener('click', resetTimer);
     resetTimer();
     return () => {
-      window.removeEventListener("keydown", resetTimer);
-      window.removeEventListener("click",   resetTimer);
-      clearTimeout(inactivityRef.current);
+      window.removeEventListener('keydown', resetTimer);
+      window.removeEventListener('click', resetTimer);
+      window.clearTimeout(inactivityRef.current);
     };
   }, [resetTimer]);
 
-  // ── Send question to backend (via ML engine first) ──────────────────────
   async function ask(question) {
     if (!question.trim()) return;
+    if (!useHint()) return;
 
-    // Check hint quota (starter: 3 max)
-    if (!useHint()) return; // triggers paywall if over limit
-
-    setMessages(m => [...m, { role: "user", text: question }]);
-    setInput("");
+    setMessages((current) => [...current, { role: 'user', text: question }]);
+    setInput('');
     setLoading(true);
 
     try {
-      // ML engine runs locally; only calls /api/ai/help when confidence is low
       const response = await getMentorResponse(
         {
           labId,
-          commandHistory:   labState?.commandHistory   ?? [],
-          terminalOutput:   labState?.terminalOutput   ?? "",
-          verifyResult:     labState?.verifyResult     ?? null,
-          elapsedMinutes:   labState?.elapsedMinutes   ?? 0,
-          hints:            labState?.mentorHints      ?? [],
+          commandHistory: labState?.commandHistory ?? [],
+          terminalOutput: labState?.terminalOutput ?? '',
+          verifyResult: labState?.verifyResult ?? null,
+          elapsedMinutes: labState?.elapsedMinutes ?? 0,
+          hints: labState?.mentorHints ?? [],
           shownHintIndices: labState?.shownHintIndices ?? [],
-          userQuestion:     question,
-          forceAI:          false,
+          userQuestion: question,
+          forceAI: false,
         },
-        async (prompt) => {
-          const res = await fetch("/api/ai/help", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
+        async () => {
+          const res = await fetch('/api/ai/help', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ cmd: question, context: { labId, ...labState }, labId }),
           });
           const data = await res.json();
@@ -124,45 +121,55 @@ export default function AIMentor({ labId, labState = {} }) {
         }
       );
 
-      setMessages(m => [
-        ...m,
+      setMessages((current) => [
+        ...current,
         {
-          role:   "ai",
-          text:   response.content,
-          cached: response.type === "hint", // local hints are instant
+          role: 'ai',
+          text: response.content,
+          cached: response.type === 'hint',
         },
       ]);
     } catch {
-      setMessages(m => [...m, { role: "ai", text: "What is the first service you would check in this situation?" }]);
+      setMessages((current) => [...current, { role: 'ai', text: 'What is the first service you would check in this situation?' }]);
     } finally {
       setLoading(false);
     }
   }
 
-  function handleKey(e) {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(input); }
+  function handleKey(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      ask(input);
+    }
   }
 
-  const hintsLeft = maxHints === Infinity ? "∞" : Math.max(0, maxHints - hintCount);
+  const hintsLeft = maxHints === Infinity ? 'inf' : Math.max(0, maxHints - hintCount);
+  const floatingButtonClass = isMobile
+    ? 'fixed bottom-4 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-xl text-white shadow-lg shadow-blue-600/40'
+    : 'fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-lg shadow-blue-600/40 transition-transform hover:scale-105';
 
-  // ── Nudge bubble (shown after inactivity) ─────────────────────────────────
   if (!open && !showConsent && nudge) {
     return (
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl rounded-br-sm px-4 py-3 max-w-[220px] shadow-xl">
-          <p className="text-sm text-white font-medium">Need a hint? 🤔</p>
-          <p className="text-xs text-slate-400 mt-0.5">I can guide you without giving away the answer.</p>
+      <div className={`fixed z-40 flex ${isMobile ? 'left-4 right-4 bottom-20 flex-col gap-2' : 'bottom-6 right-6 flex-col items-end gap-2'}`}>
+        <div className={`rounded-2xl border border-slate-700 bg-slate-800 px-4 py-3 shadow-xl ${isMobile ? 'w-full' : 'max-w-[220px] rounded-br-sm'}`}>
+          <p className="text-sm font-medium text-white">Need a hint?</p>
+          <p className="mt-0.5 text-xs text-slate-400">I can guide you without giving away the answer.</p>
         </div>
-        <div className="flex gap-2">
+        <div className={`flex gap-2 ${isMobile ? 'w-full flex-col' : ''}`}>
           <button
-            onClick={() => { setNudge(false); }}
-            className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white border border-slate-700"
+            type="button"
+            onClick={() => setNudge(false)}
+            className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-400 hover:text-white"
           >
             No thanks
           </button>
           <button
-            onClick={() => { setNudge(false); openWithConsentCheck(); }}
-            className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium"
+            type="button"
+            onClick={() => {
+              setNudge(false);
+              openWithConsentCheck();
+            }}
+            className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-500"
           >
             Ask mentor
           </button>
@@ -171,17 +178,12 @@ export default function AIMentor({ labId, labState = {} }) {
     );
   }
 
-  // ── Collapsed button ──────────────────────────────────────────────────────
   if (!open && !showConsent) {
     return (
-      <button
-        onClick={openWithConsentCheck}
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-500 text-2xl shadow-lg shadow-blue-600/40 flex items-center justify-center transition-transform hover:scale-105"
-        title="AI Mentor"
-      >
-        🤖
-        {hintCount > 0 && plan === "starter" && (
-          <span className="absolute -top-1 -right-1 text-xs bg-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
+      <button type="button" onClick={openWithConsentCheck} className={floatingButtonClass} title="AI Mentor">
+        AI
+        {hintCount > 0 && plan === 'starter' && (
+          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs text-white">
             {hintsLeft}
           </span>
         )}
@@ -189,135 +191,114 @@ export default function AIMentor({ labId, labState = {} }) {
     );
   }
 
-  // ── AI Mentor consent modal ───────────────────────────────────────────────
   if (showConsent) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-white rounded-2xl max-w-[480px] w-[90%] p-8 shadow-2xl">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-2xl mb-4">🤖</div>
-          <h2 className="text-lg font-bold text-gray-900 mb-2">AI Mentor uses a third-party service</h2>
-          <p className="text-sm text-gray-500 leading-relaxed mb-4">
-            WinLab's AI Mentor is powered by Anthropic's Claude API. Your lab commands and questions are sent to Anthropic's servers for processing.
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="max-h-[90dvh] w-full max-w-[480px] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl sm:p-8">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-2xl">AI</div>
+          <h2 className="mb-2 text-lg font-bold text-gray-900">AI Mentor uses a third-party service</h2>
+          <p className="mb-4 text-sm leading-relaxed text-gray-500">
+            WinLab&apos;s AI Mentor is powered by Anthropic&apos;s Claude API. Your lab commands and questions are sent to Anthropic&apos;s servers for processing.
           </p>
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 mb-4 text-sm text-slate-600">
-            <div className="flex gap-2.5 items-start">
-              <span className="shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs mt-0.5">↑</span>
-              <span><strong>What is sent:</strong> your lab commands, questions, and error messages — in the context of the current lab session only</span>
-            </div>
-            <div className="flex gap-2.5 items-start">
-              <span className="shrink-0 w-5 h-5 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs mt-0.5">✓</span>
-              <span><strong>Not used for training:</strong> Anthropic does not use API data to train their models</span>
-            </div>
-            <div className="flex gap-2.5 items-start">
-              <span className="shrink-0 w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs mt-0.5">⇄</span>
-              <span><strong>Where:</strong> Anthropic is based in the United States. Transfer is covered by Standard Contractual Clauses (SCCs)</span>
-            </div>
+          <div className="mb-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            <div><strong>What is sent:</strong> your lab commands, questions, and error messages in the current session.</div>
+            <div><strong>Not used for training:</strong> Anthropic does not use API data to train their models.</div>
+            <div><strong>Where:</strong> Anthropic is based in the United States and transfer is covered by SCCs.</div>
           </div>
-          <p className="text-xs text-slate-500 mb-5">
+          <p className="mb-5 text-xs text-slate-500">
             You can use all labs without the AI Mentor. If you decline, every lab scenario remains fully accessible.
           </p>
-          <div className="flex gap-2.5">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <button
+              type="button"
               onClick={() => saveAiConsent(false)}
               disabled={consentSaving}
-              className="flex-1 py-3 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-50 transition-colors"
+              className="flex-1 rounded-xl bg-slate-100 py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-50"
             >
               No thanks
             </button>
             <button
+              type="button"
               onClick={() => saveAiConsent(true)}
               disabled={consentSaving}
-              className="flex-1 py-3 rounded-xl text-sm font-semibold bg-gray-900 text-white hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              className="flex-1 rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
             >
-              {consentSaving ? "Saving…" : "Enable AI Mentor"}
+              {consentSaving ? 'Saving...' : 'Enable AI Mentor'}
             </button>
           </div>
-          <p className="text-xs text-slate-400 text-center mt-3">
-            You can change this anytime in <a href="/settings" className="text-blue-600 underline">Settings</a>. Read our <a href="/privacy" className="text-blue-600 underline">Privacy Policy</a>.
-          </p>
         </div>
       </div>
     );
   }
 
-  // ── Expanded panel ────────────────────────────────────────────────────────
   return (
-    <div className="fixed bottom-6 right-6 z-40 w-80 flex flex-col rounded-2xl border border-slate-700 bg-[#0d0d0f] shadow-2xl overflow-hidden">
-
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/50">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">🤖</span>
-          <div>
-            <p className="text-sm font-semibold text-white">AI Mentor</p>
-            <p className="text-xs text-slate-500">
-              {hintsLeft === "∞" ? "Unlimited hints" : `${hintsLeft} hint${hintsLeft !== 1 ? "s" : ""} left`}
-            </p>
-          </div>
+    <div
+      className={`fixed z-40 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-[#0d0d0f] shadow-2xl ${
+        isMobile
+          ? 'bottom-0 left-0 right-0 max-h-[58dvh] rounded-b-none rounded-t-3xl border-x-0 border-b-0'
+          : 'bottom-6 right-6 w-80'
+      }`}
+    >
+      <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/50 px-4 py-3">
+        <div>
+          <p className="text-sm font-semibold text-white">AI Mentor</p>
+          <p className="text-xs text-slate-500">
+            {hintsLeft === 'inf' ? 'Unlimited hints' : `${hintsLeft} hint${hintsLeft !== 1 ? 's' : ''} left`}
+          </p>
         </div>
-        <button onClick={() => setOpen(false)} className="text-slate-500 hover:text-white text-lg">✕</button>
+        <button type="button" onClick={() => setOpen(false)} className="text-lg text-slate-500 hover:text-white">
+          x
+        </button>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 max-h-80 min-h-[120px]">
+      <div className={`flex-1 overflow-y-auto px-4 py-3 ${isMobile ? 'max-h-[34dvh]' : 'max-h-80 min-h-[120px]'} space-y-3`}>
         {messages.length === 0 && (
-          <p className="text-xs text-slate-600 text-center py-4">
-            Ask me anything about this lab.<br/>I'll guide you — never spoil the answer.
+          <p className="py-4 text-center text-xs text-slate-600">
+            Ask me anything about this lab.
           </p>
         )}
-        {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`
-              max-w-[85%] text-sm px-3 py-2 rounded-xl leading-relaxed
-              ${m.role === "user"
-                ? "bg-blue-600 text-white rounded-br-sm"
-                : "bg-slate-800 text-slate-200 rounded-bl-sm"}
-            `}>
-              {m.text}
-              {m.cached && (
-                <span className="block text-xs text-slate-500 mt-1">⚡ instant</span>
-              )}
+        {messages.map((message, index) => (
+          <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div
+              className={`max-w-[85%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
+                message.role === 'user' ? 'rounded-br-sm bg-blue-600 text-white' : 'rounded-bl-sm bg-slate-800 text-slate-200'
+              }`}
+            >
+              {message.text}
+              {message.cached && <span className="mt-1 block text-xs text-slate-500">instant</span>}
             </div>
           </div>
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-slate-800 text-slate-400 text-sm px-3 py-2 rounded-xl rounded-bl-sm">
-              <span className="inline-flex gap-1">
-                <span className="animate-bounce" style={{ animationDelay: "0ms"   }}>•</span>
-                <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
-                <span className="animate-bounce" style={{ animationDelay: "300ms" }}>•</span>
-              </span>
-            </div>
+            <div className="rounded-xl rounded-bl-sm bg-slate-800 px-3 py-2 text-sm text-slate-400">...</div>
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="px-3 py-3 border-t border-slate-800">
+      <div className="border-t border-slate-800 px-3 py-3">
         <div className="flex gap-2">
           <input
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={(event) => setInput(event.target.value)}
             onKeyDown={handleKey}
             disabled={loading}
-            placeholder="Ask a question…"
-            className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-600"
+            placeholder="Ask a question..."
+            className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-blue-600 focus:outline-none"
           />
           <button
+            type="button"
             onClick={() => ask(input)}
             disabled={loading || !input.trim()}
-            className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium disabled:opacity-40 transition-colors"
+            className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-40"
           >
-            →
+            Send
           </button>
         </div>
-        {plan === "starter" && hintCount >= 2 && (
-          <p className="text-xs text-orange-400 mt-2 text-center">
-            {hintsLeft === 0
-              ? "Hints exhausted — upgrade for unlimited"
-              : `${hintsLeft} hint${hintsLeft !== 1 ? "s" : ""} remaining on free plan`}
+        {plan === 'starter' && hintCount >= 2 && (
+          <p className="mt-2 text-center text-xs text-orange-400">
+            {hintsLeft === 0 ? 'Hints exhausted, upgrade for unlimited.' : `${hintsLeft} hint${hintsLeft !== 1 ? 's' : ''} remaining on free plan.`}
           </p>
         )}
       </div>

@@ -53,7 +53,7 @@ export default function RegisterModal({ onSuccess, onClose }) {
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-zinc-900 border border-white/10 rounded-[32px] w-full max-w-md p-8 shadow-2xl">
+      <div className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-[32px] border border-white/10 bg-zinc-900 p-5 shadow-2xl sm:p-8">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-600 hover:text-white transition-colors"
@@ -61,10 +61,10 @@ export default function RegisterModal({ onSuccess, onClose }) {
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter mb-2">
+        <h2 className="mb-2 pr-10 text-2xl font-black uppercase tracking-tighter text-white italic">
           {mode === 'register' ? 'Create Account' : 'Sign In'}
         </h2>
-        <p className="text-gray-500 text-sm mb-6">
+        <p className="mb-6 text-sm text-gray-500">
           {mode === 'register'
             ? 'Register to save your progress.'
             : 'Welcome back, Operator.'}

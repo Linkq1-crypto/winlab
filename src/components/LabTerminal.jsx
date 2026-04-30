@@ -14,6 +14,30 @@ function createSocketUrl(containerName, levelId, hintEnabled) {
   return `${protocol}//${window.location.host}/ws/lab?${search.toString()}`;
 }
 
+function getTerminalFontSize() {
+  if (typeof window === 'undefined') return 14;
+  if (window.innerWidth <= 390) return 12;
+  if (window.innerWidth <= 768) return 13;
+  return 14;
+}
+
+function debounceFrame(callback, delay = 80) {
+  let timeoutId = null;
+  let frameId = null;
+
+  return () => {
+    if (timeoutId) window.clearTimeout(timeoutId);
+    if (frameId) window.cancelAnimationFrame(frameId);
+    timeoutId = window.setTimeout(() => {
+      frameId = window.requestAnimationFrame(() => {
+        timeoutId = null;
+        frameId = null;
+        callback();
+      });
+    }, delay);
+  };
+}
+
 export default function LabTerminal({
   containerName,
   levelId = 'JUNIOR',
@@ -29,6 +53,7 @@ export default function LabTerminal({
   const pendingOutputRef = useRef([]);
   const readyRef = useRef(false);
   const resizeObserverRef = useRef(null);
+  const debouncedFitRef = useRef(null);
   const [hasOutput, setHasOutput] = useState(false);
 
   const onCloseRef = useRef(onClose);
@@ -55,7 +80,7 @@ export default function LabTerminal({
       convertEol: true,
       cursorBlink: true,
       fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-      fontSize: 14,
+      fontSize: getTerminalFontSize(),
       letterSpacing: 0,
       lineHeight: 1.35,
       scrollback: 1500,
@@ -96,8 +121,15 @@ export default function LabTerminal({
       const currentTerm = termRef.current;
       const currentFit = fitAddonRef.current;
       if (!currentViewport || !currentTerm || !currentFit) return;
+
       const { width, height } = currentViewport.getBoundingClientRect();
       if (width <= 0 || height <= 0) return;
+
+      const nextFontSize = getTerminalFontSize();
+      if (currentTerm.options.fontSize !== nextFontSize) {
+        currentTerm.options.fontSize = nextFontSize;
+      }
+
       currentFit.fit();
       currentTerm.focus();
     };
@@ -119,6 +151,11 @@ export default function LabTerminal({
       pendingOutputRef.current = [];
     };
 
+    debouncedFitRef.current = debounceFrame(() => {
+      fitTerminal();
+      flushPending();
+    });
+
     requestAnimationFrame(() => {
       fitTerminal();
       readyRef.current = true;
@@ -128,27 +165,19 @@ export default function LabTerminal({
 
     if (document.fonts?.ready) {
       document.fonts.ready.then(() => {
-        requestAnimationFrame(() => {
-          fitTerminal();
-          flushPending();
-        });
+        debouncedFitRef.current?.();
       }).catch(() => {});
     }
 
     const handleResize = () => {
-      requestAnimationFrame(() => {
-        fitTerminal();
-        flushPending();
-      });
+      debouncedFitRef.current?.();
     };
 
     window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
 
     const observer = new ResizeObserver(() => {
-      requestAnimationFrame(() => {
-        fitTerminal();
-        flushPending();
-      });
+      debouncedFitRef.current?.();
     });
     observer.observe(viewport);
     if (wrapperRef.current) observer.observe(wrapperRef.current);
@@ -200,6 +229,7 @@ export default function LabTerminal({
     return () => {
       inputDisposable.dispose();
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
       resizeObserverRef.current?.disconnect();
       resizeObserverRef.current = null;
       socketRef.current?.close();
@@ -213,45 +243,53 @@ export default function LabTerminal({
   }, [containerName, hintEnabled, levelId]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[linear-gradient(180deg,#081019_0%,#05070c_100%)] text-slate-200">
-      <div className="shrink-0 border-b border-cyan-400/10 bg-black/20 px-5 py-3 backdrop-blur-sm">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+    <div className="flex h-full min-h-0 min-w-0 flex-col bg-[linear-gradient(180deg,#081019_0%,#05070c_100%)] text-slate-200">
+      <div className="shrink-0 border-b border-cyan-400/10 bg-black/20 px-4 py-3 backdrop-blur-sm sm:px-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
             <div className="flex gap-1.5">
               <div className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
               <div className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />
               <div className="h-2.5 w-2.5 rounded-full bg-emerald-400/80 animate-pulse" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-cyan-200/80">
                 Live Incident Terminal
               </div>
-              <div className="mt-1 text-xs font-mono text-slate-400">
+              <div className="mt-1 truncate text-xs font-mono text-slate-400">
                 {containerName}
               </div>
             </div>
           </div>
           <button
+            type="button"
             onClick={() => {
               socketRef.current?.close();
               onCloseRef.current?.();
             }}
-            className="rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.25em] text-rose-200 transition-colors hover:bg-rose-400/20"
+            className="w-full rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.25em] text-rose-200 transition-colors hover:bg-rose-400/20 sm:w-auto"
           >
             End Session
           </button>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden p-3 md:p-5">
-        <div className="h-full min-h-0 rounded-[24px] border border-cyan-400/12 bg-[#07111a] shadow-[0_0_60px_rgba(14,165,233,0.08)]">
-          <div className="flex items-center justify-between border-b border-white/6 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.24em] text-slate-500">
+      <div className="flex-1 min-h-0 min-w-0 overflow-hidden p-3 sm:p-4 md:p-5">
+        <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[24px] border border-cyan-400/12 bg-[#07111a] shadow-[0_0_60px_rgba(14,165,233,0.08)]">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/6 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.24em] text-slate-500">
             <span>shell attached</span>
             <span>network isolated</span>
           </div>
 
-          <div ref={wrapperRef} className="relative h-[calc(100%-37px)] min-h-0 overflow-hidden">
-            <div ref={viewportRef} className="winlab-xterm-shell absolute inset-0 h-full w-full min-h-0 overflow-hidden px-3 py-3" />
+          <div
+            ref={wrapperRef}
+            className="relative min-h-0 min-w-0 flex-1 overflow-hidden"
+            style={{ height: 'min(70dvh, 620px)' }}
+          >
+            <div
+              ref={viewportRef}
+              className="winlab-xterm-shell absolute inset-0 h-full w-full min-h-0 min-w-0 overflow-hidden px-3 py-3"
+            />
             {!hasOutput && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 text-center text-xs font-mono uppercase tracking-[0.24em] text-slate-500">
                 awaiting terminal stream
