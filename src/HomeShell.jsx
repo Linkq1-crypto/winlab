@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import SocialSidebar from './SocialSidebar';
+import { useLab } from './LabContext';
 import { LEVEL_OPTIONS, getLevelConfig } from './config/levels';
 import { useSocialStorage } from './hooks/useSocialStorage';
 import { getLaunchCountdownState, normalizeLaunchPricingPayload } from './lib/launchWindow';
@@ -80,6 +81,7 @@ const QUICK_PAGE_LINKS = [
 ];
 
 export default function HomeShell() {
+  const { sessionId: browserSessionId, ensureSessionId } = useLab();
   const [view, setView] = useState('terminal');
   const [auth, setAuth] = useState(null);
   const [activeSession, setActiveSession] = useState(null);
@@ -240,6 +242,7 @@ export default function HomeShell() {
     setSelectedLab(lab);
     setLabLoading(true);
     setLabError('');
+    const launchSessionId = browserSessionId || ensureSessionId();
     try {
       const res = await fetch('/api/lab/start', {
         method: 'POST',
@@ -248,27 +251,45 @@ export default function HomeShell() {
         body: JSON.stringify({
           labId: lab.id,
           level: selectedLevelId,
-          sessionId: crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
+          sessionId: launchSessionId,
         }),
       });
+      const responseText = await res.text().catch(() => '');
+      let data = null;
+      if (responseText) {
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          data = null;
+        }
+      }
+
       if (res.status === 401) {
         setShowRegister(true);
         return;
       }
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        const text = await res.text().catch(() => '');
-        setLabError(`Server error ${res.status}: ${text.slice(0, 120) || 'unexpected response'}`);
+      if (!res.ok) {
+        console.error('POST /api/lab/start failed', {
+          status: res.status,
+          body: responseText,
+          labId: lab.id,
+          sessionId: launchSessionId,
+        });
+        setLabError(data?.error || 'Unable to start the lab right now. Please try again.');
         return;
       }
-      if (!res.ok) {
-        setLabError(data.error || `Error ${res.status}`);
+      if (!data) {
+        console.error('POST /api/lab/start returned a non-JSON response', {
+          status: res.status,
+          body: responseText,
+          labId: lab.id,
+          sessionId: launchSessionId,
+        });
+        setLabError('The lab started with an invalid server response. Please retry.');
         return;
       }
       setActiveSession({
-        sessionId: data.sessionId,
+        sessionId: data.sessionId || launchSessionId,
         containerName: data.containerName,
         labId: lab.id,
         levelId: data.level || selectedLevelId,
@@ -530,6 +551,7 @@ export default function HomeShell() {
               containerName={activeSession.containerName}
               levelId={activeSession.levelId}
               hintEnabled={activeSession.hintEnabled}
+              sessionId={activeSession.sessionId}
               onClose={stopLab}
               onComplete={handleLabComplete}
             />

@@ -2,6 +2,7 @@
 // Fully DB-synced: progress, achievements, settings, lab state
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { readStoredAiConsentPreference, syncStoredAiConsentPreference, writeStoredAiConsentPreference } from "./services/aiConsent.js";
+import { getOrCreateBrowserSessionId, getStoredBrowserSessionId } from "./lib/browserSession.js";
 
 // ── Lab registry ──────────────────────────────────────────────────────────────
 export const LABS = [
@@ -114,6 +115,7 @@ export function LabProvider({ children }) {
   const [aiConsent, setAiConsent]     = useState(false);
   const [lastActiveLab, setLastActiveLab] = useState(null);
   const [lastLabState, setLastLabState] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
 
   // ── Hydrate — cookie-based auth, verify via /api/user/me ────────────────────
   useEffect(() => {
@@ -127,6 +129,13 @@ export function LabProvider({ children }) {
     const localAiConsent = readStoredAiConsentPreference();
     if (typeof localAiConsent === "boolean") {
       setAiConsent(localAiConsent);
+    }
+
+    const storedSessionId = getStoredBrowserSessionId();
+    if (storedSessionId) {
+      setSessionId(storedSessionId);
+    } else {
+      setSessionId(getOrCreateBrowserSessionId());
     }
 
     // Verify session via httpOnly cookie — if valid, hydrate user state
@@ -307,6 +316,12 @@ export function LabProvider({ children }) {
     }
   }, [user]);
 
+  const ensureSessionId = useCallback(() => {
+    const sid = getStoredBrowserSessionId() || getOrCreateBrowserSessionId();
+    setSessionId((current) => current || sid);
+    return sid;
+  }, []);
+
   // ── Profile & Settings ──────────────────────────────────────────────────────
   const updateProfile = useCallback(async (data) => {
     if (user?.id) {
@@ -398,6 +413,7 @@ export function LabProvider({ children }) {
       aiConsent, updateSettings,
       updateProfile, deleteAccount,
       lastActiveLab, lastLabState,
+      sessionId, ensureSessionId,
       LABS,
     }}>
       {children}
