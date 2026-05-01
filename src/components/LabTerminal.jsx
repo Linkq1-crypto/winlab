@@ -3,8 +3,9 @@ import { Terminal } from 'xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import 'xterm/css/xterm.css';
 import './LabTerminal.css';
+import { analyzeDeadlockScenario, getDeadlockScenario } from '../lib/deadlockGuard.js';
 
-function createSocketUrl(containerName, levelId, hintEnabled, sessionId) {
+function createSocketUrl(containerName, levelId, hintEnabled, sessionId, labId) {
   const search = new URLSearchParams({
     container: containerName,
     level: levelId,
@@ -12,6 +13,9 @@ function createSocketUrl(containerName, levelId, hintEnabled, sessionId) {
   });
   if (sessionId) {
     search.set('sessionId', sessionId);
+  }
+  if (labId) {
+    search.set('labId', labId);
   }
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${protocol}//${window.location.host}/ws/lab?${search.toString()}`;
@@ -43,6 +47,7 @@ function debounceFrame(callback, delay = 80) {
 
 export default function LabTerminal({
   containerName,
+  labId = 'default',
   levelId = 'JUNIOR',
   hintEnabled = true,
   sessionId = null,
@@ -60,6 +65,7 @@ export default function LabTerminal({
   const debouncedFitRef = useRef(null);
   const [hasOutput, setHasOutput] = useState(false);
   const [isOffline, setIsOffline] = useState(() => (typeof navigator !== 'undefined' ? !navigator.onLine : false));
+  const deadlockAnalysis = analyzeDeadlockScenario(getDeadlockScenario(labId));
 
   const onCloseRef = useRef(onClose);
   const onCompleteRef = useRef(onComplete);
@@ -201,7 +207,7 @@ export default function LabTerminal({
     if (wrapperRef.current) observer.observe(wrapperRef.current);
     resizeObserverRef.current = observer;
 
-    const ws = new WebSocket(createSocketUrl(containerName, levelId, hintEnabled, sessionId));
+    const ws = new WebSocket(createSocketUrl(containerName, levelId, hintEnabled, sessionId, labId));
     socketRef.current = ws;
 
     ws.onmessage = (event) => {
@@ -258,7 +264,7 @@ export default function LabTerminal({
       readyRef.current = false;
       pendingOutputRef.current = [];
     };
-  }, [containerName, hintEnabled, levelId, sessionId]);
+  }, [containerName, hintEnabled, labId, levelId, sessionId]);
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col bg-[linear-gradient(180deg,#081019_0%,#05070c_100%)] text-slate-200">
@@ -293,32 +299,89 @@ export default function LabTerminal({
       </div>
 
       <div className="flex-1 min-h-0 min-w-0 overflow-hidden p-3 sm:p-4 md:p-5">
-        <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[24px] border border-cyan-400/12 bg-[#07111a] shadow-[0_0_60px_rgba(14,165,233,0.08)]">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/6 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.24em] text-slate-500">
-            <span>shell attached</span>
-            <span>network isolated</span>
-          </div>
-          {isOffline ? (
-            <div className="shrink-0 border-b border-amber-400/10 bg-amber-400/10 px-4 py-2 text-xs text-amber-100">
-              Connection lost. Reconnect to continue this incident.
+        <div className="grid h-full min-h-0 min-w-0 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+          <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[24px] border border-cyan-400/12 bg-[#07111a] shadow-[0_0_60px_rgba(14,165,233,0.08)]">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/6 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.24em] text-slate-500">
+              <span>shell attached</span>
+              <span>network isolated</span>
             </div>
-          ) : null}
-
-          <div
-            ref={wrapperRef}
-            className="relative min-h-0 min-w-0 flex-1 overflow-hidden"
-            style={{ height: 'min(70dvh, 620px)' }}
-          >
-            <div
-              ref={viewportRef}
-              className="winlab-xterm-shell absolute inset-0 h-full w-full min-h-0 min-w-0 overflow-hidden px-3 py-3"
-            />
-            {!hasOutput && (
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 text-center text-xs font-mono uppercase tracking-[0.24em] text-slate-500">
-                awaiting terminal stream
+            {isOffline ? (
+              <div className="shrink-0 border-b border-amber-400/10 bg-amber-400/10 px-4 py-2 text-xs text-amber-100">
+                Connection lost. Reconnect to continue this incident.
               </div>
-            )}
+            ) : null}
+
+            <div
+              ref={wrapperRef}
+              className="relative min-h-0 min-w-0 flex-1 overflow-hidden"
+              style={{ height: 'min(70dvh, 620px)' }}
+            >
+              <div
+                ref={viewportRef}
+                className="winlab-xterm-shell absolute inset-0 h-full w-full min-h-0 min-w-0 overflow-hidden px-3 py-3"
+              />
+              {!hasOutput && (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 text-center text-xs font-mono uppercase tracking-[0.24em] text-slate-500">
+                  awaiting terminal stream
+                </div>
+              )}
+            </div>
           </div>
+
+          <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(8,15,26,0.98),rgba(6,8,14,0.98))]">
+            <div className="border-b border-white/8 px-4 py-3">
+              <p className="text-[10px] font-mono uppercase tracking-[0.28em] text-cyan-200/75">DeadlockGuard&trade;</p>
+              <h2 className="mt-2 text-lg font-black text-white">{deadlockAnalysis.title}</h2>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">{deadlockAnalysis.summary}</p>
+              <p className="mt-3 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">Last snapshot {deadlockAnalysis.timestamp}</p>
+            </div>
+            <div className="min-h-0 space-y-3 overflow-y-auto p-4 text-sm">
+              <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Dependency Graph</p>
+                <div className="mt-3 space-y-2 font-mono text-xs text-slate-300">
+                  {deadlockAnalysis.dependencyGraph.map((line) => (
+                    <div key={line} className="rounded-xl border border-white/6 bg-[#07111a] px-3 py-2">
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Blocked Chain</p>
+                <div className="mt-3 space-y-2 text-xs text-slate-300">
+                  {deadlockAnalysis.blockedChain.map((line) => (
+                    <div key={line} className="rounded-xl border border-white/6 bg-white/[0.03] px-3 py-2">
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Root Cause</p>
+                <p className="mt-3 text-sm leading-relaxed text-white">{deadlockAnalysis.rootCause}</p>
+                <div className="mt-4 space-y-2">
+                  {deadlockAnalysis.blockedServices.map((service) => (
+                    <div key={`${service.name}-${service.transactionId}`} className="rounded-xl border border-white/6 bg-white/[0.03] px-3 py-2 text-xs text-slate-300">
+                      <div className="font-semibold text-white">{service.name}</div>
+                      <div className="mt-1 font-mono text-[11px] text-slate-400">tx {service.transactionId} | waiting for {service.waitingFor} | {service.lock}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-emerald-400/12 bg-emerald-400/6 p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-200/80">Suggested Fix</p>
+                <p className="mt-3 text-sm leading-relaxed text-white">{deadlockAnalysis.suggestedAction}</p>
+                <div className="mt-4 space-y-2 font-mono text-[11px] text-emerald-50/80">
+                  {deadlockAnalysis.lockInfo.map((line) => (
+                    <div key={line}>{line}</div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          </aside>
         </div>
       </div>
     </div>

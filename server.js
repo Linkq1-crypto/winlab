@@ -62,6 +62,7 @@ import {
 import { getSiteLabCatalog } from "./src/services/siteLabCatalog.js";
 import { getLevelConfig, isKnownLevel } from "./src/config/levels.js";
 import { DEFAULT_LAUNCH_START_AT, buildLaunchWindow, getLaunchState } from "./src/lib/launchWindow.js";
+import { analyzeDeadlockScenario, buildDeadlockGuardShellFunction, getDeadlockScenario } from "./src/lib/deadlockGuard.js";
 import labAiRoutes from "./server/routes/labAi.js";
 import labProgressRouter from "./server/routes/labProgress.js";
 
@@ -2794,6 +2795,7 @@ labWss.on("connection", (ws, req) => {
   const url = new URL(req.url, "http://x");
   const containerName = url.searchParams.get("container");
   const hintEnabled = url.searchParams.get("hintEnabled") !== "false";
+  const labId = url.searchParams.get("labId") || "default";
 
   if (!containerName) {
     ws.send(JSON.stringify({ type: "error", data: "Missing container parameter" }));
@@ -2813,8 +2815,15 @@ labWss.on("connection", (ws, req) => {
     env: { ...process.env, TERM: "xterm-256color" },
     windowsHide: true,
   });
+  const deadlockAnalysis = analyzeDeadlockScenario(getDeadlockScenario(labId));
 
   ws.send(JSON.stringify({ type: "ready" }));
+
+  setTimeout(() => {
+    try {
+      child.stdin.write(buildDeadlockGuardShellFunction(deadlockAnalysis));
+    } catch {}
+  }, 150);
 
   // Auto-show lab instructions without injecting a visible shell command into the live session.
   setTimeout(() => {
@@ -2826,8 +2835,8 @@ labWss.on("connection", (ws, req) => {
         "/bin/bash",
         "-lc",
         hintEnabled
-          ? "cat /opt/winlab/*/README.txt 2>/dev/null; echo; echo '  > Type verify | hint'"
-          : "cat /opt/winlab/*/README.txt 2>/dev/null; echo; echo '  > Type verify'",
+          ? "cat /opt/winlab/*/README.txt 2>/dev/null; echo; echo '  > Type verify | hint | analyze'"
+          : "cat /opt/winlab/*/README.txt 2>/dev/null; echo; echo '  > Type verify | analyze'",
       ],
       { windowsHide: true }
     );

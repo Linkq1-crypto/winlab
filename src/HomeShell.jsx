@@ -24,7 +24,60 @@ const RegisterModal = lazy(() => import('./components/RegisterModal'));
 const CookieBanner = lazy(() => import('./CookieBanner'));
 const AIMentor = lazy(() => import('./AIMentor'));
 
-const CATEGORIES = ['All', 'Starter', 'Pro', 'Codex', 'Ops', 'Business'];
+const CATEGORIES = ['All', 'Starter', 'Pro', 'Codex', 'Ops', 'Business', 'Deadlocks & Dependency Failures'];
+
+const DEADLOCK_GUARD_LABS = [
+  {
+    id: 'deadlock-postgresql',
+    title: 'PostgreSQL Deadlock',
+    difficulty: 'Hard',
+    duration: '35 min',
+    category: 'Deadlocks & Dependency Failures',
+    xp: 220,
+    status: 'placeholder',
+    tags: ['postgres', 'locks', 'transactions'],
+  },
+  {
+    id: 'deadlock-k8s-loop',
+    title: 'Kubernetes Dependency Loop',
+    difficulty: 'Hard',
+    duration: '40 min',
+    category: 'Deadlocks & Dependency Failures',
+    xp: 240,
+    status: 'placeholder',
+    tags: ['kubernetes', 'dependency-graph', 'rollout'],
+  },
+  {
+    id: 'deadlock-queue-starvation',
+    title: 'Queue Worker Starvation',
+    difficulty: 'Medium',
+    duration: '30 min',
+    category: 'Deadlocks & Dependency Failures',
+    xp: 190,
+    status: 'placeholder',
+    tags: ['queue', 'workers', 'starvation'],
+  },
+  {
+    id: 'deadlock-redis-contention',
+    title: 'Redis Lock Contention',
+    difficulty: 'Medium',
+    duration: '25 min',
+    category: 'Deadlocks & Dependency Failures',
+    xp: 180,
+    status: 'placeholder',
+    tags: ['redis', 'locks', 'contention'],
+  },
+  {
+    id: 'deadlock-api-cascade',
+    title: 'API Cascade Blocking',
+    difficulty: 'Hard',
+    duration: '45 min',
+    category: 'Deadlocks & Dependency Failures',
+    xp: 260,
+    status: 'placeholder',
+    tags: ['api', 'cascading-failure', 'dependency'],
+  },
+];
 
 function buildInitialLogs() {
   return [
@@ -391,14 +444,23 @@ export default function HomeShell() {
       lab.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchCat && matchSearch;
   });
+  const filteredDeadlockLabs = DEADLOCK_GUARD_LABS.filter((lab) => {
+    const matchCat = selectedCategory === 'All' || selectedCategory === lab.category;
+    const matchSearch =
+      lab.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lab.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchCat && matchSearch;
+  });
+  const displayedLabs = [...filteredLabs, ...filteredDeadlockLabs];
   const starterLabs = labCatalog.filter((lab) => starterIds.has(lab.id));
   const featuredStarterLabs = starterLabs.slice(0, 5);
   const hideInstallPrompt = view === 'lab' || showRegister || showPaywall || Boolean(selectedLab);
   const launchCountdown = getLaunchCountdownState(launchPricing, countdownNowMs + launchClockOffsetMs);
   const terminalPreviewLogs = isSmallScreen ? terminalLogs.slice(0, 2) : terminalLogs;
   const earlyAccessFeatures = ['All Starter labs', 'Save progress', 'Founder badge', 'Early supporter status', 'Price locked forever'];
-  const proFeatures = ['All labs unlocked', 'Unlimited AI Mentor', 'Certificates', 'Advanced incident chains', 'Priority support'];
+  const proFeatures = ['All labs unlocked', 'Deadlock labs included', 'Unlimited AI Mentor', 'Certificates', 'Advanced incident chains'];
   const lifetimeFeatures = ['Everything in Pro', 'All future labs included', 'Lifetime updates', 'No recurring fees', 'Early access to new features'];
+  const businessDeadlockFeatures = ['Team incident graph', 'Shared dependency views', 'Cross-seat incident review', 'Custom escalation reports'];
   const visibleEarlyAccessFeatures = isPhoneWidth ? earlyAccessFeatures.slice(0, 4) : earlyAccessFeatures;
   const visibleProFeatures = isPhoneWidth ? proFeatures.slice(0, 4) : proFeatures;
   const visibleLifetimeFeatures = isPhoneWidth ? lifetimeFeatures.slice(0, 4) : lifetimeFeatures;
@@ -549,6 +611,7 @@ export default function HomeShell() {
           >
             <LabTerminal
               containerName={activeSession.containerName}
+              labId={activeSession.labId}
               levelId={activeSession.levelId}
               hintEnabled={activeSession.hintEnabled}
               sessionId={activeSession.sessionId}
@@ -704,7 +767,7 @@ export default function HomeShell() {
               </div>
               <div className="hidden w-full rounded-2xl border border-white/5 bg-zinc-900 px-5 py-4 md:block md:w-auto">
                 <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-gray-600">Catalog Integrity</p>
-                <p className="text-lg font-black text-white sm:text-xl">{filteredLabs.length} / {labCatalog.length} MODULES</p>
+                <p className="text-lg font-black text-white sm:text-xl">{displayedLabs.length} / {labCatalog.length + DEADLOCK_GUARD_LABS.length} MODULES</p>
               </div>
             </div>
           </header>
@@ -770,8 +833,67 @@ export default function HomeShell() {
             </div>
           </section>
 
+          <section className="mb-10 rounded-[28px] border border-cyan-400/15 bg-[radial-gradient(circle_at_top_right,_rgba(56,189,248,0.18),_transparent_38%),linear-gradient(180deg,rgba(7,17,26,0.98),rgba(5,8,14,0.98))] p-5 sm:p-7">
+            <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+              <div className="max-w-2xl">
+                <p className="mb-3 text-[10px] font-black uppercase tracking-[0.32em] text-cyan-300/80">DeadlockGuard&trade;</p>
+                <h2 className="text-[2rem] font-black uppercase italic leading-[0.96] tracking-tighter text-white sm:text-4xl">
+                  Find what is blocked, by whom, and why.
+                </h2>
+                <p className="mt-4 text-sm leading-relaxed text-slate-300">
+                  WinLab visualizes service dependencies, database locks, and cascading wait chains so operators can identify root cause faster.
+                </p>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-white/8 bg-black/25 p-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/70">Lab Category</p>
+                    <p className="mt-2 text-sm font-semibold text-white">Deadlocks &amp; Dependency Failures</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/8 bg-black/25 p-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/70">Training Mode</p>
+                    <p className="mt-2 text-sm font-semibold text-white">Incident training + root cause simulation</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[24px] border border-cyan-400/15 bg-black/35 p-4 shadow-[0_18px_50px_rgba(8,47,73,0.28)]">
+                <div className="mb-4 flex items-center justify-between gap-3 border-b border-white/8 pb-3">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.26em] text-cyan-200/75">Dependency Graph</p>
+                    <p className="mt-1 text-xs text-slate-500">deadlock analysis engine</p>
+                  </div>
+                  <span className="rounded-full border border-amber-400/20 bg-amber-400/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-amber-200">
+                    Wait chain detected
+                  </span>
+                </div>
+                <div className="space-y-3 text-sm">
+                  <div className="rounded-2xl border border-white/6 bg-[#07111a] px-4 py-3 text-slate-300">
+                    <span className="font-mono text-xs text-cyan-100/85">api-gateway &rarr; jobs-worker &rarr; postgres-primary</span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">Blocked service</p>
+                      <p className="mt-2 font-semibold text-white">jobs-worker / reconcile-orders</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">Lock holder</p>
+                      <p className="mt-2 font-semibold text-white">postgres txn 18442</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">Root cause</p>
+                      <p className="mt-2 font-semibold text-white">Circular row lock on `billing_events`</p>
+                    </div>
+                    <div className="rounded-2xl border border-emerald-400/12 bg-emerald-400/6 p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/75">Suggested action</p>
+                      <p className="mt-2 font-semibold text-white">Kill holder, replay queue, rebalance lock order</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <section className="mb-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredLabs.map((lab) => (
+            {displayedLabs.map((lab) => (
               <div
                 key={lab.id}
                 onClick={() => !labLoading && lab.status !== 'placeholder' && setSelectedLab(lab)}
@@ -809,7 +931,7 @@ export default function HomeShell() {
                 </div>
                 <div className="mt-auto flex items-center justify-between gap-3 border-t border-white/5 pt-5">
                   <span className="text-[9px] font-black uppercase tracking-widest text-gray-600">{lab.category}</span>
-                  <span className="text-xs font-black italic text-red-500">+{lab.xp} XP</span>
+                  <span className="text-xs font-black italic text-red-500">{lab.status === 'placeholder' ? 'Coming soon' : `+${lab.xp} XP`}</span>
                 </div>
               </div>
             ))}
@@ -850,7 +972,7 @@ export default function HomeShell() {
               <div className="flex min-w-0 max-w-full flex-col rounded-[28px] border border-red-500/25 bg-[linear-gradient(180deg,rgba(52,11,11,0.82),rgba(14,14,14,0.96))] p-5 shadow-[0_18px_60px_rgba(127,29,29,0.18)] sm:p-7">
                 <p className="mb-3 text-[9px] font-black uppercase tracking-widest text-red-300">Pro</p>
                 <p className="mb-1 break-words text-[2.1rem] font-black italic text-white sm:text-4xl">EUR 19<span className="text-base font-normal text-red-100/60 sm:text-lg">/mo</span></p>
-                <p className="mb-5 text-xs text-red-100/65">Full platform access.</p>
+                <p className="mb-5 text-xs text-red-100/65">Full platform access, including deadlock labs.</p>
                 <ul className="mb-6 space-y-2">
                   {visibleProFeatures.map((feature) => (
                     <li key={feature} className="flex items-center gap-2 text-xs text-red-50/80">
@@ -878,6 +1000,27 @@ export default function HomeShell() {
                   Get Lifetime
                 </button>
               </div>
+            </div>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-[24px] border border-white/8 bg-zinc-950/80 p-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.26em] text-cyan-300/80">Business add-on</p>
+                <h3 className="mt-2 text-lg font-black text-white">Team incident graph</h3>
+                <ul className="mt-4 space-y-2">
+                  {businessDeadlockFeatures.map((feature) => (
+                    <li key={feature} className="text-sm text-zinc-400">
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <a href="/enterprise" className="rounded-[24px] border border-emerald-400/12 bg-emerald-400/6 p-5 transition-colors hover:bg-emerald-400/10">
+                <p className="text-[10px] font-black uppercase tracking-[0.26em] text-emerald-200/80">Enterprise</p>
+                <h3 className="mt-2 text-lg font-black text-white">Custom deadlock scenarios and reports</h3>
+                <p className="mt-3 text-sm leading-relaxed text-emerald-50/75">
+                  Extend DeadlockGuard with tenant-specific dependency models, custom wait-chain incidents, and operator-ready post-incident reporting.
+                </p>
+                <p className="mt-5 text-[11px] font-black uppercase tracking-[0.24em] text-emerald-200">Talk to enterprise</p>
+              </a>
             </div>
           </section>
 
