@@ -23,6 +23,7 @@ const LabBootSplash = lazy(() => import('./components/LabBootSplash'));
 const RegisterModal = lazy(() => import('./components/RegisterModal'));
 const CookieBanner = lazy(() => import('./CookieBanner'));
 const AIMentor = lazy(() => import('./AIMentor'));
+const MobileLanding = lazy(() => import('./components/MobileLanding'));
 
 const CATEGORIES = ['All', 'Starter', 'Pro', 'Codex', 'Ops', 'Business', 'Deadlocks & Dependency Failures'];
 
@@ -160,6 +161,10 @@ export default function HomeShell() {
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [isSmallScreen, setIsSmallScreen] = useState(() => (typeof window !== 'undefined' ? window.innerWidth <= 640 : false));
   const [isPhoneWidth, setIsPhoneWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth <= 430 : false));
+  const [isPhoneLanding, setIsPhoneLanding] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth <= 640 || window.matchMedia?.('(pointer: coarse)').matches === true;
+  });
   const [socialLinks] = useSocialStorage();
   const terminalEndRef = useRef(null);
 
@@ -211,6 +216,7 @@ export default function HomeShell() {
     const syncViewport = () => {
       setIsSmallScreen(window.innerWidth <= 640);
       setIsPhoneWidth(window.innerWidth <= 430);
+      setIsPhoneLanding(window.innerWidth <= 640 || window.matchMedia?.('(pointer: coarse)').matches === true);
     };
 
     syncViewport();
@@ -465,7 +471,34 @@ export default function HomeShell() {
   const visibleProFeatures = isPhoneWidth ? proFeatures.slice(0, 4) : proFeatures;
   const visibleLifetimeFeatures = isPhoneWidth ? lifetimeFeatures.slice(0, 4) : lifetimeFeatures;
 
+  function openPricingFromMobileLanding() {
+    setView('dashboard');
+    window.setTimeout(() => {
+      window.location.hash = 'pricing';
+      document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 40);
+  }
+
   if (view === 'terminal') {
+    if (isPhoneLanding) {
+      return (
+        <div className="winlab-mobile-shell min-h-screen min-h-[100dvh] bg-black">
+          <Suspense fallback={null}>
+            <CookieBanner />
+          </Suspense>
+          <PWAInstallPrompt hidden={hideInstallPrompt} />
+          <Suspense fallback={null}>
+            <MobileLanding
+              onLaunchFreeLab={() => setView('dashboard')}
+              onOpenEarlyAccess={openPricingFromMobileLanding}
+              terminalLines={terminalLogs}
+              launchCountdown={launchCountdown}
+            />
+          </Suspense>
+        </div>
+      );
+    }
+
     return (
       <div className="winlab-mobile-shell min-h-screen min-h-[100dvh] bg-black px-3 py-3 font-mono sm:px-6 lg:px-8">
         <Suspense fallback={null}>
