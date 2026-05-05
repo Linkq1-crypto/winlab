@@ -38,6 +38,7 @@ import {
 } from "./src/services/userLifecycleEmailFlow.js";
 // import { bootstrapAlertFlow } from "./src/core/alertDispatcher.js";
 import helpdeskRouter from "./src/api/routes/helpdesk.js";
+import { createEventsRouter } from "./src/api/routes/events.js";
 import { createMentorFeedbackRouter } from "./src/api/routes/mentorFeedback.js";
 import { startHelpdeskWorker } from "./src/services/helpdeskWorker.js";
 import publicApiRouter from "./src/api/routes/publicApi.js";
@@ -60,6 +61,7 @@ import {
   isContainerRunning,
 } from "./src/services/dockerLabRunner.js";
 import { getSiteLabCatalog } from "./src/services/siteLabCatalog.js";
+import { recordRevenueEvent } from "./src/services/revenueEventEngine.js";
 import { getLevelConfig, isKnownLevel } from "./src/config/levels.js";
 import { DEFAULT_LAUNCH_START_AT, buildLaunchWindow, getLaunchState } from "./src/lib/launchWindow.js";
 import { analyzeDeadlockScenario, buildDeadlockGuardShellFunction, getDeadlockScenario } from "./src/lib/deadlockGuard.js";
@@ -315,6 +317,12 @@ async function handleStripeWebhook(req, res) {
                   plan: checkoutPlan || "pro",
                 },
               });
+              await recordRevenueEvent({
+                prisma,
+                eventType: "checkout_succeeded",
+                userId: user.id,
+                payload: { plan: checkoutPlan || "pro", source: "stripe_webhook", trigger: "subscription" },
+              });
             } else if (user && checkoutPlan === "early") {
               await prisma.user.update({
                 where: { id: user.id },
@@ -323,6 +331,12 @@ async function handleStripeWebhook(req, res) {
                   subscriptionStatus: "none",
                   subscriptionPlan: "early",
                 },
+              });
+              await recordRevenueEvent({
+                prisma,
+                eventType: "checkout_succeeded",
+                userId: user.id,
+                payload: { plan: "earlyAccess", source: "stripe_webhook", trigger: "early_access" },
               });
             } else if (user && checkoutPlan === "lifetime") {
               await prisma.user.update({
@@ -333,6 +347,12 @@ async function handleStripeWebhook(req, res) {
                   subscriptionPlan: "lifetime",
                   cancelAtPeriodEnd: false,
                 },
+              });
+              await recordRevenueEvent({
+                prisma,
+                eventType: "checkout_succeeded",
+                userId: user.id,
+                payload: { plan: "lifetime", source: "stripe_webhook", trigger: "lifetime" },
               });
             }
           }
@@ -398,6 +418,7 @@ app.use(compression());
 app.use(cookieParser());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use("/api", createEventsRouter({ prisma, jwtSecret: JWT_SECRET }));
 
 // ── Request ID (must be before all routes) ───────────────────────────
 app.use((req, res, next) => {
