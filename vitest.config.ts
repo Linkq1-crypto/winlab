@@ -15,6 +15,8 @@ export default defineConfig({
       "tests/language.spec.ts",
       "tests/lighthouse.spec.ts",
       "tests/mobile.spec.ts",
+      "tests/mobile-responsive.spec.ts",
+      "tests/mentor-feedback-ui.spec.ts",
       "tests/network-conditions.spec.ts",
       "tests/session-resume-ui.spec.ts",
       "tests/winlab.spec.ts",

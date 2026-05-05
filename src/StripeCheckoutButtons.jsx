@@ -4,6 +4,7 @@
  * Drop-in component for any page that needs Stripe checkout
  */
 import { useState, useCallback } from "react";
+import { trackEvent } from "./lib/track.js";
 
 // ─── Subscription Checkout Button ────────────────────────────────────────────
 export function SubscribeButton({
@@ -17,10 +18,12 @@ export function SubscribeButton({
   const [loading, setLoading] = useState(false);
 
   const handleCheckout = useCallback(async () => {
+    trackEvent("pricing_clicked", { source: "StripeCheckoutButtons", plan, cta: "subscribe" });
     if (!token) {
       if (onNeedLogin) onNeedLogin();
       return;
     }
+    trackEvent("checkout_started", { source: "StripeCheckoutButtons", plan, currency });
     setLoading(true);
     try {
       const res = await fetch("/api/stripe/subscribe", {
@@ -33,12 +36,14 @@ export function SubscribeButton({
 
       if (!res.ok) {
         const err = await res.json();
+        trackEvent("checkout_failed", { source: "StripeCheckoutButtons", plan, currency, statusCode: res.status });
         throw new Error(err.error || "Checkout failed");
       }
 
       const { url } = await res.json();
       if (url) window.location.href = url;
     } catch (err) {
+      trackEvent("checkout_failed", { source: "StripeCheckoutButtons", plan, currency });
       console.error("Stripe checkout error:", err);
       alert(err.message || "Failed to start checkout. Please try again.");
     } finally {
@@ -79,10 +84,12 @@ export function PayPerLabButton({
   const [loading, setLoading] = useState(false);
 
   const handleCheckout = useCallback(async () => {
+    trackEvent("pricing_clicked", { source: "StripeCheckoutButtons", labId, cta: "pay_per_lab" });
     if (!token) {
       if (onNeedLogin) onNeedLogin();
       return;
     }
+    trackEvent("checkout_started", { source: "StripeCheckoutButtons", labId, currency });
     setLoading(true);
     try {
       const res = await fetch("/api/stripe/pay-per-incident", {
@@ -95,12 +102,14 @@ export function PayPerLabButton({
 
       if (!res.ok) {
         const err = await res.json();
+        trackEvent("checkout_failed", { source: "StripeCheckoutButtons", labId, currency, statusCode: res.status });
         throw new Error(err.error || "Checkout failed");
       }
 
       const { url } = await res.json();
       if (url) window.location.href = url;
     } catch (err) {
+      trackEvent("checkout_failed", { source: "StripeCheckoutButtons", labId, currency });
       console.error("Stripe checkout error:", err);
       alert(err.message || "Failed to start checkout. Please try again.");
     } finally {

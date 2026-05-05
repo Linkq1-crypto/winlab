@@ -4,6 +4,7 @@
  * Supports both subscription and pay-per-incident models
  */
 import { useState, useEffect, useCallback } from "react";
+import { trackEvent } from "./lib/track.js";
 
 // ─── Region Detection ────────────────────────────────────────────────────────
 function detectRegion() {
@@ -115,6 +116,7 @@ function SubscriptionCard({ plan, region, token, onNeedLogin }) {
   const [loading, setLoading] = useState(false);
 
   const handleCheckout = useCallback(async () => {
+    trackEvent("pricing_clicked", { source: "StripePricingTable", plan: plan.id, cta: plan.cta });
     if (plan.isEmail) {
       window.location.href = "mailto:sales@winlab.cloud?subject=Business Plan Inquiry&body=Hello WinLab Team,%0A%0AI'd like to learn more about the Business plan for my organization.%0A%0ACompany: %0ATeam Size: %0A%0AThank you.";
       return;
@@ -123,6 +125,7 @@ function SubscriptionCard({ plan, region, token, onNeedLogin }) {
       if (onNeedLogin) onNeedLogin();
       return;
     }
+    trackEvent("checkout_started", { source: "StripePricingTable", plan: plan.id, currency: region === "IN" ? "inr" : "usd" });
     setLoading(true);
     try {
       const currency = region === "IN" ? "inr" : "usd";
@@ -137,9 +140,11 @@ function SubscriptionCard({ plan, region, token, onNeedLogin }) {
       if (data.url) {
         window.location.href = data.url;
       } else {
+        trackEvent("checkout_failed", { source: "StripePricingTable", plan: plan.id, statusCode: res.status });
         alert(data.error || "Failed to create checkout. Please try again.");
       }
     } catch (err) {
+      trackEvent("checkout_failed", { source: "StripePricingTable", plan: plan.id });
       console.error(err);
       alert("Something went wrong. Please try again.");
     } finally {
@@ -221,7 +226,9 @@ function PayPerIncidentBanner({ region, token, labId }) {
   const { price, currency, period } = pricing.payPerIncident;
 
   const handleCheckout = async () => {
+    trackEvent("pricing_clicked", { source: "StripePricingTable", labId, cta: "pay_per_incident" });
     if (!token) return;
+    trackEvent("checkout_started", { source: "StripePricingTable", labId, currency: region === "IN" ? "inr" : "usd" });
     setLoading(true);
     try {
       const curr = region === "IN" ? "inr" : "usd";
@@ -237,6 +244,7 @@ function PayPerIncidentBanner({ region, token, labId }) {
         window.location.href = data.url;
       }
     } catch (err) {
+      trackEvent("checkout_failed", { source: "StripePricingTable", labId });
       console.error(err);
     } finally {
       setLoading(false);
@@ -270,6 +278,13 @@ export default function StripePricingTable({ token, onNeedLogin, labId, currentP
     const detected = detectRegion();
     setRegion(detected);
   }, []);
+
+  useEffect(() => {
+    const search = new URLSearchParams(window.location.search);
+    if (search.get("canceled") === "1") {
+      trackEvent("checkout_abandoned", { source: "StripePricingTable", labId });
+    }
+  }, [labId]);
 
   const pricing = PRICING[region];
   const plans = pricing.subscriptions;

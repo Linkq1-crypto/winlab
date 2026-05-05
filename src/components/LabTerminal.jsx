@@ -3,6 +3,7 @@ import { Terminal } from 'xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import 'xterm/css/xterm.css';
 import './LabTerminal.css';
+import { trackEvent } from '../lib/track.js';
 
 function createSocketUrl(containerName, levelId, hintEnabled, sessionId, labId) {
   const search = new URLSearchParams({
@@ -73,6 +74,7 @@ export default function LabTerminal({
   const termRef = useRef(null);
   const fitAddonRef = useRef(null);
   const socketRef = useRef(null);
+  const commandBufferRef = useRef('');
   const pendingOutputRef = useRef([]);
   const readyRef = useRef(false);
   const resizeObserverRef = useRef(null);
@@ -266,6 +268,39 @@ export default function LabTerminal({
     };
 
     const inputDisposable = term.onData((data) => {
+      if (data === '\u007F') {
+        commandBufferRef.current = commandBufferRef.current.slice(0, -1);
+      } else if (data.includes('\r')) {
+        const segments = data.split('\r');
+        for (let index = 0; index < segments.length; index += 1) {
+          const segment = segments[index];
+          if (segment) {
+            commandBufferRef.current += segment;
+          }
+          if (index < segments.length - 1) {
+            const command = commandBufferRef.current.trim();
+            if (command) {
+              trackEvent('command_entered', {
+                labId,
+                levelId,
+                sessionId,
+                source: 'LabTerminal',
+                command,
+              });
+              if (/^(hint|mentor|ai)\b/i.test(command)) {
+                trackEvent('hint_requested', { labId, sessionId, source: 'LabTerminal', trigger: 'typed_command' });
+              }
+              if (/^(verify|\.?\/?verify\.sh)\b/i.test(command) || /\bverify\.sh\b/i.test(command)) {
+                trackEvent('verify_requested', { labId, levelId, sessionId, source: 'LabTerminal' });
+              }
+            }
+            commandBufferRef.current = '';
+          }
+        }
+      } else if (!data.startsWith('\u001b')) {
+        commandBufferRef.current += data;
+      }
+
       if (socketRef.current?.readyState === WebSocket.OPEN) {
         socketRef.current.send(JSON.stringify({ type: 'input', data }));
       }
@@ -284,6 +319,7 @@ export default function LabTerminal({
       fitAddonRef.current = null;
       readyRef.current = false;
       pendingOutputRef.current = [];
+      commandBufferRef.current = '';
     };
   }, [containerName, hintEnabled, labId, levelId, sessionId]);
 

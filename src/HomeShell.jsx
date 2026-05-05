@@ -14,6 +14,7 @@ import SocialSidebar from './SocialSidebar';
 import { useLab } from './LabContext';
 import { LEVEL_OPTIONS, getLevelConfig } from './config/levels';
 import { useSocialStorage } from './hooks/useSocialStorage';
+import { trackEvent } from './lib/track.js';
 import { getLaunchCountdownState, normalizeLaunchPricingPayload } from './lib/launchWindow';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { syncStoredAiConsentPreference } from './services/aiConsent.js';
@@ -173,6 +174,14 @@ export default function HomeShell() {
       setTerminalLogs(buildInitialLogs());
     }
   }, [terminalLogs.length]);
+
+  useEffect(() => {
+    trackEvent('page_view', { component: 'HomeShell', location: view });
+    const search = new URLSearchParams(window.location.search);
+    if (search.get('canceled') === '1') {
+      trackEvent('checkout_abandoned', { source: 'url_cancel', location: window.location.pathname });
+    }
+  }, []);
 
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -371,6 +380,12 @@ export default function HomeShell() {
         },
         bootSequence: data.bootSequence ?? [],
       });
+      trackEvent('lab_started', {
+        labId: data.labId || lab.id,
+        labTitle: data.labTitle || lab.title,
+        levelId: data.level || selectedLevelId,
+        source: 'HomeShell',
+      });
       setShowSplash((data.bootSequence?.length ?? 0) > 0);
       setView('lab');
     } catch (err) {
@@ -436,6 +451,7 @@ export default function HomeShell() {
       setShowRegister(true);
       return;
     }
+    trackEvent('checkout_started', { plan, source: 'HomeShell' });
     try {
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
@@ -445,11 +461,13 @@ export default function HomeShell() {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
+        trackEvent('checkout_failed', { plan, source: 'HomeShell', statusCode: res.status });
         setLabError(data?.error || `Checkout error ${res.status}`);
         return;
       }
       if (data?.url) window.location.href = data.url;
     } catch (err) {
+      trackEvent('checkout_failed', { plan, source: 'HomeShell' });
       setLabError(`Checkout error: ${err?.message || 'unable to start Stripe checkout'}`);
     }
   }
@@ -505,7 +523,10 @@ export default function HomeShell() {
           <Suspense fallback={null}>
             <MobileLanding
               onLaunchFreeLab={() => setView('dashboard')}
-              onOpenEarlyAccess={openPricingFromMobileLanding}
+              onOpenEarlyAccess={() => {
+                trackEvent('pricing_clicked', { source: 'MobileLanding', cta: 'early_access' });
+                openPricingFromMobileLanding();
+              }}
               terminalLines={terminalLogs}
               launchCountdown={launchCountdown}
             />
@@ -555,7 +576,10 @@ export default function HomeShell() {
                 <div className="grid w-full max-w-full gap-3 sm:w-auto">
                   <button
                     type="button"
-                    onClick={() => setView('dashboard')}
+                    onClick={() => {
+                      trackEvent('hero_cta_clicked', { source: 'HomeShell', cta: 'launch_free_labs' });
+                      setView('dashboard');
+                    }}
                     className="min-h-[48px] w-full max-w-full rounded-2xl bg-red-600 px-4 py-3 text-sm font-black uppercase tracking-[0.18em] text-white transition-colors hover:bg-red-500 sm:min-w-[220px]"
                   >
                     Launch Free Labs
@@ -563,7 +587,10 @@ export default function HomeShell() {
                   {!isSmallScreen ? (
                     <a
                       href="#pricing"
-                      onClick={() => setView('dashboard')}
+                      onClick={() => {
+                        trackEvent('pricing_clicked', { source: 'HomeShell', cta: 'view_pricing' });
+                        setView('dashboard');
+                      }}
                       className="block min-h-[48px] w-full max-w-full rounded-2xl border border-white/10 px-4 py-3 text-center text-sm font-black uppercase tracking-[0.18em] text-gray-300 transition-colors hover:bg-white/5 sm:min-w-[220px]"
                     >
                       View Pricing
@@ -628,6 +655,7 @@ export default function HomeShell() {
         }
       >
         <LabBootSplash
+          sessionId={activeSession.sessionId}
           lab={activeSession.lab}
           levelId={activeSession.levelId}
           hintEnabled={activeSession.hintEnabled}

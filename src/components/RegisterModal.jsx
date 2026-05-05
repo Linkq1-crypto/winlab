@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Eye, EyeOff, X } from 'lucide-react';
+import { trackEvent } from '../lib/track.js';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
@@ -29,6 +30,10 @@ export default function RegisterModal({ onSuccess, onClose }) {
       ? { email: trimmedEmail, password, name: name.trim() }
       : { email: trimmedEmail, password };
 
+    if (mode === 'register') {
+      trackEvent('signup_started', { source: 'RegisterModal', trigger: 'submit' });
+    }
+
     try {
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -43,6 +48,9 @@ export default function RegisterModal({ onSuccess, onClose }) {
         return;
       }
       setLoading(false);
+      if (mode === 'register') {
+        trackEvent('signup_completed', { source: 'RegisterModal' });
+      }
       onSuccess(data.user, data.token ?? null);
     } catch {
       setError('Connection failed. Please try again.');

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { trackEvent } from '../lib/track.js';
 
 const TYPE_COLOR = {
   system: 'text-amber-300 font-semibold',
@@ -55,7 +56,7 @@ function formatBootLine(line) {
   return `${prefix.padEnd(8, ' ')} ${text}`;
 }
 
-export default function LabBootSplash({ bootSequence, onReady, lab = null, levelId = 'JUNIOR', hintEnabled = true }) {
+export default function LabBootSplash({ bootSequence, onReady, lab = null, sessionId = null, levelId = 'JUNIOR', hintEnabled = true }) {
   const [visibleCount, setVisibleCount] = useState(0);
   const [allVisible, setAllVisible] = useState(false);
   const fullSequence = [...buildWarmupSequence({ lab, levelId, hintEnabled }), ...(bootSequence || [])];
@@ -64,6 +65,16 @@ export default function LabBootSplash({ bootSequence, onReady, lab = null, level
     setVisibleCount(0);
     setAllVisible(false);
   }, [bootSequence, hintEnabled, lab, levelId]);
+
+  useEffect(() => {
+    trackEvent('lab_boot_started', {
+      labId: lab?.id,
+      labTitle: lab?.title,
+      levelId,
+      source: 'LabBootSplash',
+      sessionId,
+    });
+  }, [lab?.id, lab?.title, levelId, sessionId]);
 
   useEffect(() => {
     if (visibleCount < fullSequence.length) {
@@ -86,10 +97,17 @@ export default function LabBootSplash({ bootSequence, onReady, lab = null, level
 
   useEffect(() => {
     if (!allVisible) return;
+    trackEvent('lab_boot_completed', {
+      labId: lab?.id,
+      labTitle: lab?.title,
+      levelId,
+      source: 'LabBootSplash',
+      sessionId,
+    });
     const onKey = () => onReady();
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [allVisible, onReady]);
+  }, [allVisible, lab?.id, lab?.title, levelId, onReady, sessionId]);
 
   return (
     <div

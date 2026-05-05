@@ -1,4 +1,5 @@
 import React from "react";
+import { trackEvent } from "../lib/track.js";
 
 export default function PricingPage({
   user = null,
@@ -24,7 +25,10 @@ export default function PricingPage({
             </button>
             <button
               type="button"
-              onClick={onStartFree}
+              onClick={() => {
+                trackEvent("hero_cta_clicked", { source: "PricingPage", cta: "start_free_header" });
+                onStartFree?.();
+              }}
               className="w-full rounded-2xl bg-white px-4 py-2 text-black hover:bg-zinc-200 sm:w-auto"
             >
               Start Free
@@ -63,7 +67,10 @@ export default function PricingPage({
               "Try before you commit",
             ]}
             ctaLabel="Enter Starter"
-            onClick={onStartFree}
+            onClick={() => {
+              trackEvent("hero_cta_clicked", { source: "PricingPage", cta: "starter" });
+              onStartFree?.();
+            }}
           />
 
           <PlanCard
@@ -80,7 +87,10 @@ export default function PricingPage({
               "Best way to get in early",
             ]}
             ctaLabel="Enter Early Access"
-            onClick={onBuyFounding}
+            onClick={() => {
+              trackEvent("pricing_clicked", { source: "PricingPage", plan: "early_access", cta: "enter_early_access" });
+              onBuyFounding?.();
+            }}
             footnote="Locked launch access for early operators."
           />
 
@@ -97,7 +107,10 @@ export default function PricingPage({
               "Scoring, history, leaderboard",
             ]}
             ctaLabel="Enter Pro"
-            onClick={onBuyPro}
+            onClick={() => {
+              trackEvent("pricing_clicked", { source: "PricingPage", plan: "pro", cta: "enter_pro" });
+              onBuyPro?.();
+            }}
           />
 
           <PlanCard
@@ -113,7 +126,10 @@ export default function PricingPage({
               "No recurring subscription",
             ]}
             ctaLabel="Enter Lifetime"
-            onClick={onBuyLifetime}
+            onClick={() => {
+              trackEvent("pricing_clicked", { source: "PricingPage", plan: "lifetime", cta: "enter_lifetime" });
+              onBuyLifetime?.();
+            }}
           />
         </section>
 
@@ -197,14 +213,20 @@ export default function PricingPage({
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <button
                 type="button"
-                onClick={onStartFree}
+                onClick={() => {
+                  trackEvent("hero_cta_clicked", { source: "PricingPage", cta: "start_free_footer" });
+                  onStartFree?.();
+                }}
                 className="w-full rounded-2xl bg-white px-5 py-3 text-black hover:bg-zinc-200 sm:w-auto"
               >
                 Start Free
               </button>
               <button
                 type="button"
-                onClick={onBuyPro}
+                onClick={() => {
+                  trackEvent("pricing_clicked", { source: "PricingPage", plan: "pro", cta: "view_pro_footer" });
+                  onBuyPro?.();
+                }}
                 className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-5 py-3 hover:bg-black sm:w-auto"
               >
                 View Pro

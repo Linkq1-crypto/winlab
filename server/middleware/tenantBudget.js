@@ -1,7 +1,7 @@
 const tenantUsage = new Map();
 
 function getTenantId(req) {
-  return req.user?.tenantId || req.headers["x-tenant-id"] || req.body?.tenantId || "default";
+  return req.user?.tenantId || req.headers?.["x-tenant-id"] || req.body?.tenantId || "default";
 }
 
 function getRequestCost(req) {

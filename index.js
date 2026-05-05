@@ -24,6 +24,7 @@ import { spawn } from "child_process";
 import { sendPasswordResetEmail, sendVerifyEmail, verifyResetToken, verifyEmailToken, sendNewDeviceLoginEmail, sendAccountDeletedEmail } from "./src/services/userLifecycleEmailFlow.js";
 import { bootstrapAlertFlow } from "./src/core/alertDispatcher.js";
 import helpdeskRouter from "./src/api/routes/helpdesk.js";
+import { createEventsRouter } from "./src/api/routes/events.js";
 import { startHelpdeskWorker } from "./src/services/helpdeskWorker.js";
 import { recordDeploy as recordDeployEvent, getDeployHistory as getDeployHistoryFn } from "./src/services/helpdeskEngines/bugDetection.js";
 import { syncLogger, dlqLogger } from "./src/services/logger.js";
@@ -47,6 +48,7 @@ import { executeWithOutbox, processPendingEvents } from "./src/api/eventSourcing
 import { isEventProcessed, markEventProcessed } from "./src/services/webhookIdempotency.js";
 import { startDockerLabSession, stopDockerLabSession } from "./src/services/dockerLabRunner.js";
 import { getLabIncidentBrief } from "./src/services/labIncidentBrief.js";
+import { recordRevenueEvent } from "./src/services/revenueEventEngine.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,6 +86,7 @@ function securityLog(entry) {
 const app = express();
 app.set('trust proxy', 1); // behind Nginx / Cloudflare
 app.use(cookieParser());
+app.use("/api", createEventsRouter({ prisma, jwtSecret: process.env.JWT_SECRET }));
 
 // ─────────────────────────────────────────────
 // SECURITY HEADERS - Helmet + Custom CSP
@@ -824,6 +827,12 @@ app.post("/api/billing/webhook", express.raw({ type: "application/json" }), asyn
         await prisma.analytics.create({
           data: { event: "early_access_purchased", userId: user.id, meta: JSON.stringify({ email }) },
         });
+        await recordRevenueEvent({
+          prisma,
+          eventType: "checkout_succeeded",
+          userId: user.id,
+          payload: { plan: "earlyAccess", source: "stripe_webhook", trigger: "early_access" },
+        });
 
         await markEventProcessed(event.id, event.type, { userId: user.id, type });
         console.log(`[Stripe] Early access purchased by ${email} → user ${user.id}`);
@@ -856,6 +865,12 @@ app.post("/api/billing/webhook", express.raw({ type: "application/json" }), asyn
         await prisma.analytics.create({
           data: { event: "lifetime_purchased", userId: resolvedUserId, meta: JSON.stringify({ amount: 149 }) },
         });
+        await recordRevenueEvent({
+          prisma,
+          eventType: "checkout_succeeded",
+          userId: resolvedUserId,
+          payload: { plan: "lifetime", source: "stripe_webhook", trigger: "lifetime" },
+        });
 
         await markEventProcessed(event.id, event.type, { userId: resolvedUserId, type });
         console.log(`[Stripe] Lifetime purchased by user ${resolvedUserId}`);
@@ -870,6 +885,12 @@ app.post("/api/billing/webhook", express.raw({ type: "application/json" }), asyn
         });
         await prisma.analytics.create({
           data: { event: "plan_upgraded", userId, meta: JSON.stringify({ plan, type: type || "subscription" }) },
+        });
+        await recordRevenueEvent({
+          prisma,
+          eventType: "checkout_succeeded",
+          userId,
+          payload: { plan, labId: session.metadata?.labId, source: "stripe_webhook", trigger: type || "subscription" },
         });
       }
 

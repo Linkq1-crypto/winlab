@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLab } from "../LabContext.jsx";
 import { getOrCreateBrowserSessionId } from "../lib/browserSession.js";
+import { trackEvent } from "../lib/track.js";
 
 /**
  * Manages an anonymous Docker lab session for the free-lab homepage experience.
@@ -34,7 +35,7 @@ export function useFreeLab(labId) {
 
     // Reconnect to an existing container (user refreshed mid-session)
     try {
-      const ping = await fetch("/api/lab/command", {
+    const ping = await fetch("/api/lab/command", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: sid, command: "echo alive" }),
@@ -69,6 +70,7 @@ export function useFreeLab(labId) {
 
     let res;
     try {
+      trackEvent("lab_started", { labId, source: "useFreeLab", trigger: "boot" });
       res = await fetch("/api/lab/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -146,6 +148,12 @@ export function useFreeLab(labId) {
 
     addLine(`$ ${cmd}`, "input");
     setCommandCount(c => c + 1);
+    trackEvent("command_entered", {
+      labId,
+      sessionId: sessionId.current,
+      source: "FreeLabTerminal",
+      command: cmd,
+    });
 
     const res = await fetch("/api/lab/command", {
       method: "POST",
@@ -163,12 +171,19 @@ export function useFreeLab(labId) {
   }, [started, addLine]);
 
   const verify = useCallback(async () => {
+    trackEvent("verify_requested", { labId, sessionId: sessionId.current, source: "FreeLabTerminal" });
     const res = await fetch("/api/lab/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ labId, sessionId: sessionId.current }),
     });
     const data = await res.json().catch(() => ({ ok: false }));
+    trackEvent(data.ok ? "verify_passed" : "verify_failed", {
+      labId,
+      sessionId: sessionId.current,
+      source: "FreeLabTerminal",
+      success: Boolean(data.ok),
+    });
     return data;
   }, [labId]);
 
