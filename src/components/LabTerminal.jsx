@@ -3,7 +3,6 @@ import { Terminal } from 'xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import 'xterm/css/xterm.css';
 import './LabTerminal.css';
-import { analyzeDeadlockScenario, getDeadlockScenario } from '../lib/deadlockGuard.js';
 
 function createSocketUrl(containerName, levelId, hintEnabled, sessionId, labId) {
   const search = new URLSearchParams({
@@ -45,9 +44,24 @@ function debounceFrame(callback, delay = 80) {
   };
 }
 
+function normalizeIncidentBrief(incidentBrief, fallbackLabId) {
+  const brief = incidentBrief && typeof incidentBrief === 'object' ? incidentBrief : {};
+  return {
+    labId: brief.labId || fallbackLabId || '',
+    labTitle: brief.labTitle || '',
+    incidentType: brief.incidentType || '',
+    symptoms: brief.symptoms || '',
+    objective: brief.objective || '',
+    successCondition: brief.successCondition || '',
+    suggestedCommands: Array.isArray(brief.suggestedCommands) ? brief.suggestedCommands.filter(Boolean) : [],
+    hints: Array.isArray(brief.hints) ? brief.hints.filter(Boolean) : [],
+  };
+}
+
 export default function LabTerminal({
   containerName,
   labId = 'default',
+  incidentBrief = null,
   levelId = 'JUNIOR',
   hintEnabled = true,
   sessionId = null,
@@ -65,7 +79,14 @@ export default function LabTerminal({
   const debouncedFitRef = useRef(null);
   const [hasOutput, setHasOutput] = useState(false);
   const [isOffline, setIsOffline] = useState(() => (typeof navigator !== 'undefined' ? !navigator.onLine : false));
-  const deadlockAnalysis = analyzeDeadlockScenario(getDeadlockScenario(labId));
+  const activeIncidentBrief = normalizeIncidentBrief(incidentBrief, labId);
+  const hasIncidentData =
+    Boolean(activeIncidentBrief.incidentType) ||
+    Boolean(activeIncidentBrief.symptoms) ||
+    Boolean(activeIncidentBrief.objective) ||
+    Boolean(activeIncidentBrief.successCondition) ||
+    activeIncidentBrief.suggestedCommands.length > 0 ||
+    activeIncidentBrief.hints.length > 0;
 
   const onCloseRef = useRef(onClose);
   const onCompleteRef = useRef(onComplete);
@@ -330,56 +351,72 @@ export default function LabTerminal({
 
           <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(8,15,26,0.98),rgba(6,8,14,0.98))]">
             <div className="border-b border-white/8 px-4 py-3">
-              <p className="text-[10px] font-mono uppercase tracking-[0.28em] text-cyan-200/75">DeadlockGuard&trade;</p>
-              <h2 className="mt-2 text-lg font-black text-white">{deadlockAnalysis.title}</h2>
-              <p className="mt-2 text-xs leading-relaxed text-slate-400">{deadlockAnalysis.summary}</p>
-              <p className="mt-3 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">Last snapshot {deadlockAnalysis.timestamp}</p>
+              <p className="text-[10px] font-mono uppercase tracking-[0.28em] text-cyan-200/75">Incident Brief</p>
+              <h2 className="mt-2 text-lg font-black text-white">
+                {activeIncidentBrief.incidentType || 'Brief unavailable'}
+              </h2>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                {activeIncidentBrief.labTitle || 'No lab metadata was attached to this session.'}
+              </p>
+              <p className="mt-3 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">
+                Session {sessionId || 'pending'} {activeIncidentBrief.labId ? `• ${activeIncidentBrief.labId}` : ''}
+              </p>
             </div>
             <div className="min-h-0 space-y-3 overflow-y-auto p-4 text-sm">
-              <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Dependency Graph</p>
-                <div className="mt-3 space-y-2 font-mono text-xs text-slate-300">
-                  {deadlockAnalysis.dependencyGraph.map((line) => (
-                    <div key={line} className="rounded-xl border border-white/6 bg-[#07111a] px-3 py-2">
-                      {line}
-                    </div>
-                  ))}
-                </div>
-              </section>
+              {!hasIncidentData ? (
+                <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                  <p className="text-sm leading-relaxed text-slate-300">
+                    Lab briefing is unavailable for this session. Start the lab again or inspect the terminal directly.
+                  </p>
+                </section>
+              ) : null}
 
-              <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Blocked Chain</p>
-                <div className="mt-3 space-y-2 text-xs text-slate-300">
-                  {deadlockAnalysis.blockedChain.map((line) => (
-                    <div key={line} className="rounded-xl border border-white/6 bg-white/[0.03] px-3 py-2">
-                      {line}
-                    </div>
-                  ))}
-                </div>
-              </section>
+              {activeIncidentBrief.symptoms ? (
+                <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Symptoms</p>
+                  <p className="mt-3 text-sm leading-relaxed text-white">{activeIncidentBrief.symptoms}</p>
+                </section>
+              ) : null}
 
-              <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Root Cause</p>
-                <p className="mt-3 text-sm leading-relaxed text-white">{deadlockAnalysis.rootCause}</p>
-                <div className="mt-4 space-y-2">
-                  {deadlockAnalysis.blockedServices.map((service) => (
-                    <div key={`${service.name}-${service.transactionId}`} className="rounded-xl border border-white/6 bg-white/[0.03] px-3 py-2 text-xs text-slate-300">
-                      <div className="font-semibold text-white">{service.name}</div>
-                      <div className="mt-1 font-mono text-[11px] text-slate-400">tx {service.transactionId} | waiting for {service.waitingFor} | {service.lock}</div>
-                    </div>
-                  ))}
-                </div>
-              </section>
+              {activeIncidentBrief.objective ? (
+                <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Objective</p>
+                  <p className="mt-3 text-sm leading-relaxed text-white">{activeIncidentBrief.objective}</p>
+                </section>
+              ) : null}
 
-              <section className="rounded-2xl border border-emerald-400/12 bg-emerald-400/6 p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-200/80">Suggested Fix</p>
-                <p className="mt-3 text-sm leading-relaxed text-white">{deadlockAnalysis.suggestedAction}</p>
-                <div className="mt-4 space-y-2 font-mono text-[11px] text-emerald-50/80">
-                  {deadlockAnalysis.lockInfo.map((line) => (
-                    <div key={line}>{line}</div>
-                  ))}
-                </div>
-              </section>
+              {activeIncidentBrief.successCondition ? (
+                <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Success Condition</p>
+                  <p className="mt-3 text-sm leading-relaxed text-white">{activeIncidentBrief.successCondition}</p>
+                </section>
+              ) : null}
+
+              {activeIncidentBrief.suggestedCommands.length > 0 ? (
+                <section className="rounded-2xl border border-emerald-400/12 bg-emerald-400/6 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-200/80">Suggested Commands</p>
+                  <div className="mt-4 space-y-2 font-mono text-[11px] text-emerald-50/80">
+                    {activeIncidentBrief.suggestedCommands.map((command) => (
+                      <div key={command} className="rounded-xl border border-emerald-200/10 bg-black/20 px-3 py-2">
+                        {command}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              {activeIncidentBrief.hints.length > 0 ? (
+                <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Hints</p>
+                  <div className="mt-3 space-y-2 text-xs text-slate-300">
+                    {activeIncidentBrief.hints.map((hint, index) => (
+                      <div key={`${index}-${hint}`} className="rounded-xl border border-white/6 bg-white/[0.03] px-3 py-2">
+                        {hint}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
             </div>
           </aside>
         </div>

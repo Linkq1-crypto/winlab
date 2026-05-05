@@ -350,10 +350,25 @@ export default function HomeShell() {
       setActiveSession({
         sessionId: data.sessionId || launchSessionId,
         containerName: data.containerName,
-        labId: lab.id,
+        labId: data.labId || lab.id,
         levelId: data.level || selectedLevelId,
         hintEnabled: data.hintEnabled !== false,
-        lab,
+        lab: {
+          ...lab,
+          id: data.labId || lab.id,
+          title: data.labTitle || lab.title,
+        },
+        incidentBrief: {
+          labId: data.labId || lab.id,
+          labTitle: data.labTitle || lab.title,
+          incidentType: data.incidentType || data.labTitle || lab.title,
+          symptoms: data.symptoms || "",
+          objective: data.objective || "",
+          successCondition: data.successCondition || "",
+          suggestedCommands: Array.isArray(data.suggestedCommands) ? data.suggestedCommands : [],
+          hints: Array.isArray(data.hints) ? data.hints : [],
+          ...(data.incidentBrief && typeof data.incidentBrief === 'object' ? data.incidentBrief : {}),
+        },
         bootSequence: data.bootSequence ?? [],
       });
       setShowSplash((data.bootSequence?.length ?? 0) > 0);
@@ -643,8 +658,10 @@ export default function HomeShell() {
             }
           >
             <LabTerminal
+              key={`${activeSession.sessionId}:${activeSession.labId}`}
               containerName={activeSession.containerName}
               labId={activeSession.labId}
+              incidentBrief={activeSession.incidentBrief}
               levelId={activeSession.levelId}
               hintEnabled={activeSession.hintEnabled}
               sessionId={activeSession.sessionId}

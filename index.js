@@ -46,6 +46,7 @@ import { encryptUserData, decryptUser } from "./src/api/middleware/encryptPrisma
 import { executeWithOutbox, processPendingEvents } from "./src/api/eventSourcing.js";
 import { isEventProcessed, markEventProcessed } from "./src/services/webhookIdempotency.js";
 import { startDockerLabSession, stopDockerLabSession } from "./src/services/dockerLabRunner.js";
+import { getLabIncidentBrief } from "./src/services/labIncidentBrief.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -619,6 +620,7 @@ app.post("/api/lab/start", labLimiter, async (req, res) => {
   const sessionId = crypto.randomUUID();
   try {
     const session = await startDockerLabSession({ labId, sessionId });
+    const incidentBrief = getLabIncidentBrief(labId);
     activeSessions.set(sessionId, session.containerName);
     setTimeout(async () => {
       activeSessions.delete(sessionId);
@@ -633,7 +635,20 @@ app.post("/api/lab/start", labLimiter, async (req, res) => {
         // boot.json malformed — degrade gracefully, lab still starts
       }
     }
-    res.json({ sessionId, containerName: session.containerName, labId, bootSequence });
+    res.json({
+      sessionId,
+      containerName: session.containerName,
+      labId: incidentBrief.labId || labId,
+      labTitle: incidentBrief.labTitle,
+      incidentType: incidentBrief.incidentType,
+      symptoms: incidentBrief.symptoms,
+      objective: incidentBrief.objective,
+      successCondition: incidentBrief.successCondition,
+      suggestedCommands: incidentBrief.suggestedCommands,
+      hints: incidentBrief.hints,
+      incidentBrief,
+      bootSequence,
+    });
   } catch (err) {
     console.error("Lab start error:", err);
     res.status(500).json({ error: "Failed to start lab container" });
