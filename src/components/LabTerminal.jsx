@@ -24,6 +24,53 @@ function getTerminalFontSize() {
   return 14;
 }
 
+function getAdaptiveLayoutMetrics() {
+  if (typeof window === 'undefined') {
+    return {
+      width: 1440,
+      height: 900,
+      shellMinHeight: 0,
+      shellPreferredHeight: null,
+      panelMaxHeight: null,
+      stacked: false,
+    };
+  }
+
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  if (width < 768) {
+    return {
+      width,
+      height,
+      shellMinHeight: Math.max(280, Math.min(380, Math.round(height * 0.34))),
+      shellPreferredHeight: Math.max(320, Math.min(520, Math.round(height * 0.46))),
+      panelMaxHeight: Math.max(260, Math.min(420, Math.round(height * 0.4))),
+      stacked: true,
+    };
+  }
+
+  if (width < 1280) {
+    return {
+      width,
+      height,
+      shellMinHeight: Math.max(320, Math.min(440, Math.round(height * 0.38))),
+      shellPreferredHeight: Math.max(380, Math.min(640, Math.round(height * 0.52))),
+      panelMaxHeight: Math.max(300, Math.min(500, Math.round(height * 0.34))),
+      stacked: true,
+    };
+  }
+
+  return {
+    width,
+    height,
+    shellMinHeight: 0,
+    shellPreferredHeight: null,
+    panelMaxHeight: null,
+    stacked: false,
+  };
+}
+
 function debounceFrame(callback, delay = 80) {
   let timeoutId = null;
   let frameId = null;
@@ -336,6 +383,7 @@ export default function LabTerminal({
   const [elapsedSec, setElapsedSec] = useState(0);
   const [timelineEvents, setTimelineEvents] = useState([]);
   const [recoveryProgress, setRecoveryProgress] = useState(12);
+  const [layoutMetrics, setLayoutMetrics] = useState(getAdaptiveLayoutMetrics);
 
   const activeIncidentBrief = normalizeIncidentBrief(incidentBrief, labId);
   const hasIncidentData =
@@ -357,6 +405,17 @@ export default function LabTerminal({
   const latestEvent = timelineEvents[timelineEvents.length - 1] || null;
   const degradedCount = affectedServices.filter((service) => service.status === 'degraded' || service.status === 'failed').length;
   const commandCards = activeIncidentBrief.suggestedCommands.slice(0, 3);
+  const shellViewportStyle = layoutMetrics.stacked
+    ? {
+        minHeight: `${layoutMetrics.shellMinHeight}px`,
+        height: `${layoutMetrics.shellPreferredHeight}px`,
+      }
+    : {
+        height: '100%',
+      };
+  const briefPanelStyle = layoutMetrics.panelMaxHeight
+    ? { maxHeight: `${layoutMetrics.panelMaxHeight}px` }
+    : undefined;
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -374,6 +433,17 @@ export default function LabTerminal({
     return () => {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('online', handleOnline);
+    };
+  }, []);
+
+  useEffect(() => {
+    const syncLayout = () => setLayoutMetrics(getAdaptiveLayoutMetrics());
+    syncLayout();
+    window.addEventListener('resize', syncLayout);
+    window.addEventListener('orientationchange', syncLayout);
+    return () => {
+      window.removeEventListener('resize', syncLayout);
+      window.removeEventListener('orientationchange', syncLayout);
     };
   }, []);
 
@@ -716,7 +786,7 @@ export default function LabTerminal({
             <div
               ref={wrapperRef}
               className="relative min-h-[360px] min-w-0 flex-1 overflow-hidden xl:min-h-0"
-              style={{ height: 'min(68dvh, 760px)' }}
+              style={shellViewportStyle}
             >
               <div
                 ref={viewportRef}
@@ -730,7 +800,10 @@ export default function LabTerminal({
             </div>
           </div>
 
-          <aside className="order-1 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-white/8 bg-[#081019] md:rounded-[20px] xl:order-2">
+          <aside
+            className="order-1 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-white/8 bg-[#081019] md:rounded-[20px] xl:order-2 xl:max-h-none"
+            style={briefPanelStyle}
+          >
             <div className="border-b border-white/8 bg-[#0a131c] px-3 py-3 sm:px-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
