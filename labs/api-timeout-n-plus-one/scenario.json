@@ -4,7 +4,26 @@
   "tier": "codex",
   "difficulty": "hard",
   "duration": 20,
-  "tags": ["api", "timeout", "db", "performance"],
+  "tags": [
+    "api",
+    "timeout",
+    "db",
+    "performance"
+  ],
   "type": "codex",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "public-api",
+      "role": "application"
+    },
+    {
+      "name": "postgresql",
+      "role": "database"
+    },
+    {
+      "name": "node-runtime",
+      "role": "runtime"
+    }
+  ]
 }

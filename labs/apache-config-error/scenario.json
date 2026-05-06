@@ -4,7 +4,13 @@
   "tier": "starter",
   "difficulty": "easy",
   "duration": 10,
-  "tags": ["apache", "linux", "config", "web-server", "systemd"],
+  "tags": [
+    "apache",
+    "linux",
+    "config",
+    "web-server",
+    "systemd"
+  ],
   "type": "ubuntu",
   "status": "runnable",
   "hints": [
@@ -13,5 +19,11 @@
     "There is a typo in the directive name on line 2. 'ServerNaame' is not a valid Apache directive",
     "Fix the typo: sed -i 's/ServerNaame/ServerName/' /etc/apache2/conf-enabled/winlab.conf",
     "Validate and start: apache2ctl configtest && apache2ctl start"
+  ],
+  "services": [
+    {
+      "name": "apache",
+      "role": "edge"
+    }
   ]
 }

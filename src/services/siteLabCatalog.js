@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getLabOperationalMetadata } from "./labMetadata.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -61,6 +62,7 @@ function hasRuntimeFiles(labDir) {
 }
 
 function toSiteLab(labName, scenario) {
+  const metadata = getLabOperationalMetadata(scenario.id || labName);
   const tier = String(scenario.tier || "pro").toLowerCase();
   const difficulty = String(scenario.difficulty || "medium").toLowerCase();
   const duration = Number(scenario.duration) || 15;
@@ -78,6 +80,7 @@ function toSiteLab(labName, scenario) {
     status: scenario.status || "runnable",
     runtimeType: scenario.type || "ubuntu",
     runtimeImage: SITE_RUNTIME_IMAGE,
+    services: metadata.services,
   };
 }
 

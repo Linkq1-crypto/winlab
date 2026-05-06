@@ -83,12 +83,12 @@ const DEADLOCK_GUARD_LABS = [
 
 function buildInitialLogs() {
   return [
-    { type: 'system', text: 'WINLAB INCIDENT ROUTER [v4.2.0]' },
-    { type: 'info', text: 'Booting secure environment...' },
-    { type: 'info', text: 'Initializing neural link to edge nodes...' },
-    { type: 'success', text: 'Link established. Latency: 14ms' },
-    { type: 'warning', text: 'SCAN COMPLETE: runnable incidents detected.' },
-    { type: 'info', text: 'Waiting for Operator authorization...' },
+    { type: 'system', text: 'WINLAB INCIDENT READINESS CONSOLE [v4.2.0]' },
+    { type: 'info', text: 'Loading runnable incident environments...' },
+    { type: 'info', text: 'Catalog sync complete. Starter incidents available.' },
+    { type: 'success', text: 'Terminal access ready.' },
+    { type: 'warning', text: 'Use the dashboard to launch an isolated lab session.' },
+    { type: 'info', text: 'Waiting for operator input...' },
     { type: 'prompt', text: 'Type "login" or "1" to continue:' },
   ];
 }
@@ -287,7 +287,7 @@ export default function HomeShell() {
     setInputValue('');
     setTimeout(() => {
       if (cmd === 'login' || cmd === 'start' || cmd === '1') {
-        setTerminalLogs((prev) => [...prev, { type: 'info', text: 'Access authorized. Redirecting...' }]);
+        setTerminalLogs((prev) => [...prev, { type: 'info', text: 'Access accepted. Opening operations dashboard...' }]);
         setTimeout(() => setView('dashboard'), 600);
       } else if (cmd === 'help') {
         setTerminalLogs((prev) => [...prev, { type: 'system', text: 'Commands: login, help, clear' }]);
@@ -1169,7 +1169,7 @@ export default function HomeShell() {
                 {selectedLab.title}
               </h2>
               <p className="mx-auto mb-8 max-w-md text-sm italic text-gray-500">
-                Initializing isolated Docker environment. Confirm launch?
+                Start an isolated incident environment for this scenario.
               </p>
               <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="rounded-2xl border border-white/5 bg-white/5 p-4 text-center">

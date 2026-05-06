@@ -4,7 +4,21 @@
   "tier": "ops",
   "difficulty": "hard",
   "duration": 15,
-  "tags": ["redis", "oom", "cache"],
+  "tags": [
+    "redis",
+    "oom",
+    "cache"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "redis",
+      "role": "cache"
+    },
+    {
+      "name": "app-service",
+      "role": "application"
+    }
+  ]
 }

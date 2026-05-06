@@ -4,7 +4,27 @@
   "tier": "pro",
   "difficulty": "hard",
   "duration": 25,
-  "tags": ["sssd", "ldap", "active-directory", "authentication", "enterprise"],
+  "tags": [
+    "sssd",
+    "ldap",
+    "active-directory",
+    "authentication",
+    "enterprise"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "sssd",
+      "role": "identity-agent"
+    },
+    {
+      "name": "ldap-directory",
+      "role": "identity-store"
+    },
+    {
+      "name": "pam-auth",
+      "role": "security-control"
+    }
+  ]
 }

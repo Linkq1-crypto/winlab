@@ -4,7 +4,23 @@
   "tier": "pro",
   "difficulty": "medium",
   "duration": 10,
-  "tags": ["permissions", "chmod", "selinux", "acl", "linux"],
+  "tags": [
+    "permissions",
+    "chmod",
+    "selinux",
+    "acl",
+    "linux"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "filesystem-policy",
+      "role": "security-control"
+    },
+    {
+      "name": "application-user",
+      "role": "access"
+    }
+  ]
 }

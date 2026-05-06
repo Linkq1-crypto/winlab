@@ -11,12 +11,8 @@ function createSocketUrl(containerName, levelId, hintEnabled, sessionId, labId) 
     level: levelId,
     hintEnabled: hintEnabled ? 'true' : 'false',
   });
-  if (sessionId) {
-    search.set('sessionId', sessionId);
-  }
-  if (labId) {
-    search.set('labId', labId);
-  }
+  if (sessionId) search.set('sessionId', sessionId);
+  if (labId) search.set('labId', labId);
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${protocol}//${window.location.host}/ws/lab?${search.toString()}`;
 }
@@ -56,6 +52,258 @@ function normalizeIncidentBrief(incidentBrief, fallbackLabId) {
     successCondition: brief.successCondition || '',
     suggestedCommands: Array.isArray(brief.suggestedCommands) ? brief.suggestedCommands.filter(Boolean) : [],
     hints: Array.isArray(brief.hints) ? brief.hints.filter(Boolean) : [],
+    affectedServices: Array.isArray(brief.affectedServices) ? brief.affectedServices.filter(Boolean) : [],
+  };
+}
+
+const SERVICE_PATTERNS = [
+  { label: 'nginx', match: /\bnginx\b/i },
+  { label: 'postgresql', match: /\bpostgres|postgresql|db\b/i },
+  { label: 'redis', match: /\bredis\b/i },
+  { label: 'queue-worker', match: /\bqueue|worker\b/i },
+  { label: 'api-gateway', match: /\bapi\b/i },
+  { label: 'docker', match: /\bdocker|container\b/i },
+  { label: 'auth-service', match: /\bauth|jwt|login\b/i },
+  { label: 'storage-volume', match: /\bdisk|filesystem|storage\b/i },
+];
+
+function collectIncidentText(brief) {
+  return [
+    brief?.labId,
+    brief?.labTitle,
+    brief?.incidentType,
+    brief?.symptoms,
+    brief?.objective,
+    brief?.successCondition,
+    ...(brief?.suggestedCommands || []),
+    ...(brief?.hints || []),
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+function deriveAffectedServices(brief, fallbackLabId) {
+  if (Array.isArray(brief?.affectedServices) && brief.affectedServices.length > 0) {
+    return Array.from(new Set(brief.affectedServices.map((value) => String(value).trim()).filter(Boolean))).slice(0, 5);
+  }
+  const haystack = `${collectIncidentText(brief)} ${fallbackLabId || ''}`;
+  const services = SERVICE_PATTERNS.filter((item) => item.match.test(haystack)).map((item) => item.label);
+  const unique = Array.from(new Set(services));
+  return unique.length > 0 ? unique.slice(0, 4) : ['app-service', 'systemd-unit', 'verification-job'];
+}
+
+function detectSeverity(brief, fallbackLabId) {
+  const haystack = `${collectIncidentText(brief)} ${fallbackLabId || ''}`.toLowerCase();
+  if (/\boutage|down|offline|critical|forgery|bypass|deadlock|crash\b/.test(haystack)) return 'SEV-1';
+  if (/\bdegraded|latency|timeout|contention|error|permission|lock\b/.test(haystack)) return 'SEV-2';
+  return 'SEV-3';
+}
+
+function formatElapsed(totalSeconds) {
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `T+${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function getSeverityStyles(severity) {
+  if (severity === 'SEV-1') {
+    return {
+      pill: 'border-rose-400/25 bg-rose-400/10 text-rose-200',
+      dot: 'bg-rose-400',
+      label: 'critical',
+    };
+  }
+  if (severity === 'SEV-2') {
+    return {
+      pill: 'border-amber-400/25 bg-amber-400/10 text-amber-100',
+      dot: 'bg-amber-300',
+      label: 'major',
+    };
+  }
+  return {
+    pill: 'border-sky-400/25 bg-sky-400/10 text-sky-100',
+    dot: 'bg-sky-300',
+    label: 'minor',
+  };
+}
+
+function buildRecoveryStages(progress) {
+  return [
+    { label: 'Detection', done: progress >= 15 },
+    { label: 'Triage', done: progress >= 35 },
+    { label: 'Mitigation', done: progress >= 65 },
+    { label: 'Validation', done: progress >= 90 },
+  ];
+}
+
+function normalizeEventSeverity(cmd) {
+  if (/failed|error|disconnected/i.test(cmd)) return 'critical';
+  if (/verify_requested|terminal_command|api_command|session_started/i.test(cmd)) return 'high';
+  return 'low';
+}
+
+function parseSignalPayload(output) {
+  try {
+    const parsed = JSON.parse(String(output || '{}'));
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function mapSessionEvent(record, startedAtMs) {
+  const tsMs = Date.parse(record?.ts || '') || Date.now();
+  const atSec = Math.max(0, Math.round((tsMs - startedAtMs) / 1000));
+  const output = String(record?.output || '').trim();
+  const cmd = String(record?.cmd || '');
+  const signal = cmd === '__signal__' ? parseSignalPayload(output) : null;
+
+  if (signal) {
+    if (signal.type === 'affected_services_update') {
+      return {
+        id: record.id,
+        atSec,
+        kind: 'signal',
+        severity: 'low',
+        actor: 'topology',
+        message: `Affected services updated: ${(signal.services || []).join(', ') || 'unknown'}.`,
+        signal,
+      };
+    }
+    if (signal.type === 'service_health') {
+      return {
+        id: record.id,
+        atSec,
+        kind: 'signal',
+        severity: signal.status === 'healthy' ? 'low' : 'high',
+        actor: 'service-health',
+        message: `${signal.status === 'healthy' ? 'Healthy' : 'Degraded'}: ${(signal.services || []).join(', ') || 'service'}.`,
+        signal,
+      };
+    }
+    if (signal.type === 'phase_update') {
+      return {
+        id: record.id,
+        atSec,
+        kind: signal.phase === 'validation' ? 'validation' : signal.phase === 'mitigation' ? 'impact' : 'detection',
+        severity: 'low',
+        actor: 'orchestrator',
+        message: `Recovery phase updated: ${signal.phase}.`,
+        signal,
+      };
+    }
+    if (signal.type === 'escalation') {
+      return {
+        id: record.id,
+        atSec,
+        kind: 'escalation',
+        severity: 'high',
+        actor: signal.level || 'on-call',
+        message: signal.summary || 'Escalation recorded.',
+        signal,
+      };
+    }
+    if (signal.type === 'verification_result') {
+      return {
+        id: record.id,
+        atSec,
+        kind: 'validation',
+        severity: signal.status === 'passed' ? 'low' : 'critical',
+        actor: 'verification',
+        message: signal.summary || `Verification ${signal.status || 'completed'}.`,
+        signal,
+      };
+    }
+  }
+
+  if (cmd === '__session_started__') {
+    return { id: record.id, atSec, kind: 'detection', severity: 'critical', actor: 'scheduler', message: 'Isolated incident session started.' };
+  }
+  if (cmd === '__terminal_connected__') {
+    return { id: record.id, atSec, kind: 'system', severity: 'low', actor: 'terminal', message: 'Interactive shell attached for operator.' };
+  }
+  if (cmd === '__context__') {
+    return { id: record.id, atSec, kind: 'impact', severity: 'high', actor: 'context', message: output || 'Incident context loaded into the terminal.' };
+  }
+  if (cmd === '__terminal_command__') {
+    return { id: record.id, atSec, kind: 'operator', severity: 'medium', actor: 'operator', message: `Command executed: ${output}` };
+  }
+  if (cmd === '__api_command__') {
+    return { id: record.id, atSec, kind: 'operator', severity: 'medium', actor: 'api', message: `API command executed: ${output}` };
+  }
+  if (cmd === '__verify_requested__') {
+    return { id: record.id, atSec, kind: 'validation', severity: 'high', actor: 'verification', message: `Verification started for ${record?.labId || 'session'}.` };
+  }
+  if (cmd === '__verify_passed__') {
+    return { id: record.id, atSec, kind: 'validation', severity: 'low', actor: 'verification', message: output || 'Verification passed.' };
+  }
+  if (cmd === '__verify_failed__') {
+    return { id: record.id, atSec, kind: 'validation', severity: 'critical', actor: 'verification', message: output || 'Verification failed.' };
+  }
+  if (cmd === '__session_stopped__') {
+    return { id: record.id, atSec, kind: 'system', severity: 'low', actor: 'operator', message: output || 'Session stopped by operator.' };
+  }
+  if (cmd === '__terminal_disconnected__') {
+    return { id: record.id, atSec, kind: 'system', severity: 'low', actor: 'terminal', message: 'Interactive shell disconnected.' };
+  }
+  if (cmd === '__api_output__') {
+    return { id: record.id, atSec, kind: 'signal', severity: normalizeEventSeverity(cmd), actor: 'service', message: output || 'Command output captured.' };
+  }
+  return { id: record.id, atSec, kind: 'signal', severity: normalizeEventSeverity(cmd), actor: 'system', message: output || cmd || 'Session event recorded.' };
+}
+
+function deriveProgressFromEvent(event, current) {
+  if (event?.signal?.progress != null) return Math.max(current, Number(event.signal.progress) || current);
+  if (event.kind === 'detection') return Math.max(current, 12);
+  if (event.kind === 'operator') return Math.max(current, 30);
+  if (event.kind === 'impact' || event.kind === 'escalation') return Math.max(current, 38);
+  if (event.kind === 'signal') return Math.max(current, 58);
+  if (event.kind === 'validation' && /passed|succeeded|recovery/i.test(event.message)) return 100;
+  if (event.kind === 'validation') return Math.max(current, 82);
+  return current;
+}
+
+function buildOperationalSnapshot(events, fallbackServices, fallbackSeverity, fallbackProgress) {
+  const services = new Map((fallbackServices || []).map((service, index) => [
+    service,
+    index === 0 ? 'degraded' : 'at risk',
+  ]));
+  let severity = fallbackSeverity;
+  let progress = fallbackProgress;
+
+  for (const event of events) {
+    if (event?.signal?.services?.length) {
+      for (const service of event.signal.services) {
+        if (!services.has(service)) services.set(service, 'at risk');
+      }
+    }
+    if (event?.signal?.type === 'service_health') {
+      for (const service of event.signal.services || []) {
+        if (event.signal.status === 'healthy') {
+          services.set(service, 'recovering');
+        } else if (event.signal.status === 'failed') {
+          services.set(service, 'failed');
+        } else {
+          services.set(service, 'degraded');
+        }
+      }
+    }
+    if (event?.signal?.progress != null) {
+      progress = Math.max(progress, Number(event.signal.progress) || progress);
+    }
+    if (event?.signal?.type === 'verification_result' && event.signal.status === 'passed') {
+      severity = 'SEV-3';
+    } else if (event?.signal?.type === 'escalation') {
+      severity = 'SEV-1';
+    } else if (event?.signal?.type === 'service_health' && event.signal.status === 'degraded' && severity !== 'SEV-1') {
+      severity = 'SEV-2';
+    }
+  }
+
+  return {
+    services: Array.from(services.entries()).slice(0, 5).map(([name, status]) => ({ name, status })),
+    severity,
+    progress,
   };
 }
 
@@ -79,8 +327,16 @@ export default function LabTerminal({
   const readyRef = useRef(false);
   const resizeObserverRef = useRef(null);
   const debouncedFitRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  const onCompleteRef = useRef(onComplete);
+  const sessionStartedAtRef = useRef(Date.now());
+
   const [hasOutput, setHasOutput] = useState(false);
   const [isOffline, setIsOffline] = useState(() => (typeof navigator !== 'undefined' ? !navigator.onLine : false));
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const [timelineEvents, setTimelineEvents] = useState([]);
+  const [recoveryProgress, setRecoveryProgress] = useState(12);
+
   const activeIncidentBrief = normalizeIncidentBrief(incidentBrief, labId);
   const hasIncidentData =
     Boolean(activeIncidentBrief.incidentType) ||
@@ -89,9 +345,15 @@ export default function LabTerminal({
     Boolean(activeIncidentBrief.successCondition) ||
     activeIncidentBrief.suggestedCommands.length > 0 ||
     activeIncidentBrief.hints.length > 0;
-
-  const onCloseRef = useRef(onClose);
-  const onCompleteRef = useRef(onComplete);
+  const fallbackServices = deriveAffectedServices(activeIncidentBrief, labId);
+  const fallbackSeverity = detectSeverity(activeIncidentBrief, labId);
+  const snapshot = buildOperationalSnapshot(timelineEvents, fallbackServices, fallbackSeverity, recoveryProgress);
+  const affectedServices = snapshot.services;
+  const severity = snapshot.severity;
+  const severityStyles = getSeverityStyles(severity);
+  const recoveryStages = buildRecoveryStages(snapshot.progress);
+  const escalationEvents = timelineEvents.filter((event) => event.kind === 'escalation' || event.kind === 'operator');
+  const primaryService = affectedServices[0]?.name || fallbackServices[0] || 'app-service';
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -104,15 +366,78 @@ export default function LabTerminal({
   useEffect(() => {
     const handleOffline = () => setIsOffline(true);
     const handleOnline = () => setIsOffline(false);
-
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
-
     return () => {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('online', handleOnline);
     };
   }, []);
+
+  useEffect(() => {
+    sessionStartedAtRef.current = Date.now();
+    setElapsedSec(0);
+    setTimelineEvents([]);
+    setRecoveryProgress(12);
+  }, [activeIncidentBrief, labId, sessionId]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setElapsedSec((value) => value + 1);
+    }, 1000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  function addTimelineEvent(event) {
+    setTimelineEvents((current) => {
+      const next = {
+        ...event,
+        id: event.id || `${event.kind}-${Date.now()}-${current.length}`,
+        atSec: event.atSec ?? elapsedSec,
+      };
+      if (current.some((item) => item.id === next.id)) return current;
+      return [...current, next];
+    });
+    setRecoveryProgress((value) => deriveProgressFromEvent({
+      ...event,
+      atSec: event.atSec ?? elapsedSec,
+    }, value));
+  }
+
+  function recordOperatorCommand(command) {
+    const normalized = String(command || '').trim().toLowerCase();
+    if (!normalized) return;
+  }
+
+  useEffect(() => {
+    if (!sessionId) return undefined;
+    let cancelled = false;
+
+    async function loadSessionEvents() {
+      try {
+        const res = await fetch(`/api/lab/events?sessionId=${encodeURIComponent(sessionId)}&limit=200`, {
+          credentials: 'include',
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.ok || !Array.isArray(data.events) || cancelled) return;
+
+        const firstTs = data.events.length > 0 ? Date.parse(data.events[0].ts || '') : Date.now();
+        sessionStartedAtRef.current = Number.isFinite(firstTs) ? firstTs : Date.now();
+
+        const mapped = data.events.map((event) => mapSessionEvent(event, sessionStartedAtRef.current));
+        if (cancelled) return;
+        setTimelineEvents(mapped);
+        setRecoveryProgress(mapped.reduce((progress, event) => deriveProgressFromEvent(event, progress), 12));
+      } catch {}
+    }
+
+    loadSessionEvents();
+    const intervalId = window.setInterval(loadSessionEvents, 4000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [sessionId]);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -134,7 +459,7 @@ export default function LabTerminal({
       theme: {
         background: '#07111a',
         foreground: '#d7e3f1',
-        cursor: '#f97316',
+        cursor: '#f59e0b',
         cursorAccent: '#07111a',
         selectionBackground: '#38bdf833',
         black: '#07111a',
@@ -142,7 +467,7 @@ export default function LabTerminal({
         green: '#34d399',
         yellow: '#fbbf24',
         blue: '#38bdf8',
-        magenta: '#c084fc',
+        magenta: '#a78bfa',
         cyan: '#22d3ee',
         white: '#e5eef8',
         brightBlack: '#4b5563',
@@ -150,7 +475,7 @@ export default function LabTerminal({
         brightGreen: '#6ee7b7',
         brightYellow: '#fde68a',
         brightBlue: '#7dd3fc',
-        brightMagenta: '#d8b4fe',
+        brightMagenta: '#c4b5fd',
         brightCyan: '#67e8f9',
         brightWhite: '#f8fafc',
       },
@@ -237,11 +562,27 @@ export default function LabTerminal({
       try {
         const message = JSON.parse(event.data);
         if (message.type === 'ready') {
-          writeChunk('\r\n\x1b[32m[WINLAB]\x1b[0m Lab ready. Type commands below.\r\n\r\n');
+          writeChunk('\r\n\x1b[32m[WINLAB]\x1b[0m Environment ready. Begin investigation.\r\n\r\n');
+          return;
+        }
+        if (message.type === 'lab_event' && message.event) {
+          const record = message.event;
+          const recordTs = Date.parse(record.ts || '') || Date.now();
+          if (!sessionStartedAtRef.current) {
+            sessionStartedAtRef.current = recordTs;
+          }
+          addTimelineEvent(mapSessionEvent(record, sessionStartedAtRef.current));
           return;
         }
         if (message.type === 'output') {
           writeChunk(message.data);
+          const outputText = String(message.data || '').toLowerCase();
+          if (outputText.includes('active (running)') || outputText.includes('healthy') || outputText.includes('ok')) {
+            setRecoveryProgress((value) => Math.max(value, 72));
+          }
+          if (outputText.includes('all_checks_pass') || outputText.includes('verification passed') || outputText.includes('resolved')) {
+            setRecoveryProgress((value) => 100);
+          }
           return;
         }
         if (message.type === 'exit') {
@@ -274,12 +615,11 @@ export default function LabTerminal({
         const segments = data.split('\r');
         for (let index = 0; index < segments.length; index += 1) {
           const segment = segments[index];
-          if (segment) {
-            commandBufferRef.current += segment;
-          }
+          if (segment) commandBufferRef.current += segment;
           if (index < segments.length - 1) {
             const command = commandBufferRef.current.trim();
             if (command) {
+              recordOperatorCommand(command);
               trackEvent('command_entered', {
                 labId,
                 levelId,
@@ -325,20 +665,22 @@ export default function LabTerminal({
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col bg-[linear-gradient(180deg,#081019_0%,#05070c_100%)] text-slate-200">
-      <div className="shrink-0 border-b border-cyan-400/10 bg-black/20 px-4 py-3 backdrop-blur-sm sm:px-5">
+      <div className="shrink-0 border-b border-white/8 bg-[#09111a]/95 px-4 py-3 backdrop-blur-sm sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
+              <div className={`h-2.5 w-2.5 rounded-full ${severityStyles.dot}`} />
               <div className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />
               <div className="h-2.5 w-2.5 rounded-full bg-emerald-400/80 animate-pulse" />
             </div>
             <div className="min-w-0">
-              <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-cyan-200/80">
-                Live Incident Terminal
+              <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-slate-400">
+                Incident Terminal
               </div>
-              <div className="mt-1 truncate text-xs font-mono text-slate-400">
-                {containerName}
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-slate-400">
+                <span className="truncate">{containerName}</span>
+                <span className="uppercase text-slate-500">{severity}</span>
+                <span className="uppercase text-slate-500">{primaryService}</span>
               </div>
             </div>
           </div>
@@ -356,10 +698,10 @@ export default function LabTerminal({
       </div>
 
       <div className="flex-1 min-h-0 min-w-0 overflow-hidden p-3 sm:p-4 md:p-5">
-        <div className="grid h-full min-h-0 min-w-0 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-          <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[24px] border border-cyan-400/12 bg-[#07111a] shadow-[0_0_60px_rgba(14,165,233,0.08)]">
+        <div className="grid h-full min-h-0 min-w-0 gap-4 xl:grid-cols-[minmax(0,1.32fr)_minmax(320px,0.68fr)]">
+          <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[20px] border border-white/8 bg-[#07111a] shadow-[0_18px_48px_rgba(0,0,0,0.28)]">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/6 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.24em] text-slate-500">
-              <span>shell attached</span>
+              <span>interactive shell</span>
               <span>network isolated</span>
             </div>
             {isOffline ? (
@@ -379,28 +721,152 @@ export default function LabTerminal({
               />
               {!hasOutput && (
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 text-center text-xs font-mono uppercase tracking-[0.24em] text-slate-500">
-                  awaiting terminal stream
+                  waiting for terminal stream
                 </div>
               )}
             </div>
           </div>
 
-          <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(8,15,26,0.98),rgba(6,8,14,0.98))]">
+          <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[20px] border border-white/8 bg-[#081019]">
             <div className="border-b border-white/8 px-4 py-3">
-              <p className="text-[10px] font-mono uppercase tracking-[0.28em] text-cyan-200/75">Incident Brief</p>
-              <h2 className="mt-2 text-lg font-black text-white">
-                {activeIncidentBrief.incidentType || 'Brief unavailable'}
-              </h2>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-mono uppercase tracking-[0.28em] text-slate-400">Live Incident Intelligence</p>
+                  <h2 className="mt-2 text-lg font-black text-white">
+                    {activeIncidentBrief.incidentType || 'Brief unavailable'}
+                  </h2>
+                </div>
+                <div className={`rounded-full border px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.18em] ${severityStyles.pill}`}>
+                  {severity}
+                </div>
+              </div>
               <p className="mt-2 text-xs leading-relaxed text-slate-400">
                 {activeIncidentBrief.labTitle || 'No lab metadata was attached to this session.'}
               </p>
-              <p className="mt-3 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">
-                Session {sessionId || 'pending'} {activeIncidentBrief.labId ? `• ${activeIncidentBrief.labId}` : ''}
-              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">
+                <span>Session {sessionId || 'pending'}</span>
+                {activeIncidentBrief.labId ? <span>{activeIncidentBrief.labId}</span> : null}
+                <span>{primaryService}</span>
+              </div>
             </div>
-            <div className="min-h-0 space-y-3 overflow-y-auto p-4 text-sm">
+
+            <div className="grid grid-cols-2 gap-px border-b border-white/8 bg-white/8">
+              <div className="bg-[#09111a] px-4 py-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">Incident timer</p>
+                <p className="mt-2 font-mono text-xl font-semibold text-white">{formatElapsed(elapsedSec)}</p>
+              </div>
+              <div className="bg-[#09111a] px-4 py-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">Recovery progress</p>
+                <p className="mt-2 font-mono text-xl font-semibold text-white">{snapshot.progress}%</p>
+              </div>
+            </div>
+
+            <div className="min-h-0 space-y-3 overflow-y-auto p-3 text-sm">
+              <section className="border border-white/8 bg-black/20">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="px-3 pt-3 text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Recovery stages</p>
+                  <p className="px-3 pt-3 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">{severityStyles.label} incident</p>
+                </div>
+                <div className="mx-3 mb-3 h-1.5 overflow-hidden bg-white/8">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-rose-400 via-amber-300 to-emerald-300 transition-all duration-500"
+                    style={{ width: `${Math.max(6, snapshot.progress)}%` }}
+                  />
+                </div>
+                <div className="grid gap-px bg-white/6">
+                  {recoveryStages.map((stage) => (
+                    <div key={stage.label} className="flex items-center justify-between bg-[#09111a] px-3 py-2">
+                      <span className="text-xs text-slate-300">{stage.label}</span>
+                      <span className={`text-[10px] font-mono uppercase tracking-[0.18em] ${stage.done ? 'text-emerald-300' : 'text-slate-500'}`}>
+                        {stage.done ? 'done' : 'pending'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="border border-white/8 bg-black/20">
+                <p className="px-3 py-3 text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Affected services</p>
+                <div className="grid gap-px bg-white/6">
+                  {affectedServices.map((service, index) => {
+                    return (
+                      <div key={service.name} className="flex items-center justify-between bg-[#09111a] px-3 py-2">
+                        <span className="font-mono text-[11px] text-slate-200">{service.name}</span>
+                        <span className={`rounded-full px-2 py-1 text-[10px] font-mono uppercase tracking-[0.18em] ${
+                          service.status === 'recovering'
+                            ? 'border border-emerald-400/20 bg-emerald-400/10 text-emerald-200'
+                            : service.status === 'failed'
+                              ? 'border border-rose-500/30 bg-rose-500/15 text-rose-100'
+                            : service.status === 'degraded'
+                              ? 'border border-rose-400/20 bg-rose-400/10 text-rose-200'
+                              : 'border border-amber-400/20 bg-amber-400/10 text-amber-100'
+                        }`}>
+                          {service.status}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section className="border border-white/8 bg-black/20">
+                <div className="flex items-center justify-between gap-3 border-b border-white/8 px-3 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Live event timeline</p>
+                  <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">latest 8 events</p>
+                </div>
+                <div className="space-y-px bg-white/6">
+                  {timelineEvents.length === 0 ? (
+                    <div className="bg-[#09111a] px-3 py-3 text-xs text-slate-400">
+                      Waiting for incident events...
+                    </div>
+                  ) : (
+                    timelineEvents.slice(-8).map((event) => (
+                      <div key={event.id} className="bg-[#09111a] px-3 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-500">{formatElapsed(event.atSec || 0)}</span>
+                          <span className={`text-[10px] font-mono uppercase tracking-[0.18em] ${
+                            event.severity === 'critical'
+                              ? 'text-rose-200'
+                              : event.severity === 'high'
+                                ? 'text-amber-100'
+                                : 'text-sky-100'
+                          }`}>
+                            {event.actor}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs leading-relaxed text-slate-200">{event.message}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </section>
+
+              <section className="border border-white/8 bg-black/20">
+                <div className="flex items-center justify-between gap-3 border-b border-white/8 px-3 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Escalation log</p>
+                  <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">operator and on-call</p>
+                </div>
+                <div className="space-y-px bg-white/6">
+                  {escalationEvents.length === 0 ? (
+                    <div className="bg-[#09111a] px-3 py-3 text-xs text-slate-400">
+                      No escalation entries yet.
+                    </div>
+                  ) : (
+                    escalationEvents.slice(-4).map((event) => (
+                      <div key={`esc-${event.id}`} className="bg-[#09111a] px-3 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">{formatElapsed(event.atSec || 0)}</span>
+                          <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">{event.actor}</span>
+                        </div>
+                        <p className="mt-2 text-xs leading-relaxed text-slate-200">{event.message}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </section>
+
               {!hasIncidentData ? (
-                <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                <section className="border border-white/8 bg-black/20 p-4">
                   <p className="text-sm leading-relaxed text-slate-300">
                     Lab briefing is unavailable for this session. Start the lab again or inspect the terminal directly.
                   </p>
@@ -408,32 +874,32 @@ export default function LabTerminal({
               ) : null}
 
               {activeIncidentBrief.symptoms ? (
-                <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Symptoms</p>
+                <section className="border border-white/8 bg-black/20 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Symptoms</p>
                   <p className="mt-3 text-sm leading-relaxed text-white">{activeIncidentBrief.symptoms}</p>
                 </section>
               ) : null}
 
               {activeIncidentBrief.objective ? (
-                <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Objective</p>
+                <section className="border border-white/8 bg-black/20 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Objective</p>
                   <p className="mt-3 text-sm leading-relaxed text-white">{activeIncidentBrief.objective}</p>
                 </section>
               ) : null}
 
               {activeIncidentBrief.successCondition ? (
-                <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Success Condition</p>
+                <section className="border border-white/8 bg-black/20 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Success condition</p>
                   <p className="mt-3 text-sm leading-relaxed text-white">{activeIncidentBrief.successCondition}</p>
                 </section>
               ) : null}
 
               {activeIncidentBrief.suggestedCommands.length > 0 ? (
-                <section className="rounded-2xl border border-emerald-400/12 bg-emerald-400/6 p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-200/80">Suggested Commands</p>
-                  <div className="mt-4 space-y-2 font-mono text-[11px] text-emerald-50/80">
+                <section className="border border-white/8 bg-black/20 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Suggested commands</p>
+                  <div className="mt-4 space-y-2 font-mono text-[11px] text-slate-200">
                     {activeIncidentBrief.suggestedCommands.map((command) => (
-                      <div key={command} className="rounded-xl border border-emerald-200/10 bg-black/20 px-3 py-2">
+                      <div key={command} className="border border-white/6 bg-white/[0.03] px-3 py-2">
                         {command}
                       </div>
                     ))}
@@ -442,11 +908,11 @@ export default function LabTerminal({
               ) : null}
 
               {activeIncidentBrief.hints.length > 0 ? (
-                <section className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200/80">Hints</p>
+                <section className="border border-white/8 bg-black/20 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Operational notes</p>
                   <div className="mt-3 space-y-2 text-xs text-slate-300">
                     {activeIncidentBrief.hints.map((hint, index) => (
-                      <div key={`${index}-${hint}`} className="rounded-xl border border-white/6 bg-white/[0.03] px-3 py-2">
+                      <div key={`${index}-${hint}`} className="border border-white/6 bg-white/[0.03] px-3 py-2">
                         {hint}
                       </div>
                     ))}

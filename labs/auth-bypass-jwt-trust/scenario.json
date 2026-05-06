@@ -4,7 +4,22 @@
   "tier": "codex",
   "difficulty": "hard",
   "duration": 20,
-  "tags": ["auth", "jwt", "security", "privilege-escalation"],
+  "tags": [
+    "auth",
+    "jwt",
+    "security",
+    "privilege-escalation"
+  ],
+  "services": [
+    {
+      "name": "auth-service",
+      "role": "application"
+    },
+    {
+      "name": "jwt-verifier",
+      "role": "security-control"
+    }
+  ],
   "type": "codex",
   "status": "runnable"
 }

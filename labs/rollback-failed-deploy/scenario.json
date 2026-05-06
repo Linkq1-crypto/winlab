@@ -4,7 +4,21 @@
   "tier": "ops",
   "difficulty": "medium",
   "duration": 15,
-  "tags": ["rollback", "deploy", "ops"],
+  "tags": [
+    "rollback",
+    "deploy",
+    "ops"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "release-controller",
+      "role": "delivery"
+    },
+    {
+      "name": "app-service",
+      "role": "application"
+    }
+  ]
 }

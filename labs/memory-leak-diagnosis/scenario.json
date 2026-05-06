@@ -4,7 +4,21 @@
   "tier": "ops",
   "difficulty": "medium",
   "duration": 12,
-  "tags": ["memory", "performance", "diagnosis"],
+  "tags": [
+    "memory",
+    "performance",
+    "diagnosis"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "jvm-app",
+      "role": "application"
+    },
+    {
+      "name": "memory-runtime",
+      "role": "runtime"
+    }
+  ]
 }

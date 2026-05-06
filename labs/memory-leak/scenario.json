@@ -4,7 +4,23 @@
   "tier": "pro",
   "difficulty": "hard",
   "duration": 15,
-  "tags": ["memory", "performance", "debug", "linux", "nodejs"],
+  "tags": [
+    "memory",
+    "performance",
+    "debug",
+    "linux",
+    "nodejs"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "app-service",
+      "role": "application"
+    },
+    {
+      "name": "node-runtime",
+      "role": "runtime"
+    }
+  ]
 }

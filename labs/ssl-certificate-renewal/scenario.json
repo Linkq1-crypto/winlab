@@ -4,7 +4,21 @@
   "tier": "ops",
   "difficulty": "medium",
   "duration": 12,
-  "tags": ["ssl", "tls", "certbot"],
+  "tags": [
+    "ssl",
+    "tls",
+    "certbot"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "edge-tls",
+      "role": "security"
+    },
+    {
+      "name": "certificate-manager",
+      "role": "security-control"
+    }
+  ]
 }

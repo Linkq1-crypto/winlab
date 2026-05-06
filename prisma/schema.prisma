@@ -65,6 +65,189 @@ model User {
   profile      UserProfile?
   agentJobs    AgentJob[]
   agentDecisions AgentDecision[]
+  organizationMemberships OrganizationMembership[]
+  enterpriseIncidentSessions EnterpriseIncidentSession[]
+  enterpriseCampaignEnrollments EnterpriseCampaignEnrollment[]
+  assignedEnterpriseIncidents EnterpriseIncidentAssignment[] @relation("EnterpriseIncidentAssignedBy")
+  enterpriseTimelineEvents EnterpriseIncidentTimelineEvent[] @relation("EnterpriseTimelineActor")
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  status      String   @default("active")
+  plan        String   @default("enterprise_pilot")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  workspaces  Workspace[]
+  memberships OrganizationMembership[]
+  campaigns   EnterpriseCampaign[]
+  assignments EnterpriseIncidentAssignment[]
+  sessions    EnterpriseIncidentSession[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Workspace {
+  id                    String   @id @default(cuid())
+  organizationId        String
+  name                  String
+  slug                  String
+  status                String   @default("active")
+  environmentPolicyJson String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberships           OrganizationMembership[]
+  campaigns             EnterpriseCampaign[]
+  assignments           EnterpriseIncidentAssignment[]
+  sessions              EnterpriseIncidentSession[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, status])
+}
+
+model OrganizationMembership {
+  id             String   @id @default(cuid())
+  organizationId String
+  workspaceId    String?
+  userId         String
+  role           String
+  invitedById    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspace      Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, workspaceId, userId])
+  @@index([userId, role])
+  @@index([organizationId, role])
+  @@index([workspaceId, role])
+}
+
+model EnterpriseCampaign {
+  id          String   @id @default(cuid())
+  organizationId String
+  workspaceId String
+  name        String
+  description String?
+  startsAt    DateTime
+  endsAt      DateTime
+  status      String   @default("draft")
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  incidents   EnterpriseCampaignIncident[]
+  enrollments EnterpriseCampaignEnrollment[]
+  assignments EnterpriseIncidentAssignment[]
+
+  @@index([organizationId, status])
+  @@index([workspaceId, startsAt])
+}
+
+model EnterpriseCampaignIncident {
+  id            String   @id @default(cuid())
+  campaignId    String
+  labId         String
+  incidentSeed  String?
+  variantId     String?
+  sequenceOrder Int      @default(0)
+  required      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  campaign      EnterpriseCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, sequenceOrder])
+}
+
+model EnterpriseCampaignEnrollment {
+  id          String   @id @default(cuid())
+  campaignId  String
+  userId      String
+  teamName    String?
+  status      String   @default("assigned")
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  campaign    EnterpriseCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, userId])
+  @@index([userId, status])
+}
+
+model EnterpriseIncidentAssignment {
+  id             String   @id @default(cuid())
+  organizationId String
+  workspaceId    String
+  campaignId     String?
+  labId          String
+  incidentSeed   String?
+  variantId      String?
+  title          String?
+  assignedTeam   String?
+  assignedById   String
+  dueAt          DateTime?
+  status         String   @default("assigned")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  campaign       EnterpriseCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  assignedBy     User @relation("EnterpriseIncidentAssignedBy", fields: [assignedById], references: [id], onDelete: Restrict)
+  sessions       EnterpriseIncidentSession[]
+
+  @@index([workspaceId, status])
+  @@index([campaignId, status])
+  @@index([assignedById, createdAt])
+}
+
+model EnterpriseIncidentSession {
+  id             String   @id @default(cuid())
+  organizationId String
+  workspaceId    String
+  assignmentId   String?
+  userId         String
+  labId          String
+  campaignId     String?
+  startedAt      DateTime @default(now())
+  endedAt        DateTime?
+  status         String   @default("active")
+  success        Boolean  @default(false)
+  durationMs     Int?
+  failureReason  String?
+  readinessScore Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignment     EnterpriseIncidentAssignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timelineEvents EnterpriseIncidentTimelineEvent[]
+
+  @@index([workspaceId, status])
+  @@index([workspaceId, startedAt])
+  @@index([userId, startedAt])
+  @@index([assignmentId])
+}
+
+model EnterpriseIncidentTimelineEvent {
+  id         String   @id @default(cuid())
+  sessionId  String
+  type       String
+  actorType  String?
+  actorId    String?
+  payloadJson String?
+  createdAt  DateTime @default(now())
+  session    EnterpriseIncidentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  actorUser  User? @relation("EnterpriseTimelineActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId, createdAt])
+  @@index([type, createdAt])
 }
 
 model UserProgress {

@@ -4,7 +4,23 @@
   "tier": "pro",
   "difficulty": "hard",
   "duration": 20,
-  "tags": ["database", "mysql", "postgresql", "recovery", "linux"],
+  "tags": [
+    "database",
+    "mysql",
+    "postgresql",
+    "recovery",
+    "linux"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "postgresql",
+      "role": "database"
+    },
+    {
+      "name": "mysql",
+      "role": "database"
+    }
+  ]
 }

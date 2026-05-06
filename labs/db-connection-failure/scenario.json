@@ -4,7 +4,21 @@
   "tier": "ops",
   "difficulty": "medium",
   "duration": 12,
-  "tags": ["database", "connectivity", "ops"],
+  "tags": [
+    "database",
+    "connectivity",
+    "ops"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "app-api",
+      "role": "application"
+    },
+    {
+      "name": "postgresql",
+      "role": "database"
+    }
+  ]
 }

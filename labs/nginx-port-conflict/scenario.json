@@ -5,6 +5,10 @@
   "difficulty": "easy",
   "duration": 6,
   "tags": ["nginx", "port", "systemd", "linux"],
+  "services": [
+    { "name": "nginx", "role": "edge" },
+    { "name": "port-binding", "role": "runtime" }
+  ],
   "type": "ubuntu",
   "status": "runnable"
 }

@@ -4,7 +4,27 @@
   "tier": "starter",
   "difficulty": "easy",
   "duration": 20,
-  "tags": ["linux", "apache", "disk", "security", "guided"],
+  "tags": [
+    "linux",
+    "apache",
+    "disk",
+    "security",
+    "guided"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "apache",
+      "role": "edge"
+    },
+    {
+      "name": "root-filesystem",
+      "role": "storage"
+    },
+    {
+      "name": "audit-policy",
+      "role": "security-control"
+    }
+  ]
 }

@@ -4,7 +4,13 @@
   "tier": "starter",
   "difficulty": "easy",
   "duration": 12,
-  "tags": ["ssh", "linux", "config", "networking", "security"],
+  "tags": [
+    "ssh",
+    "linux",
+    "config",
+    "networking",
+    "security"
+  ],
   "type": "ubuntu",
   "status": "runnable",
   "hints": [
@@ -13,5 +19,11 @@
     "Fix the port: sed -i 's/^Port 2222/Port 22/' /etc/ssh/sshd_config",
     "Fix password auth: sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config",
     "Start sshd: /usr/sbin/sshd — then confirm: ss -tlnp | grep :22"
+  ],
+  "services": [
+    {
+      "name": "sshd",
+      "role": "access"
+    }
   ]
 }

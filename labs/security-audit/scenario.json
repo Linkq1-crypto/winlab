@@ -4,7 +4,21 @@
   "tier": "business",
   "difficulty": "medium",
   "duration": 20,
-  "tags": ["security", "audit", "simulator"],
+  "tags": [
+    "security",
+    "audit",
+    "simulator"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "audit-runner",
+      "role": "security-control"
+    },
+    {
+      "name": "app-service",
+      "role": "application"
+    }
+  ]
 }

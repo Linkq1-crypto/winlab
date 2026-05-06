@@ -55,6 +55,54 @@ const TAG_OPTIONS = [
   { label: "Networking", color: "text-cyan-400 border-cyan-500/30 bg-cyan-500/10" },
 ];
 
+function slugifyArticleTitle(value) {
+  return String(value || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function parseStoredTags(rawTags) {
+  if (Array.isArray(rawTags)) return rawTags;
+  if (typeof rawTags !== "string" || !rawTags.trim()) return [];
+  try {
+    const parsed = JSON.parse(rawTags);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return rawTags.split(",").map((tag) => tag.trim()).filter(Boolean);
+  }
+}
+
+function findTagStyle(label) {
+  return TAG_OPTIONS.find((entry) => entry.label.toLowerCase() === String(label || "").toLowerCase()) || TAG_OPTIONS[3];
+}
+
+function createEmptyBlogForm() {
+  return {
+    id: "",
+    slug: "",
+    title: "",
+    excerpt: "",
+    content: "",
+    tagsInput: "Linux",
+    published: true,
+  };
+}
+
+function blogPostToForm(post) {
+  const tags = parseStoredTags(post.tags);
+  return {
+    id: post.id,
+    slug: post.slug || "",
+    title: post.title || "",
+    excerpt: post.excerpt || "",
+    content: post.content || "",
+    tagsInput: tags.join(", "),
+    published: post.status === "published",
+  };
+}
+
 // ── Dashboard Tab ─────────────────────────────────────────────────────────────
 function AdminDashboard() {
   const [users, setUsers] = useState(null);
@@ -352,6 +400,318 @@ function BlogEditor() {
 
 // ── Root ──────────────────────────────────────────────────────────────────────
 // ── Leaderboard Tab ───────────────────────────────────────────────────────────
+function BlogEditorV2() {
+  const [articles, setArticles] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(createEmptyBlogForm);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadArticles = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/blog/admin", { credentials: "include" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !Array.isArray(data)) {
+        throw new Error("Unable to load blog posts.");
+      }
+      setArticles(data);
+    } catch (err) {
+      setError(err.message || "Unable to load blog posts.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadArticles();
+  }, [loadArticles]);
+
+  function openNew() {
+    setEditing("new");
+    setForm(createEmptyBlogForm());
+    setError("");
+  }
+
+  function openEdit(post) {
+    setEditing(post.id);
+    setForm(blogPostToForm(post));
+    setError("");
+  }
+
+  async function save() {
+    if (!form.title.trim() || !form.content.trim()) return;
+
+    const slug = slugifyArticleTitle(form.slug || form.title);
+    const tags = form.tagsInput
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch("/api/blog", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: form.title.trim(),
+          slug,
+          excerpt: form.excerpt.trim(),
+          content: form.content.trim(),
+          tags,
+          status: form.published ? "published" : "draft",
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) {
+        throw new Error(data?.error || "Unable to save article.");
+      }
+      await loadArticles();
+      setEditing(null);
+      setForm(createEmptyBlogForm());
+    } catch (err) {
+      setError(err.message || "Unable to save article.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function remove(post) {
+    if (!post || !confirm("Delete this article?")) return;
+
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/blog/${post.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || "Unable to delete article.");
+      }
+      await loadArticles();
+      if (editing === post.id) {
+        setEditing(null);
+        setForm(createEmptyBlogForm());
+      }
+    } catch (err) {
+      setError(err.message || "Unable to delete article.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function togglePublish(post) {
+    const nextStatus = post.status === "published" ? "draft" : "published";
+    const tags = parseStoredTags(post.tags);
+
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch("/api/blog", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: post.title,
+          slug: post.slug,
+          excerpt: post.excerpt || "",
+          content: post.content,
+          tags,
+          status: nextStatus,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) {
+        throw new Error(data?.error || "Unable to update article.");
+      }
+      await loadArticles();
+      if (editing === post.id) {
+        setForm((current) => ({ ...current, published: nextStatus === "published" }));
+      }
+    } catch (err) {
+      setError(err.message || "Unable to update article.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold text-white">Blog Editor</h2>
+        <button
+          onClick={openNew}
+          disabled={editing !== null || saving}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors"
+        >
+          + New Article
+        </button>
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs text-red-300">
+          {error}
+        </div>
+      )}
+
+      {editing !== null && (
+        <div className="mb-8 p-5 rounded-xl border border-blue-600/20 bg-blue-600/5 space-y-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-white">{editing === "new" ? "Create Article" : "Edit Article"}</h3>
+            <button onClick={() => setEditing(null)} className="text-slate-500 hover:text-white text-xs">Cancel</button>
+          </div>
+
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">Primary Tag</label>
+            <div className="flex gap-2 flex-wrap">
+              {TAG_OPTIONS.map((tagOption) => (
+                <button
+                  key={tagOption.label}
+                  type="button"
+                  onClick={() => {
+                    const currentTags = form.tagsInput
+                      .split(",")
+                      .map((tag) => tag.trim())
+                      .filter(Boolean)
+                      .filter((tag) => tag.toLowerCase() !== tagOption.label.toLowerCase());
+                    setForm({ ...form, tagsInput: [tagOption.label, ...currentTags].join(", ") });
+                  }}
+                  className={`px-4 py-2 rounded-full text-xs font-medium border transition-all min-h-[44px]
+                    ${parseStoredTags(form.tagsInput).some((tag) => tag.toLowerCase() === tagOption.label.toLowerCase()) ? tagOption.color : "border-slate-700 text-slate-600 hover:text-slate-400"}`}
+                >
+                  {tagOption.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <input
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            placeholder="Article title"
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-600"
+          />
+          <input
+            value={form.slug}
+            onChange={(e) => setForm({ ...form, slug: e.target.value })}
+            placeholder="article-slug"
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-600"
+          />
+          <input
+            value={form.excerpt}
+            onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+            placeholder="Short excerpt"
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-600"
+          />
+          <textarea
+            value={form.content}
+            onChange={(e) => setForm({ ...form, content: e.target.value })}
+            placeholder="Article body"
+            rows={8}
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-600 resize-none"
+          />
+          <div className="flex items-center gap-4">
+            <input
+              value={form.tagsInput}
+              onChange={(e) => setForm({ ...form, tagsInput: e.target.value })}
+              placeholder="linux, sre, incident-response"
+              className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-600"
+            />
+            <label className="flex items-center gap-2 text-xs text-slate-400">
+              <input
+                type="checkbox"
+                checked={form.published}
+                onChange={(e) => setForm({ ...form, published: e.target.checked })}
+                className="accent-blue-600"
+              />
+              Published
+            </label>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={save}
+              disabled={saving || !form.title.trim() || !form.content.trim()}
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors"
+            >
+              {saving ? "Saving..." : editing === "new" ? "Create" : "Save Changes"}
+            </button>
+            {editing !== "new" && (
+              <button
+                onClick={() => remove(articles.find((article) => article.id === editing))}
+                disabled={saving}
+                className="px-4 py-2 bg-red-600/20 hover:bg-red-600/40 border border-red-600/30 text-red-400 text-xs font-medium rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {loading && <div className="text-sm text-slate-500">Loading posts...</div>}
+
+        {!loading && articles.map((article) => {
+          const tags = parseStoredTags(article.tags);
+          const primaryTag = findTagStyle(tags[0] || "Linux");
+          return (
+            <div
+              key={article.id}
+              className={`flex items-start gap-4 p-4 rounded-xl border transition-all
+                ${article.status === "published" ? "border-slate-800 bg-slate-900/40" : "border-slate-800/40 bg-slate-900/20 opacity-60"}`}
+            >
+              <span className="text-xs font-mono text-slate-600 shrink-0 w-28 pt-1">{article.slug}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${primaryTag.color}`}>
+                    {tags[0] || "General"}
+                  </span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${article.status === "published" ? "border-green-500/30 text-green-400 bg-green-500/10" : "border-slate-600 text-slate-500 bg-slate-800"}`}>
+                    {article.status === "published" ? "Published" : "Draft"}
+                  </span>
+                </div>
+                <p className="text-sm font-semibold text-white">{article.title}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{article.excerpt || "No excerpt"}</p>
+                {tags.length > 1 && (
+                  <p className="text-[10px] text-slate-600 mt-2">{tags.join(", ")}</p>
+                )}
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  onClick={() => togglePublish(article)}
+                  disabled={saving}
+                  className="px-3 py-2 min-h-[44px] text-xs border border-slate-700 text-slate-400 hover:text-white rounded-lg transition-colors"
+                >
+                  {article.status === "published" ? "Unpublish" : "Publish"}
+                </button>
+                <button
+                  onClick={() => openEdit(article)}
+                  className="px-3 py-2 min-h-[44px] text-xs border border-blue-600/30 text-blue-400 hover:text-blue-300 rounded-lg transition-colors"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {!loading && articles.length === 0 && (
+        <div className="text-center py-16 text-slate-600 text-sm">
+          No articles yet. Create your first one!
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminLeaderboard() {
   return (
     <div>
@@ -720,7 +1080,7 @@ export default function AdminPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-10">
         {tab === "dashboard" && <AdminDashboard />}
-        {tab === "blog" && <BlogEditor />}
+        {tab === "blog" && <BlogEditorV2 />}
         {tab === "leaderboard" && <AdminLeaderboard />}
         {tab === "replay" && <AdminReplayTab />}
         {tab === "b2b" && <AdminB2bLeads />}

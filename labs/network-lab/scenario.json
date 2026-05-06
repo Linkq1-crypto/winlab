@@ -4,7 +4,20 @@
   "tier": "business",
   "difficulty": "medium",
   "duration": 20,
-  "tags": ["network", "simulator"],
+  "tags": [
+    "network",
+    "simulator"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "edge-router",
+      "role": "network"
+    },
+    {
+      "name": "dns-resolver",
+      "role": "network"
+    }
+  ]
 }

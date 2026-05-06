@@ -4,7 +4,21 @@
   "tier": "ops",
   "difficulty": "medium",
   "duration": 15,
-  "tags": ["assets", "cdn", "frontend"],
+  "tags": [
+    "assets",
+    "cdn",
+    "frontend"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "cdn-edge",
+      "role": "edge"
+    },
+    {
+      "name": "asset-origin",
+      "role": "application"
+    }
+  ]
 }

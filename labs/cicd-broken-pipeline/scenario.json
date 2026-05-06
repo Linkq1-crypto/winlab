@@ -4,7 +4,26 @@
   "tier": "ops",
   "difficulty": "medium",
   "duration": 15,
-  "tags": ["ci", "cd", "pipeline", "secrets"],
+  "tags": [
+    "ci",
+    "cd",
+    "pipeline",
+    "secrets"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "ci-runner",
+      "role": "delivery"
+    },
+    {
+      "name": "artifact-registry",
+      "role": "delivery"
+    },
+    {
+      "name": "deploy-secrets",
+      "role": "security-control"
+    }
+  ]
 }

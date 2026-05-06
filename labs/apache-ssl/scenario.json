@@ -4,7 +4,21 @@
   "tier": "business",
   "difficulty": "medium",
   "duration": 15,
-  "tags": ["apache", "ssl", "tls"],
+  "tags": [
+    "apache",
+    "ssl",
+    "tls"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "apache",
+      "role": "edge"
+    },
+    {
+      "name": "edge-tls",
+      "role": "security"
+    }
+  ]
 }

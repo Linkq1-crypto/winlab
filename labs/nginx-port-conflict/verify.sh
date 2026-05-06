@@ -12,6 +12,10 @@ ok() {
   echo "VERIFY_STEP_OK $1"
 }
 
+signal() {
+  echo "WINLAB_SIGNAL $1"
+}
+
 check_command() {
   command -v "$1" >/dev/null 2>&1 || fail "missing command: $1"
 }
@@ -80,6 +84,9 @@ check_http_response() {
 
 main() {
   echo "VERIFY_START $LAB_ID"
+  signal '{"type":"affected_services_update","services":["nginx","port-binding"],"source":"verify"}'
+  signal '{"type":"service_health","services":["nginx","port-binding"],"status":"degraded","progress":68,"source":"verify"}'
+  signal '{"type":"phase_update","phase":"validation","progress":82,"source":"verify"}'
 
   check_command nginx
   check_command curl
@@ -91,10 +98,16 @@ main() {
   check_http_response "WinLab nginx recovered"
 
   if [[ "${#FAILURES[@]}" -eq 0 ]]; then
+    signal '{"type":"service_health","services":["nginx","port-binding"],"status":"recovering","progress":92,"source":"verify"}'
+    signal '{"type":"phase_update","phase":"recovery","progress":92,"source":"verify"}'
+    signal '{"type":"service_health","services":["nginx","port-binding"],"status":"healthy","progress":100,"source":"verify"}'
+    signal '{"type":"verification_result","status":"passed","summary":"Nginx recovered and validation checks passed.","source":"verify"}'
     echo "VERIFY_OK"
     exit 0
   fi
 
+  signal '{"type":"service_health","services":["nginx","port-binding"],"status":"failed","progress":82,"source":"verify"}'
+  signal '{"type":"verification_result","status":"failed","summary":"Nginx validation failed.","source":"verify"}'
   echo "VERIFY_FAIL"
   for failure in "${FAILURES[@]}"; do
     echo "- $failure"

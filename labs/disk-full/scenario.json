@@ -4,7 +4,18 @@
   "tier": "starter",
   "difficulty": "easy",
   "duration": 8,
-  "tags": ["disk", "storage", "linux", "find"],
+  "tags": [
+    "disk",
+    "storage",
+    "linux",
+    "find"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "root-filesystem",
+      "role": "storage"
+    }
+  ]
 }

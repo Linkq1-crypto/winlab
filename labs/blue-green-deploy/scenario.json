@@ -4,7 +4,25 @@
   "tier": "ops",
   "difficulty": "medium",
   "duration": 14,
-  "tags": ["deploy", "blue-green", "release"],
+  "tags": [
+    "deploy",
+    "blue-green",
+    "release"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "release-controller",
+      "role": "delivery"
+    },
+    {
+      "name": "app-blue",
+      "role": "application"
+    },
+    {
+      "name": "app-green",
+      "role": "application"
+    }
+  ]
 }

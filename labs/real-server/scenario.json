@@ -4,7 +4,16 @@
   "tier": "pro",
   "difficulty": "hard",
   "duration": 25,
-  "tags": ["iostat", "apache", "mysql", "tcpdump", "strace", "oom", "fsck", "dns"],
+  "tags": [
+    "iostat",
+    "apache",
+    "mysql",
+    "tcpdump",
+    "strace",
+    "oom",
+    "fsck",
+    "dns"
+  ],
   "type": "ubuntu",
   "status": "runnable",
   "variants": [
@@ -20,5 +29,23 @@
     "fsck",
     "oomkiller",
     "infoblox"
+  ],
+  "services": [
+    {
+      "name": "apache",
+      "role": "edge"
+    },
+    {
+      "name": "mysql",
+      "role": "database"
+    },
+    {
+      "name": "php-app",
+      "role": "application"
+    },
+    {
+      "name": "system-disk",
+      "role": "storage"
+    }
   ]
 }

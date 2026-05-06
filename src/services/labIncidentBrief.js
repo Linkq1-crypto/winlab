@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getLabOperationalMetadata } from "./labMetadata.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -78,6 +79,7 @@ export function getLabIncidentBrief(labId) {
   const labDir = path.join(LABS_ROOT, safeLabId);
   const scenario = safeReadJson(path.join(labDir, "scenario.json"));
   const locale = safeReadJson(path.join(labDir, "locales", "en.json"));
+  const metadata = getLabOperationalMetadata(safeLabId);
 
   const fallbackTitle = titleCase(safeLabId, "Unknown Lab");
   const labTitle = String(scenario?.title || fallbackTitle).trim() || fallbackTitle;
@@ -101,6 +103,6 @@ export function getLabIncidentBrief(labId) {
     successCondition: success || "Incident resolved.",
     suggestedCommands: extractSuggestedCommands(hints),
     hints,
+    affectedServices: metadata.services.map((service) => service.name),
   };
 }
-

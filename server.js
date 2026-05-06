@@ -38,6 +38,7 @@ import {
 } from "./src/services/userLifecycleEmailFlow.js";
 // import { bootstrapAlertFlow } from "./src/core/alertDispatcher.js";
 import helpdeskRouter from "./src/api/routes/helpdesk.js";
+import { createEnterpriseRouter } from "./src/api/routes/enterprise.js";
 import { createEventsRouter } from "./src/api/routes/events.js";
 import { createMentorFeedbackRouter } from "./src/api/routes/mentorFeedback.js";
 import { startHelpdeskWorker } from "./src/services/helpdeskWorker.js";
@@ -52,6 +53,7 @@ import { recordDeploy as recordDeployEvent, getDeployHistory as getDeployHistory
 import { syncLogger, dlqLogger } from "./src/services/logger.js";
 import { createAIRouter } from "./src/services/aiRouter.js";
 import { createAIService } from "./src/services/aiService.js";
+import { ensureSeedBlogPosts } from "./src/services/blogSeed.js";
 import { cleanupWorkspace, createWorkspace, runLabWithAI } from "./src/services/labRunner.js";
 import {
   startDockerLabSession,
@@ -61,6 +63,7 @@ import {
   isContainerRunning,
 } from "./src/services/dockerLabRunner.js";
 import { getSiteLabCatalog } from "./src/services/siteLabCatalog.js";
+import { extractLabServiceNames } from "./src/services/labMetadata.js";
 import { recordRevenueEvent } from "./src/services/revenueEventEngine.js";
 import { getLevelConfig, isKnownLevel } from "./src/config/levels.js";
 import { DEFAULT_LAUNCH_START_AT, buildLaunchWindow, getLaunchState } from "./src/lib/launchWindow.js";
@@ -104,6 +107,7 @@ const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: proces
 const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 1 }) : null;
 const refreshTokenStore = new Map();
 const revokedAccessTokens = new Map();
+try { ensureSeedBlogPosts(prisma, { logger: console }).catch((e) => console.warn("[blogSeed] bootstrap skipped:", e.message)); } catch (e) { console.warn("[blogSeed] bootstrap skipped:", e.message); }
 async function getRepoCommit(lab) {
   const repoRoot = String(lab?.repoRoot || __dirname);
   try {
@@ -762,6 +766,258 @@ app.get("/api/labs/catalog", (req, res) => {
 
 // ── Free-lab session TTL (15 min inactivity → auto-remove container) ──
 const labSessionActivity = new Map(); // sessionId → lastActivityMs
+const labWsConnections = new Map(); // sessionId -> Set<ws>
+
+function normalizeLabSessionId(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function broadcastLabEvent(sessionId, payload) {
+  const safeSessionId = normalizeLabSessionId(sessionId);
+  if (!safeSessionId) return;
+  const clients = labWsConnections.get(safeSessionId);
+  if (!clients?.size) return;
+  const message = JSON.stringify({ type: "lab_event", event: payload });
+  for (const client of clients) {
+    if (client.readyState === 1) {
+      try { client.send(message); } catch {}
+    }
+  }
+}
+
+async function recordLabSessionEvent({
+  sessionId,
+  labId = null,
+  userId = null,
+  cmd,
+  output,
+  ts = new Date(),
+}) {
+  const safeSessionId = normalizeLabSessionId(sessionId);
+  if (!safeSessionId || !cmd) return null;
+
+  const event = await prisma.sessionEvent.create({
+    data: {
+      sessionId: safeSessionId,
+      userId: userId || null,
+      labId: labId || null,
+      cmd: String(cmd).slice(0, 240),
+      output: String(output || "").slice(0, 4000),
+      ts,
+    },
+  });
+
+  broadcastLabEvent(safeSessionId, {
+    id: event.id,
+    sessionId: event.sessionId,
+    labId: event.labId,
+    userId: event.userId,
+    cmd: event.cmd,
+    output: event.output,
+    ts: event.ts,
+  });
+
+  return event;
+}
+
+const LAB_SERVICE_PATTERNS = [
+  { label: "nginx", match: /\bnginx\b/i },
+  { label: "postgresql", match: /\bpostgres|postgresql|db\b/i },
+  { label: "redis", match: /\bredis\b/i },
+  { label: "queue-worker", match: /\bqueue|worker\b/i },
+  { label: "api-gateway", match: /\bapi\b/i },
+  { label: "docker", match: /\bdocker|container\b/i },
+  { label: "auth-service", match: /\bauth|jwt|login\b/i },
+  { label: "storage-volume", match: /\bdisk|filesystem|storage\b/i },
+];
+
+function extractLabServices(...values) {
+  const haystack = values.filter(Boolean).join(" ");
+  const services = LAB_SERVICE_PATTERNS.filter((item) => item.match.test(haystack)).map((item) => item.label);
+  return Array.from(new Set(services));
+}
+
+function getDeclaredLabServices(labId) {
+  return Array.from(new Set(extractLabServiceNames(labId).filter(Boolean)));
+}
+
+function mergeServiceLists(...lists) {
+  return Array.from(new Set(lists.flat().filter(Boolean)));
+}
+
+function parseStructuredSignals(text) {
+  return String(text || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("WINLAB_SIGNAL "))
+    .map((line) => line.slice("WINLAB_SIGNAL ".length).trim())
+    .map((json) => {
+      try {
+        const parsed = JSON.parse(json);
+        return parsed && typeof parsed === "object" ? parsed : null;
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
+}
+
+async function emitStructuredLabSignal({ sessionId, labId = null, signal }) {
+  if (!signal || typeof signal !== "object") return null;
+  return recordLabSessionEvent({
+    sessionId,
+    labId,
+    cmd: "__signal__",
+    output: JSON.stringify(signal),
+  });
+}
+
+function buildCommandSignals({ command, labId }) {
+  const text = String(command || "").trim().toLowerCase();
+  if (!text) return [];
+
+  const services = mergeServiceLists(getDeclaredLabServices(labId), extractLabServices(text, labId));
+  const signals = [];
+  if (services.length) {
+    signals.push({
+      type: "affected_services_update",
+      services,
+      source: "command",
+    });
+  }
+
+  if (/verify\b|verify\.sh/.test(text)) {
+    signals.push({
+      type: "phase_update",
+      phase: "validation",
+      progress: 82,
+      source: "command",
+    });
+  } else if (/restart|start|reload|kill|chmod|chown|mount|docker\b/.test(text)) {
+    signals.push({
+      type: "phase_update",
+      phase: "mitigation",
+      progress: 58,
+      source: "command",
+    });
+  } else if (/systemctl status|journalctl|ps |ss |netstat|curl\b/.test(text)) {
+    signals.push({
+      type: "phase_update",
+      phase: "triage",
+      progress: 30,
+      source: "command",
+    });
+  }
+
+  if (/sudo\b|su\b|kill\b/.test(text)) {
+    signals.push({
+      type: "escalation",
+      level: "operator",
+      summary: `Operator executed elevated action: ${text.slice(0, 120)}`,
+      source: "command",
+    });
+  }
+
+  return signals;
+}
+
+function buildOutputSignals({ output, labId }) {
+  const text = String(output || "");
+  if (!text.trim()) return [];
+
+  const explicitSignals = parseStructuredSignals(text).map((signal) => ({
+    ...signal,
+    services: Array.isArray(signal.services)
+      ? mergeServiceLists(signal.services)
+      : signal.services,
+  }));
+  if (explicitSignals.length > 0) return explicitSignals;
+
+  const services = mergeServiceLists(getDeclaredLabServices(labId), extractLabServices(text, labId));
+  const signals = [];
+  if (services.length) {
+    signals.push({
+      type: "affected_services_update",
+      services,
+      source: "output",
+    });
+  }
+
+  const lowered = text.toLowerCase();
+  const healthServices = services.length ? services : ["app-service"];
+
+  if (/(active \(running\)|healthy|restored|serving content correctly|resolved)/i.test(text)) {
+    signals.push({
+      type: "service_health",
+      services: healthServices,
+      status: "healthy",
+      progress: /resolved|serving content correctly/i.test(text) ? 100 : 72,
+      source: "output",
+    });
+  }
+
+  if (/(failed|inactive|offline|cannot connect|permission denied|returning 403|timed out|timeout|error)/i.test(text)) {
+    signals.push({
+      type: "service_health",
+      services: healthServices,
+      status: "degraded",
+      progress: 38,
+      source: "output",
+    });
+  }
+
+  if (/(deadlock|lock wait|retry storm|oom|crash loop|no listening sockets)/i.test(lowered)) {
+    signals.push({
+      type: "escalation",
+      level: "on-call",
+      summary: text.trim().split(/\r?\n/).find(Boolean)?.slice(0, 180) || "Critical runtime signal detected.",
+      source: "output",
+    });
+  }
+
+  return signals;
+}
+
+function buildVerifySignals({ labId, success, stdout, stderr }) {
+  const text = `${stdout || ""}\n${stderr || ""}`.trim();
+  const explicitSignals = parseStructuredSignals(text);
+  if (explicitSignals.length > 0) {
+    return explicitSignals.map((signal) => ({
+      ...signal,
+      services: Array.isArray(signal.services)
+        ? mergeServiceLists(signal.services)
+        : signal.services,
+    }));
+  }
+
+  const services = mergeServiceLists(getDeclaredLabServices(labId), extractLabServices(text, labId));
+  return [
+    {
+      type: "phase_update",
+      phase: "validation",
+      progress: success ? 100 : 82,
+      source: "verify",
+    },
+    {
+      type: "service_health",
+      services: services.length ? services : extractLabServices(labId),
+      status: success ? "healthy" : "degraded",
+      progress: success ? 100 : 82,
+      source: "verify",
+    },
+    {
+      type: "verification_result",
+      status: success ? "passed" : "failed",
+      summary: text.slice(0, 400) || (success ? "Verification passed." : "Verification failed."),
+      source: "verify",
+    },
+  ];
+}
 
 setInterval(async () => {
   const now = Date.now();
@@ -788,6 +1044,35 @@ app.post("/api/lab/start", freeLabLimiter, async (req, res) => {
 
     const result = await startDockerLabSession({ labId, sessionId, variantId, levelId });
     labSessionActivity.set(result.sessionId, Date.now());
+    await recordLabSessionEvent({
+      sessionId: result.sessionId,
+      labId: result.labId,
+      cmd: "__session_started__",
+      output: JSON.stringify({
+        levelId: level.id,
+        hintEnabled: level.hintsEnabled,
+        containerName: result.containerName,
+      }),
+    });
+    await emitStructuredLabSignal({
+      sessionId: result.sessionId,
+      labId: result.labId,
+      signal: {
+        type: "phase_update",
+        phase: "detection",
+        progress: 12,
+        source: "session_start",
+      },
+    });
+    await emitStructuredLabSignal({
+      sessionId: result.sessionId,
+      labId: result.labId,
+      signal: {
+        type: "affected_services_update",
+        services: extractLabServices(result.labId),
+        source: "session_start",
+      },
+    });
     res.json({ ok: true, level: level.id, hintEnabled: level.hintsEnabled, ...result });
   } catch (error) {
     console.error("POST /api/lab/start error:", error);
@@ -809,7 +1094,23 @@ app.post("/api/lab/command", async (req, res) => {
     }
 
     labSessionActivity.set(sessionId, Date.now());
+    await recordLabSessionEvent({
+      sessionId,
+      cmd: "__api_command__",
+      output: command,
+    });
+    for (const signal of buildCommandSignals({ command, labId })) {
+      await emitStructuredLabSignal({ sessionId, signal });
+    }
     const result = await execCommandInContainer({ sessionId, command });
+    await recordLabSessionEvent({
+      sessionId,
+      cmd: "__api_output__",
+      output: `${result.stdout || ""}${result.stderr || ""}`.trim() || `exitCode=${result.exitCode}`,
+    });
+    for (const signal of buildOutputSignals({ output: `${result.stdout || ""}\n${result.stderr || ""}`, labId })) {
+      await emitStructuredLabSignal({ sessionId, signal });
+    }
     res.json({ ok: true, output: result.stdout + result.stderr, exitCode: result.exitCode });
   } catch (error) {
     console.error("POST /api/lab/command error:", error);
@@ -824,7 +1125,27 @@ app.post("/api/lab/verify", async (req, res) => {
       return res.status(400).json({ error: "labId and sessionId are required" });
     }
 
+    await recordLabSessionEvent({
+      sessionId,
+      labId,
+      cmd: "__verify_requested__",
+      output: `verify ${labId}`,
+    });
     const result = await verifyDockerLabSession({ labId, sessionId });
+    await recordLabSessionEvent({
+      sessionId,
+      labId,
+      cmd: result?.success ? "__verify_passed__" : "__verify_failed__",
+      output: `${result?.stdout || ""}\n${result?.stderr || ""}`.trim() || (result?.success ? "verify passed" : "verify failed"),
+    });
+    for (const signal of buildVerifySignals({
+      labId,
+      success: !!result?.success,
+      stdout: result?.stdout || "",
+      stderr: result?.stderr || "",
+    })) {
+      await emitStructuredLabSignal({ sessionId, labId, signal });
+    }
     res.json(result);
   } catch (error) {
     console.error("POST /api/lab/verify error:", error);
@@ -840,6 +1161,11 @@ app.post("/api/lab/stop", async (req, res) => {
     }
 
     await stopDockerLabSession({ sessionId });
+    await recordLabSessionEvent({
+      sessionId,
+      cmd: "__session_stopped__",
+      output: "Session stopped by operator.",
+    });
     res.json({ ok: true });
   } catch (error) {
     console.error("POST /api/lab/stop error:", error);
@@ -848,6 +1174,36 @@ app.post("/api/lab/stop", async (req, res) => {
 });
 
 // ── Public API v1 (external integrations + SDK) ──────────────────────
+app.get("/api/lab/events", async (req, res) => {
+  try {
+    const sessionId = normalizeLabSessionId(req.query.sessionId);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 250);
+    if (!sessionId) {
+      return res.status(400).json({ ok: false, error: "sessionId is required" });
+    }
+
+    const events = await prisma.sessionEvent.findMany({
+      where: { sessionId },
+      orderBy: { ts: "asc" },
+      take: limit,
+      select: {
+        id: true,
+        sessionId: true,
+        userId: true,
+        labId: true,
+        cmd: true,
+        output: true,
+        ts: true,
+      },
+    });
+
+    res.json({ ok: true, sessionId, events });
+  } catch (error) {
+    console.error("GET /api/lab/events error:", error);
+    res.status(500).json({ ok: false, error: "Failed to load lab events" });
+  }
+});
+
 app.use("/api/v1", tenantMiddleware, qosMiddleware, publicApiRouter);
 app.use("/api/i18n", i18nRouter);
 
@@ -1030,6 +1386,13 @@ app.post("/api/auth/reset-password", authLimiter, async (req, res) => {
 });
 
 // ── Microsoft SSO ────────────────────────────────────────────────────
+app.use("/api/enterprise", createEnterpriseRouter({
+  prisma,
+  requireAuth,
+  authLimiter,
+  issueAuthSession,
+}));
+
 const MS_CLIENT_ID     = process.env.MICROSOFT_CLIENT_ID || "";
 const MS_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET || "";
 const MS_REDIRECT_URI  = process.env.MICROSOFT_REDIRECT_URI || "https://winlab.cloud/api/auth/microsoft/callback";
@@ -2382,6 +2745,23 @@ app.get("/api/blog/all", async (req, res) => {
   }
 });
 
+// GET /api/blog/admin
+app.get("/api/blog/admin", requireAdmin, async (req, res) => {
+  try {
+    const posts = await prisma.blogPost.findMany({
+      orderBy: [
+        { publishedAt: "desc" },
+        { updatedAt: "desc" },
+        { createdAt: "desc" },
+      ],
+    });
+    res.json(posts);
+  } catch (err) {
+    console.error("GET /api/blog/admin error:", err);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
 // GET /api/blog/:slug
 app.get("/api/blog/:slug", async (req, res) => {
   try {
@@ -2651,14 +3031,46 @@ app.post("/api/blog", requireAdmin, async (req, res) => {
   try {
     const { title, slug, excerpt, content, tags, status } = req.body;
     if (!title || !slug || !content) return res.status(400).json({ error: "title, slug, content required" });
+    const normalizedStatus = status === "published" ? "published" : "draft";
+    const existing = await prisma.blogPost.findUnique({ where: { slug } });
+    const nextPublishedAt =
+      normalizedStatus === "published"
+        ? existing?.publishedAt || new Date()
+        : null;
     const post = await prisma.blogPost.upsert({
       where: { slug },
-      create: { title, slug, excerpt: excerpt || null, content, tags: tags ? JSON.stringify(tags) : null, status: status || "draft", publishedAt: status === "published" ? new Date() : null },
-      update: { title, excerpt: excerpt || null, content, tags: tags ? JSON.stringify(tags) : null, status: status || "draft", publishedAt: status === "published" ? new Date() : null },
+      create: {
+        title,
+        slug,
+        excerpt: excerpt || null,
+        content,
+        tags: tags ? JSON.stringify(tags) : null,
+        status: normalizedStatus,
+        publishedAt: nextPublishedAt,
+      },
+      update: {
+        title,
+        excerpt: excerpt || null,
+        content,
+        tags: tags ? JSON.stringify(tags) : null,
+        status: normalizedStatus,
+        publishedAt: nextPublishedAt,
+      },
     });
     res.json(post);
   } catch (err) {
     console.error("POST /api/blog error:", err);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+// DELETE /api/blog/:id
+app.delete("/api/blog/:id", requireAdmin, async (req, res) => {
+  try {
+    await prisma.blogPost.delete({ where: { id: req.params.id } });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("DELETE /api/blog/:id error:", err);
     res.status(500).json({ error: "Failed" });
   }
 });
@@ -2817,6 +3229,7 @@ labWss.on("connection", (ws, req) => {
   const containerName = url.searchParams.get("container");
   const hintEnabled = url.searchParams.get("hintEnabled") !== "false";
   const labId = url.searchParams.get("labId") || "default";
+  const sessionId = normalizeLabSessionId(url.searchParams.get("sessionId"));
 
   if (!containerName) {
     ws.send(JSON.stringify({ type: "error", data: "Missing container parameter" }));
@@ -2837,6 +3250,31 @@ labWss.on("connection", (ws, req) => {
     windowsHide: true,
   });
   const deadlockAnalysis = analyzeDeadlockScenario(getDeadlockScenario(labId));
+  let commandBuffer = "";
+  let stdoutCarry = "";
+
+  if (sessionId) {
+    if (!labWsConnections.has(sessionId)) {
+      labWsConnections.set(sessionId, new Set());
+    }
+    labWsConnections.get(sessionId).add(ws);
+    void recordLabSessionEvent({
+      sessionId,
+      labId,
+      cmd: "__terminal_connected__",
+      output: safeContainer,
+    });
+    void emitStructuredLabSignal({
+      sessionId,
+      labId,
+      signal: {
+        type: "phase_update",
+        phase: "triage",
+        progress: 18,
+        source: "terminal_connect",
+      },
+    });
+  }
 
   ws.send(JSON.stringify({ type: "ready" }));
 
@@ -2873,12 +3311,30 @@ labWss.on("connection", (ws, req) => {
       if (ws.readyState === 1 && helperOutput.trim()) {
         ws.send(JSON.stringify({ type: "output", data: `\r\n${helperOutput}\r\n` }));
       }
+      if (sessionId && helperOutput.trim()) {
+        void recordLabSessionEvent({
+          sessionId,
+          labId,
+          cmd: "__context__",
+          output: helperOutput.trim(),
+        });
+        for (const signal of buildOutputSignals({ output: helperOutput.trim(), labId })) {
+          void emitStructuredLabSignal({ sessionId, labId, signal });
+        }
+      }
     });
   }, 700);
 
   child.stdout.on("data", (data) => {
+    const text = data.toString("utf8");
+    stdoutCarry = `${stdoutCarry}${text}`.slice(-8000);
+    if (sessionId) {
+      for (const signal of buildOutputSignals({ output: text, labId })) {
+        void emitStructuredLabSignal({ sessionId, labId, signal });
+      }
+    }
     if (ws.readyState === 1) {
-      ws.send(JSON.stringify({ type: "output", data: data.toString("utf8") }));
+      ws.send(JSON.stringify({ type: "output", data: text }));
     }
   });
 
@@ -2902,12 +3358,54 @@ labWss.on("connection", (ws, req) => {
     try {
       const msg = JSON.parse(raw.toString());
       if (msg.type === "input" && child.stdin.writable) {
+        const input = String(msg.data || "");
+        if (input === "\u007F") {
+          commandBuffer = commandBuffer.slice(0, -1);
+        } else if (input.includes("\r")) {
+          const segments = input.split("\r");
+          for (let index = 0; index < segments.length; index += 1) {
+            const segment = segments[index];
+            if (segment) commandBuffer += segment;
+            if (index < segments.length - 1) {
+              const command = commandBuffer.trim();
+              if (sessionId && command) {
+                void recordLabSessionEvent({
+                  sessionId,
+                  labId,
+                  cmd: "__terminal_command__",
+                  output: command,
+                });
+                for (const signal of buildCommandSignals({ command, labId })) {
+                  void emitStructuredLabSignal({ sessionId, labId, signal });
+                }
+              }
+              commandBuffer = "";
+            }
+          }
+        } else if (!input.startsWith("\u001b")) {
+          commandBuffer += input;
+        }
         child.stdin.write(msg.data);
       }
     } catch {}
   });
 
   ws.on("close", () => {
+    if (sessionId) {
+      const clients = labWsConnections.get(sessionId);
+      if (clients) {
+        clients.delete(ws);
+        if (clients.size === 0) {
+          labWsConnections.delete(sessionId);
+        }
+      }
+      void recordLabSessionEvent({
+        sessionId,
+        labId,
+        cmd: "__terminal_disconnected__",
+        output: stdoutCarry.trim().slice(-1000) || "terminal closed",
+      });
+    }
     try { child.kill(); } catch {}
   });
 });

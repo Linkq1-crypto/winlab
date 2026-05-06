@@ -4,7 +4,21 @@
   "tier": "ops",
   "difficulty": "medium",
   "duration": 10,
-  "tags": ["nginx", "reload", "config"],
+  "tags": [
+    "nginx",
+    "reload",
+    "config"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "nginx",
+      "role": "edge"
+    },
+    {
+      "name": "config-runtime",
+      "role": "configuration"
+    }
+  ]
 }

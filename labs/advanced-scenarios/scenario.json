@@ -4,7 +4,16 @@
   "tier": "pro",
   "difficulty": "hard",
   "duration": 20,
-  "tags": ["nginx", "mysql", "disk", "ssl", "cron", "java", "oom", "production"],
+  "tags": [
+    "nginx",
+    "mysql",
+    "disk",
+    "ssl",
+    "cron",
+    "java",
+    "oom",
+    "production"
+  ],
   "type": "ubuntu",
   "status": "runnable",
   "variants": [
@@ -14,5 +23,31 @@
     "ssl-chain-expired",
     "cron-stopped-jobs",
     "java-oom"
+  ],
+  "services": [
+    {
+      "name": "nginx",
+      "role": "edge"
+    },
+    {
+      "name": "edge-tls",
+      "role": "security"
+    },
+    {
+      "name": "mysql",
+      "role": "database"
+    },
+    {
+      "name": "cron-worker",
+      "role": "scheduler"
+    },
+    {
+      "name": "jvm-app",
+      "role": "application"
+    },
+    {
+      "name": "storage-volume",
+      "role": "storage"
+    }
   ]
 }

@@ -4,7 +4,13 @@
   "tier": "starter",
   "difficulty": "easy",
   "duration": 15,
-  "tags": ["linux", "bash", "terminal", "basics", "filesystem"],
+  "tags": [
+    "linux",
+    "bash",
+    "terminal",
+    "basics",
+    "filesystem"
+  ],
   "type": "ubuntu",
   "status": "runnable",
   "hints": [
@@ -13,5 +19,15 @@
     "archive/ does not exist. Create it: mkdir /opt/winlab/linux-terminal/archive/",
     "Move the log: mv /opt/winlab/linux-terminal/incoming/incident.log /opt/winlab/linux-terminal/archive/",
     "Create the recovery flag: echo 'linux-terminal-ok' > /opt/winlab/linux-terminal/archive/recovered.flag"
+  ],
+  "services": [
+    {
+      "name": "shell-runtime",
+      "role": "runtime"
+    },
+    {
+      "name": "root-filesystem",
+      "role": "storage"
+    }
   ]
 }

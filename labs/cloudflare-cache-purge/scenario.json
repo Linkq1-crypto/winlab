@@ -4,7 +4,21 @@
   "tier": "ops",
   "difficulty": "medium",
   "duration": 10,
-  "tags": ["cloudflare", "cache", "cdn"],
+  "tags": [
+    "cloudflare",
+    "cache",
+    "cdn"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "cdn-edge",
+      "role": "edge"
+    },
+    {
+      "name": "origin-web",
+      "role": "application"
+    }
+  ]
 }

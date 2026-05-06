@@ -4,7 +4,21 @@
   "tier": "ops",
   "difficulty": "medium",
   "duration": 10,
-  "tags": ["env", "config", "ops"],
+  "tags": [
+    "env",
+    "config",
+    "ops"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "app-service",
+      "role": "application"
+    },
+    {
+      "name": "config-runtime",
+      "role": "configuration"
+    }
+  ]
 }

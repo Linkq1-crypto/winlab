@@ -4,7 +4,25 @@
   "tier": "ops",
   "difficulty": "hard",
   "duration": 18,
-  "tags": ["kubernetes", "node", "ops"],
+  "tags": [
+    "kubernetes",
+    "node",
+    "ops"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "kubelet",
+      "role": "orchestrator"
+    },
+    {
+      "name": "kube-apiserver",
+      "role": "control-plane"
+    },
+    {
+      "name": "worker-node",
+      "role": "compute"
+    }
+  ]
 }

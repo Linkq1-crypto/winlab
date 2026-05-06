@@ -4,7 +4,21 @@
   "tier": "ops",
   "difficulty": "medium",
   "duration": 15,
-  "tags": ["docker", "containers", "ops"],
+  "tags": [
+    "docker",
+    "containers",
+    "ops"
+  ],
   "type": "ubuntu",
-  "status": "runnable"
+  "status": "runnable",
+  "services": [
+    {
+      "name": "docker-engine",
+      "role": "runtime"
+    },
+    {
+      "name": "app-container",
+      "role": "application"
+    }
+  ]
 }
