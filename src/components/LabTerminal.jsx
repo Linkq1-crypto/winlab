@@ -354,6 +354,9 @@ export default function LabTerminal({
   const recoveryStages = buildRecoveryStages(snapshot.progress);
   const escalationEvents = timelineEvents.filter((event) => event.kind === 'escalation' || event.kind === 'operator');
   const primaryService = affectedServices[0]?.name || fallbackServices[0] || 'app-service';
+  const latestEvent = timelineEvents[timelineEvents.length - 1] || null;
+  const degradedCount = affectedServices.filter((service) => service.status === 'degraded' || service.status === 'failed').length;
+  const commandCards = activeIncidentBrief.suggestedCommands.slice(0, 3);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -698,9 +701,9 @@ export default function LabTerminal({
       </div>
 
       <div className="flex-1 min-h-0 min-w-0 overflow-hidden p-3 sm:p-4 md:p-5">
-        <div className="grid h-full min-h-0 min-w-0 gap-4 xl:grid-cols-[minmax(0,1.32fr)_minmax(320px,0.68fr)]">
-          <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[20px] border border-white/8 bg-[#07111a] shadow-[0_18px_48px_rgba(0,0,0,0.28)]">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/6 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.24em] text-slate-500">
+        <div className="grid h-full min-h-0 min-w-0 gap-3 md:gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.55fr)]">
+          <div className="order-2 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-white/8 bg-[#07111a] shadow-[0_18px_48px_rgba(0,0,0,0.28)] md:rounded-[20px] xl:order-1">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/6 px-3 py-2 text-[10px] font-mono uppercase tracking-[0.24em] text-slate-500 sm:px-4">
               <span>interactive shell</span>
               <span>network isolated</span>
             </div>
@@ -712,12 +715,12 @@ export default function LabTerminal({
 
             <div
               ref={wrapperRef}
-              className="relative min-h-0 min-w-0 flex-1 overflow-hidden"
-              style={{ height: 'min(70dvh, 620px)' }}
+              className="relative min-h-[360px] min-w-0 flex-1 overflow-hidden xl:min-h-0"
+              style={{ height: 'min(68dvh, 760px)' }}
             >
               <div
                 ref={viewportRef}
-                className="winlab-xterm-shell absolute inset-0 h-full w-full min-h-0 min-w-0 overflow-hidden px-3 py-3"
+                className="winlab-xterm-shell absolute inset-0 h-full w-full min-h-0 min-w-0 overflow-hidden px-2 py-2 sm:px-3 sm:py-3"
               />
               {!hasOutput && (
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 text-center text-xs font-mono uppercase tracking-[0.24em] text-slate-500">
@@ -727,12 +730,12 @@ export default function LabTerminal({
             </div>
           </div>
 
-          <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[20px] border border-white/8 bg-[#081019]">
-            <div className="border-b border-white/8 px-4 py-3">
+          <aside className="order-1 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-white/8 bg-[#081019] md:rounded-[20px] xl:order-2">
+            <div className="border-b border-white/8 bg-[#0a131c] px-3 py-3 sm:px-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-mono uppercase tracking-[0.28em] text-slate-400">Live Incident Intelligence</p>
-                  <h2 className="mt-2 text-lg font-black text-white">
+                  <h2 className="mt-2 text-base font-black text-white sm:text-lg">
                     {activeIncidentBrief.incidentType || 'Brief unavailable'}
                   </h2>
                 </div>
@@ -750,18 +753,43 @@ export default function LabTerminal({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-px border-b border-white/8 bg-white/8">
-              <div className="bg-[#09111a] px-4 py-3">
+            <div className="grid grid-cols-2 gap-px border-b border-white/8 bg-white/8 lg:grid-cols-4">
+              <div className="bg-[#09111a] px-3 py-3 sm:px-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">Incident timer</p>
-                <p className="mt-2 font-mono text-xl font-semibold text-white">{formatElapsed(elapsedSec)}</p>
+                <p className="mt-2 font-mono text-lg font-semibold text-white sm:text-xl">{formatElapsed(elapsedSec)}</p>
               </div>
-              <div className="bg-[#09111a] px-4 py-3">
+              <div className="bg-[#09111a] px-3 py-3 sm:px-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">Recovery progress</p>
-                <p className="mt-2 font-mono text-xl font-semibold text-white">{snapshot.progress}%</p>
+                <p className="mt-2 font-mono text-lg font-semibold text-white sm:text-xl">{snapshot.progress}%</p>
+              </div>
+              <div className="bg-[#09111a] px-3 py-3 sm:px-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">Affected now</p>
+                <p className="mt-2 font-mono text-lg font-semibold text-white sm:text-xl">{affectedServices.length}</p>
+              </div>
+              <div className="bg-[#09111a] px-3 py-3 sm:px-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">Open impact</p>
+                <p className="mt-2 font-mono text-lg font-semibold text-white sm:text-xl">{degradedCount}</p>
               </div>
             </div>
 
-            <div className="min-h-0 space-y-3 overflow-y-auto p-3 text-sm">
+            <div className="grid gap-px border-b border-white/8 bg-white/6 lg:grid-cols-[1fr_1fr]">
+              <div className="bg-[#09111a] px-3 py-3 sm:px-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">Current state</p>
+                <p className="mt-2 text-xs leading-relaxed text-slate-200">
+                  {latestEvent?.message || 'Session initialized. Awaiting operator actions and system signals.'}
+                </p>
+              </div>
+              <div className="bg-[#09111a] px-3 py-3 sm:px-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">Response posture</p>
+                <p className="mt-2 text-xs leading-relaxed text-slate-200">
+                  {degradedCount > 0
+                    ? `${degradedCount} service scope still degraded. Keep mitigation active and verify recovery before closeout.`
+                    : 'No degraded services in the latest signal set. Focus on validation and closeout checks.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="min-h-0 space-y-3 overflow-y-auto p-2.5 text-sm sm:p-3">
               <section className="border border-white/8 bg-black/20">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <p className="px-3 pt-3 text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Recovery stages</p>
@@ -809,6 +837,22 @@ export default function LabTerminal({
                 </div>
               </section>
 
+              {commandCards.length > 0 ? (
+                <section className="border border-white/8 bg-black/20">
+                  <div className="flex items-center justify-between gap-3 border-b border-white/8 px-3 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Command focus</p>
+                    <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">next likely actions</p>
+                  </div>
+                  <div className="space-y-px bg-white/6">
+                    {commandCards.map((command) => (
+                      <div key={command} className="bg-[#09111a] px-3 py-3">
+                        <p className="font-mono text-[11px] leading-relaxed text-slate-200">{command}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
               <section className="border border-white/8 bg-black/20">
                 <div className="flex items-center justify-between gap-3 border-b border-white/8 px-3 py-3">
                   <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Live event timeline</p>
@@ -833,6 +877,11 @@ export default function LabTerminal({
                           }`}>
                             {event.actor}
                           </span>
+                        </div>
+                        <div className="mt-2 flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">
+                          <span>{event.kind}</span>
+                          <span>/</span>
+                          <span>{event.severity}</span>
                         </div>
                         <p className="mt-2 text-xs leading-relaxed text-slate-200">{event.message}</p>
                       </div>
@@ -891,19 +940,6 @@ export default function LabTerminal({
                 <section className="border border-white/8 bg-black/20 p-4">
                   <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Success condition</p>
                   <p className="mt-3 text-sm leading-relaxed text-white">{activeIncidentBrief.successCondition}</p>
-                </section>
-              ) : null}
-
-              {activeIncidentBrief.suggestedCommands.length > 0 ? (
-                <section className="border border-white/8 bg-black/20 p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Suggested commands</p>
-                  <div className="mt-4 space-y-2 font-mono text-[11px] text-slate-200">
-                    {activeIncidentBrief.suggestedCommands.map((command) => (
-                      <div key={command} className="border border-white/6 bg-white/[0.03] px-3 py-2">
-                        {command}
-                      </div>
-                    ))}
-                  </div>
                 </section>
               ) : null}
 
