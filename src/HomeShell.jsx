@@ -491,7 +491,10 @@ export default function HomeShell() {
     return matchCat && matchSearch;
   });
   const displayedLabs = [...filteredLabs, ...filteredDeadlockLabs];
-  const starterLabs = labCatalog.filter((lab) => starterIds.has(lab.id));
+  const starterLabs = labCatalog.filter((lab) => {
+    if (starterIds.has(lab.id)) return true;
+    return lab.category === 'Starter' || lab.tier === 'Starter';
+  });
   const featuredStarterLabs = starterLabs.slice(0, 5);
   const hideInstallPrompt = view === 'lab' || showRegister || showPaywall || Boolean(selectedLab);
   const launchCountdown = getLaunchCountdownState(launchPricing, countdownNowMs + launchClockOffsetMs);
@@ -529,6 +532,7 @@ export default function HomeShell() {
               }}
               terminalLines={terminalLogs}
               launchCountdown={launchCountdown}
+              featuredStarterLabs={featuredStarterLabs.slice(0, 3)}
             />
           </Suspense>
         </div>

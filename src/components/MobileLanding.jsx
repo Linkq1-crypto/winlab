@@ -18,6 +18,7 @@ export default function MobileLanding({
   onOpenEarlyAccess,
   terminalLines = [],
   launchCountdown = null,
+  featuredStarterLabs = [],
 }) {
   const teaserLines = terminalLines.slice(0, 5);
   const showEarlyAccess = Boolean(launchCountdown?.visible);
@@ -59,6 +60,31 @@ export default function MobileLanding({
             Launch Free Lab
           </button>
         </section>
+
+        {featuredStarterLabs.length > 0 ? (
+          <section className="rounded-[18px] border border-emerald-400/15 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_42%),linear-gradient(180deg,rgba(10,18,16,0.96),rgba(5,5,5,0.98))] p-4">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-200/80">Free Starter Labs</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-200">Start free with real incidents before touching pricing.</p>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3">
+              {featuredStarterLabs.map((lab) => (
+                <button
+                  key={lab.id}
+                  type="button"
+                  onClick={onLaunchFreeLab}
+                  className="rounded-[16px] border border-emerald-400/12 bg-black/25 px-4 py-3 text-left transition-colors hover:bg-black/40"
+                >
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-200/80">Free Starter</p>
+                  <p className="mt-2 text-sm font-black leading-tight text-white">{lab.title}</p>
+                  <p className="mt-1 text-[11px] text-slate-400">{lab.difficulty} / {lab.duration}</p>
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className="rounded-[18px] border border-white/8 bg-[#07111a] p-4">
           <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-cyan-200/75">
