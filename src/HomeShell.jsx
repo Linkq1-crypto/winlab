@@ -888,8 +888,8 @@ export default function HomeShell() {
           )}
 
           <section className="mb-8 rounded-[28px] border border-emerald-500/15 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_42%),linear-gradient(180deg,rgba(10,18,16,0.96),rgba(5,5,5,0.98))] p-4 sm:p-6 md:p-8">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-2xl">
+            <div className="flex min-w-0 flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+              <div className="min-w-0 flex-1 lg:max-w-2xl">
                 <p className="mb-3 text-[10px] font-black uppercase tracking-[0.35em] text-emerald-300/80">Start In The Free Zone</p>
                 <h2 className="break-words text-[2.15rem] font-black uppercase italic tracking-tighter leading-[0.95] text-white sm:text-4xl">
                   Start Free. Feel The Product Fast.
@@ -898,7 +898,7 @@ export default function HomeShell() {
                   Launch a real incident first, then introduce upgrade pressure only after the product has already proven itself.
                 </p>
               </div>
-              <div className="grid w-full max-w-full grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 xl:w-[min(100%,720px)]">
+              <div className="grid w-full min-w-0 max-w-full grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 lg:flex-1 lg:self-stretch xl:max-w-[720px]">
                 {featuredStarterLabs.map((lab) => (
                   <button
                     key={lab.id}
