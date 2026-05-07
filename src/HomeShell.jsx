@@ -898,13 +898,13 @@ export default function HomeShell() {
                   Launch a real incident first, then introduce upgrade pressure only after the product has already proven itself.
                 </p>
               </div>
-              <div className="grid w-full max-w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:w-auto xl:grid-cols-3">
+              <div className="grid w-full max-w-full grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 xl:w-[min(100%,720px)]">
                 {featuredStarterLabs.map((lab) => (
                   <button
                     key={lab.id}
                     type="button"
                     onClick={() => !labLoading && setSelectedLab(lab)}
-                    className="w-full min-w-0 max-w-full rounded-2xl border border-emerald-400/15 bg-black/35 px-4 py-4 text-left transition-all hover:border-emerald-300/40 hover:bg-black/50"
+                    className="flex h-full min-h-[126px] w-full min-w-0 max-w-full flex-col justify-between rounded-2xl border border-emerald-400/15 bg-black/35 px-4 py-4 text-left transition-all hover:border-emerald-300/40 hover:bg-black/50"
                   >
                     <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-emerald-300">Free Starter</p>
                     <p className="mb-2 text-sm font-black leading-tight text-white">{lab.title}</p>

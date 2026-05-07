@@ -69,13 +69,13 @@ export default function MobileLanding({
                 <p className="mt-2 text-sm leading-relaxed text-slate-200">Start free with real incidents before touching pricing.</p>
               </div>
             </div>
-            <div className="mt-4 grid gap-3">
+            <div className="mt-4 grid gap-3 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
               {featuredStarterLabs.map((lab) => (
                 <button
                   key={lab.id}
                   type="button"
                   onClick={onLaunchFreeLab}
-                  className="rounded-[16px] border border-emerald-400/12 bg-black/25 px-4 py-3 text-left transition-colors hover:bg-black/40"
+                  className="flex min-h-[118px] flex-col justify-between rounded-[16px] border border-emerald-400/12 bg-black/25 px-4 py-3 text-left transition-colors hover:bg-black/40"
                 >
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-200/80">Free Starter</p>
                   <p className="mt-2 text-sm font-black leading-tight text-white">{lab.title}</p>
