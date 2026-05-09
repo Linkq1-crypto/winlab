@@ -2729,11 +2729,32 @@ app.get("/api/referral/stats", requireAuth, async (req, res) => {
 // BLOG
 // ====================================================================
 
+function buildPublicBlogWhere(now = new Date()) {
+  return {
+    status: "published",
+    OR: [
+      { publishedAt: null },
+      { publishedAt: { lte: now } },
+    ],
+  };
+}
+
+function resolveBlogPublishedAt(rawPublishedAt, existingPublishedAt, normalizedStatus) {
+  if (normalizedStatus !== "published") return null;
+  if (rawPublishedAt) {
+    const parsed = new Date(rawPublishedAt);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+  return existingPublishedAt || new Date();
+}
+
 // GET /api/blog/all
 app.get("/api/blog/all", async (req, res) => {
   try {
     const posts = await prisma.blogPost.findMany({
-      where: { status: "published" },
+      where: buildPublicBlogWhere(),
       orderBy: { publishedAt: "desc" },
       take: 20,
       select: { id: true, title: true, slug: true, excerpt: true, tags: true, publishedAt: true, createdAt: true },
@@ -2766,7 +2787,11 @@ app.get("/api/blog/admin", requireAdmin, async (req, res) => {
 app.get("/api/blog/:slug", async (req, res) => {
   try {
     const post = await prisma.blogPost.findUnique({ where: { slug: req.params.slug } });
-    if (!post || post.status !== "published") return res.status(404).json({ error: "Not found" });
+    const now = new Date();
+    const isPublished =
+      post?.status === "published" &&
+      (!post.publishedAt || new Date(post.publishedAt).getTime() <= now.getTime());
+    if (!post || !isPublished) return res.status(404).json({ error: "Not found" });
     res.json(post);
   } catch (err) {
     console.error("GET /api/blog/:slug error:", err);
@@ -3029,14 +3054,11 @@ app.post("/api/admin/purge-cache", requireAdmin, async (req, res) => {
 // POST /api/blog (admin: create/update post)
 app.post("/api/blog", requireAdmin, async (req, res) => {
   try {
-    const { title, slug, excerpt, content, tags, status } = req.body;
+    const { title, slug, excerpt, content, tags, status, publishedAt } = req.body;
     if (!title || !slug || !content) return res.status(400).json({ error: "title, slug, content required" });
     const normalizedStatus = status === "published" ? "published" : "draft";
     const existing = await prisma.blogPost.findUnique({ where: { slug } });
-    const nextPublishedAt =
-      normalizedStatus === "published"
-        ? existing?.publishedAt || new Date()
-        : null;
+    const nextPublishedAt = resolveBlogPublishedAt(publishedAt, existing?.publishedAt, normalizedStatus);
     const post = await prisma.blogPost.upsert({
       where: { slug },
       create: {

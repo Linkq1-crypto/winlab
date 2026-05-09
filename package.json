@@ -17,6 +17,7 @@
     "lab:gen": "node scripts/gen-lab.js",
     "lab:build-image": "docker build -t winlab-lab-runner:latest -f docker/lab-runner/Dockerfile .",
     "blog:import": "node scripts/import-main-blog-posts.mjs",
+    "blog:schedule:production-series": "node scripts/schedule-production-seo-series.mjs",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
