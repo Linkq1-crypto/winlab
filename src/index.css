@@ -29,6 +29,10 @@ body {
      The app shell (SaaSOrchestrator) sets its own overflow-hidden internally. */
 }
 
+body.winlab-lab-view {
+  overflow-x: hidden;
+}
+
 #root {
   /* Let each top-level view control its own height/overflow */
   min-height: 100vh;

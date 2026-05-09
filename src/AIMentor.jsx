@@ -6,6 +6,9 @@ import { trackEvent } from './lib/track.js';
 import { readStoredAiConsentPreference, saveAiConsentPreference } from './services/aiConsent.js';
 
 const INACTIVITY_MS = 20_000;
+const floatingEdgeInset = 'max(16px,env(safe-area-inset-right))';
+const floatingBottomInset = 'max(16px,env(safe-area-inset-bottom))';
+const floatingNudgeBottomInset = 'max(80px,calc(env(safe-area-inset-bottom) + 64px))';
 
 export default function AIMentor({ labId, labState = {}, sessionId = null, userId = null }) {
   const { useHint, hintCount, maxHints, plan } = useLab();
@@ -203,12 +206,19 @@ export default function AIMentor({ labId, labState = {}, sessionId = null, userI
 
   const hintsLeft = maxHints === Infinity ? 'inf' : Math.max(0, maxHints - hintCount);
   const floatingButtonClass = isMobile
-    ? 'fixed bottom-4 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-xl text-white shadow-lg shadow-blue-600/40'
-    : 'fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-lg shadow-blue-600/40 transition-transform hover:scale-105';
+    ? 'fixed z-40 flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-xl text-white shadow-lg shadow-blue-600/40'
+    : 'fixed z-40 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-lg shadow-blue-600/40 transition-transform hover:scale-105';
 
   if (!open && !showConsent && nudge) {
     return (
-      <div className={`fixed z-40 flex ${isMobile ? 'left-4 right-4 bottom-20 flex-col gap-2' : 'bottom-6 right-6 flex-col items-end gap-2'}`}>
+      <div
+        className={`fixed z-40 flex ${isMobile ? 'left-4 right-4 flex-col gap-2' : 'flex-col items-end gap-2'}`}
+        style={
+          isMobile
+            ? { bottom: floatingNudgeBottomInset }
+            : { right: floatingEdgeInset, bottom: floatingBottomInset }
+        }
+      >
         <div className={`rounded-2xl border border-slate-700 bg-slate-800 px-4 py-3 shadow-xl ${isMobile ? 'w-full' : 'max-w-[220px] rounded-br-sm'}`}>
           <p className="text-sm font-medium text-white">Need a hint?</p>
           <p className="mt-0.5 text-xs text-slate-400">I can guide you without giving away the answer.</p>
@@ -238,7 +248,14 @@ export default function AIMentor({ labId, labState = {}, sessionId = null, userI
 
   if (!open && !showConsent) {
     return (
-      <button type="button" onClick={openWithConsentCheck} className={floatingButtonClass} title="AI Mentor">
+      <button
+        type="button"
+        data-testid="ai-mentor-button"
+        onClick={openWithConsentCheck}
+        className={floatingButtonClass}
+        style={{ right: floatingEdgeInset, bottom: floatingBottomInset }}
+        title="AI Mentor"
+      >
         AI
         {hintCount > 0 && plan === 'starter' && (
           <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs text-white">
@@ -291,11 +308,22 @@ export default function AIMentor({ labId, labState = {}, sessionId = null, userI
 
   return (
     <div
+      data-testid="ai-mentor-panel"
       className={`fixed z-40 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-[#0d0d0f] shadow-2xl ${
         isMobile
           ? 'bottom-0 left-0 right-0 max-h-[58dvh] rounded-b-none rounded-t-3xl border-x-0 border-b-0'
-          : 'bottom-6 right-6 w-80'
+          : 'w-[min(20rem,calc(100vw-32px))]'
       }`}
+      style={
+        isMobile
+          ? undefined
+          : {
+              right: floatingEdgeInset,
+              bottom: floatingBottomInset,
+              maxWidth: 'calc(100vw - 32px)',
+              maxHeight: 'min(42rem, calc(100dvh - 32px))',
+            }
+      }
     >
       <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/50 px-4 py-3">
         <div>

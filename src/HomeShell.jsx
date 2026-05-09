@@ -184,6 +184,13 @@ export default function HomeShell() {
   }, []);
 
   useEffect(() => {
+    document.body.classList.toggle('winlab-lab-view', view === 'lab');
+    return () => {
+      document.body.classList.remove('winlab-lab-view');
+    };
+  }, [view]);
+
+  useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [terminalLogs]);
 
@@ -672,7 +679,7 @@ export default function HomeShell() {
 
   if (view === 'lab' && activeSession) {
     return (
-      <div className="winlab-mobile-shell relative flex min-h-screen min-h-[100dvh] min-w-0 flex-col overflow-hidden bg-[#050505] text-gray-300">
+      <div className="winlab-mobile-shell relative flex h-[100dvh] min-h-[100dvh] min-w-0 max-w-[100vw] flex-col overflow-x-hidden overflow-y-hidden bg-[#050505] text-gray-300">
         {showRegister && (
           <Suspense fallback={null}>
             <RegisterModal onSuccess={handleAuthSuccess} onClose={() => setShowRegister(false)} />
@@ -681,7 +688,7 @@ export default function HomeShell() {
         {showPaywall && <PaywallModal onUpgrade={handleUpgrade} onClose={() => { setShowPaywall(false); stopLab(); }} />}
         <PWAInstallPrompt hidden={hideInstallPrompt} />
         <SocialSidebar links={socialLinks} />
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-[clamp(12px,2vw,24px)] py-[clamp(12px,2vw,24px)]">
           <Suspense
             fallback={
               <div className="flex h-full items-center justify-center px-4 text-center text-xs font-mono uppercase tracking-[0.28em] text-slate-500">

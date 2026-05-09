@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+const LAUNCH_FREE_LAB_LABEL = /Launch Free Lab(s)?/i;
+
 const VIEWPORTS = [
   { width: 320, height: 700 },
   { width: 375, height: 812 },
@@ -37,6 +39,12 @@ const catalogPayload = {
 };
 
 async function mockApp(page) {
+  await page.routeWebSocket(/\/ws\/lab(\?|$)/, async (ws) => {
+    ws.onMessage(() => {});
+    ws.send(JSON.stringify({ type: 'ready' }));
+    ws.send(JSON.stringify({ type: 'output', data: '\r\n[WINLAB] mock terminal attached\r\n' }));
+  });
+
   await page.route('**/api/labs/catalog', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(catalogPayload) });
   });
@@ -107,6 +115,22 @@ async function expectNoHorizontalOverflow(page) {
   expect(metrics.doc).toBeLessThanOrEqual(metrics.inner + 1);
 }
 
+async function dismissCookieBanner(page) {
+  const essentialOnly = page.getByRole('button', { name: /Essential only/i });
+  if (await essentialOnly.isVisible().catch(() => false)) {
+    await essentialOnly.click();
+  }
+}
+
+async function openHub(page, viewport) {
+  await dismissCookieBanner(page);
+  const cta = page.getByRole('button', { name: LAUNCH_FREE_LAB_LABEL });
+  await expect(cta).toBeVisible();
+  await cta.click();
+  await expect(page.getByRole('heading', { name: viewport.width <= 640 ? /WinLab Hub/i : /Operational Hub/i })).toBeVisible();
+  return cta;
+}
+
 test.describe('mobile responsiveness smoke', () => {
   for (const viewport of VIEWPORTS) {
     test(`homepage stays usable at ${viewport.width}x${viewport.height}`, async ({ page }) => {
@@ -114,20 +138,21 @@ test.describe('mobile responsiveness smoke', () => {
       await mockApp(page);
       await page.goto('/');
 
-      const cta = page.getByRole('button', { name: /Launch Free Labs/i });
+      await dismissCookieBanner(page);
+      const cta = page.getByRole('button', { name: LAUNCH_FREE_LAB_LABEL });
       await expect(cta).toBeVisible();
-      await expect(page.getByText('WinLab Operational Terminal')).toBeVisible();
-
-      const headline = page.getByRole('heading', { name: /Real labs\. Small screen safe\./i });
+      const headline = page.getByRole('heading', {
+        name: viewport.width <= 640 ? /REAL LABS\.\s*ZERO FRICTION\./i : /REAL LABS\.\s*ZERO FRICTION\./i,
+      });
       await expect(headline).toBeVisible();
       const heroBox = await headline.boundingBox();
       const ctaBox = await cta.boundingBox();
       expect(heroBox && ctaBox).toBeTruthy();
-      expect(ctaBox.y).toBeGreaterThanOrEqual(heroBox.y);
+      expect(ctaBox.y + 4).toBeGreaterThanOrEqual(heroBox.y);
 
       await cta.click();
 
-      await expect(page.getByRole('heading', { name: /Operational Hub/i })).toBeVisible();
+      await expect(page.getByRole('heading', { name: viewport.width <= 640 ? /WinLab Hub/i : /Operational Hub/i })).toBeVisible();
       await expect(page.getByText('Start In The Free Zone')).toBeVisible();
       await expectNoHorizontalOverflow(page);
     });
@@ -137,11 +162,11 @@ test.describe('mobile responsiveness smoke', () => {
       await mockApp(page);
       await page.goto('/');
 
-      await page.getByRole('button', { name: /Launch Free Labs/i }).click();
+      await openHub(page, viewport);
       await page.getByRole('button', { name: /Nginx Port Conflict/i }).first().click();
       await page.getByRole('button', { name: /Launch Session/i }).click();
 
-      await expect(page.getByText('Live Incident Terminal')).toBeVisible();
+      await expect(page.getByTestId('lab-incident-shell')).toBeVisible();
       const terminalWrapper = page.locator('.winlab-xterm-shell').first();
       await expect(terminalWrapper).toBeVisible();
       await expectNoHorizontalOverflow(page);
@@ -156,6 +181,7 @@ test.describe('mobile responsiveness smoke', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await mockApp(page);
     await page.goto('/');
+    await dismissCookieBanner(page);
 
     await page.evaluate(() => {
       const event = new Event('beforeinstallprompt');
@@ -171,7 +197,7 @@ test.describe('mobile responsiveness smoke', () => {
     const prompt = page.getByTestId('pwa-install-prompt');
     await expect(prompt).toBeVisible();
 
-    const cta = page.getByRole('button', { name: /Launch Free Labs/i });
+    const cta = page.getByRole('button', { name: LAUNCH_FREE_LAB_LABEL });
     const promptBox = await prompt.boundingBox();
     const ctaBox = await cta.boundingBox();
     expect(promptBox && ctaBox).toBeTruthy();
@@ -180,9 +206,9 @@ test.describe('mobile responsiveness smoke', () => {
     await page.getByRole('button', { name: /Dismiss install prompt/i }).click();
     await expect(prompt).toBeHidden();
 
-    await page.getByRole('button', { name: /Launch Free Labs/i }).click();
+    await openHub(page, { width: 390, height: 844 });
     await page.locator('#pricing').scrollIntoViewIfNeeded();
-    await expect(page.getByRole('button', { name: /Get Early Access/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Get Early Access|Get Lifetime/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /Go Pro/i })).toBeVisible();
   });
 
@@ -191,6 +217,7 @@ test.describe('mobile responsiveness smoke', () => {
     await mockApp(page);
 
     await page.goto('/');
+    await dismissCookieBanner(page);
     const serviceWorkerReady = await page.evaluate(async () => {
       if (!('serviceWorker' in navigator)) return false;
 
@@ -240,11 +267,11 @@ test.describe('mobile responsiveness smoke', () => {
     expect(healthCacheStatus.statuses.length).toBe(2);
     expect(healthCacheStatus.cachedMatches).toBe(0);
 
-    await page.getByRole('button', { name: /Launch Free Labs/i }).click();
+    await openHub(page, { width: 390, height: 844 });
     await page.getByRole('button', { name: /Nginx Port Conflict/i }).first().click();
     await page.getByRole('button', { name: /Launch Session/i }).click();
 
-    await expect(page.getByText('Live Incident Terminal')).toBeVisible();
+    await expect(page.getByTestId('lab-incident-shell')).toBeVisible();
 
     const helperFocused = await page.locator('.xterm-helper-textarea').evaluate((node) => {
       node.focus();

@@ -29,7 +29,7 @@ function getAdaptiveLayoutMetrics() {
     return {
       width: 1440,
       height: 900,
-      shellMinHeight: 0,
+      shellMinHeight: 320,
       shellPreferredHeight: null,
       panelMaxHeight: null,
       stacked: false,
@@ -39,24 +39,13 @@ function getAdaptiveLayoutMetrics() {
   const width = window.innerWidth;
   const height = window.innerHeight;
 
-  if (width < 768) {
+  if (width < 1024) {
     return {
       width,
       height,
       shellMinHeight: Math.max(280, Math.min(380, Math.round(height * 0.34))),
       shellPreferredHeight: Math.max(320, Math.min(520, Math.round(height * 0.46))),
-      panelMaxHeight: Math.max(260, Math.min(420, Math.round(height * 0.4))),
-      stacked: true,
-    };
-  }
-
-  if (width < 1280) {
-    return {
-      width,
-      height,
-      shellMinHeight: Math.max(320, Math.min(440, Math.round(height * 0.38))),
-      shellPreferredHeight: Math.max(380, Math.min(640, Math.round(height * 0.52))),
-      panelMaxHeight: Math.max(300, Math.min(500, Math.round(height * 0.34))),
+      panelMaxHeight: null,
       stacked: true,
     };
   }
@@ -64,7 +53,7 @@ function getAdaptiveLayoutMetrics() {
   return {
     width,
     height,
-    shellMinHeight: 0,
+    shellMinHeight: 320,
     shellPreferredHeight: null,
     panelMaxHeight: null,
     stacked: false,
@@ -737,9 +726,15 @@ export default function LabTerminal({
   }, [containerName, hintEnabled, labId, levelId, sessionId]);
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col bg-[linear-gradient(180deg,#081019_0%,#05070c_100%)] text-slate-200">
-      <div className="shrink-0 border-b border-white/8 bg-[#09111a]/95 px-4 py-3 backdrop-blur-sm sm:px-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      data-testid="lab-incident-shell"
+      className="flex h-full min-h-0 min-w-0 w-full max-w-full flex-col overflow-hidden rounded-[24px] bg-[linear-gradient(180deg,#081019_0%,#05070c_100%)] text-slate-200"
+    >
+      <div
+        data-testid="lab-incident-header"
+        className="w-full min-w-0 shrink-0 border-b border-white/8 bg-[#09111a]/95 px-4 py-3 backdrop-blur-sm sm:px-5"
+      >
+        <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex gap-1.5">
               <div className={`h-2.5 w-2.5 rounded-full ${severityStyles.dot}`} />
@@ -750,10 +745,10 @@ export default function LabTerminal({
               <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-slate-400">
                 Incident Terminal
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-slate-400">
-                <span className="truncate">{containerName}</span>
+              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-slate-400">
+                <span className="max-w-full truncate">{containerName}</span>
                 <span className="uppercase text-slate-500">{severity}</span>
-                <span className="uppercase text-slate-500">{primaryService}</span>
+                <span className="max-w-full truncate uppercase text-slate-500">{primaryService}</span>
               </div>
             </div>
           </div>
@@ -763,7 +758,7 @@ export default function LabTerminal({
               socketRef.current?.close();
               onCloseRef.current?.();
             }}
-            className="w-full rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.25em] text-rose-200 transition-colors hover:bg-rose-400/20 sm:w-auto"
+            className="w-full shrink-0 self-start rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.25em] text-rose-200 transition-colors hover:bg-rose-400/20 sm:w-auto lg:self-auto"
           >
             End Session
           </button>
@@ -771,8 +766,11 @@ export default function LabTerminal({
       </div>
 
       <div className="flex-1 min-h-0 min-w-0 overflow-hidden p-3 sm:p-4 md:p-5">
-        <div className="grid h-full min-h-0 min-w-0 gap-3 md:gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.55fr)]">
-          <div className="order-2 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-white/8 bg-[#07111a] shadow-[0_18px_48px_rgba(0,0,0,0.28)] md:rounded-[20px] xl:order-1">
+        <div className="grid h-full min-h-0 min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_clamp(360px,28vw,480px)] lg:gap-5">
+          <div
+            data-testid="lab-terminal-panel"
+            className="order-1 flex min-h-0 min-w-0 w-full max-w-full flex-col overflow-hidden rounded-[18px] border border-white/8 bg-[#07111a] shadow-[0_18px_48px_rgba(0,0,0,0.28)] md:rounded-[20px]"
+          >
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/6 px-3 py-2 text-[10px] font-mono uppercase tracking-[0.24em] text-slate-500 sm:px-4">
               <span>interactive shell</span>
               <span>network isolated</span>
@@ -785,12 +783,12 @@ export default function LabTerminal({
 
             <div
               ref={wrapperRef}
-              className="relative min-h-[360px] min-w-0 flex-1 overflow-hidden xl:min-h-0"
+              className="relative min-h-[360px] min-w-0 w-full max-w-full flex-1 overflow-hidden lg:min-h-0"
               style={shellViewportStyle}
             >
               <div
                 ref={viewportRef}
-                className="winlab-xterm-shell absolute inset-0 h-full w-full min-h-0 min-w-0 overflow-hidden px-2 py-2 sm:px-3 sm:py-3"
+                className="winlab-xterm-shell absolute inset-0 h-full w-full min-h-0 min-w-0 max-w-full overflow-hidden px-2 py-2 sm:px-3 sm:py-3"
               />
               {!hasOutput && (
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 text-center text-xs font-mono uppercase tracking-[0.24em] text-slate-500">
@@ -801,28 +799,29 @@ export default function LabTerminal({
           </div>
 
           <aside
-            className="order-1 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-white/8 bg-[#081019] md:rounded-[20px] xl:order-2 xl:max-h-none"
+            data-testid="lab-intelligence-panel"
+            className="order-2 flex min-h-0 min-w-0 max-w-full flex-col overflow-hidden rounded-[18px] border border-white/8 bg-[#081019] md:rounded-[20px] lg:max-h-full"
             style={briefPanelStyle}
           >
-            <div className="border-b border-white/8 bg-[#0a131c] px-3 py-3 sm:px-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
+            <div className="min-w-0 border-b border-white/8 bg-[#0a131c] px-3 py-3 sm:px-4">
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
                   <p className="text-[10px] font-mono uppercase tracking-[0.28em] text-slate-400">Live Incident Intelligence</p>
-                  <h2 className="mt-2 text-base font-black text-white sm:text-lg">
+                  <h2 className="mt-2 break-words text-base font-black text-white sm:text-lg">
                     {activeIncidentBrief.incidentType || 'Brief unavailable'}
                   </h2>
                 </div>
-                <div className={`rounded-full border px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.18em] ${severityStyles.pill}`}>
+                <div className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.18em] ${severityStyles.pill}`}>
                   {severity}
                 </div>
               </div>
-              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+              <p className="mt-2 break-words text-xs leading-relaxed text-slate-400">
                 {activeIncidentBrief.labTitle || 'No lab metadata was attached to this session.'}
               </p>
-              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">
-                <span>Session {sessionId || 'pending'}</span>
-                {activeIncidentBrief.labId ? <span>{activeIncidentBrief.labId}</span> : null}
-                <span>{primaryService}</span>
+              <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">
+                <span className="max-w-full truncate">Session {sessionId || 'pending'}</span>
+                {activeIncidentBrief.labId ? <span className="max-w-full truncate">{activeIncidentBrief.labId}</span> : null}
+                <span className="max-w-full truncate">{primaryService}</span>
               </div>
             </div>
 
@@ -862,7 +861,7 @@ export default function LabTerminal({
               </div>
             </div>
 
-            <div className="min-h-0 space-y-3 overflow-y-auto p-2.5 text-sm sm:p-3">
+            <div className="min-h-0 min-w-0 space-y-3 overflow-y-auto overflow-x-hidden p-2.5 text-sm sm:p-3">
               <section className="border border-white/8 bg-black/20">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <p className="px-3 pt-3 text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Recovery stages</p>

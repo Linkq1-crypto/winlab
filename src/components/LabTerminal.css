@@ -13,6 +13,7 @@
   height: 100%;
   max-width: 100%;
   overflow: hidden;
+  min-width: 0;
   contain: layout paint style;
 }
 
@@ -20,7 +21,7 @@
   width: 100% !important;
   max-width: 100% !important;
   overflow-y: auto;
-  overflow-x: hidden !important;
+  overflow-x: auto !important;
   overscroll-behavior: contain;
 }
 
@@ -29,6 +30,7 @@
 .winlab-xterm-shell .xterm-rows,
 .winlab-xterm-shell .xterm-scroll-area {
   max-width: 100% !important;
+  min-width: 0 !important;
 }
 
 .winlab-xterm-shell .xterm-screen,
@@ -53,15 +55,15 @@
 @media (max-width: 640px) {
   .winlab-xterm-shell {
     width: 100%;
-    max-width: 100vw;
-    overflow-x: auto;
+    max-width: 100%;
+    overflow-x: hidden;
     overflow-y: hidden;
     padding: 0.75rem;
   }
 
   .winlab-xterm-shell .xterm {
     width: 100% !important;
-    max-width: 100vw !important;
+    max-width: 100% !important;
     font-size: 11px;
     line-height: 1.5;
   }
