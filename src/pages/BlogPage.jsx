@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, CalendarDays, Server, Tag } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Copy, Link2, Server, Share2, Tag } from 'lucide-react';
 import SocialSidebar from '../SocialSidebar';
 import { useSocialStorage } from '../hooks/useSocialStorage';
 
@@ -38,6 +38,17 @@ function renderContent(content) {
     .filter(Boolean);
 }
 
+function buildShareUrls(post) {
+  if (!post || typeof window === 'undefined') return null;
+  const pageUrl = window.location.href;
+  const shareText = `${post.title} | WinLab`;
+  return {
+    pageUrl,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`,
+    x: `https://x.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(shareText)}`,
+  };
+}
+
 export default function BlogPage() {
   const [socialLinks] = useSocialStorage();
   const path = window.location.pathname;
@@ -50,6 +61,8 @@ export default function BlogPage() {
   const [error, setError] = useState('');
   const [posts, setPosts] = useState([]);
   const [post, setPost] = useState(null);
+  const [shareFeedback, setShareFeedback] = useState('');
+  const shareUrls = useMemo(() => buildShareUrls(post), [post]);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +97,35 @@ export default function BlogPage() {
     load();
     return () => { cancelled = true; };
   }, [slug]);
+
+  useEffect(() => {
+    if (!shareFeedback) return undefined;
+    const timer = window.setTimeout(() => setShareFeedback(''), 2200);
+    return () => window.clearTimeout(timer);
+  }, [shareFeedback]);
+
+  async function handleNativeShare() {
+    if (!post || !shareUrls?.pageUrl || !navigator?.share) return;
+    try {
+      await navigator.share({
+        title: post.title,
+        text: post.excerpt || post.title,
+        url: shareUrls.pageUrl,
+      });
+    } catch {
+      // User-cancelled share should stay silent.
+    }
+  }
+
+  async function handleCopyLink() {
+    if (!shareUrls?.pageUrl || !navigator?.clipboard) return;
+    try {
+      await navigator.clipboard.writeText(shareUrls.pageUrl);
+      setShareFeedback('Link copied');
+    } catch {
+      setShareFeedback('Copy failed');
+    }
+  }
 
   return (
     <div className="winlab-public-page font-sans">
@@ -120,6 +162,51 @@ export default function BlogPage() {
                 </span>
               )}
             </div>
+            {shareUrls && (
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
+                  <button
+                    type="button"
+                    onClick={handleNativeShare}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:border-red-600/40 hover:bg-red-600/10"
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                    Share
+                  </button>
+                )}
+                <a
+                  href={shareUrls.linkedin}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:border-blue-500/40 hover:bg-blue-500/10"
+                >
+                  <Link2 className="h-3.5 w-3.5" />
+                  LinkedIn
+                </a>
+                <a
+                  href={shareUrls.x}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:border-slate-200/30 hover:bg-white/10"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  X
+                </a>
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/10"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy Link
+                </button>
+                {shareFeedback && (
+                  <span className="text-xs uppercase tracking-[0.18em] text-emerald-300">
+                    {shareFeedback}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         )}
 
