@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, CalendarDays, Copy, Link2, Server, Share2, Tag } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Camera, Copy, Globe, Mail, Server, Share2, Tag } from 'lucide-react';
 import SocialSidebar from '../SocialSidebar';
 import { useSocialStorage } from '../hooks/useSocialStorage';
 
@@ -42,10 +42,13 @@ function buildShareUrls(post) {
   if (!post || typeof window === 'undefined') return null;
   const pageUrl = window.location.href;
   const shareText = `${post.title} | WinLab`;
+  const emailSubject = post.title;
+  const emailBody = `${post.excerpt || post.title}\n\n${pageUrl}`;
   return {
     pageUrl,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`,
     x: `https://x.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(shareText)}`,
+    email: `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`,
   };
 }
 
@@ -117,11 +120,11 @@ export default function BlogPage() {
     }
   }
 
-  async function handleCopyLink() {
+  async function handleCopyLink(label = 'Link copied') {
     if (!shareUrls?.pageUrl || !navigator?.clipboard) return;
     try {
       await navigator.clipboard.writeText(shareUrls.pageUrl);
-      setShareFeedback('Link copied');
+      setShareFeedback(label);
     } catch {
       setShareFeedback('Copy failed');
     }
@@ -175,14 +178,22 @@ export default function BlogPage() {
                   </button>
                 )}
                 <a
-                  href={shareUrls.linkedin}
+                  href={shareUrls.facebook}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:border-blue-500/40 hover:bg-blue-500/10"
                 >
-                  <Link2 className="h-3.5 w-3.5" />
-                  LinkedIn
+                  <Globe className="h-3.5 w-3.5" />
+                  Facebook
                 </a>
+                <button
+                  type="button"
+                  onClick={() => handleCopyLink('Link copied for Instagram')}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:border-pink-500/40 hover:bg-pink-500/10"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  Instagram
+                </button>
                 <a
                   href={shareUrls.x}
                   target="_blank"
@@ -192,9 +203,16 @@ export default function BlogPage() {
                   <Share2 className="h-3.5 w-3.5" />
                   X
                 </a>
+                <a
+                  href={shareUrls.email}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:border-amber-500/40 hover:bg-amber-500/10"
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  Email
+                </a>
                 <button
                   type="button"
-                  onClick={handleCopyLink}
+                  onClick={() => handleCopyLink()}
                   className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/10"
                 >
                   <Copy className="h-3.5 w-3.5" />
